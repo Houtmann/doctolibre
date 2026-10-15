@@ -15,7 +15,6 @@ func TestRun(t *testing.T) {
 		errHas string
 	}{
 		{[]string{"version"}, 0, version, ""},
-		{[]string{"serve"}, 2, "", "not implemented"},
 		{[]string{"migrate"}, 2, "", "not implemented"},
 		{[]string{"create-user"}, 2, "", "not implemented"},
 		{[]string{"nope"}, 2, "", "inconnue"},

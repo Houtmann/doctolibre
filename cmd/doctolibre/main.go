@@ -2,9 +2,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 // version est injectée au build : -ldflags "-X main.version=...".
@@ -23,7 +26,15 @@ func run(args []string, stdout, stderr io.Writer) int {
 	case "version":
 		_, _ = fmt.Fprintln(stdout, version)
 		return 0
-	case "serve", "migrate", "create-user":
+	case "serve":
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		if err := serve(ctx, stderr); err != nil {
+			_, _ = fmt.Fprintf(stderr, "doctolibre serve: %v\n", err)
+			return 1
+		}
+		return 0
+	case "migrate", "create-user":
 		_, _ = fmt.Fprintf(stderr, "doctolibre %s: not implemented\n", args[0])
 		return 2
 	case "-h", "--help", "help":
