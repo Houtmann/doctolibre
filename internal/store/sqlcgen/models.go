@@ -93,6 +93,25 @@ type AvailabilityRule struct {
 	UpdatedAt          time.Time
 }
 
+type OutboxMessage struct {
+	ID            uuid.UUID
+	PracticeID    uuid.UUID
+	Kind          string
+	Template      string
+	Payload       []byte
+	Recipient     string
+	AppointmentID pgtype.UUID
+	DedupKey      pgtype.Text
+	RunAt         time.Time
+	Status        string
+	Attempts      int32
+	LastError     pgtype.Text
+	SentAt        pgtype.Timestamptz
+	ProviderRef   pgtype.Text
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
 type Patient struct {
 	ID         uuid.UUID
 	PracticeID uuid.UUID
