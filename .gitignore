@@ -3,3 +3,5 @@
 /tmp/
 .env
 *.local
+*.test
+*.out

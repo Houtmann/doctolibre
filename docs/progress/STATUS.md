@@ -9,7 +9,7 @@
 
 - **Phase** : 0 — Fondations (pas commencée)
 - **Code** : aucun. Le plan, les conventions et les 27 tâches sont écrits et ont été revus (review externe intégrée).
-- **Dépôt** : git initialisé (branche `main`), aucun commit.
+- **Dépôt** : git initialisé (branche `main`), commit initial de la documentation `629f231`.
 
 ## En cours
 
@@ -21,7 +21,7 @@ _Aucune tâche en cours._
 
 ## Prochaine action
 
-1. Premier commit de la documentation (nécessaire : l'orchestrateur contrôle via `git diff`).
+1. ~~Premier commit de la documentation~~ (fait).
 2. `/run-task T001` — [T001 — Bootstrap du dépôt Go](../../tasks/T001-bootstrap.md).
 3. Ensuite, en parallèle : [T002](../../tasks/T002-database-tooling.md), [T003](../../tasks/T003-http-server.md), [T013](../../tasks/T013-slot-engine.md).
 

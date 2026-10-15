@@ -26,9 +26,9 @@ Un dépôt Go qui compile, se lint, et expose un binaire `doctolibre` avec sous-
 - `version` injectée via `-ldflags "-X main.version=..."`.
 
 ## Critères d'acceptation
-- [ ] `make build` produit `bin/doctolibre` ; `bin/doctolibre version` affiche la version.
-- [ ] `make check` passe.
-- [ ] `config.Load` testée : défauts, valeur invalide, secret manquant en prod.
+- [x] `make build` produit `bin/doctolibre` ; `bin/doctolibre version` affiche la version.
+- [x] `make check` passe.
+- [x] `config.Load` testée : défauts, valeur invalide, secret manquant en prod.
 
 ## Vérification
 ```bash
@@ -42,8 +42,8 @@ Serveur HTTP (T003), base de données (T002).
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-15 (sonnet)
+- **Fait** : tout le périmètre (go.mod, main, config + tests, Makefile, golangci, .gitignore, .env.example, README, LICENSE AGPL-3.0).
+- **Reste à faire** : rien.
+- **Notes de reprise** : config.LoadFrom(getenv) est testable ; Load() ajoute le repli .env en dev.
+- **Écarts** : module `doctolibre`, go 1.24 ; LICENSE téléchargée depuis gnu.org.

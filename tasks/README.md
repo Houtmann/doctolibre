@@ -22,7 +22,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 
 | ID | Tâche | Phase | Dépend de | Statut |
 |---|---|---|---|---|
-| T001 | [Bootstrap du dépôt Go](T001-bootstrap.md) | 0 | — | todo |
+| T001 | [Bootstrap du dépôt Go](T001-bootstrap.md) | 0 | — | done |
 | T002 | [PostgreSQL dev, goose, sqlc](T002-database-tooling.md) | 0 | T001 | todo |
 | T003 | [Serveur HTTP et middlewares](T003-http-server.md) | 0 | T001 | todo |
 | T004 | [Socle front : templates, htmx, CSS](T004-frontend-base.md) | 0 | T003 | todo |
