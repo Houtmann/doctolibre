@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-15 — 5 tâches suivantes (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T012, T021, T022, T024, T040 → review
+- **Fait** : paramétrage cabinet/motifs/plages/absences ; email SMTP stdlib + mot de passe oublié ; SMS (log, HTTP générique, Android, OVH) ; worker outbox dans `serve` + sous-commande `worker` + `/admin/messages` ; Dockerfile/compose/Caddy/systemd/release + `DOCTOLIBRE_TRUSTED_PROXIES`. Dispatchers réels branchés après merge.
+- **Revue** : 1 correction renvoyée (T040 : `tls` vide refusé par Caddy). À la fusion : migrations renumérotées 00005–00007, conflits `config.go`/`routes.go`/`schema_test.go` résolus, doublon du switch `DOCTOLIBRE_WORKER` retiré, `gofmt` du Makefile limité hors `.claude/`.
+- **Vérification** : `make check` ✅ après chaque merge (Postgres.app). Non vérifié : Docker (build, HTTPS, mémoire), Mailpit, CI.
+- **Reste / reprise** : relecture humaine des 5 tâches, puis T014 et T016.
+- **Décisions** : 16 entrées dans `decisions.md` (de « IP client via TrustedProxies » à « Migrations renumérotées ») ; `AGENTS.md` : `auth → service` autorisé.
+
 ## 2026-10-15 — 10 premières tâches (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T001, T002, T003, T004, T005, T010, T011, T013, T020, T045 → done ; créées : T024 (reste de T020), T046 (reste de T045)

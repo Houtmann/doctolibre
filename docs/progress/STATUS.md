@@ -7,41 +7,38 @@
 
 ## Où on en est
 
-- **Phase 0 (Fondations) terminée.** Le binaire démarre (`serve`, `migrate`, `create-user`, `version`), avec la page d'accueil et le 404 stylé, et les tests DB isolés par schéma.
-- **Cœur RDV en cours** :
-  - schéma v1 avec la contrainte anti-chevauchement buffers inclus (T010) ;
-  - moteur de créneaux pur, testé sur les changements d'heure et par fuzz (T013) ;
-  - connexion praticien (T011).
-- **Notifications** : l'outbox et le worker existent (T020), mais le worker n'est pas encore lancé par le binaire (T024).
-- **Dépôt** : branche `main`, un commit et un merge par tâche. Il y a 29 tâches : T024 et T046 ont été créées pour ce qui n'a pas pu être fait dans T020 et T045.
+- **Phase 0 (Fondations) terminée.**
+- **Cœur RDV** : schéma v1 (T010), moteur de créneaux (T013), connexion praticien (T011) faits ; **paramétrage cabinet, motifs, plages et absences (T012) en `review`**.
+- **Notifications** : outbox + worker (T020) fait ; **email SMTP + mot de passe oublié (T021), SMS 4 drivers (T022), worker lancé par `serve` et page `/admin/messages` (T024) en `review`**. Les vrais envois sont branchés (`buildDispatcher`) ; en prod un driver `log` donne un avertissement.
+- **Exploitation** : métriques (T045) faites ; **packaging Docker + Caddy, IP client derrière proxy (T040) en `review`**.
+- Migrations : 00001, 00002, 00004, 00005 (index outbox), 00006 (plages sans chevauchement), 00007 (password_reset).
 
 ## En cours
 
-_Aucune tâche en cours._
+_Aucune tâche en cours._ 5 tâches en `review` attendent une relecture humaine : T012, T021, T022, T024, T040.
 
 ## Prochaine action
 
-Tâches prêtes (dépendances `done`), parallélisables :
-1. [T012 — Paramétrage cabinet, motifs, disponibilités](../../tasks/T012-availability-admin.md) : débloque T014 et T016, donc le MVP.
-2. [T021 — Email SMTP](../../tasks/T021-email-smtp.md) et [T022 — SMS](../../tasks/T022-sms-providers.md), en parallèle.
-3. [T024 — Câblage du worker outbox et page admin](../../tasks/T024-outbox-wiring.md).
-4. [T040 — Packaging Docker + Caddy](../../tasks/T040-packaging.md) : inclut maintenant la gestion de l'IP client derrière le proxy.
+1. Relire et valider les 5 tâches en `review` (→ `done`).
+2. Une fois T012 validée : [T014 — Réservation en ligne patient](../../tasks/T014-public-booking.md) et [T016 — Agenda praticien](../../tasks/T016-staff-calendar.md) en parallèle (chemin du MVP).
+3. Une fois T040 validée : T041 (sauvegardes).
 
 ## Blocages et questions ouvertes pour l'humain
 
-- Nom de l'organisation et du module Go : `doctolibre` provisoirement.
-- Hébergement du dépôt (GitHub, Codeberg ou GitLab) : la CI (`.github/workflows/ci.yml`) est écrite mais n'a jamais tourné, faute de remote.
-- Vérifications manuelles restantes :
-  - Lighthouse accessibilité ≥ 95 sur `/` (T004) ;
-  - `make db-up` avec Docker (T002, T005) : le daemon Docker n'était pas lancé, tout a été vérifié sur le Postgres.app local.
-- Relecture humaine des 10 tâches marquées `done` : contrôlées par Opus (`make check`, diff, revue renforcée pour T010, T011, T013 et T020), mais pas encore relues par un humain.
+- Nom de l'organisation et du module Go : `doctolibre` provisoirement (image `ghcr.io/doctolibre/doctolibre` provisoire).
+- Hébergement du dépôt : la CI et `release.yml` n'ont jamais tourné, faute de remote.
+- Vérifications manuelles (Docker était arrêté) :
+  - `docker build -f deploy/Dockerfile .` (image ≤ 30 Mo), `caddy validate`, `docker compose up` en HTTPS (`CADDY_TLS=internal`), mémoire au repos < 50 Mo, reboot (T040) ;
+  - envoi réel via Mailpit (T021) ; `make db-up` (T002, T005) ; Lighthouse ≥ 95 (T004).
+- Avant T014 : `practitioner_appointment_type` n'est pas alimentée par T012 (la restriction passe par `availability_rule.appointment_type_ids`). Décider si T014 s'en sert.
+- À traiter plus tard : jeton de réinitialisation en clair dans `outbox_message.payload` après envoi (T043) ; purge des `password_reset` expirés jamais appelée ; opt-out SMS figé à l'enfilement (T023 doit enfiler les rappels peu avant l'envoi).
 
 ## Avancement par phase
 
-| Phase | Tâches | Faites |
-|---|---|---|
-| 0 — Fondations | 5 | 5 |
-| 1 — Cœur RDV | 8 | 3 |
-| 2 — Notifications | 5 | 1 |
-| 3 — Spécificités kiné | 4 | 0 |
-| 4 — Exploitation | 7 | 1 |
+| Phase | Tâches | Faites | En review |
+|---|---|---|---|
+| 0 — Fondations | 5 | 5 | 0 |
+| 1 — Cœur RDV | 8 | 3 | 1 |
+| 2 — Notifications | 5 | 1 | 3 |
+| 3 — Spécificités kiné | 4 | 0 | 0 |
+| 4 — Exploitation | 7 | 1 | 1 |

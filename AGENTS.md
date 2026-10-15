@@ -65,6 +65,7 @@ make check      # fmt + vet + lint + test — doit être vert
 cmd/doctolibre → web → service → store, booking, notify, outbox, auth
                                   booking : pur (aucun import interne sauf domain)
                                   domain  : types et erreurs, n'importe rien d'interne
+                                  auth → service autorisé (seed à la création du cabinet) ; service n'importe jamais auth
 ```
 - `web` (handlers) : parse la requête, appelle **un** service, rend un template. Aucun SQL, aucune logique métier.
 - `service` : règles métier, transactions, émission d'événements. Reçoit ses dépendances par struct (pas de globals).
