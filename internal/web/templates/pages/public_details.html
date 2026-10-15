@@ -27,8 +27,8 @@
 
   <fieldset>
     <legend>Recevoir le code de vérification par</legend>
-    <label><input type="radio" name="channel" value="sms"{{if ne .Data.Form.Channel "email"}} checked{{end}}> SMS (au téléphone indiqué)</label>
-    <label><input type="radio" name="channel" value="email"{{if eq .Data.Form.Channel "email"}} checked{{end}}> Email (à l'adresse indiquée)</label>
+    <label><input type="radio" name="channel" value="sms"{{if eq .Data.Form.Channel "sms"}} checked{{end}}> SMS (au téléphone indiqué)</label>
+    <label><input type="radio" name="channel" value="email"{{if ne .Data.Form.Channel "sms"}} checked{{end}}> Email (recommandé, à l'adresse indiquée)</label>
   </fieldset>
 
   <fieldset>

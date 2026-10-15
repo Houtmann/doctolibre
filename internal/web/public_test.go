@@ -394,3 +394,39 @@ func (c *client) doWith(method, target string, headers ...string) *httptest.Resp
 	c.h.ServeHTTP(rec, req)
 	return rec
 }
+
+func TestResolveOTPChannel(t *testing.T) {
+	t.Parallel()
+	tests := []struct{ name, channel, phone, email, want string }{
+		{"vide, email fourni", "", "0611111111", "a@b.test", "email"},
+		{"vide, sans email", "", "0611111111", "", "sms"},
+		{"inconnu, email fourni", "pigeon", "", "a@b.test", "email"},
+		{"email choisi sans email, téléphone", "email", "0611111111", "", "sms"},
+		{"email choisi, les deux", "email", "0611111111", "a@b.test", "email"},
+		{"sms choisi sans téléphone, email", "sms", "", "a@b.test", "email"},
+		{"sms choisi, les deux", "sms", "0611111111", "a@b.test", "sms"},
+		{"sms choisi, téléphone seul", "sms", "0611111111", "", "sms"},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := web.ResolveOTPChannel(tc.channel, tc.phone, tc.email); got != tc.want {
+				t.Errorf("got %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestPublicBookingDefaultsToEmailOTP(t *testing.T) {
+	t.Parallel()
+	e := newPublicEnv(t)
+	c := newClient(t, e.h, "192.0.2.77")
+	const start = "2026-10-20T07:00:00Z"
+	form := detailsForm(e.typ.ID.String(), start)
+	form.Del("channel")
+	rec := c.do("POST", e.base()+"/book/details", form)
+	mustContain(t, rec, 200, `name="channel" value="email"`)
+	if e.otp.code("alice@example.test") == "" || e.otp.code("+33611111111") != "" {
+		t.Errorf("le code doit partir par email uniquement (codes: %v)", e.otp.codes)
+	}
+}

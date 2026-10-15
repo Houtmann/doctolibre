@@ -393,7 +393,29 @@ func readBookingForm(r *http.Request) BookingForm {
 		SMSOptIn: r.PostFormValue("sms_opt_in") != "", EmailOptIn: r.PostFormValue("email_opt_in") != "",
 		Consent: r.PostFormValue("consent") != "",
 	}
+	f.Channel = resolveOTPChannel(f.Channel, f.Phone, f.Email)
 	return f
+}
+
+// resolveOTPChannel choisit le canal du code de vérification : email par défaut
+// (moins coûteux), repli sur l'autre contact si celui choisi est absent.
+func resolveOTPChannel(channel, phone, email string) string {
+	switch channel {
+	case "email":
+		if email == "" && phone != "" {
+			return "sms"
+		}
+		return "email"
+	case "sms":
+		if phone == "" && email != "" {
+			return "email"
+		}
+		return "sms"
+	}
+	if email != "" {
+		return "email"
+	}
+	return "sms"
 }
 
 func (f BookingForm) patient() service.PatientDetails {
@@ -438,7 +460,7 @@ func (h *publicHandlers) detailsForm(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	h.renderDetails(w, r, http.StatusOK, t, start, BookingForm{Channel: "sms", SMSOptIn: true, EmailOptIn: true}, nil)
+	h.renderDetails(w, r, http.StatusOK, t, start, BookingForm{Channel: "email", SMSOptIn: true, EmailOptIn: true}, nil)
 }
 
 func (h *publicHandlers) detailsSubmit(w http.ResponseWriter, r *http.Request) {

@@ -61,3 +61,4 @@ Format : `AAAA-MM-JJ — décision — pourquoi — alternative écartée`.
 - 2026-10-15 — RDV en ligne : envois uniquement sur le canal vérifié par l'OTP (`appointment.verified_channel`) (T023) — écrire à un contact non vérifié.
 - 2026-10-15 — Rappel sauté si le RDV a été créé ou modifié après l'heure d'envoi (`updated_at`) ; une série = une seule confirmation, rappels par séance ; pas de lien `/r/` dans les rappels (jeton haché) (T023).
 - 2026-10-15 — Sous-agents : build/test ciblés par package pendant l'implémentation, `make check` complet une seule fois à la fin (`.claude/agents/task-implementer.md`) — build complet à chaque étape (lent en parallèle).
+- 2026-10-15 — OTP de réservation par email par défaut quand une adresse est fournie (repli SMS sinon) ; choix explicite du patient respecté — SMS par défaut (coût).
