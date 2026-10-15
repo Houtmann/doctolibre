@@ -81,6 +81,34 @@ services:
     networks:
       - internal
 
+  # Sauvegardes chiffrées (age) quotidiennes : voir docs/backup.md. Activé par COMPOSE_PROFILES=backup (.env).
+  backup:
+    profiles: ["backup"]
+    build:
+      context: ./backup
+    image: doctolibre-backup:local
+    restart: unless-stopped
+    mem_limit: 128m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      BACKUP_DATABASE_URL: postgres://doctolibre:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}@postgres:5432/doctolibre?sslmode=disable
+      DOCTOLIBRE_BACKUP_AGE_RECIPIENT: ${DOCTOLIBRE_BACKUP_AGE_RECIPIENT:-}
+      BACKUP_TIME: ${BACKUP_TIME:-03:30}
+      BACKUP_KEEP_DAILY: ${BACKUP_KEEP_DAILY:-7}
+      BACKUP_KEEP_WEEKLY: ${BACKUP_KEEP_WEEKLY:-4}
+      DOCTOLIBRE_BACKUP_S3_ENDPOINT: ${DOCTOLIBRE_BACKUP_S3_ENDPOINT:-}
+      DOCTOLIBRE_BACKUP_S3_BUCKET: ${DOCTOLIBRE_BACKUP_S3_BUCKET:-}
+      DOCTOLIBRE_BACKUP_S3_ACCESS_KEY: ${DOCTOLIBRE_BACKUP_S3_ACCESS_KEY:-}
+      DOCTOLIBRE_BACKUP_S3_SECRET_KEY: ${DOCTOLIBRE_BACKUP_S3_SECRET_KEY:-}
+      DOCTOLIBRE_BACKUP_S3_REGION: ${DOCTOLIBRE_BACKUP_S3_REGION:-}
+      DOCTOLIBRE_BACKUP_S3_PREFIX: ${DOCTOLIBRE_BACKUP_S3_PREFIX:-doctolibre}
+    volumes:
+      - backups:/backups
+    networks:
+      - internal
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -110,5 +138,6 @@ networks:
 
 volumes:
   pgdata:
+  backups:
   caddy_data:
   caddy_config:

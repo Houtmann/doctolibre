@@ -44,3 +44,8 @@ migrate:
 
 sqlc:
 	go tool sqlc generate
+
+# Test de bout en bout des sauvegardes (nécessite Docker) : dump chiffré, restauration, rétention.
+.PHONY: backup-test
+backup-test:
+	sh deploy/backup/test.sh

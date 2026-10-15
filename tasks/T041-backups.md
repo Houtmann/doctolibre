@@ -20,8 +20,8 @@ Des sauvegardes chiffrées, automatiques, testables, envoyables hors du serveur 
 - Test automatisé : dump → restore dans une base vierge → comptes de lignes identiques.
 
 ## Critères d'acceptation
-- [ ] Un backup n'est pas lisible sans la clé privée.
-- [ ] Restauration documentée testée de bout en bout.
+- [x] Un backup n'est pas lisible sans la clé privée.
+- [x] Restauration documentée testée de bout en bout.
 
 ## Vérification
 ```bash
@@ -35,8 +35,8 @@ Réplication / haute dispo.
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-15 (sonnet)
+- **Fait** : option « scripts » retenue. `deploy/backup/` (Dockerfile postgres:17-alpine + age + rclone, `backup.sh`, `restore.sh`, `entrypoint.sh` = boucle quotidienne à `BACKUP_TIME`, `test.sh`). Service compose `backup` (profil `backup`, volume `backups`) ; variables dans `deploy/.env.example` (`COMPOSE_PROFILES=backup` + `DOCTOLIBRE_BACKUP_AGE_RECIPIENT` vide à renseigner). Rétention 7 daily + 4 weekly (liens durs), envoi S3 via rclone configuré par variables d'env. `docs/backup.md` + entrée dans `docs/README.md`. `make backup-test` vert (Docker local) : illisible sans la clé, restauration en base vierge, comptes identiques, contrainte EXCLUDE restaurée, rétention.
+- **Reste à faire** : vérification manuelle de l'envoi S3 réel (rclone, aucun bucket de test) et d'un `docker compose up` complet avec le profil backup sur un vrai serveur.
+- **Notes de reprise** : `make backup-test` exige Docker (construit l'image, Postgres jetable) ; `TEST_TRACE=1` active `set -x` du test. Sans clé publique, le conteneur `backup` sort en erreur (volontaire).
+- **Écarts avec la spécification** : pas de sous-commande Go `doctolibre backup/restore` (alternative « script » acceptée par la spec ; évite une dépendance age). Pas de migration.
