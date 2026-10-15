@@ -1,0 +1,47 @@
+<div id="calendar" hx-get="{{.RefreshURL}}" hx-trigger="every 60s" hx-target="#calendar" hx-swap="outerHTML">
+  <div class="cal-toolbar">
+    <nav aria-label="Période de l'agenda">
+      <ul>
+        <li><a role="button" class="outline" href="{{.PrevURL}}" hx-get="{{.PrevURL}}" hx-target="#calendar" hx-swap="outerHTML" hx-push-url="true">Précédent</a></li>
+        <li><a role="button" class="outline" href="{{.TodayURL}}" hx-get="{{.TodayURL}}" hx-target="#calendar" hx-swap="outerHTML" hx-push-url="true">Aujourd'hui</a></li>
+        <li><a role="button" class="outline" href="{{.NextURL}}" hx-get="{{.NextURL}}" hx-target="#calendar" hx-swap="outerHTML" hx-push-url="true">Suivant</a></li>
+      </ul>
+    </nav>
+    <h1>{{.V.Title}}</h1>
+    <nav aria-label="Type d'affichage">
+      <ul>
+        <li><a role="button" class="{{if ne .V.Mode "day"}}outline {{end}}secondary" href="{{.DayURL}}" hx-get="{{.DayURL}}" hx-target="#calendar" hx-swap="outerHTML" hx-push-url="true"{{if eq .V.Mode "day"}} aria-current="page"{{end}}>Jour</a></li>
+        <li><a role="button" class="{{if ne .V.Mode "week"}}outline {{end}}secondary" href="{{.WeekURL}}" hx-get="{{.WeekURL}}" hx-target="#calendar" hx-swap="outerHTML" hx-push-url="true"{{if eq .V.Mode "week"}} aria-current="page"{{end}}>Semaine</a></li>
+      </ul>
+    </nav>
+    <a role="button" href="{{.NewURL}}" hx-get="{{.NewURL}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false">Nouveau rendez-vous</a>
+  </div>
+
+  <div class="cal-grid cal-cols-{{len .V.Days}}" role="group" aria-label="Agenda, {{.V.Title}}">
+    <div class="cal-head gr-1 gc-1"></div>
+    {{range .V.Days}}<div class="cal-head gr-1 gc-{{.Col}}{{if .Today}} is-today{{end}}"><span aria-hidden="true">{{.Label}}</span><span class="visually-hidden">{{.LongLabel}}</span></div>{{end}}
+    {{range .V.Hours}}
+    <div class="cal-hour gr-{{.Row}} gs-4 gc-all" aria-hidden="true"></div>
+    <div class="cal-hour-label gr-{{.Row}} gc-1" aria-hidden="true">{{.Label}}</div>
+    {{end}}
+    {{range $d := .V.Days}}
+      {{range .Bands}}<div class="cal-band gr-{{.Row}} gs-{{.Span}} gc-{{$d.Col}}" aria-hidden="true"></div>{{end}}
+      {{range .Slots}}<a class="cal-slot gr-{{.Row}} gs-2 gc-{{$d.Col}}" tabindex="-1" aria-label="Nouveau rendez-vous le {{$d.LongLabel}} à {{.Label}}" href="/admin/appointments/new?start={{.Start}}" hx-get="/admin/appointments/new?start={{.Start}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false"></a>{{end}}
+      {{range .Appts}}<a class="cal-appt gr-{{.Row}} gs-{{.Span}} gc-{{$d.Col}} st-{{.Status}}{{if .Past}} is-past{{end}}" href="/admin/appointments/{{.ID}}" hx-get="/admin/appointments/{{.ID}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false" title="{{localTime .Start}}–{{localTime .End}} · {{.Patient}} · {{.TypeName}} · {{.StatusName}}"><strong>{{localTime .Start}}</strong> {{.Patient}}<br>{{.TypeName}}<span class="visually-hidden"> ({{.StatusName}})</span></a>{{end}}
+      {{if .NowRow}}<div class="cal-now gr-{{.NowRow}} gc-{{$d.Col}}" aria-hidden="true"></div>{{end}}
+    {{end}}
+  </div>
+
+  <div class="cal-list">
+    {{range .V.Days}}
+    <section aria-label="{{.LongLabel}}">
+      <h2>{{.LongLabel}}</h2>
+      {{if .Appts}}
+      <ol>
+        {{range .Appts}}<li><a class="st-{{.Status}}" href="/admin/appointments/{{.ID}}" hx-get="/admin/appointments/{{.ID}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false"><strong>{{localTime .Start}}–{{localTime .End}}</strong> · {{.Patient}} · {{.TypeName}} <small>({{.StatusName}})</small></a></li>{{end}}
+      </ol>
+      {{else}}<p>Aucun rendez-vous.</p>{{end}}
+    </section>
+    {{end}}
+  </div>
+</div>

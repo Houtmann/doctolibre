@@ -53,6 +53,9 @@ func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger)
 	if d.Practice != nil {
 		d.configRoutes(mux, rd, logger)
 	}
+	if d.Calendar != nil {
+		d.calendarRoutes(mux, rd, logger)
+	}
 }
 
 type adminHandlers struct {

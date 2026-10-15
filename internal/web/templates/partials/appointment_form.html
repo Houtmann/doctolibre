@@ -1,0 +1,69 @@
+<div id="appt-form">
+  <h2 id="appt-dialog-title">Nouveau rendez-vous</h2>
+  {{template "form_errors.html" .Errors}}
+
+  <form method="get" action="/admin/appointments/new" role="search">
+    <input type="hidden" name="start" value="{{.Form.Start}}">
+    <input type="hidden" name="view" value="{{.Form.View}}">
+    <label for="patient-q">Rechercher un patient (nom, prénom, téléphone ou email)</label>
+    <input id="patient-q" type="search" name="q" value="{{.Form.Query}}" autocomplete="off"
+           hx-get="/admin/patients/search" hx-trigger="input changed delay:300ms, search" hx-target="#patient-results" hx-swap="outerHTML" hx-push-url="false">
+    <button type="submit" class="secondary outline">Rechercher</button>
+  </form>
+
+  <form id="appt-create" method="post" action="/admin/appointments" hx-post="/admin/appointments" hx-target="#appt-form" hx-swap="outerHTML">
+    {{csrf .CSRF}}
+    <input type="hidden" name="view" value="{{.Form.View}}">
+    {{template "patient_results.html" .}}
+    <details{{if .QuickOpen}} open{{end}}>
+      <summary>Nouveau patient (création rapide)</summary>
+      <div class="grid">
+        <div>
+          <label for="new-last-name">Nom</label>
+          <input id="new-last-name" name="new_last_name" value="{{.Form.NewLastName}}" maxlength="80" autocomplete="off">
+        </div>
+        <div>
+          <label for="new-first-name">Prénom</label>
+          <input id="new-first-name" name="new_first_name" value="{{.Form.NewFirstName}}" maxlength="80" autocomplete="off">
+        </div>
+      </div>
+      <div class="grid">
+        <div>
+          <label for="new-phone">Téléphone</label>
+          <input id="new-phone" name="new_phone" type="tel" value="{{.Form.NewPhone}}" autocomplete="off">
+        </div>
+        <div>
+          <label for="new-email">Email</label>
+          <input id="new-email" name="new_email" type="email" value="{{.Form.NewEmail}}" autocomplete="off">
+        </div>
+      </div>
+      <small>Un téléphone ou un email est requis. Aucune information médicale ici.</small>
+    </details>
+
+    <label for="appt-type">Motif</label>
+    <select id="appt-type" name="type_id" required>
+      <option value="">Choisir…</option>
+      {{range .Types}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}} ({{.Minutes}} min)</option>{{end}}
+    </select>
+
+    <div class="grid">
+      <div>
+        <label for="appt-date">Date</label>
+        <input id="appt-date" name="date" type="date" value="{{.Form.Date}}" required>
+      </div>
+      <div>
+        <label for="appt-time">Heure</label>
+        <input id="appt-time" name="time" type="time" step="300" value="{{.Form.Time}}" required>
+      </div>
+    </div>
+    <label for="appt-force">
+      <input id="appt-force" type="checkbox" name="force" value="1"{{if .Form.Force}} checked{{end}}>
+      Hors horaires (autoriser en dehors des disponibilités)
+    </label>
+
+    <div class="inline-actions">
+      <button type="submit">Créer le rendez-vous</button>
+      <a role="button" class="secondary outline" href="/admin/calendar">Annuler</a>
+    </div>
+  </form>
+</div>
