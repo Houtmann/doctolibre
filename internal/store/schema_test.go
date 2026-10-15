@@ -62,24 +62,34 @@ func TestMigrateUpDownUp(t *testing.T) {
 	t.Parallel()
 	db := testutil.DB(t) // up
 	ctx := context.Background()
-	if err := store.MigrateDown(ctx, db); err != nil { // retire la dernière (outbox_message)
-		t.Fatalf("down: %v", err)
-	}
 	count := func(table string) int {
 		var n int
-		if err := db.QueryRow(ctx, "SELECT count(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = $1", table).Scan(&n); err != nil {
+		q := "SELECT count(*) FROM information_schema.tables WHERE table_schema = current_schema()"
+		args := []any{}
+		if table != "" {
+			q += " AND table_name = $1"
+			args = append(args, table)
+		}
+		if err := db.QueryRow(ctx, q, args...).Scan(&n); err != nil {
 			t.Fatal(err)
 		}
 		return n
 	}
-	if n := count("outbox_message"); n != 0 {
-		t.Fatalf("outbox_message doit avoir disparu: n=%d", n)
+	before := count("")                                // indépendant de la dernière migration (d'autres tâches en ajoutent)
+	if err := store.MigrateDown(ctx, db); err != nil { // retire la dernière migration
+		t.Fatalf("down: %v", err)
+	}
+	if after := count(""); after >= before {
+		t.Fatalf("down doit retirer au moins une table: avant=%d après=%d", before, after)
 	}
 	if n := count("appointment"); n != 1 {
 		t.Fatalf("appointment ne doit pas être touchée: n=%d", n)
 	}
 	if err := store.Migrate(ctx, db); err != nil {
 		t.Fatalf("up again: %v", err)
+	}
+	if again := count(""); again != before {
+		t.Fatalf("up après down: %d tables, attendu %d", again, before)
 	}
 }
 

@@ -49,6 +49,9 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 			if n == "login" {
 				data = LoginData{}
 			}
+			if n == "password_reset" {
+				data = PasswordResetData{Token: "t"}
+			}
 			rd.Page(rec, httptest.NewRequest("GET", "/", nil), n, data)
 			if rec.Code != 200 || !strings.Contains(rec.Body.String(), `<html lang="fr">`) {
 				t.Errorf("page %s: code %d", n, rec.Code)

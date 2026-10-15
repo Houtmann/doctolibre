@@ -17,3 +17,6 @@ LIMIT @page_size;
 
 -- name: TouchUserLogin :exec
 UPDATE app_user SET last_login_at = @at, updated_at = now() WHERE id = @id;
+
+-- name: UpdateUserPassword :exec
+UPDATE app_user SET password_hash = @password_hash, updated_at = now() WHERE id = @id;

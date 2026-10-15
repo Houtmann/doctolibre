@@ -32,6 +32,8 @@ type Config struct {
 	Timezone    string
 	// MetricsToken active /metrics (jeton Bearer) ; vide = endpoint désactivé.
 	MetricsToken string
+	// Email : envoi des emails transactionnels (voir email.go).
+	Email EmailConfig
 }
 
 // IsProd indique si l'application tourne en production.
@@ -73,6 +75,10 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 
 		MetricsToken: get("DOCTOLIBRE_METRICS_TOKEN", ""),
 	}
+	var emailErr error
+	if c.Email, emailErr = loadEmail(get); emailErr != nil {
+		return Config{}, emailErr
+	}
 	if c.BaseURL == "" && c.Env == EnvDev {
 		c.BaseURL = "http://localhost:8080"
 	}
@@ -101,6 +107,9 @@ func (c Config) Validate() error {
 	}
 	if c.MetricsToken != "" && len(c.MetricsToken) < minMetricsTokenLen {
 		errs = append(errs, fmt.Errorf("DOCTOLIBRE_METRICS_TOKEN: %d octets, %d minimum", len(c.MetricsToken), minMetricsTokenLen))
+	}
+	if err := c.Email.validate(); err != nil {
+		errs = append(errs, err)
 	}
 	if c.Env == EnvProd {
 		if c.SecretKey == "" {

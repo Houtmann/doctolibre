@@ -16,5 +16,14 @@ services:
       timeout: 3s
       retries: 20
 
+  # Faux serveur SMTP de dev : DOCTOLIBRE_EMAIL_DRIVER=smtp DOCTOLIBRE_SMTP_HOST=localhost
+  # DOCTOLIBRE_SMTP_PORT=1025 DOCTOLIBRE_SMTP_TLS=none DOCTOLIBRE_SMTP_FROM=rdv@localhost ;
+  # interface web des messages reçus sur http://localhost:8025.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
 volumes:
   pgdata:
