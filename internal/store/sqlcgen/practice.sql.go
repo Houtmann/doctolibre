@@ -15,7 +15,7 @@ import (
 const createPractice = `-- name: CreatePractice :one
 INSERT INTO practice (name, slug, address, phone, timezone)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at
+RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones
 `
 
 type CreatePracticeParams struct {
@@ -47,12 +47,14 @@ func (q *Queries) CreatePractice(ctx context.Context, arg CreatePracticeParams) 
 		&i.BookingHorizon,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.HomeVisitOnline,
+		&i.HomeVisitZones,
 	)
 	return i, err
 }
 
 const getPractice = `-- name: GetPractice :one
-SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at FROM practice WHERE id = $1
+SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones FROM practice WHERE id = $1
 `
 
 func (q *Queries) GetPractice(ctx context.Context, id uuid.UUID) (Practice, error) {
@@ -70,12 +72,14 @@ func (q *Queries) GetPractice(ctx context.Context, id uuid.UUID) (Practice, erro
 		&i.BookingHorizon,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.HomeVisitOnline,
+		&i.HomeVisitZones,
 	)
 	return i, err
 }
 
 const getPracticeByName = `-- name: GetPracticeByName :one
-SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at FROM practice WHERE name = $1 ORDER BY created_at, id LIMIT 1
+SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones FROM practice WHERE name = $1 ORDER BY created_at, id LIMIT 1
 `
 
 func (q *Queries) GetPracticeByName(ctx context.Context, name string) (Practice, error) {
@@ -93,12 +97,14 @@ func (q *Queries) GetPracticeByName(ctx context.Context, name string) (Practice,
 		&i.BookingHorizon,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.HomeVisitOnline,
+		&i.HomeVisitZones,
 	)
 	return i, err
 }
 
 const getPracticeBySlug = `-- name: GetPracticeBySlug :one
-SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at FROM practice WHERE slug = $1
+SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones FROM practice WHERE slug = $1
 `
 
 func (q *Queries) GetPracticeBySlug(ctx context.Context, slug string) (Practice, error) {
@@ -116,8 +122,26 @@ func (q *Queries) GetPracticeBySlug(ctx context.Context, slug string) (Practice,
 		&i.BookingHorizon,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.HomeVisitOnline,
+		&i.HomeVisitZones,
 	)
 	return i, err
+}
+
+const setPracticeHomeVisit = `-- name: SetPracticeHomeVisit :exec
+UPDATE practice SET home_visit_online = $1, home_visit_zones = $2, updated_at = now()
+WHERE id = $3
+`
+
+type SetPracticeHomeVisitParams struct {
+	HomeVisitOnline bool
+	HomeVisitZones  []string
+	ID              uuid.UUID
+}
+
+func (q *Queries) SetPracticeHomeVisit(ctx context.Context, arg SetPracticeHomeVisitParams) error {
+	_, err := q.db.Exec(ctx, setPracticeHomeVisit, arg.HomeVisitOnline, arg.HomeVisitZones, arg.ID)
+	return err
 }
 
 const updatePractice = `-- name: UpdatePractice :one
@@ -126,7 +150,7 @@ UPDATE practice SET
     min_booking_notice = $5, min_cancel_notice = $6,
     booking_horizon = $7, updated_at = now()
 WHERE id = $8
-RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at
+RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones
 `
 
 type UpdatePracticeParams struct {
@@ -164,6 +188,8 @@ func (q *Queries) UpdatePractice(ctx context.Context, arg UpdatePracticeParams) 
 		&i.BookingHorizon,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.HomeVisitOnline,
+		&i.HomeVisitZones,
 	)
 	return i, err
 }

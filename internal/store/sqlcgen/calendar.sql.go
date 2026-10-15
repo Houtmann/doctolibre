@@ -20,7 +20,7 @@ SELECT a.id, a.practitioner_id, a.patient_id, a.appointment_type_id, a.status, a
        upper(a.during)::timestamptz AS ends_at,
        a.cancelled_at, a.cancelled_by, a.cancel_reason, a.created_at,
        p.first_name, p.last_name, p.phone, p.email,
-       t.name AS type_name
+       t.name AS type_name, t.at_home AS type_at_home, a.address
 FROM appointment a
 JOIN patient p ON p.id = a.patient_id
 JOIN appointment_type t ON t.id = a.appointment_type_id
@@ -52,6 +52,8 @@ type GetAppointmentDetailRow struct {
 	Phone             pgtype.Text
 	Email             pgtype.Text
 	TypeName          string
+	TypeAtHome        bool
+	Address           pgtype.Text
 }
 
 func (q *Queries) GetAppointmentDetail(ctx context.Context, arg GetAppointmentDetailParams) (GetAppointmentDetailRow, error) {
@@ -77,6 +79,8 @@ func (q *Queries) GetAppointmentDetail(ctx context.Context, arg GetAppointmentDe
 		&i.Phone,
 		&i.Email,
 		&i.TypeName,
+		&i.TypeAtHome,
+		&i.Address,
 	)
 	return i, err
 }
@@ -131,7 +135,7 @@ SELECT a.id, a.status, a.source, a.patient_id,
        lower(a.during)::timestamptz AS starts_at,
        upper(a.during)::timestamptz AS ends_at,
        p.first_name, p.last_name,
-       t.name AS type_name
+       t.name AS type_name, t.at_home AS type_at_home
 FROM appointment a
 JOIN patient p ON p.id = a.patient_id
 JOIN appointment_type t ON t.id = a.appointment_type_id
@@ -150,15 +154,16 @@ type ListCalendarAppointmentsParams struct {
 }
 
 type ListCalendarAppointmentsRow struct {
-	ID        uuid.UUID
-	Status    string
-	Source    string
-	PatientID uuid.UUID
-	StartsAt  time.Time
-	EndsAt    time.Time
-	FirstName string
-	LastName  string
-	TypeName  string
+	ID         uuid.UUID
+	Status     string
+	Source     string
+	PatientID  uuid.UUID
+	StartsAt   time.Time
+	EndsAt     time.Time
+	FirstName  string
+	LastName   string
+	TypeName   string
+	TypeAtHome bool
 }
 
 // Agenda d'un praticien : RDV non annulés dont la zone bloquée intersecte
@@ -187,6 +192,7 @@ func (q *Queries) ListCalendarAppointments(ctx context.Context, arg ListCalendar
 			&i.FirstName,
 			&i.LastName,
 			&i.TypeName,
+			&i.TypeAtHome,
 		); err != nil {
 			return nil, err
 		}
@@ -204,7 +210,7 @@ UPDATE appointment SET
     during_blocked = tstzrange($3::timestamptz, $4::timestamptz, '[)'),
     updated_at = now()
 WHERE id = $5 AND practice_id = $6 AND status = 'booked'
-RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at
+RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address
 `
 
 type MoveAppointmentParams struct {
@@ -245,12 +251,13 @@ func (q *Queries) MoveAppointment(ctx context.Context, arg MoveAppointmentParams
 		&i.ManageTokenHash,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Address,
 	)
 	return i, err
 }
 
 const searchPatients = `-- name: SearchPatients :many
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, address FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL
   AND (last_name ILIKE $2::text || '%'
        OR first_name ILIKE $2::text || '%'
@@ -292,6 +299,7 @@ func (q *Queries) SearchPatients(ctx context.Context, arg SearchPatientsParams) 
 			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Address,
 		); err != nil {
 			return nil, err
 		}

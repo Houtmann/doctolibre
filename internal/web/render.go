@@ -15,6 +15,7 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -437,6 +438,9 @@ func (r *Renderer) funcMap() template.FuncMap {
 		// Idem, mais dans le fuseau porté par t (déjà celui du cabinet).
 		"localDate": frenchDate,
 		"localTime": func(t time.Time) string { return t.Format("15h04") },
+		// Liens vers l'adresse d'une visite à domicile (schéma geo: pour les applis de cartes).
+		"geoURL": func(addr string) template.URL { return template.URL("geo:0,0?q=" + url.QueryEscape(addr)) }, //nolint:gosec // schéma fixe, adresse échappée par QueryEscape
+		"osmURL": func(addr string) string { return "https://www.openstreetmap.org/search?query=" + url.QueryEscape(addr) },
 		// "14h30".
 		"formatTime": func(t time.Time) string { return t.In(loc).Format("15h04") },
 		// "45 min", "1 h", "1 h 30".

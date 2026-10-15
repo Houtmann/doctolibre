@@ -98,6 +98,9 @@ func (b *Booking) Practitioner(ctx context.Context, practiceSlug, practitionerSl
 	}
 	out := PractitionerPage{Practice: pc, Practitioner: pr}
 	for _, t := range types {
+		if t.AtHome && !homeVisitsOnline(pc) {
+			continue
+		}
 		for _, r := range rules {
 			if ruleAllows(r.AppointmentTypeIds, t.ID) {
 				out.Types = append(out.Types, t)
@@ -106,6 +109,12 @@ func (b *Booking) Practitioner(ctx context.Context, practiceSlug, practitionerSl
 		}
 	}
 	return out, nil
+}
+
+// homeVisitsOnline : la réservation en ligne à domicile exige l'option du cabinet
+// et au moins une zone desservie.
+func homeVisitsOnline(pc sqlcgen.Practice) bool {
+	return pc.HomeVisitOnline && len(pc.HomeVisitZones) > 0
 }
 
 func ruleAllows(ids []uuid.UUID, id uuid.UUID) bool {
@@ -163,7 +172,7 @@ func loadSlotContext(ctx context.Context, q *sqlcgen.Queries, practitionerID, ty
 		return slotContext{}, fmt.Errorf("lecture cabinet: %w", err)
 	}
 	typ, err := q.GetAppointmentType(ctx, sqlcgen.GetAppointmentTypeParams{ID: typeID, PracticeID: pr.PracticeID})
-	if errors.Is(err, pgx.ErrNoRows) || (err == nil && (!typ.Active || !typ.OnlineBookable)) {
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && (!typ.Active || !typ.OnlineBookable || (typ.AtHome && !homeVisitsOnline(pc)))) {
 		return slotContext{}, domain.ErrNotFound
 	}
 	if err != nil {
@@ -174,6 +183,29 @@ func loadSlotContext(ctx context.Context, q *sqlcgen.Queries, practitionerID, ty
 		return slotContext{}, fmt.Errorf("fuseau %q: %w", pc.Timezone, err)
 	}
 	return slotContext{pr: pr, pc: pc, typ: typ, loc: loc}, nil
+}
+
+// buffers retourne les marges effectives du motif : trajet compris pour une
+// visite à domicile (même règle que celle copiée sur le RDV, donc que la contrainte EXCLUDE).
+func (s slotContext) buffers() (before, after time.Duration) {
+	return domain.HomeBuffers(s.typ.AtHome,
+		microsToDuration(intervalMicros(s.typ.BufferBefore)), microsToDuration(intervalMicros(s.typ.BufferAfter)),
+		microsToDuration(intervalMicros(s.typ.TravelBuffer)))
+}
+
+// checkAddress valide l'adresse d'une visite à domicile : obligatoire et dans
+// une zone desservie. Hors visite à domicile, l'adresse est ignorée.
+func (s slotContext) checkAddress(d details) error {
+	if !s.typ.AtHome {
+		return nil
+	}
+	switch {
+	case d.address == "":
+		return domain.ErrValidation{Field: "address", Msg: "L'adresse de la visite à domicile est requise."}
+	case !domain.InHomeZone(d.address, s.pc.HomeVisitZones):
+		return domain.ErrValidation{Field: "address", Msg: "Cette adresse est hors de la zone desservie à domicile. Indiquez le code postal ou la commune, ou contactez le cabinet."}
+	}
+	return nil
 }
 
 // slots charge règles, exceptions et rendez-vous puis appelle le moteur pur
@@ -224,13 +256,14 @@ func (s slotContext) slots(ctx context.Context, q *sqlcgen.Queries, now, from, t
 	for _, a := range appts {
 		busy = append(busy, booking.Busy{Start: a.DuringBlocked.Lower.Time, End: a.DuringBlocked.Upper.Time})
 	}
+	bb, ba := s.buffers()
 	return booking.Slots(booking.Request{
 		Loc: s.loc, From: from, To: to, Now: now,
 		MinNotice:    microsToDuration(intervalMicros(s.pc.MinBookingNotice)),
 		Horizon:      microsToDuration(intervalMicros(s.pc.BookingHorizon)),
 		Duration:     microsToDuration(intervalMicros(s.typ.Duration)),
-		BufferBefore: microsToDuration(intervalMicros(s.typ.BufferBefore)),
-		BufferAfter:  microsToDuration(intervalMicros(s.typ.BufferAfter)),
+		BufferBefore: bb,
+		BufferAfter:  ba,
 		TypeID:       s.typ.ID,
 	}, wr, ex, busy), nil
 }
@@ -301,6 +334,9 @@ func (b *Booking) StartVerification(ctx context.Context, in VerifyInput) (Verifi
 	q := sqlcgen.New(b.Pool)
 	sc, err := loadSlotContext(ctx, q, in.PractitionerID, in.TypeID)
 	if err != nil {
+		return Verification{}, err
+	}
+	if err := sc.checkAddress(d); err != nil {
 		return Verification{}, err
 	}
 	if _, err := sc.check(ctx, q, now, in.Start); err != nil {
@@ -411,19 +447,27 @@ func (b *Booking) Book(ctx context.Context, in BookInput) (BookResult, error) {
 		if sc.pc.ID != ch.PracticeID {
 			return ErrOTPExpired
 		}
+		if err := sc.checkAddress(d); err != nil {
+			return err
+		}
 		slot, err := sc.check(ctx, q, now, in.Start)
 		if err != nil {
 			return err
+		}
+		if !sc.typ.AtHome {
+			d.address = ""
 		}
 		patient, err := findOrCreatePatient(ctx, q, sc.pc.ID, d)
 		if err != nil {
 			return err
 		}
+		bb, ba := sc.buffers()
 		appt, err = store.CreateAppointment(ctx, q, store.NewAppointment{
 			PracticeID: sc.pc.ID, PractitionerID: sc.pr.ID, PatientID: patient.ID, AppointmentTypeID: sc.typ.ID,
 			Start: slot.Start, End: slot.End,
-			BufferBefore:    microsToDuration(intervalMicros(sc.typ.BufferBefore)),
-			BufferAfter:     microsToDuration(intervalMicros(sc.typ.BufferAfter)),
+			BufferBefore:    bb,
+			BufferAfter:     ba,
+			Address:         d.address,
 			Source:          "online",
 			ManageTokenHash: ManageTokenHash(token),
 		})

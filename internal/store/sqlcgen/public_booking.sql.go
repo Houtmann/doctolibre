@@ -13,7 +13,7 @@ import (
 )
 
 const findPatientByEmail = `-- name: FindPatientByEmail :one
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, address FROM patient
 WHERE practice_id = $1 AND email = $2
   AND lower(first_name) = lower($3) AND lower(last_name) = lower($4)
   AND deleted_at IS NULL
@@ -50,12 +50,13 @@ func (q *Queries) FindPatientByEmail(ctx context.Context, arg FindPatientByEmail
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Address,
 	)
 	return i, err
 }
 
 const findPatientByPhone = `-- name: FindPatientByPhone :one
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, address FROM patient
 WHERE practice_id = $1 AND phone = $2
   AND lower(first_name) = lower($3) AND lower(last_name) = lower($4)
   AND deleted_at IS NULL
@@ -92,6 +93,7 @@ func (q *Queries) FindPatientByPhone(ctx context.Context, arg FindPatientByPhone
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Address,
 	)
 	return i, err
 }
@@ -120,7 +122,7 @@ func (q *Queries) GetActivePractitioner(ctx context.Context, id uuid.UUID) (Prac
 }
 
 const listBookableAppointmentTypes = `-- name: ListBookableAppointmentTypes :many
-SELECT id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at FROM appointment_type
+SELECT id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at, travel_buffer FROM appointment_type
 WHERE practice_id = $1 AND active AND online_bookable
 ORDER BY position, name, id
 LIMIT $2
@@ -155,6 +157,7 @@ func (q *Queries) ListBookableAppointmentTypes(ctx context.Context, arg ListBook
 			&i.Active,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.TravelBuffer,
 		); err != nil {
 			return nil, err
 		}

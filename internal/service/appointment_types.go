@@ -26,6 +26,7 @@ type AppointmentTypeInput struct {
 	BufferBeforeMin, BufferAfterMin string
 	Color                           string
 	OnlineBookable, AtHome          bool
+	TravelBufferMin                 string // trajet (visite à domicile), en minutes, ajouté avant et après
 }
 
 type defaultType struct {
@@ -94,6 +95,7 @@ func (s *Practice) AppointmentType(ctx context.Context, a Actor, id uuid.UUID) (
 type typeValues struct {
 	name                  string
 	duration, before, aft int
+	travel                int
 	color                 string
 }
 
@@ -116,6 +118,9 @@ func validateType(in AppointmentTypeInput) (typeValues, error) {
 	if v.aft, ok = parseIntRange(emptyAsZero(in.BufferAfterMin), 0, 120); !ok {
 		add("buffer_after", "La marge après doit être un nombre entier de minutes entre 0 et 120.")
 	}
+	if v.travel, ok = parseIntRange(emptyAsDefault(in.TravelBufferMin, defaultTravelMin), 0, 120); !ok {
+		add("travel_buffer", "Le temps de trajet doit être un nombre entier de minutes entre 0 et 120.")
+	}
 	if v.color == "" {
 		v.color = defaultTypeColor
 	} else if !colorRe.MatchString(v.color) {
@@ -125,6 +130,16 @@ func validateType(in AppointmentTypeInput) (typeValues, error) {
 		return v, errs
 	}
 	return v, nil
+}
+
+// defaultTravelMin est le trajet par défaut (aussi la valeur par défaut de la colonne).
+const defaultTravelMin = "15"
+
+func emptyAsDefault(s, def string) string {
+	if strings.TrimSpace(s) == "" {
+		return def
+	}
+	return s
 }
 
 func emptyAsZero(s string) string {
@@ -161,6 +176,12 @@ func (s *Practice) CreateAppointmentType(ctx context.Context, a Actor, in Appoin
 		if err != nil {
 			return fmt.Errorf("création motif: %w", err)
 		}
+		if err := q.SetAppointmentTypeTravelBuffer(ctx, sqlcgen.SetAppointmentTypeTravelBufferParams{
+			ID: out.ID, PracticeID: a.PracticeID, TravelBuffer: minutesInterval(v.travel),
+		}); err != nil {
+			return fmt.Errorf("trajet du motif: %w", err)
+		}
+		out.TravelBuffer = minutesInterval(v.travel)
 		return nil
 	})
 	return out, err
@@ -176,19 +197,26 @@ func (s *Practice) UpdateAppointmentType(ctx context.Context, a Actor, id uuid.U
 	if err != nil {
 		return err
 	}
-	_, err = sqlcgen.New(s.Pool).UpdateAppointmentType(ctx, sqlcgen.UpdateAppointmentTypeParams{
-		ID: id, PracticeID: a.PracticeID, Name: v.name, Duration: minutesInterval(v.duration),
-		BufferBefore: minutesInterval(v.before), BufferAfter: minutesInterval(v.aft),
-		OnlineBookable: in.OnlineBookable, AtHome: in.AtHome, Color: v.color,
-		Position: cur.Position, Active: cur.Active,
+	return store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+		_, err := q.UpdateAppointmentType(ctx, sqlcgen.UpdateAppointmentTypeParams{
+			ID: id, PracticeID: a.PracticeID, Name: v.name, Duration: minutesInterval(v.duration),
+			BufferBefore: minutesInterval(v.before), BufferAfter: minutesInterval(v.aft),
+			OnlineBookable: in.OnlineBookable, AtHome: in.AtHome, Color: v.color,
+			Position: cur.Position, Active: cur.Active,
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.ErrNotFound
+		}
+		if err != nil {
+			return fmt.Errorf("mise à jour motif: %w", err)
+		}
+		if err := q.SetAppointmentTypeTravelBuffer(ctx, sqlcgen.SetAppointmentTypeTravelBufferParams{
+			ID: id, PracticeID: a.PracticeID, TravelBuffer: minutesInterval(v.travel),
+		}); err != nil {
+			return fmt.Errorf("trajet du motif: %w", err)
+		}
+		return nil
 	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.ErrNotFound
-	}
-	if err != nil {
-		return fmt.Errorf("mise à jour motif: %w", err)
-	}
-	return nil
 }
 
 // SetAppointmentTypeActive active ou désactive un motif (jamais supprimé : les
@@ -243,6 +271,9 @@ func (s *Practice) MoveAppointmentType(ctx context.Context, a Actor, id uuid.UUI
 		return nil
 	})
 }
+
+// TravelMinutes expose le temps de trajet d'un motif en minutes.
+func TravelMinutes(t sqlcgen.AppointmentType) int { return intervalMinutes(t.TravelBuffer) }
 
 // TypeMinutes expose les durées d'un motif en minutes (pour l'affichage et les formulaires).
 func TypeMinutes(t sqlcgen.AppointmentType) (duration, before, after int) {

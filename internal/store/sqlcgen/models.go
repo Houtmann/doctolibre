@@ -42,6 +42,7 @@ type Appointment struct {
 	ManageTokenHash   pgtype.Text
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
+	Address           pgtype.Text
 }
 
 type AppointmentType struct {
@@ -58,6 +59,7 @@ type AppointmentType struct {
 	Active         bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	TravelBuffer   pgtype.Interval
 }
 
 type AuditLog struct {
@@ -147,6 +149,7 @@ type Patient struct {
 	DeletedAt  pgtype.Timestamptz
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+	Address    pgtype.Text
 }
 
 type Practice struct {
@@ -161,6 +164,8 @@ type Practice struct {
 	BookingHorizon   pgtype.Interval
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
+	HomeVisitOnline  bool
+	HomeVisitZones   []string
 }
 
 type Practitioner struct {

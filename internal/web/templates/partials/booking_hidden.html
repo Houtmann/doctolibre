@@ -5,6 +5,7 @@
 <input type="hidden" name="phone" value="{{.Form.Phone}}">
 <input type="hidden" name="email" value="{{.Form.Email}}">
 <input type="hidden" name="birth_date" value="{{.Form.BirthDate}}">
+{{if .Form.Address}}<input type="hidden" name="address" value="{{.Form.Address}}">{{end}}
 <input type="hidden" name="channel" value="{{.Form.Channel}}">
 {{if .Form.SMSOptIn}}<input type="hidden" name="sms_opt_in" value="on">{{end}}
 {{if .Form.EmailOptIn}}<input type="hidden" name="email_opt_in" value="on">{{end}}

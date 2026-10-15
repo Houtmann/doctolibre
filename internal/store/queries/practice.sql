@@ -19,3 +19,7 @@ RETURNING *;
 
 -- name: GetPracticeByName :one
 SELECT * FROM practice WHERE name = @name ORDER BY created_at, id LIMIT 1;
+
+-- name: SetPracticeHomeVisit :exec
+UPDATE practice SET home_visit_online = @home_visit_online, home_visit_zones = @home_visit_zones, updated_at = now()
+WHERE id = @id;

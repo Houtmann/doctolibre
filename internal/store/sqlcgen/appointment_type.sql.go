@@ -31,7 +31,7 @@ func (q *Queries) AddPractitionerAppointmentType(ctx context.Context, arg AddPra
 const createAppointmentType = `-- name: CreateAppointmentType :one
 INSERT INTO appointment_type (practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at
+RETURNING id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at, travel_buffer
 `
 
 type CreateAppointmentTypeParams struct {
@@ -73,12 +73,13 @@ func (q *Queries) CreateAppointmentType(ctx context.Context, arg CreateAppointme
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TravelBuffer,
 	)
 	return i, err
 }
 
 const getAppointmentType = `-- name: GetAppointmentType :one
-SELECT id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at FROM appointment_type WHERE id = $1 AND practice_id = $2
+SELECT id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at, travel_buffer FROM appointment_type WHERE id = $1 AND practice_id = $2
 `
 
 type GetAppointmentTypeParams struct {
@@ -103,12 +104,13 @@ func (q *Queries) GetAppointmentType(ctx context.Context, arg GetAppointmentType
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TravelBuffer,
 	)
 	return i, err
 }
 
 const listAppointmentTypes = `-- name: ListAppointmentTypes :many
-SELECT id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at FROM appointment_type
+SELECT id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at, travel_buffer FROM appointment_type
 WHERE practice_id = $1 AND active
 ORDER BY position, name, id
 LIMIT $2
@@ -142,6 +144,7 @@ func (q *Queries) ListAppointmentTypes(ctx context.Context, arg ListAppointmentT
 			&i.Active,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.TravelBuffer,
 		); err != nil {
 			return nil, err
 		}
@@ -154,7 +157,7 @@ func (q *Queries) ListAppointmentTypes(ctx context.Context, arg ListAppointmentT
 }
 
 const listPractitionerAppointmentTypes = `-- name: ListPractitionerAppointmentTypes :many
-SELECT t.id, t.practice_id, t.name, t.duration, t.buffer_before, t.buffer_after, t.online_bookable, t.at_home, t.color, t.position, t.active, t.created_at, t.updated_at FROM appointment_type t
+SELECT t.id, t.practice_id, t.name, t.duration, t.buffer_before, t.buffer_after, t.online_bookable, t.at_home, t.color, t.position, t.active, t.created_at, t.updated_at, t.travel_buffer FROM appointment_type t
 JOIN practitioner_appointment_type pt ON pt.appointment_type_id = t.id
 WHERE pt.practitioner_id = $1 AND t.active
 ORDER BY t.position, t.name, t.id
@@ -183,6 +186,7 @@ func (q *Queries) ListPractitionerAppointmentTypes(ctx context.Context, practiti
 			&i.Active,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.TravelBuffer,
 		); err != nil {
 			return nil, err
 		}
@@ -209,13 +213,29 @@ func (q *Queries) RemovePractitionerAppointmentType(ctx context.Context, arg Rem
 	return err
 }
 
+const setAppointmentTypeTravelBuffer = `-- name: SetAppointmentTypeTravelBuffer :exec
+UPDATE appointment_type SET travel_buffer = $1, updated_at = now()
+WHERE id = $2 AND practice_id = $3
+`
+
+type SetAppointmentTypeTravelBufferParams struct {
+	TravelBuffer pgtype.Interval
+	ID           uuid.UUID
+	PracticeID   uuid.UUID
+}
+
+func (q *Queries) SetAppointmentTypeTravelBuffer(ctx context.Context, arg SetAppointmentTypeTravelBufferParams) error {
+	_, err := q.db.Exec(ctx, setAppointmentTypeTravelBuffer, arg.TravelBuffer, arg.ID, arg.PracticeID)
+	return err
+}
+
 const updateAppointmentType = `-- name: UpdateAppointmentType :one
 UPDATE appointment_type SET
     name = $1, duration = $2, buffer_before = $3, buffer_after = $4,
     online_bookable = $5, at_home = $6, color = $7,
     position = $8, active = $9, updated_at = now()
 WHERE id = $10 AND practice_id = $11
-RETURNING id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at
+RETURNING id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at, travel_buffer
 `
 
 type UpdateAppointmentTypeParams struct {
@@ -261,6 +281,7 @@ func (q *Queries) UpdateAppointmentType(ctx context.Context, arg UpdateAppointme
 		&i.Active,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TravelBuffer,
 	)
 	return i, err
 }

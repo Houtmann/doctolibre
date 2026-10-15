@@ -59,6 +59,9 @@
         <input id="type-after" name="buffer_after" type="number" inputmode="numeric" min="0" max="120" value="{{.BufferAfterMin}}">
       </div>
     </div>
+    <label for="type-travel">Temps de trajet (minutes, visites à domicile)</label>
+    <input id="type-travel" name="travel_buffer" type="number" inputmode="numeric" min="0" max="120" value="{{.TravelBufferMin}}" aria-describedby="type-travel-help">
+    <small id="type-travel-help">Réservé avant et après chaque visite à domicile. Deux visites consécutives cumulent leurs trajets (par exemple 15 + 15 = 30 minutes entre les deux) : c'est une marge de sécurité, sans calcul d'itinéraire.</small>
     <label for="type-color">Couleur</label>
     <input id="type-color" name="color" type="color" value="{{.Color}}">
     <label><input type="checkbox" name="online_bookable" value="1"{{if .OnlineBookable}} checked{{end}}> Réservable en ligne par les patients</label>

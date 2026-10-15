@@ -13,9 +13,9 @@ import (
 )
 
 const createPatient = `-- name: CreatePatient :one
-INSERT INTO patient (practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at
+INSERT INTO patient (practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, address)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, address
 `
 
 type CreatePatientParams struct {
@@ -28,6 +28,7 @@ type CreatePatientParams struct {
 	SmsOptIn   bool
 	EmailOptIn bool
 	NotesAdmin string
+	Address    pgtype.Text
 }
 
 func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (Patient, error) {
@@ -41,6 +42,7 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 		arg.SmsOptIn,
 		arg.EmailOptIn,
 		arg.NotesAdmin,
+		arg.Address,
 	)
 	var i Patient
 	err := row.Scan(
@@ -57,12 +59,13 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Address,
 	)
 	return i, err
 }
 
 const getPatient = `-- name: GetPatient :one
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at FROM patient WHERE id = $1 AND practice_id = $2 AND deleted_at IS NULL
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, address FROM patient WHERE id = $1 AND practice_id = $2 AND deleted_at IS NULL
 `
 
 type GetPatientParams struct {
@@ -87,12 +90,13 @@ func (q *Queries) GetPatient(ctx context.Context, arg GetPatientParams) (Patient
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Address,
 	)
 	return i, err
 }
 
 const listPatients = `-- name: ListPatients :many
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, address FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL
   AND (last_name, first_name, id) > ($2::text, $3::text, $4::uuid)
 ORDER BY last_name, first_name, id
@@ -136,6 +140,7 @@ func (q *Queries) ListPatients(ctx context.Context, arg ListPatientsParams) ([]P
 			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Address,
 		); err != nil {
 			return nil, err
 		}
@@ -153,7 +158,7 @@ UPDATE patient SET
     email = $5, sms_opt_in = $6, email_opt_in = $7,
     notes_admin = $8, updated_at = now()
 WHERE id = $9 AND practice_id = $10 AND deleted_at IS NULL
-RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at
+RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, address
 `
 
 type UpdatePatientParams struct {
@@ -197,6 +202,7 @@ func (q *Queries) UpdatePatient(ctx context.Context, arg UpdatePatientParams) (P
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Address,
 	)
 	return i, err
 }

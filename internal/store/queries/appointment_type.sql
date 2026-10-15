@@ -34,3 +34,7 @@ SELECT t.* FROM appointment_type t
 JOIN practitioner_appointment_type pt ON pt.appointment_type_id = t.id
 WHERE pt.practitioner_id = @practitioner_id AND t.active
 ORDER BY t.position, t.name, t.id;
+
+-- name: SetAppointmentTypeTravelBuffer :exec
+UPDATE appointment_type SET travel_buffer = @travel_buffer, updated_at = now()
+WHERE id = @id AND practice_id = @practice_id;

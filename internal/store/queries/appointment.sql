@@ -3,13 +3,13 @@
 INSERT INTO appointment (
     practice_id, practitioner_id, patient_id, appointment_type_id,
     during, buffer_before, buffer_after, during_blocked,
-    status, source, manage_token_hash
+    status, source, manage_token_hash, address
 ) VALUES (
     @practice_id, @practitioner_id, @patient_id, @appointment_type_id,
     tstzrange(@starts_at::timestamptz, @ends_at::timestamptz, '[)'),
     @buffer_before, @buffer_after,
     tstzrange(@blocked_start::timestamptz, @blocked_end::timestamptz, '[)'),
-    @status, @source, @manage_token_hash
+    @status, @source, @manage_token_hash, @address
 )
 RETURNING *;
 
