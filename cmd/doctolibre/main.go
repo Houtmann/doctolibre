@@ -8,6 +8,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"doctolibre/internal/config"
+	"doctolibre/internal/store"
 )
 
 // version est injectée au build : -ldflags "-X main.version=...".
@@ -34,7 +37,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return 1
 		}
 		return 0
-	case "migrate", "create-user":
+	case "migrate":
+		return runMigrate(args[1:], stdout, stderr)
+	case "create-user":
 		_, _ = fmt.Fprintf(stderr, "doctolibre %s: not implemented\n", args[0])
 		return 2
 	case "-h", "--help", "help":
@@ -49,4 +54,44 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 func usage(w io.Writer) {
 	_, _ = fmt.Fprintln(w, "usage: doctolibre <serve|migrate|create-user|version>")
+}
+
+func runMigrate(args []string, stdout, stderr io.Writer) int {
+	action := "up"
+	if len(args) > 0 {
+		action = args[0]
+	}
+	if action != "up" && action != "down" && action != "status" {
+		_, _ = fmt.Fprintf(stderr, "usage: doctolibre migrate [up|down|status]\n")
+		return 2
+	}
+	cfg, err := config.Load()
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "doctolibre migrate: %v\n", err)
+		return 1
+	}
+	if cfg.DatabaseURL == "" {
+		_, _ = fmt.Fprintln(stderr, "doctolibre migrate: DOCTOLIBRE_DATABASE_URL est vide")
+		return 1
+	}
+	ctx := context.Background()
+	pool, err := store.Open(ctx, cfg.DatabaseURL)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "doctolibre migrate: %v\n", err)
+		return 1
+	}
+	defer pool.Close()
+	switch action {
+	case "up":
+		err = store.Migrate(ctx, pool)
+	case "down":
+		err = store.MigrateDown(ctx, pool)
+	case "status":
+		err = store.MigrateStatus(ctx, pool, stdout)
+	}
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "doctolibre migrate: %v\n", err)
+		return 1
+	}
+	return 0
 }
