@@ -1,0 +1,48 @@
+{{/* layout: admin */}}
+{{define "title"}}{{.Data.Name}}{{end}}
+{{define "content"}}
+<h1>{{.Data.Name}}</h1>
+{{template "form_errors.html" .Data.Errors}}
+
+<h2>Coordonnées</h2>
+<form method="post" action="/admin/patients/{{.Data.ID}}">
+  {{csrf .CSRF}}
+  {{template "patient_fields.html" .Data.Form}}
+  <button type="submit">Enregistrer</button>
+</form>
+
+<h2>Rendez-vous à venir</h2>
+{{if .Data.Upcoming}}
+<ul>
+  {{range .Data.Upcoming}}<li><a href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a> — {{.TypeName}}</li>{{end}}
+</ul>
+{{else}}<p>Aucun rendez-vous à venir.</p>{{end}}
+
+<h2>Historique</h2>
+<p>Absences : <strong>{{.Data.NoShows}}</strong></p>
+{{if .Data.History}}
+<ul>
+  {{range .Data.History}}<li><a href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a> — {{.TypeName}} ({{.StatusLabel}})</li>{{end}}
+</ul>
+{{else}}<p>Aucun rendez-vous passé.</p>{{end}}
+
+<h2>Fusionner un doublon</h2>
+<p>Cette fiche sera fusionnée dans la fiche choisie : ses rendez-vous y seront rattachés, puis elle sera supprimée.</p>
+<form method="get" action="/admin/patients/{{.Data.ID}}" role="search">
+  <label for="merge-q">Rechercher la fiche à conserver</label>
+  <input id="merge-q" type="search" name="mq" value="{{.Data.MergeQuery}}" autocomplete="off">
+  <button type="submit" class="secondary outline">Rechercher</button>
+</form>
+{{if .Data.Candidates}}
+<form method="post" action="/admin/patients/{{.Data.ID}}/merge">
+  {{csrf .CSRF}}
+  <fieldset>
+    <legend>Fiche à conserver</legend>
+    {{range .Data.Candidates}}
+    <label><input type="radio" name="into" value="{{.ID}}" required> {{.Name}} <small>{{.Phone}} {{.Email}}</small></label>
+    {{end}}
+  </fieldset>
+  <button type="submit" class="secondary">Fusionner dans la fiche choisie</button>
+</form>
+{{else if .Data.MergeQuery}}<p><small>Aucune autre fiche trouvée.</small></p>{{end}}
+{{end}}

@@ -7,15 +7,33 @@ package sqlcgen
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const absorbPatient = `-- name: AbsorbPatient :exec
+UPDATE patient SET deleted_at = now(), merged_into = $1, updated_at = now()
+WHERE id = $2 AND practice_id = $3
+`
+
+type AbsorbPatientParams struct {
+	IntoID     pgtype.UUID
+	FromID     uuid.UUID
+	PracticeID uuid.UUID
+}
+
+// Soft-delete de la fiche absorbée par la fusion.
+func (q *Queries) AbsorbPatient(ctx context.Context, arg AbsorbPatientParams) error {
+	_, err := q.db.Exec(ctx, absorbPatient, arg.IntoID, arg.FromID, arg.PracticeID)
+	return err
+}
+
 const createPatient = `-- name: CreatePatient :one
 INSERT INTO patient (practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at
+RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into
 `
 
 type CreatePatientParams struct {
@@ -57,12 +75,63 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MergedInto,
 	)
 	return i, err
 }
 
+const findPatientDuplicates = `-- name: FindPatientDuplicates :many
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into FROM patient
+WHERE practice_id = $1 AND deleted_at IS NULL
+  AND (($2::text <> '' AND phone = $2::text) OR ($3::text <> '' AND email = $3::text))
+ORDER BY last_name, first_name, id
+LIMIT 5
+`
+
+type FindPatientDuplicatesParams struct {
+	PracticeID uuid.UUID
+	Phone      string
+	Email      string
+}
+
+// Fiches actives partageant le téléphone ou l'email (détection à la création).
+func (q *Queries) FindPatientDuplicates(ctx context.Context, arg FindPatientDuplicatesParams) ([]Patient, error) {
+	rows, err := q.db.Query(ctx, findPatientDuplicates, arg.PracticeID, arg.Phone, arg.Email)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Patient
+	for rows.Next() {
+		var i Patient
+		if err := rows.Scan(
+			&i.ID,
+			&i.PracticeID,
+			&i.FirstName,
+			&i.LastName,
+			&i.BirthDate,
+			&i.Phone,
+			&i.Email,
+			&i.SmsOptIn,
+			&i.EmailOptIn,
+			&i.NotesAdmin,
+			&i.DeletedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.MergedInto,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPatient = `-- name: GetPatient :one
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at FROM patient WHERE id = $1 AND practice_id = $2 AND deleted_at IS NULL
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into FROM patient WHERE id = $1 AND practice_id = $2 AND deleted_at IS NULL
 `
 
 type GetPatientParams struct {
@@ -87,12 +156,64 @@ func (q *Queries) GetPatient(ctx context.Context, arg GetPatientParams) (Patient
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MergedInto,
 	)
 	return i, err
 }
 
+const listPatientAppointments = `-- name: ListPatientAppointments :many
+SELECT a.id, lower(a.during)::timestamptz AS starts_at, upper(a.during)::timestamptz AS ends_at,
+       a.status, a.source, t.name AS type_name
+FROM appointment a
+JOIN appointment_type t ON t.id = a.appointment_type_id
+WHERE a.patient_id = $1 AND a.practice_id = $2
+ORDER BY lower(a.during) DESC, a.id
+LIMIT 500
+`
+
+type ListPatientAppointmentsParams struct {
+	PatientID  uuid.UUID
+	PracticeID uuid.UUID
+}
+
+type ListPatientAppointmentsRow struct {
+	ID       uuid.UUID
+	StartsAt time.Time
+	EndsAt   time.Time
+	Status   string
+	Source   string
+	TypeName string
+}
+
+func (q *Queries) ListPatientAppointments(ctx context.Context, arg ListPatientAppointmentsParams) ([]ListPatientAppointmentsRow, error) {
+	rows, err := q.db.Query(ctx, listPatientAppointments, arg.PatientID, arg.PracticeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPatientAppointmentsRow
+	for rows.Next() {
+		var i ListPatientAppointmentsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.Status,
+			&i.Source,
+			&i.TypeName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPatients = `-- name: ListPatients :many
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL
   AND (last_name, first_name, id) > ($2::text, $3::text, $4::uuid)
 ORDER BY last_name, first_name, id
@@ -136,6 +257,213 @@ func (q *Queries) ListPatients(ctx context.Context, arg ListPatientsParams) ([]P
 			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MergedInto,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPatientsPage = `-- name: ListPatientsPage :many
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into FROM patient
+WHERE practice_id = $1 AND deleted_at IS NULL
+  AND (last_name, first_name, id) > ($2::text, $3::text, $4::uuid)
+ORDER BY last_name, first_name, id
+LIMIT $5
+`
+
+type ListPatientsPageParams struct {
+	PracticeID     uuid.UUID
+	AfterLastName  string
+	AfterFirstName string
+	AfterID        uuid.UUID
+	PageSize       int32
+}
+
+// Page keyset (nom, prénom, id) des patients actifs du cabinet.
+func (q *Queries) ListPatientsPage(ctx context.Context, arg ListPatientsPageParams) ([]Patient, error) {
+	rows, err := q.db.Query(ctx, listPatientsPage,
+		arg.PracticeID,
+		arg.AfterLastName,
+		arg.AfterFirstName,
+		arg.AfterID,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Patient
+	for rows.Next() {
+		var i Patient
+		if err := rows.Scan(
+			&i.ID,
+			&i.PracticeID,
+			&i.FirstName,
+			&i.LastName,
+			&i.BirthDate,
+			&i.Phone,
+			&i.Email,
+			&i.SmsOptIn,
+			&i.EmailOptIn,
+			&i.NotesAdmin,
+			&i.DeletedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.MergedInto,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const lockPatient = `-- name: LockPatient :one
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into FROM patient WHERE id = $1 AND practice_id = $2 AND deleted_at IS NULL FOR UPDATE
+`
+
+type LockPatientParams struct {
+	ID         uuid.UUID
+	PracticeID uuid.UUID
+}
+
+func (q *Queries) LockPatient(ctx context.Context, arg LockPatientParams) (Patient, error) {
+	row := q.db.QueryRow(ctx, lockPatient, arg.ID, arg.PracticeID)
+	var i Patient
+	err := row.Scan(
+		&i.ID,
+		&i.PracticeID,
+		&i.FirstName,
+		&i.LastName,
+		&i.BirthDate,
+		&i.Phone,
+		&i.Email,
+		&i.SmsOptIn,
+		&i.EmailOptIn,
+		&i.NotesAdmin,
+		&i.DeletedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MergedInto,
+	)
+	return i, err
+}
+
+const mergePatientPrefs = `-- name: MergePatientPrefs :exec
+UPDATE patient SET
+    sms_opt_in = sms_opt_in AND $1::boolean,
+    email_opt_in = email_opt_in AND $2::boolean,
+    phone = coalesce(phone, nullif($3::text, '')),
+    email = coalesce(email, nullif($4::text, '')::citext),
+    updated_at = now()
+WHERE id = $5 AND practice_id = $6
+`
+
+type MergePatientPrefsParams struct {
+	SmsOptIn   bool
+	EmailOptIn bool
+	Phone      string
+	Email      string
+	ID         uuid.UUID
+	PracticeID uuid.UUID
+}
+
+// L'opt-out le plus restrictif l'emporte ; les coordonnées manquantes sont reprises.
+func (q *Queries) MergePatientPrefs(ctx context.Context, arg MergePatientPrefsParams) error {
+	_, err := q.db.Exec(ctx, mergePatientPrefs,
+		arg.SmsOptIn,
+		arg.EmailOptIn,
+		arg.Phone,
+		arg.Email,
+		arg.ID,
+		arg.PracticeID,
+	)
+	return err
+}
+
+const reassignPatientAppointments = `-- name: ReassignPatientAppointments :execrows
+UPDATE appointment SET patient_id = $1, updated_at = now()
+WHERE patient_id = $2 AND practice_id = $3
+`
+
+type ReassignPatientAppointmentsParams struct {
+	IntoID     uuid.UUID
+	FromID     uuid.UUID
+	PracticeID uuid.UUID
+}
+
+func (q *Queries) ReassignPatientAppointments(ctx context.Context, arg ReassignPatientAppointmentsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, reassignPatientAppointments, arg.IntoID, arg.FromID, arg.PracticeID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const searchPatientsPage = `-- name: SearchPatientsPage :many
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into FROM patient
+WHERE practice_id = $1 AND deleted_at IS NULL
+  AND (patient_search_text(first_name, last_name, phone, email) LIKE '%' || f_unaccent(lower($2::text)) || '%'
+       OR ($3::text <> '' AND phone = $3::text))
+  AND (last_name, first_name, id) > ($4::text, $5::text, $6::uuid)
+ORDER BY last_name, first_name, id
+LIMIT $7
+`
+
+type SearchPatientsPageParams struct {
+	PracticeID     uuid.UUID
+	Term           string
+	Phone          string
+	AfterLastName  string
+	AfterFirstName string
+	AfterID        uuid.UUID
+	PageSize       int32
+}
+
+// Recherche insensible à la casse et aux accents (index trigram
+// patient_search_trgm_idx) ; @term est mis en minuscules sans accents ici,
+// @phone est le téléphone normalisé E.164 (ou ”).
+func (q *Queries) SearchPatientsPage(ctx context.Context, arg SearchPatientsPageParams) ([]Patient, error) {
+	rows, err := q.db.Query(ctx, searchPatientsPage,
+		arg.PracticeID,
+		arg.Term,
+		arg.Phone,
+		arg.AfterLastName,
+		arg.AfterFirstName,
+		arg.AfterID,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Patient
+	for rows.Next() {
+		var i Patient
+		if err := rows.Scan(
+			&i.ID,
+			&i.PracticeID,
+			&i.FirstName,
+			&i.LastName,
+			&i.BirthDate,
+			&i.Phone,
+			&i.Email,
+			&i.SmsOptIn,
+			&i.EmailOptIn,
+			&i.NotesAdmin,
+			&i.DeletedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.MergedInto,
 		); err != nil {
 			return nil, err
 		}
@@ -153,7 +481,7 @@ UPDATE patient SET
     email = $5, sms_opt_in = $6, email_opt_in = $7,
     notes_admin = $8, updated_at = now()
 WHERE id = $9 AND practice_id = $10 AND deleted_at IS NULL
-RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at
+RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into
 `
 
 type UpdatePatientParams struct {
@@ -197,6 +525,7 @@ func (q *Queries) UpdatePatient(ctx context.Context, arg UpdatePatientParams) (P
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MergedInto,
 	)
 	return i, err
 }

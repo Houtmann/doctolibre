@@ -250,7 +250,7 @@ func (q *Queries) MoveAppointment(ctx context.Context, arg MoveAppointmentParams
 }
 
 const searchPatients = `-- name: SearchPatients :many
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL
   AND (last_name ILIKE $2::text || '%'
        OR first_name ILIKE $2::text || '%'
@@ -292,6 +292,7 @@ func (q *Queries) SearchPatients(ctx context.Context, arg SearchPatientsParams) 
 			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MergedInto,
 		); err != nil {
 			return nil, err
 		}

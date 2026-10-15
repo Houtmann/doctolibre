@@ -37,6 +37,8 @@ type Deps struct {
 	Practice *service.Practice
 	// Calendar (agenda du praticien) est optionnel : nil = pas de pages d'agenda.
 	Calendar *service.Calendar
+	// Patients (fiches patients) est optionnel : nil = pas de pages /admin/patients.
+	Patients *service.Patients
 	// Booking (réservation en ligne des patients) est optionnel : nil = pas de pages /p/… ni /r/….
 	Booking *service.Booking
 }

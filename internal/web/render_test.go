@@ -70,6 +70,12 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = &FormPage{}
 			case "admin_appointment":
 				data = &DetailPage{}
+			case "admin_patients":
+				data = PatientsPage{}
+			case "admin_patient_new":
+				data = PatientNewPage{}
+			case "admin_patient":
+				data = PatientPage{}
 			case "public_practice":
 				data = PublicPracticeData{}
 			case "public_practitioner":
