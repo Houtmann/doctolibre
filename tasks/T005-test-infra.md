@@ -28,8 +28,8 @@
 - CI GitHub Actions `.github/workflows/ci.yml` : service postgres, `make check`.
 
 ## Critères d'acceptation
-- [ ] Deux tests DB en parallèle (`t.Parallel()`) ne se voient pas mutuellement.
-- [ ] Aucun schéma `test_%` ne reste après `make test` (vérification dans le test lui-même ou en CI).
+- [x] Deux tests DB en parallèle (`t.Parallel()`) ne se voient pas mutuellement.
+- [x] Aucun schéma `test_%` ne reste après `make test` (vérification dans le test lui-même ou en CI).
 - [ ] CI verte sur une PR.
 
 ## Vérification
@@ -44,8 +44,9 @@ Fixtures métier (T010).
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-15 (sonnet)
+- **Fait** : `testutil.DB` (schéma `test_<hex>`, pool propre avec search_path en RuntimeParams, extensions en `sync.Once` dans public, goose_db_version vérifiée dans le schéma du test, drop en Cleanup) ; `domain.Clock`/`SystemClock` ; `testutil.FixedClock` (+ Advance) ; `fixtures.go` vide ; `migrate_test.go` migré sur `testutil.DB` ; tests `db_test.go` (3 sous-tests parallèles, schéma supprimé après test, goose dans le bon schéma) ; `.github/workflows/ci.yml` (postgres:17, setup-go go-version-file, golangci-lint, make check). Migration ~40-70 ms par test (< 200 ms). Skip vérifié avec une URL injoignable.
+- **Revue (corrections)** : création des extensions protégée par `pg_advisory_xact_lock` (course inter-process entre packages) ; `deploy/initdb/01-test-db.sql` monté dans le compose dev (crée `doctolibre_test`, effectif sur volume neuf : `make db-reset` si le volume existe déjà).
+- **Reste à faire** : critère « CI verte sur une PR » (pas de remote, non vérifiable).
+- **Notes de reprise** : URL par défaut = identifiants du compose dev mais base `doctolibre_test` (créée par deploy/initdb). Lint gosec G101 neutralisé par `//nolint` sur la constante.
+- **Écarts avec la spécification** : l'interface `Clock` n'est pas dupliquée dans testutil (seulement `FixedClock` qui implémente `domain.Clock`).
