@@ -93,6 +93,19 @@ type AvailabilityRule struct {
 	UpdatedAt          time.Time
 }
 
+type OtpChallenge struct {
+	ID            uuid.UUID
+	PracticeID    uuid.UUID
+	Channel       string
+	RecipientHash string
+	BindingHash   string
+	CodeHash      string
+	Attempts      int16
+	ExpiresAt     time.Time
+	ConsumedAt    pgtype.Timestamptz
+	CreatedAt     time.Time
+}
+
 type OutboxMessage struct {
 	ID            uuid.UUID
 	PracticeID    uuid.UUID

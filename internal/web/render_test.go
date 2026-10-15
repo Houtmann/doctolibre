@@ -70,6 +70,18 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = &FormPage{}
 			case "admin_appointment":
 				data = &DetailPage{}
+			case "public_practice":
+				data = PublicPracticeData{}
+			case "public_practitioner":
+				data = PublicPractitionerData{}
+			case "public_book":
+				data = GridData{}
+			case "public_details":
+				data = DetailsData{}
+			case "public_verify":
+				data = VerifyData{}
+			case "public_confirmed":
+				data = ConfirmedData{}
 			}
 			rd.Page(rec, httptest.NewRequest("GET", "/", nil), n, data)
 			if rec.Code != 200 || !strings.Contains(rec.Body.String(), `<html lang="fr">`) {

@@ -1,0 +1,5 @@
+<article class="booking-summary" aria-label="Votre rendez-vous">
+  <p><strong>{{.Type}}</strong> ({{formatDuration .Duration}})<br>
+  avec {{.Practitioner}}, {{.Practice}}<br>
+  <time datetime="{{.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Start}} à {{localTime .Start}}</time></p>
+</article>

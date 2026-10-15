@@ -1,0 +1,17 @@
+{{define "title"}}{{.Data.Practitioner.Name}} · {{.Data.Practice.Name}}{{end}}
+{{define "content"}}
+<nav aria-label="Fil d'Ariane"><a href="/p/{{.Data.Practice.Slug}}">&larr; {{.Data.Practice.Name}}</a></nav>
+<h1>{{.Data.Practitioner.Name}}</h1>
+{{if .Data.Practitioner.Title}}<p>{{.Data.Practitioner.Title}}</p>{{end}}
+{{if .Data.Practitioner.Bio}}<p>{{.Data.Practitioner.Bio}}</p>{{end}}
+<h2>Choisissez un motif de rendez-vous</h2>
+{{if .Data.Types}}
+<ul class="choice-list">
+  {{range .Data.Types}}
+  <li><a href="{{.URL}}" role="button" class="outline">{{.Name}} <small>({{formatDuration .Duration}})</small></a></li>
+  {{end}}
+</ul>
+{{else}}
+<p>Aucun rendez-vous n'est réservable en ligne pour le moment.{{if .Data.Practice.Phone}} Appelez le cabinet au <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>.{{end}}</p>
+{{end}}
+{{end}}

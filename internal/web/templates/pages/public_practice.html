@@ -1,0 +1,19 @@
+{{define "title"}}{{.Data.Practice.Name}}{{end}}
+{{define "content"}}
+<h1>{{.Data.Practice.Name}}</h1>
+{{if .Data.Practice.Address}}<p>{{.Data.Practice.Address}}</p>{{end}}
+{{if .Data.Practice.Phone}}<p>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a></p>{{end}}
+<h2>Prendre rendez-vous</h2>
+{{if .Data.Practitioners}}
+<ul class="choice-list">
+  {{range .Data.Practitioners}}
+  <li>
+    <a href="{{.URL}}" role="button" class="outline">{{.Name}}{{if .Title}} <small>({{.Title}})</small>{{end}}</a>
+    {{if .Bio}}<p><small>{{.Bio}}</small></p>{{end}}
+  </li>
+  {{end}}
+</ul>
+{{else}}
+<p>La prise de rendez-vous en ligne n'est pas encore ouverte pour ce cabinet.</p>
+{{end}}
+{{end}}
