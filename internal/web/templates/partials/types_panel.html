@@ -1,0 +1,70 @@
+<div id="types-panel">
+  {{if .Notice}}<div class="flash flash-success" role="status">{{.Notice}}</div>{{end}}
+  {{template "form_errors.html" .Errors}}
+  <table>
+    <caption class="visually-hidden">Motifs du cabinet</caption>
+    <thead>
+      <tr><th scope="col">Motif</th><th scope="col">Durée</th><th scope="col">Marges</th><th scope="col">Options</th><th scope="col">Actions</th></tr>
+    </thead>
+    <tbody>
+      {{range .Rows}}
+      <tr{{if not .Active}} class="is-inactive"{{end}}>
+        <th scope="row">{{.Name}}{{if not .Active}} <small>(désactivé)</small>{{end}}</th>
+        <td>{{.Duration}} min</td>
+        <td>{{.Before}} / {{.After}} min</td>
+        <td>{{if .Online}}Réservable en ligne{{else}}Cabinet uniquement{{end}}{{if .AtHome}}, à domicile{{end}}</td>
+        <td class="row-actions">
+          <a href="/admin/appointment-types/{{.ID}}" hx-get="/admin/appointment-types/{{.ID}}" hx-target="#types-panel" hx-swap="outerHTML">Modifier</a>
+          {{if not .First}}
+          <form method="post" action="/admin/appointment-types/{{.ID}}/move" hx-post="/admin/appointment-types/{{.ID}}/move" hx-target="#types-panel" hx-swap="outerHTML">
+            {{csrf $.CSRF}}<input type="hidden" name="dir" value="up">
+            <button type="submit" class="outline secondary" aria-label="Monter {{.Name}}">↑</button>
+          </form>
+          {{end}}
+          {{if not .Last}}
+          <form method="post" action="/admin/appointment-types/{{.ID}}/move" hx-post="/admin/appointment-types/{{.ID}}/move" hx-target="#types-panel" hx-swap="outerHTML">
+            {{csrf $.CSRF}}<input type="hidden" name="dir" value="down">
+            <button type="submit" class="outline secondary" aria-label="Descendre {{.Name}}">↓</button>
+          </form>
+          {{end}}
+          <form method="post" action="/admin/appointment-types/{{.ID}}/active" hx-post="/admin/appointment-types/{{.ID}}/active" hx-target="#types-panel" hx-swap="outerHTML">
+            {{csrf $.CSRF}}<input type="hidden" name="active" value="{{if .Active}}0{{else}}1{{end}}">
+            <button type="submit" class="outline secondary">{{if .Active}}Désactiver{{else}}Réactiver{{end}}</button>
+          </form>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+
+  {{$action := "/admin/appointment-types"}}
+  {{if .EditID}}{{$action = print "/admin/appointment-types/" .EditID}}{{end}}
+  <h2>{{if .EditID}}Modifier le motif{{else}}Nouveau motif{{end}}</h2>
+  <form method="post" action="{{$action}}" hx-post="{{$action}}" hx-target="#types-panel" hx-swap="outerHTML">
+    {{csrf .CSRF}}
+    {{with .Form}}
+    <label for="type-name">Nom</label>
+    <input id="type-name" name="name" value="{{.Name}}" maxlength="60" required>
+    <div class="grid">
+      <div>
+        <label for="type-duration">Durée (minutes)</label>
+        <input id="type-duration" name="duration" type="number" inputmode="numeric" min="5" max="480" value="{{.DurationMin}}" required>
+      </div>
+      <div>
+        <label for="type-before">Marge avant (minutes)</label>
+        <input id="type-before" name="buffer_before" type="number" inputmode="numeric" min="0" max="120" value="{{.BufferBeforeMin}}">
+      </div>
+      <div>
+        <label for="type-after">Marge après (minutes)</label>
+        <input id="type-after" name="buffer_after" type="number" inputmode="numeric" min="0" max="120" value="{{.BufferAfterMin}}">
+      </div>
+    </div>
+    <label for="type-color">Couleur</label>
+    <input id="type-color" name="color" type="color" value="{{.Color}}">
+    <label><input type="checkbox" name="online_bookable" value="1"{{if .OnlineBookable}} checked{{end}}> Réservable en ligne par les patients</label>
+    <label><input type="checkbox" name="at_home" value="1"{{if .AtHome}} checked{{end}}> Séance à domicile</label>
+    {{end}}
+    <button type="submit">{{if .EditID}}Enregistrer{{else}}Ajouter le motif{{end}}</button>
+    {{if .EditID}}<a href="/admin/appointment-types" role="button" class="secondary outline" hx-get="/admin/appointment-types" hx-target="#types-panel" hx-swap="outerHTML">Annuler</a>{{end}}
+  </form>
+</div>

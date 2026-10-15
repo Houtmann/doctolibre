@@ -1,0 +1,44 @@
+{{/* layout: admin */}}
+{{define "title"}}Paramètres du cabinet{{end}}
+{{define "content"}}
+<h1>Paramètres du cabinet</h1>
+{{template "form_errors.html" .Data.Errors}}
+<form method="post" action="/admin/settings">
+  {{csrf .CSRF}}
+  {{with .Data.Form}}
+  <fieldset>
+    <legend>Cabinet</legend>
+    <label for="name">Nom du cabinet</label>
+    <input id="name" name="name" value="{{.Name}}" maxlength="120" required>
+    <label for="address">Adresse</label>
+    <textarea id="address" name="address" rows="2" maxlength="300">{{.Address}}</textarea>
+    <label for="phone">Téléphone</label>
+    <input id="phone" name="phone" type="tel" value="{{.Phone}}" maxlength="30" autocomplete="tel">
+  </fieldset>
+  <fieldset>
+    <legend>Réservation en ligne</legend>
+    <label for="booking_notice_hours">Délai minimal avant un rendez-vous (heures)</label>
+    <input id="booking_notice_hours" name="booking_notice_hours" type="number" inputmode="numeric" min="0" max="720" value="{{.BookingNoticeHours}}" required>
+    <label for="cancel_notice_hours">Délai minimal pour annuler (heures)</label>
+    <input id="cancel_notice_hours" name="cancel_notice_hours" type="number" inputmode="numeric" min="0" max="720" value="{{.CancelNoticeHours}}" required>
+    <label for="horizon_days">Réservation possible jusqu'à (jours à l'avance)</label>
+    <input id="horizon_days" name="horizon_days" type="number" inputmode="numeric" min="1" max="730" value="{{.HorizonDays}}" required>
+  </fieldset>
+  <fieldset>
+    <legend>Profil public du praticien</legend>
+    <label for="first_name">Prénom</label>
+    <input id="first_name" name="first_name" value="{{.FirstName}}" maxlength="80" required autocomplete="given-name">
+    <label for="last_name">Nom</label>
+    <input id="last_name" name="last_name" value="{{.LastName}}" maxlength="80" required autocomplete="family-name">
+    <label for="title">Titre (ex. Masseur-kinésithérapeute)</label>
+    <input id="title" name="title" value="{{.Title}}" maxlength="80">
+    <label for="bio">Présentation</label>
+    <textarea id="bio" name="bio" rows="4" maxlength="2000">{{.Bio}}</textarea>
+    <label for="slug">Identifiant dans l'adresse de réservation</label>
+    <input id="slug" name="slug" value="{{.Slug}}" maxlength="60" pattern="[a-z0-9]+(-[a-z0-9]+)*" required aria-describedby="slug-help">
+    <small id="slug-help">Lettres minuscules, chiffres et tirets.</small>
+  </fieldset>
+  {{end}}
+  <button type="submit">Enregistrer</button>
+</form>
+{{end}}

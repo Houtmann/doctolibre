@@ -1,0 +1,62 @@
+<div id="availability-panel">
+  {{if .Notice}}<div class="flash flash-success" role="status">{{.Notice}}</div>{{end}}
+  {{template "form_errors.html" .Errors}}
+
+  <div class="week-grid">
+    {{range .Days}}
+    <section class="week-day" aria-labelledby="day-{{.Weekday}}">
+      <h2 id="day-{{.Weekday}}">{{weekdayName .Weekday}}</h2>
+      {{if .Rules}}
+      <ul>
+        {{range .Rules}}
+        <li>
+          <strong>{{.Start}} – {{.End}}</strong>
+          {{if not .AllTypes}}<small>({{range $i, $n := .TypeNames}}{{if $i}}, {{end}}{{$n}}{{end}})</small>{{end}}
+          <form method="post" action="/admin/availability/{{.ID}}/delete" hx-post="/admin/availability/{{.ID}}/delete" hx-target="#availability-panel" hx-swap="outerHTML">
+            {{csrf $.CSRF}}
+            <button type="submit" class="outline secondary" aria-label="Supprimer la plage de {{.Start}} à {{.End}} du {{weekdayName .Weekday}}">Supprimer</button>
+          </form>
+        </li>
+        {{end}}
+      </ul>
+      {{else}}
+      <p><small>Fermé</small></p>
+      {{end}}
+    </section>
+    {{end}}
+  </div>
+
+  <h2>Ajouter une plage horaire</h2>
+  <form method="post" action="/admin/availability" hx-post="/admin/availability" hx-target="#availability-panel" hx-swap="outerHTML">
+    {{csrf .CSRF}}
+    {{with .Form}}
+    <fieldset>
+      <legend>Jours</legend>
+      <label><input type="checkbox" name="weekday" value="0"{{if index .Weekdays "0"}} checked{{end}}> Lundi</label>
+      <label><input type="checkbox" name="weekday" value="1"{{if index .Weekdays "1"}} checked{{end}}> Mardi</label>
+      <label><input type="checkbox" name="weekday" value="2"{{if index .Weekdays "2"}} checked{{end}}> Mercredi</label>
+      <label><input type="checkbox" name="weekday" value="3"{{if index .Weekdays "3"}} checked{{end}}> Jeudi</label>
+      <label><input type="checkbox" name="weekday" value="4"{{if index .Weekdays "4"}} checked{{end}}> Vendredi</label>
+      <label><input type="checkbox" name="weekday" value="5"{{if index .Weekdays "5"}} checked{{end}}> Samedi</label>
+      <label><input type="checkbox" name="weekday" value="6"{{if index .Weekdays "6"}} checked{{end}}> Dimanche</label>
+    </fieldset>
+    <div class="grid">
+      <div>
+        <label for="rule-start">De</label>
+        <input id="rule-start" name="start" type="time" value="{{.Start}}" required>
+      </div>
+      <div>
+        <label for="rule-end">À</label>
+        <input id="rule-end" name="end" type="time" value="{{.End}}" required>
+      </div>
+    </div>
+    {{end}}
+    <fieldset>
+      <legend>Motifs acceptés sur cette plage</legend>
+      {{range .Types}}
+      <label><input type="checkbox" name="type" value="{{.ID}}"{{if .Checked}} checked{{end}}> {{.Name}}</label>
+      {{end}}
+    </fieldset>
+    <button type="submit">Ajouter</button>
+  </form>
+</div>

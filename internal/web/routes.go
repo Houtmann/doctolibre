@@ -12,6 +12,7 @@ import (
 	"doctolibre/internal/config"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/metrics"
+	"doctolibre/internal/service"
 )
 
 // Pinger vérifie la disponibilité d'une dépendance (ex. *pgxpool.Pool).
@@ -32,6 +33,8 @@ type Deps struct {
 	Auth *auth.Service
 	// Messages est optionnel : nil = pas de page /admin/messages.
 	Messages MessageQueue
+	// Practice (service de paramétrage du cabinet) est optionnel : nil = pas de pages de configuration.
+	Practice *service.Practice
 }
 
 const pingTimeout = 2 * time.Second

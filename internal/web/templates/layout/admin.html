@@ -3,7 +3,12 @@
   <nav aria-label="Navigation du cabinet">
     <ul><li><a class="brand" href="/admin">Doctolibre</a></li></ul>
     <ul>
-      {{block "admin_nav" .}}{{end}}
+      {{block "admin_nav" .}}
+      <li><a href="/admin/availability">Horaires</a></li>
+      <li><a href="/admin/absences">Absences</a></li>
+      <li><a href="/admin/appointment-types">Motifs</a></li>
+      <li><a href="/admin/settings">Paramètres</a></li>
+      {{end}}
       <li>
         <form method="post" action="/admin/logout">
           {{csrf .CSRF}}

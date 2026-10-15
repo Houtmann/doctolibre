@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"doctolibre/internal/domain"
+	"doctolibre/internal/service"
 	"doctolibre/internal/store"
 	"doctolibre/internal/store/sqlcgen"
 )
@@ -78,6 +79,10 @@ func CreateUser(ctx context.Context, pool *pgxpool.Pool, p CreateUserParams) (sq
 				return fmt.Errorf("lecture cabinet: %w", serr)
 			}
 			practice, err = q.CreatePractice(ctx, sqlcgen.CreatePracticeParams{Name: name, Slug: slug, Timezone: tz})
+			if err == nil {
+				// Cabinet neuf : motifs par défaut (idempotent côté service).
+				err = service.SeedAppointmentTypes(ctx, q, practice.ID)
+			}
 		}
 		if err != nil {
 			return fmt.Errorf("cabinet: %w", err)
@@ -102,30 +107,5 @@ func randomSuffix() string {
 	return hex.EncodeToString(b)
 }
 
-var accentFold = strings.NewReplacer(
-	"à", "a", "â", "a", "ä", "a", "é", "e", "è", "e", "ê", "e", "ë", "e",
-	"î", "i", "ï", "i", "ô", "o", "ö", "o", "ù", "u", "û", "u", "ü", "u",
-	"ç", "c", "œ", "oe", "æ", "ae", "ÿ", "y", "ñ", "n",
-)
-
 // Slugify transforme un nom en slug [a-z0-9-] (« Cabinet Kiné Étoile » → « cabinet-kine-etoile »).
-func Slugify(name string) string {
-	s := accentFold.Replace(strings.ToLower(name))
-	var b strings.Builder
-	dash := true // évite un tiret en tête
-	for _, r := range s {
-		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
-			b.WriteRune(r)
-			dash = false
-		case !dash:
-			b.WriteByte('-')
-			dash = true
-		}
-	}
-	out := strings.TrimRight(b.String(), "-")
-	if out == "" {
-		return "cabinet"
-	}
-	return out
-}
+func Slugify(name string) string { return domain.Slugify(name) }
