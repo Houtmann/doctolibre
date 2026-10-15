@@ -22,7 +22,7 @@ const (
 
 // patientRoutes enregistre les fiches patients (tous les rôles du cabinet).
 func (d Deps) patientRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
-	h := &patientHandlers{svc: d.Patients, rd: rd, logger: logger}
+	h := &patientHandlers{svc: d.Patients, plans: d.CarePlans, rd: rd, logger: logger}
 	require := d.Auth.RequireUser(domain.RoleAdmin, domain.RolePractitioner, domain.RoleSecretary)
 	handle := func(pattern string, f http.HandlerFunc) { mux.Handle(pattern, require(f)) }
 
@@ -36,6 +36,7 @@ func (d Deps) patientRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logge
 
 type patientHandlers struct {
 	svc    *service.Patients
+	plans  *service.CarePlans // optionnel
 	rd     *Renderer
 	logger *slog.Logger
 }
@@ -175,6 +176,7 @@ type PatientPage struct {
 	Upcoming   []service.PatientAppt
 	History    []service.PatientAppt
 	NoShows    int
+	Plans      []service.PlanView
 	MergeQuery string
 	Candidates []PatientRowView
 }
@@ -188,6 +190,11 @@ func (h *patientHandlers) page(r *http.Request, id uuid.UUID, form *PatientForm,
 	p := PatientPage{
 		ID: d.Patient.ID.String(), Name: d.Patient.FirstName + " " + d.Patient.LastName,
 		Form: formOf(d.Patient), Errors: errs, Upcoming: d.Upcoming, History: d.History, NoShows: d.NoShows,
+	}
+	if h.plans != nil {
+		if p.Plans, err = h.plans.ForPatient(r.Context(), a, id); err != nil {
+			return PatientPage{}, err
+		}
 	}
 	if form != nil {
 		p.Form = *form

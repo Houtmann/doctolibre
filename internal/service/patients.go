@@ -293,6 +293,9 @@ func (s *Patients) Merge(ctx context.Context, a Actor, from, into uuid.UUID) (in
 		if err != nil {
 			return fmt.Errorf("réassignation des rendez-vous: %w", err)
 		}
+		if _, err := q.ReassignPatientCarePlans(ctx, sqlcgen.ReassignPatientCarePlansParams{IntoID: into, FromID: from, PracticeID: a.PracticeID}); err != nil {
+			return fmt.Errorf("réassignation des séries: %w", err)
+		}
 		if err := q.MergePatientPrefs(ctx, sqlcgen.MergePatientPrefsParams{
 			ID: into, PracticeID: a.PracticeID, SmsOptIn: src.SmsOptIn, EmailOptIn: src.EmailOptIn,
 			Phone: src.Phone.String, Email: src.Email.String,

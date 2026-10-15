@@ -39,6 +39,8 @@ type Deps struct {
 	Calendar *service.Calendar
 	// Patients (fiches patients) est optionnel : nil = pas de pages /admin/patients.
 	Patients *service.Patients
+	// CarePlans (séries de séances kiné) est optionnel : nil = pas de séries (fiche patient et détail RDV sans badge).
+	CarePlans *service.CarePlans
 	// Booking (réservation en ligne des patients) est optionnel : nil = pas de pages /p/… ni /r/….
 	Booking *service.Booking
 	// Feed (flux ICS du praticien) est optionnel : nil = pas de /ics/… ni de réglage d'abonnement.
