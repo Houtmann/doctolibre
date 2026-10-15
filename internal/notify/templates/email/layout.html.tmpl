@@ -1,0 +1,22 @@
+{{define "layout"}}<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{template "title" .}}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f5;">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:6px;">
+<tr><td style="padding:24px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#1f2933;">
+{{template "content" .}}
+</td></tr>
+<tr><td style="padding:12px 24px 24px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#52606d;">
+Cet email vous a été envoyé automatiquement, merci de ne pas y répondre.
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>{{end}}

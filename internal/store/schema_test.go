@@ -64,13 +64,20 @@ func TestMigrateUpDownUp(t *testing.T) {
 	ctx := context.Background()
 	count := func(table string) int {
 		var n int
-		if err := db.QueryRow(ctx, "SELECT count(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = $1", table).Scan(&n); err != nil {
+		q := "SELECT count(*) FROM information_schema.tables WHERE table_schema = current_schema()"
+		args := []any{}
+		if table != "" {
+			q += " AND table_name = $1"
+			args = append(args, table)
+		}
+		if err := db.QueryRow(ctx, q, args...).Scan(&n); err != nil {
 			t.Fatal(err)
 		}
 		return n
 	}
+	before := count("")
 	// Redescend jusqu'à la migration outbox_message (les suivantes ne créent que des index).
-	for i := 0; i < 5 && count("outbox_message") != 0; i++ {
+	for i := 0; i < 10 && count("outbox_message") != 0; i++ {
 		if err := store.MigrateDown(ctx, db); err != nil {
 			t.Fatalf("down: %v", err)
 		}
@@ -83,6 +90,9 @@ func TestMigrateUpDownUp(t *testing.T) {
 	}
 	if err := store.Migrate(ctx, db); err != nil {
 		t.Fatalf("up again: %v", err)
+	}
+	if again := count(""); again != before {
+		t.Fatalf("up après down: %d tables, attendu %d", again, before)
 	}
 }
 

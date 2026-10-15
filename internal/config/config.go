@@ -42,6 +42,8 @@ type Config struct {
 	SMS SMSConfig
 	// WorkerEnabled : lancer le worker outbox dans `serve` (DOCTOLIBRE_WORKER=off pour l'éteindre).
 	WorkerEnabled bool
+	// Email : envoi des emails transactionnels (voir email.go).
+	Email EmailConfig
 }
 
 // IsProd indique si l'application tourne en production.
@@ -105,12 +107,9 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 	default:
 		return Config{}, fmt.Errorf("DOCTOLIBRE_WORKER: %q invalide (on|off)", getenv("DOCTOLIBRE_WORKER"))
 	}
-	switch strings.ToLower(get("DOCTOLIBRE_WORKER", "on")) {
-	case "on":
-		c.WorkerEnabled = true
-	case "off":
-	default:
-		return Config{}, fmt.Errorf("DOCTOLIBRE_WORKER: %q invalide (on|off)", getenv("DOCTOLIBRE_WORKER"))
+	var emailErr error
+	if c.Email, emailErr = loadEmail(get); emailErr != nil {
+		return Config{}, emailErr
 	}
 	if c.BaseURL == "" && c.Env == EnvDev {
 		c.BaseURL = "http://localhost:8080"
@@ -149,6 +148,9 @@ func (c Config) Validate() error {
 		errs = append(errs, fmt.Errorf("DOCTOLIBRE_METRICS_TOKEN: %d octets, %d minimum", len(c.MetricsToken), minMetricsTokenLen))
 	}
 	if err := c.SMS.Validate(); err != nil {
+		errs = append(errs, err)
+	}
+	if err := c.Email.validate(); err != nil {
 		errs = append(errs, err)
 	}
 	if c.Env == EnvProd {

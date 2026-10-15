@@ -45,6 +45,7 @@ func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger)
 	h := &adminHandlers{a: a, rd: rd, logger: logger}
 	mux.HandleFunc("GET "+auth.LoginPath, h.loginForm)
 	mux.Handle("POST "+auth.LoginPath, httpx.Chain(http.HandlerFunc(h.loginSubmit), byIP, byEmail))
+	d.passwordRoutes(mux, rd, logger)
 	require := a.RequireUser()
 	mux.Handle("POST /admin/logout", require(http.HandlerFunc(h.logout)))
 	mux.Handle("GET /admin", require(http.HandlerFunc(h.dashboard)))

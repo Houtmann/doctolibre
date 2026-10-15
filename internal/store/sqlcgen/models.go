@@ -112,6 +112,14 @@ type OutboxMessage struct {
 	UpdatedAt     time.Time
 }
 
+type PasswordReset struct {
+	TokenHash string
+	UserID    uuid.UUID
+	ExpiresAt time.Time
+	UsedAt    pgtype.Timestamptz
+	CreatedAt time.Time
+}
+
 type Patient struct {
 	ID         uuid.UUID
 	PracticeID uuid.UUID
