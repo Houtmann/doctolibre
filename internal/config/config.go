@@ -40,6 +40,8 @@ type Config struct {
 	AutoMigrate bool
 	// SMS : fournisseur d'envoi (DOCTOLIBRE_SMS_*), voir sms.go.
 	SMS SMSConfig
+	// WorkerEnabled : lancer le worker outbox dans `serve` (DOCTOLIBRE_WORKER=off pour l'éteindre).
+	WorkerEnabled bool
 }
 
 // IsProd indique si l'application tourne en production.
@@ -95,6 +97,20 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 		Timezone:       get("DOCTOLIBRE_TIMEZONE", "Europe/Paris"),
 
 		MetricsToken: get("DOCTOLIBRE_METRICS_TOKEN", ""),
+	}
+	switch strings.ToLower(get("DOCTOLIBRE_WORKER", "on")) {
+	case "on":
+		c.WorkerEnabled = true
+	case "off":
+	default:
+		return Config{}, fmt.Errorf("DOCTOLIBRE_WORKER: %q invalide (on|off)", getenv("DOCTOLIBRE_WORKER"))
+	}
+	switch strings.ToLower(get("DOCTOLIBRE_WORKER", "on")) {
+	case "on":
+		c.WorkerEnabled = true
+	case "off":
+	default:
+		return Config{}, fmt.Errorf("DOCTOLIBRE_WORKER: %q invalide (on|off)", getenv("DOCTOLIBRE_WORKER"))
 	}
 	if c.BaseURL == "" && c.Env == EnvDev {
 		c.BaseURL = "http://localhost:8080"

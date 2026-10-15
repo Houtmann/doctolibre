@@ -39,6 +39,14 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return 0
 	case "healthcheck":
 		return runHealthcheck(stderr)
+	case "worker":
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		defer stop()
+		if err := runWorker(ctx, stderr); err != nil {
+			_, _ = fmt.Fprintf(stderr, "doctolibre worker: %v\n", err)
+			return 1
+		}
+		return 0
 	case "migrate":
 		return runMigrate(args[1:], stdout, stderr)
 	case "create-user":
@@ -54,7 +62,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 }
 
 func usage(w io.Writer) {
-	_, _ = fmt.Fprintln(w, "usage: doctolibre <serve|migrate|create-user|healthcheck|version>")
+	_, _ = fmt.Fprintln(w, "usage: doctolibre <serve|worker|migrate|create-user|healthcheck|version>")
 }
 
 func runMigrate(args []string, stdout, stderr io.Writer) int {

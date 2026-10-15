@@ -6,25 +6,32 @@ import (
 	"io"
 	"log/slog"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"doctolibre/internal/auth"
 	"doctolibre/internal/config"
 	"doctolibre/internal/domain"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/metrics"
+	"doctolibre/internal/outbox"
 	"doctolibre/internal/store"
 	"doctolibre/internal/web"
 )
 
-// serve lance le serveur HTTP jusqu'à l'annulation de ctx.
+// serve lance le serveur HTTP (et le worker outbox, sauf DOCTOLIBRE_WORKER=off)
+// jusqu'à l'annulation de ctx.
 func serve(ctx context.Context, logOut io.Writer) error {
 	cfg, err := config.Load()
 	if err != nil {
 		return fmt.Errorf("configuration: %w", err)
 	}
+	ctx, stop := context.WithCancel(ctx)
+	defer stop()
 	logger := newLogger(cfg, logOut)
 	deps := web.Deps{Config: cfg, Logger: logger}
+	var pool *pgxpool.Pool
 	if cfg.DatabaseURL != "" {
-		pool, err := store.Open(ctx, cfg.DatabaseURL)
+		pool, err = store.Open(ctx, cfg.DatabaseURL)
 		if err != nil {
 			return fmt.Errorf("base de données: %w", err)
 		}
@@ -36,14 +43,28 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		}
 		deps.DB = pool
 		deps.Auth = &auth.Service{Pool: pool, Clock: domain.SystemClock{}, Logger: logger, Secure: cfg.IsProd()}
+		deps.Messages = outbox.Queue{Pool: pool, Clock: domain.SystemClock{}}
 	} else {
 		logger.Warn("DOCTOLIBRE_DATABASE_URL vide : l'espace /admin est désactivé")
 	}
 	if cfg.MetricsToken != "" {
 		deps.Metrics = metrics.New()
+		if pool != nil {
+			if err := deps.Metrics.RegisterOutbox(outbox.Queue{Pool: pool, Clock: domain.SystemClock{}}); err != nil {
+				return fmt.Errorf("métriques outbox: %w", err)
+			}
+		}
 	}
 	handler := web.Routes(deps)
-	return httpx.Run(ctx, httpx.New(cfg, handler), logger)
+
+	// Le worker partage le contexte du serveur : un signal arrête les deux. On
+	// attend la fin du worker avant de fermer le pool (defer pool.Close).
+	_, waitWorker := startWorker(ctx, cfg, pool, newDispatcher(nil, nil, logger), logger)
+	err = httpx.Run(ctx, httpx.New(cfg, handler), logger)
+	stop() // erreur HTTP sans signal : arrêter aussi le worker
+	waitWorker()
+	logger.Info("arrêt complet")
+	return err
 }
 
 // newLogger : JSON en prod, texte lisible en dev.
