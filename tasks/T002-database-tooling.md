@@ -28,8 +28,8 @@ Une base Postgres locale en une commande, des migrations embarquées dans le bin
 
 ## Critères d'acceptation
 - [ ] `make db-up && make migrate` fonctionne sur une machine vierge avec Docker.
-- [ ] `make sqlc` génère du code qui compile ; le code généré est commité.
-- [ ] `doctolibre migrate status` liste la migration init.
+- [x] `make sqlc` génère du code qui compile ; le code généré est commité.
+- [x] `doctolibre migrate status` liste la migration init.
 
 ## Vérification
 ```bash
@@ -43,8 +43,8 @@ Tables métier (T010), helpers de test (T005).
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-15 (sonnet)
+- **Fait** : compose dev, cibles Makefile (db-up/down/reset, migrate, sqlc), migration 00001, embed, store.Open/Migrate/MigrateDown/MigrateStatus, `doctolibre migrate [up|down|status]`, sqlc.yaml + health.sql + code généré, outils via `tool` dans go.mod, test store (skippé sans DOCTOLIBRE_TEST_DATABASE_URL).
+- **Reste à faire** : vérifier `make db-up` avec Docker (daemon absent ici).
+- **Notes de reprise** : vérifié sur Postgres.app 17 (base doctolibre_dev) : up/status/down/up OK, `make check` vert.
+- **Écarts avec la spécification** : la directive `go` de go.mod est passée à 1.26.0 (imposée par `go get -tool` des dernières versions de sqlc/goose). `db-up` utilise `--wait` (healthcheck).
