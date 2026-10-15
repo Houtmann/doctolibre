@@ -44,3 +44,7 @@ UPDATE appointment SET
     cancel_reason = @cancel_reason, updated_at = now()
 WHERE id = @id AND practice_id = @practice_id AND status = 'booked'
 RETURNING *;
+
+-- name: LockAppointmentByManageToken :one
+-- Lecture verrouillée (dans une transaction) du RDV d'un lien patient.
+SELECT * FROM appointment WHERE manage_token_hash = @manage_token_hash FOR UPDATE;

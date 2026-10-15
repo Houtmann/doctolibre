@@ -26,6 +26,8 @@ type Booking struct {
 	Pool  *pgxpool.Pool
 	Clock domain.Clock
 	OTP   OTPSender
+	// Events reçoit les faits métier (nil = NopSink) ; les notifications sont branchées en T023.
+	Events EventSink
 }
 
 // PublicPractice est la page d'accueil publique d'un cabinet.
@@ -148,6 +150,8 @@ type slotContext struct {
 	pc  sqlcgen.Practice
 	typ sqlcgen.AppointmentType
 	loc *time.Location
+	// ignore : rendez-vous déplacé, qui ne doit pas bloquer ses propres créneaux.
+	ignore uuid.UUID
 }
 
 func loadSlotContext(ctx context.Context, q *sqlcgen.Queries, practitionerID, typeID uuid.UUID) (slotContext, error) {
@@ -222,6 +226,9 @@ func (s slotContext) slots(ctx context.Context, q *sqlcgen.Queries, now, from, t
 	}
 	busy := make([]booking.Busy, 0, len(appts))
 	for _, a := range appts {
+		if a.ID == s.ignore {
+			continue
+		}
 		busy = append(busy, booking.Busy{Start: a.DuringBlocked.Lower.Time, End: a.DuringBlocked.Upper.Time})
 	}
 	return booking.Slots(booking.Request{
@@ -432,6 +439,7 @@ func (b *Booking) Book(ctx context.Context, in BookInput) (BookResult, error) {
 	if err != nil {
 		return BookResult{}, err
 	}
+	b.emit(ctx, Event{Kind: EventAppointmentCreated, PracticeID: appt.PracticeID, AppointmentID: appt.ID})
 	return BookResult{Appointment: appt, Token: token}, nil
 }
 
@@ -458,6 +466,10 @@ type Confirmation struct {
 	FirstName    string // prénom du patient (seule donnée personnelle exposée)
 	Start, End   time.Time
 	Loc          *time.Location
+	// Changeable : le patient peut encore annuler ou déplacer (RDV à venir, délai du cabinet respecté).
+	Changeable bool
+	// MinCancel est le délai minimal avant le RDV ; Horizon la fenêtre de réservation.
+	MinCancel, Horizon time.Duration
 }
 
 // Confirmation retrouve un rendez-vous par le secret de son lien de gestion.
@@ -494,9 +506,13 @@ func (b *Booking) Confirmation(ctx context.Context, token string) (Confirmation,
 	if err != nil {
 		return Confirmation{}, fmt.Errorf("fuseau %q: %w", pc.Timezone, err)
 	}
+	minCancel := microsToDuration(intervalMicros(pc.MinCancelNotice))
+	start := a.During.Lower.Time
 	return Confirmation{
 		Appointment: a, Practice: pc, Practitioner: pr, Type: typ, FirstName: pat.FirstName, Loc: loc,
-		Start: a.During.Lower.Time.In(loc), End: a.During.Upper.Time.In(loc),
+		Start: start.In(loc), End: a.During.Upper.Time.In(loc),
+		Changeable: a.Status == "booked" && start.Sub(b.Clock.Now()) >= minCancel,
+		MinCancel:  minCancel, Horizon: microsToDuration(intervalMicros(pc.BookingHorizon)),
 	}, nil
 }
 

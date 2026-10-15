@@ -56,13 +56,14 @@ func (o *otpCapture) count() int {
 }
 
 type publicEnv struct {
-	h   http.Handler
-	db  *pgxpool.Pool
-	otp *otpCapture
-	pc  sqlcgen.Practice
-	pr  sqlcgen.Practitioner
-	typ sqlcgen.AppointmentType
-	svc *service.Booking
+	h     http.Handler
+	db    *pgxpool.Pool
+	otp   *otpCapture
+	pc    sqlcgen.Practice
+	pr    sqlcgen.Practitioner
+	typ   sqlcgen.AppointmentType
+	svc   *service.Booking
+	clock *testutil.FixedClock
 }
 
 func (e *publicEnv) base() string { return "/p/" + e.pc.Slug + "/" + e.pr.Slug }
@@ -91,7 +92,7 @@ func newPublicEnv(t *testing.T) *publicEnv {
 		DB:      db,
 		Booking: svc,
 	})
-	return &publicEnv{h: h, db: db, otp: otp, pc: pc, pr: pr, typ: typ, svc: svc}
+	return &publicEnv{h: h, db: db, otp: otp, pc: pc, pr: pr, typ: typ, svc: svc, clock: clock}
 }
 
 func (e *publicEnv) appointments(t *testing.T) int {

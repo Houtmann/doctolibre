@@ -10,6 +10,14 @@
 </article>
 {{if not .Data.Cancelled}}
 <p><a href="{{.Data.ICSURL}}" role="button">Ajouter à mon agenda</a></p>
+{{if .Data.Changeable}}
+<p class="actions">
+  <a href="{{.Data.ManageURL}}/reschedule" role="button" class="outline">Déplacer le rendez-vous</a>
+  <a href="{{.Data.ManageURL}}/cancel" role="button" class="outline secondary">Annuler le rendez-vous</a>
+</p>
+{{else}}
+<p><small>Ce rendez-vous ne peut plus être déplacé ni annulé en ligne (délai de {{formatDuration .Data.MinCancel}}){{if .Data.Practice.Phone}} : appelez le cabinet au <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}.</small></p>
+{{end}}
 {{end}}
 <p><small>Conservez l'adresse de cette page : elle vous permettra de retrouver votre rendez-vous. Ne la partagez pas.</small></p>
 {{end}}

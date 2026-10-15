@@ -82,6 +82,12 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = VerifyData{}
 			case "public_confirmed":
 				data = ConfirmedData{}
+			case "public_reschedule":
+				data = GridData{}
+			case "public_reschedule_confirm":
+				data = RescheduleConfirmData{}
+			case "public_cancel":
+				data = CancelData{}
 			}
 			rd.Page(rec, httptest.NewRequest("GET", "/", nil), n, data)
 			if rec.Code != 200 || !strings.Contains(rec.Body.String(), `<html lang="fr">`) {
