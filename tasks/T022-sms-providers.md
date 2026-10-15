@@ -24,9 +24,9 @@ Envoyer des SMS via un backend **interchangeable par configuration**, en privil�
 - `docs/sms.md` **existe déjà** (comparatif des coûts, réglages par défaut, pièges de facturation) : le compléter avec une section « Configuration » par driver et des exemples de config `httpgeneric` pour Twilio, Brevo et Plivo. Mettre à jour les prix si l'écart dépasse 10 %.
 
 ## Critères d'acceptation
-- [ ] Chaque driver testé avec `httptest.Server` (requête construite correctement).
-- [ ] Tests segments : 160 car. GSM-7 = 1 segment, 161 = 2 ; un emoji force UCS-2.
-- [ ] Changer de fournisseur = changer l'env, rien d'autre.
+- [x] Chaque driver testé avec `httptest.Server` (requête construite correctement).
+- [x] Tests segments : 160 car. GSM-7 = 1 segment, 161 = 2 ; un emoji force UCS-2.
+- [x] Changer de fournisseur = changer l'env, rien d'autre.
 
 ## Vérification
 ```bash
@@ -40,8 +40,8 @@ Réception de SMS / réponses (« répondez OUI ») — éventuellement plus tar
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-15 (sonnet)
+- **Fait** : package leaf `internal/notify/sms` (SMS, Sender, StatusError, PermanentError, IsPermanent, Segments GSM-7/UCS-2, Transliterate, MaskPhone) ; drivers `logsms`, `httpgeneric`, `androidgateway`, `ovh` (chacun avec tests httptest) ; `internal/notify/sms.go` : alias SMS/SMSSender, `NewSMSSender(cfg, clock, logger)`, `SMSDispatch(sender, from, transliterate) outbox.DispatcherFunc`, `SMSRunAt(now, loc, isOTP)` (tests DST) ; `internal/config/sms.go` (bloc `Config.SMS`, validation par driver) ; `docs/sms.md` section Configuration + exemples Twilio/Brevo/Plivo + règles d'enfilement.
+- **Reste à faire** : câbler dans `serve.go` (T024) : `NewSMSSender` puis `SMSDispatch` pour `kind=sms` ; enfilement (T023) avec `SMSRunAt` et payload `{"body","sms_opt_in","otp"}`. `.env.example` : T040 (variables listées dans docs/sms.md).
+- **Notes de reprise** : les types vivent dans `notify/sms` (et non `notify`) pour éviter un cycle d'import avec les drivers ; `notify` expose des alias. L'opt-out est contrôlé à l'envoi via `sms_opt_in` du payload (copie faite à l'enfilement), sans requête DB ; opt-out => échec définitif (statut failed). `// Package notify` est déclaré dans `sms.go` : dédoublonner avec T021. Prix non modifiés (non vérifiables hors ligne). Exemples Twilio/Brevo/Plivo non testés contre les vraies API.
+- **Écarts avec la spécification** : sous-packages sous `internal/notify/sms/` (pas `sms/` à la racine de notify) ; `.env.example` non touché (consigne orchestrateur) ; URL du driver http non templatée ; OVH horodate avec l'horloge injectée (pas /auth/time).
