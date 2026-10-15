@@ -1,0 +1,46 @@
+# Variante sans Docker : binaire + PostgreSQL du système + reverse proxy TLS local (Caddy/nginx).
+#
+#   sudo useradd --system --home /var/lib/doctolibre --shell /usr/sbin/nologin doctolibre
+#   sudo install -m 0755 doctolibre /usr/local/bin/doctolibre
+#   sudo install -d -m 0750 -o root -g doctolibre /etc/doctolibre
+#   sudo editor /etc/doctolibre/doctolibre.env   (voir ci-dessous ; chmod 0640, groupe doctolibre)
+#   sudo cp doctolibre.service /etc/systemd/system/ && sudo systemctl enable --now doctolibre
+#
+# /etc/doctolibre/doctolibre.env contient au minimum :
+#   DOCTOLIBRE_ENV=prod
+#   DOCTOLIBRE_HTTP_ADDR=127.0.0.1:8080
+#   DOCTOLIBRE_BASE_URL=https://rdv.example.fr
+#   DOCTOLIBRE_DATABASE_URL=postgres://doctolibre:...@127.0.0.1:5432/doctolibre
+#   DOCTOLIBRE_SECRET_KEY=...            (openssl rand -hex 32)
+#   DOCTOLIBRE_TRUSTED_PROXIES=127.0.0.1/32
+[Unit]
+Description=Doctolibre (prise de rendez-vous)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=doctolibre
+Group=doctolibre
+EnvironmentFile=/etc/doctolibre/doctolibre.env
+ExecStart=/usr/local/bin/doctolibre serve
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=15
+
+# Durcissement
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

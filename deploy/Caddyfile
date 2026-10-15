@@ -1,0 +1,13 @@
+# TLS automatique (Let's Encrypt) pour {$DOMAIN}. Les en-têtes de sécurité (CSP,
+# HSTS...) sont posés par l'application : ne pas les dupliquer ici.
+#
+# Test local sans domaine public : dans deploy/.env, mettre
+#   DOMAIN=localhost
+#   CADDY_TLS=internal
+# (certificat auto-signé par la CA interne de Caddy).
+# En prod, CADDY_TLS = email ACME de l'exploitant (ex. admin@exemple.fr) : certificat Let's Encrypt.
+{$DOMAIN} {
+	tls {$CADDY_TLS}
+	encode zstd gzip
+	reverse_proxy app:8080
+}

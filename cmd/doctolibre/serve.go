@@ -29,6 +29,11 @@ func serve(ctx context.Context, logOut io.Writer) error {
 			return fmt.Errorf("base de données: %w", err)
 		}
 		defer pool.Close()
+		if cfg.AutoMigrate {
+			if err := store.Migrate(ctx, pool); err != nil {
+				return fmt.Errorf("migrations: %w", err)
+			}
+		}
 		deps.DB = pool
 		deps.Auth = &auth.Service{Pool: pool, Clock: domain.SystemClock{}, Logger: logger, Secure: cfg.IsProd()}
 	} else {

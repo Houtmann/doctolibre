@@ -5,8 +5,10 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"net/netip"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -32,6 +34,10 @@ type Config struct {
 	Timezone    string
 	// MetricsToken active /metrics (jeton Bearer) ; vide = endpoint désactivé.
 	MetricsToken string
+	// TrustedProxies : CIDR des reverse proxies dont X-Forwarded-For est cru.
+	TrustedProxies []netip.Prefix
+	// AutoMigrate applique les migrations au démarrage de `serve` (défaut : true).
+	AutoMigrate bool
 }
 
 // IsProd indique si l'application tourne en production.
@@ -63,13 +69,28 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 		}
 		return def
 	}
+	var errs []error
+	proxies, err := ParseCIDRs(getenv("DOCTOLIBRE_TRUSTED_PROXIES"))
+	if err != nil {
+		errs = append(errs, fmt.Errorf("DOCTOLIBRE_TRUSTED_PROXIES: %w", err))
+	}
+	autoMigrate := true
+	if v := strings.TrimSpace(getenv("DOCTOLIBRE_AUTO_MIGRATE")); v != "" {
+		b, err := strconv.ParseBool(v)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("DOCTOLIBRE_AUTO_MIGRATE: %q invalide (true|false)", v))
+		}
+		autoMigrate = b
+	}
 	c := Config{
-		HTTPAddr:    get("DOCTOLIBRE_HTTP_ADDR", ":8080"),
-		DatabaseURL: get("DOCTOLIBRE_DATABASE_URL", ""),
-		BaseURL:     get("DOCTOLIBRE_BASE_URL", ""),
-		SecretKey:   get("DOCTOLIBRE_SECRET_KEY", ""),
-		Env:         get("DOCTOLIBRE_ENV", EnvDev),
-		Timezone:    get("DOCTOLIBRE_TIMEZONE", "Europe/Paris"),
+		TrustedProxies: proxies,
+		AutoMigrate:    autoMigrate,
+		HTTPAddr:       get("DOCTOLIBRE_HTTP_ADDR", ":8080"),
+		DatabaseURL:    get("DOCTOLIBRE_DATABASE_URL", ""),
+		BaseURL:        get("DOCTOLIBRE_BASE_URL", ""),
+		SecretKey:      get("DOCTOLIBRE_SECRET_KEY", ""),
+		Env:            get("DOCTOLIBRE_ENV", EnvDev),
+		Timezone:       get("DOCTOLIBRE_TIMEZONE", "Europe/Paris"),
 
 		MetricsToken: get("DOCTOLIBRE_METRICS_TOKEN", ""),
 	}
@@ -77,7 +98,10 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 		c.BaseURL = "http://localhost:8080"
 	}
 	if err := c.Validate(); err != nil {
-		return Config{}, err
+		errs = append(errs, err)
+	}
+	if len(errs) > 0 {
+		return Config{}, errors.Join(errs...)
 	}
 	return c, nil
 }
@@ -142,4 +166,22 @@ func parseEnvFile(path string) (map[string]string, error) {
 		out[strings.TrimSpace(k)] = v
 	}
 	return out, sc.Err()
+}
+
+// ParseCIDRs lit une liste de CIDR (ou d'IP seules) séparés par des virgules ou
+// des espaces ; vide -> nil.
+func ParseCIDRs(s string) ([]netip.Prefix, error) {
+	var out []netip.Prefix
+	for _, f := range strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == ' ' || r == '\t' || r == '\n' }) {
+		if p, err := netip.ParsePrefix(f); err == nil {
+			out = append(out, p.Masked())
+			continue
+		}
+		a, err := netip.ParseAddr(f)
+		if err != nil {
+			return nil, fmt.Errorf("%q n'est ni un CIDR ni une IP", f)
+		}
+		out = append(out, netip.PrefixFrom(a, a.BitLen()))
+	}
+	return out, nil
 }

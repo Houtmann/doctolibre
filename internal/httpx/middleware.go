@@ -9,7 +9,9 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/netip"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,6 +35,7 @@ const (
 	keyRequestID ctxKey = iota
 	keyLogger
 	keyCSRF
+	keyClientIP
 )
 
 // RequestIDHeader est le header portant l'identifiant de requête.
@@ -227,14 +230,77 @@ func safeMethod(m string) bool {
 	return m == http.MethodGet || m == http.MethodHead || m == http.MethodOptions
 }
 
-// ClientIP retourne l'IP distante (sans port). Ne fait pas confiance à
-// X-Forwarded-For : derrière un proxy, fournir une fonction de clé dédiée.
+// ClientIP retourne l'IP du client (sans port). Si le middleware TrustedProxies
+// est actif, c'est l'IP résolue via X-Forwarded-For ; sinon RemoteAddr.
 func ClientIP(r *http.Request) string {
+	if ip, ok := r.Context().Value(keyClientIP).(string); ok {
+		return ip
+	}
+	return remoteIP(r)
+}
+
+func remoteIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+// TrustedProxies résout l'IP du client derrière un reverse proxy : X-Forwarded-For
+// n'est lu que si RemoteAddr appartient à `trusted`. La liste est parcourue de
+// droite à gauche et la première IP non fiable est retenue (si toutes sont
+// fiables, la plus à gauche). En-tête invalide -> RemoteAddr. X-Real-IP est ignoré.
+// Sans proxy configuré, le middleware ne change rien.
+func TrustedProxies(trusted []netip.Prefix) Middleware {
+	return func(next http.Handler) http.Handler {
+		if len(trusted) == 0 {
+			return next
+		}
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ip := resolveClientIP(r, trusted)
+			ctx := context.WithValue(r.Context(), keyClientIP, ip)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+func isTrusted(a netip.Addr, trusted []netip.Prefix) bool {
+	a = a.Unmap()
+	for _, p := range trusted {
+		if p.Contains(a) {
+			return true
+		}
+	}
+	return false
+}
+
+func resolveClientIP(r *http.Request, trusted []netip.Prefix) string {
+	remote := remoteIP(r)
+	ra, err := netip.ParseAddr(remote)
+	if err != nil || !isTrusted(ra, trusted) {
+		return remote
+	}
+	values := r.Header.Values("X-Forwarded-For")
+	if len(values) == 0 {
+		return remote
+	}
+	var hops []netip.Addr
+	for _, v := range values {
+		for _, part := range strings.Split(v, ",") {
+			a, err := netip.ParseAddr(strings.TrimSpace(part))
+			if err != nil {
+				return remote
+			}
+			hops = append(hops, a.Unmap())
+		}
+	}
+	for i := len(hops) - 1; i >= 0; i-- {
+		if !isTrusted(hops[i], trusted) {
+			return hops[i].String()
+		}
+	}
+	return hops[0].String()
 }
 
 type visitor struct {

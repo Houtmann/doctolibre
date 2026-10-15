@@ -67,6 +67,7 @@ func Routes(d Deps) http.Handler {
 	}
 
 	return httpx.Chain(root,
+		httpx.TrustedProxies(d.Config.TrustedProxies),
 		httpx.RequestID(logger),
 		httpx.Logger(),
 		httpx.RecoverWith(rd.Error),
