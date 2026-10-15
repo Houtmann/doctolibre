@@ -20,6 +20,11 @@ Un orchestrateur (Opus) t'a confié **une seule tâche**. Il relira ton travail,
 - Pas de nouvelle dépendance Go non listée dans `AGENTS.md` ou dans la tâche.
 - Ne modifie jamais une migration existante : ajoutes-en une nouvelle.
 - Écris les tests demandés par les critères d'acceptation **avant** de déclarer fini.
+- **Compilation et tests économes** (le build complet est lent, surtout avec plusieurs agents en parallèle) :
+  - pas de `go build ./...`, `go vet ./...` ni `make check` après chaque édition : regroupe tes modifications, puis vérifie ;
+  - pendant l'implémentation, cible le package touché : `go build ./internal/service/` ou `go test ./internal/service/ -run TestXxx` ;
+  - `make check` complet **une seule fois** à la fin (plus une fois après chaque correction demandée en revue) ;
+  - un test de durée (ex. `TestCalendarWeekWith150AppointmentsIsFast`) qui échoue sous charge : relance-le seul avant de chercher un bug.
 - Si tu sens que le contexte devient long ou que tu es bloqué : mets à jour la section « Suivi » de la tâche **immédiatement**, puis continue ou rends la main.
 
 ## Fichiers que tu ne touches PAS

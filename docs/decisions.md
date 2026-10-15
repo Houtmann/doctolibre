@@ -55,3 +55,9 @@ Format : `AAAA-MM-JJ — décision — pourquoi — alternative écartée`.
 - 2026-10-15 — Les chemins à jeton secret (`/ics/`, `/r/`) sont masqués dans les logs de requêtes (`httpx.loggedPath`) (T042).
 - 2026-10-15 — Recherche patient : index GIN trigram partiel sur `patient_search_text()` (unaccent qualifié `public.`, fonction IMMUTABLE) ; fusion = soft-delete du doublon avec `merged_into` + audit (T017) — recherche ILIKE sans index.
 - 2026-10-15 — Domicile : règle unique `domain.HomeBuffers` (marges du motif + trajet) utilisée par le moteur et copiée dans `during_blocked` ; zones = codes postaux/communes par cabinet, non appliquées à la saisie cabinet ; adresse incluse dans le binding OTP (T032).
+- 2026-10-15 — Séries de séances : proposition gloutonne pure (`booking.ProposeSeries`, une séance/jour, quota hebdo, jours préférés puis repli) ; création tout ou rien, un conflit renvoie la ligne en cause (T030) — créer ce qui passe et lister les échecs.
+- 2026-10-15 — Créneaux de série côté staff : préavis, horizon et « réservable en ligne » ignorés (`slotContext` avec notice/horizon à zéro) (T030).
+- 2026-10-15 — Messages enfilés dans la transaction métier (`service/notifications.go`) ; rappels enfilés par une tâche périodique (5 min) qui relit opt-out et statut, idempotente par `dedup_key` (T023) — rappels enfilés à la réservation (opt-out figé).
+- 2026-10-15 — RDV en ligne : envois uniquement sur le canal vérifié par l'OTP (`appointment.verified_channel`) (T023) — écrire à un contact non vérifié.
+- 2026-10-15 — Rappel sauté si le RDV a été créé ou modifié après l'heure d'envoi (`updated_at`) ; une série = une seule confirmation, rappels par séance ; pas de lien `/r/` dans les rappels (jeton haché) (T023).
+- 2026-10-15 — Sous-agents : build/test ciblés par package pendant l'implémentation, `make check` complet une seule fois à la fin (`.claude/agents/task-implementer.md`) — build complet à chaque étape (lent en parallèle).

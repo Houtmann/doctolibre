@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-15 — T023 et T030 (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T023, T030 → review
+- **Fait** : confirmations, annulations, déplacements et rappels J-1/H-2 (email/SMS) enfilés dans la transaction métier, tâche périodique de rappels idempotente, page `/admin/settings/notifications` avec estimation SMS ; séries de séances (proposition éditable, création atomique, badge « séance n/N », remplacement d'une séance annulée).
+- **Revue** : T023 a intégré T030 (une confirmation par série). Merges sans conflit. Directive ajoutée aux sous-agents : pas de build complet à chaque étape.
+- **Vérification** : `make check` ✅. Non vérifié : bout en bout réservation → Mailpit + SMS dans les logs (critère T023 non coché), rendu 360 px.
+- **Reste / reprise** : relecture des 9 tâches en review ; stash `t023-wip-sonnet` laissé dans la pile git (à supprimer par l'humain) ; puis T031, T033, T043, T044.
+- **Décisions** : 6 entrées dans `decisions.md` (de « Séries de séances » à « Sous-agents »).
+
 ## 2026-10-15 — T015, T017, T032, T041, T042 (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T015, T017, T032, T041, T042 → review (lancées sur T014/T016 encore en review, code déjà sur `main`)

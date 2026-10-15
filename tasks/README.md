@@ -38,9 +38,9 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T020 | [Outbox et worker](T020-outbox-worker.md) | 2 | T010, T005 | done |
 | T021 | [Email SMTP générique](T021-email-smtp.md) | 2 | T020 | done |
 | T022 | [SMS : interface et fournisseurs](T022-sms-providers.md) | 2 | T020 | done |
-| T023 | [Confirmations et rappels](T023-reminders.md) | 2 | T021, T022, T015 | todo |
+| T023 | [Confirmations et rappels](T023-reminders.md) | 2 | T021, T022, T015 | review |
 | T024 | [Outbox : câblage du worker et page admin](T024-outbox-wiring.md) | 2 | T020, T011 | done |
-| T030 | [Séries de séances kiné](T030-care-plans.md) | 3 | T016, T017 | todo |
+| T030 | [Séries de séances kiné](T030-care-plans.md) | 3 | T016, T017 | review |
 | T031 | [Liste d'attente](T031-waitlist.md) | 3 | T023 | todo |
 | T032 | [Visites à domicile](T032-home-visits.md) | 3 | T014 | review |
 | T033 | [Multi-praticiens et rôles](T033-multi-practitioner.md) | 3 | T016, T021 | todo |
