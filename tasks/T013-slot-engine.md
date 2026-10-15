@@ -51,10 +51,10 @@ Algorithme :
 Utilitaires internes : `type Interval`, `Union`, `Subtract`, `Intersect` — testés séparément.
 
 ## Critères d'acceptation
-- [ ] Tests table-driven couvrant : journée simple ; pause midi ; absence partielle ; absence journée ; ouverture exceptionnelle un dimanche ; RDV existant au milieu ; buffers ; notice minimale ; horizon ; motif non autorisé sur une plage ; validité de règle (valid_from/until).
-- [ ] **DST** : dimanche 30/03/2025 et 26/10/2025 en `Europe/Paris` — pas de créneau fantôme ni manquant, durées réelles respectées.
-- [ ] Fuzz test (`testing.F`) : la zone bloquée d'aucun créneau ne chevauche un `Busy` ni une exception `Closed` ; tous les soins sont dans une règle ou une exception `Open`.
-- [ ] Benchmark : 1 praticien, 60 jours, 500 RDV → < 5 ms.
+- [x] Tests table-driven couvrant : journée simple ; pause midi ; absence partielle ; absence journée ; ouverture exceptionnelle un dimanche ; RDV existant au milieu ; buffers ; notice minimale ; horizon ; motif non autorisé sur une plage ; validité de règle (valid_from/until).
+- [x] **DST** : dimanche 30/03/2025 et 26/10/2025 en `Europe/Paris` — pas de créneau fantôme ni manquant, durées réelles respectées.
+- [x] Fuzz test (`testing.F`) : la zone bloquée d'aucun créneau ne chevauche un `Busy` ni une exception `Closed` ; tous les soins sont dans une règle ou une exception `Open`.
+- [x] Benchmark : 1 praticien, 60 jours, 500 RDV → < 5 ms.
 
 ## Vérification
 ```bash
@@ -68,8 +68,8 @@ Chargement depuis la DB (fait dans `service`, T014/T016).
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-15 (sonnet)
+- **Fait** : `internal/domain/blocked.go` (`BlockedRange`, partagée avec T010/T014/T016) ; `internal/booking/{interval,slots}.go` (Interval/Union/Subtract/Intersect, `Slots`, LocalTime, Date) ; tests table-driven, DST (30/03 et 26/10/2025), fuzz `FuzzSlots` (30 s, ~955k exécutions OK), benchmark 60 j / 500 RDV ≈ 0,26 ms. `make check` vert.
+- **Reste à faire** : rien.
+- **Notes de reprise** : `go get github.com/google/uuid` a ajouté la dépendance à go.mod (autorisée) : possible conflit go.mod/go.sum à fusionner avec T002/T003.
+- **Écarts avec la spécification** : `ValidFrom/ValidUntil` sont `*Date` (type maison, pas civil.Date). Les exceptions `Closed` retirent aussi la dispo ET bloquent tout créneau dont la zone bloquée (buffers inclus) les touche. `Horizon <= 0` = pas de limite ; `Start == Now+Horizon` accepté. `[From,To)` filtre sur le début du créneau. Buffers autorisés à déborder de la plage ouverte (choix de la spec, à noter dans decisions.md). Exception `Open` valable pour tous les motifs.
