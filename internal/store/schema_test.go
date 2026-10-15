@@ -62,15 +62,18 @@ func TestMigrateUpDownUp(t *testing.T) {
 	t.Parallel()
 	db := testutil.DB(t) // up
 	ctx := context.Background()
-	if err := store.MigrateDown(ctx, db); err != nil { // retire la dernière (outbox_message)
-		t.Fatalf("down: %v", err)
-	}
 	count := func(table string) int {
 		var n int
 		if err := db.QueryRow(ctx, "SELECT count(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = $1", table).Scan(&n); err != nil {
 			t.Fatal(err)
 		}
 		return n
+	}
+	// Redescend jusqu'à la migration outbox_message (les suivantes ne créent que des index).
+	for i := 0; i < 5 && count("outbox_message") != 0; i++ {
+		if err := store.MigrateDown(ctx, db); err != nil {
+			t.Fatalf("down: %v", err)
+		}
 	}
 	if n := count("outbox_message"); n != 0 {
 		t.Fatalf("outbox_message doit avoir disparu: n=%d", n)

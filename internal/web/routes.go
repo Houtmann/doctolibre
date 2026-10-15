@@ -30,6 +30,8 @@ type Deps struct {
 	Renderer *Renderer // optionnel : nil = construit depuis Config
 	// Auth est optionnel : nil = pas de routes /admin (pas de base de données).
 	Auth *auth.Service
+	// Messages est optionnel : nil = pas de page /admin/messages.
+	Messages MessageQueue
 }
 
 const pingTimeout = 2 * time.Second

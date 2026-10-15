@@ -22,6 +22,16 @@ func TestLoadFromDefaults(t *testing.T) {
 	}
 }
 
+func TestLoadFromWorker(t *testing.T) {
+	t.Parallel()
+	for val, want := range map[string]bool{"": true, "on": true, "off": false, "OFF": false} {
+		c, err := LoadFrom(env(map[string]string{"DOCTOLIBRE_WORKER": val}))
+		if err != nil || c.WorkerEnabled != want {
+			t.Errorf("DOCTOLIBRE_WORKER=%q: %v, %v", val, c.WorkerEnabled, err)
+		}
+	}
+}
+
 func TestLoadFromErrors(t *testing.T) {
 	t.Parallel()
 	good := strings.Repeat("s", 32)
@@ -32,6 +42,7 @@ func TestLoadFromErrors(t *testing.T) {
 	}{
 		{"env invalide", map[string]string{"DOCTOLIBRE_ENV": "staging"}, "DOCTOLIBRE_ENV"},
 		{"fuseau invalide", map[string]string{"DOCTOLIBRE_TIMEZONE": "Mars/Base"}, "DOCTOLIBRE_TIMEZONE"},
+		{"worker invalide", map[string]string{"DOCTOLIBRE_WORKER": "maybe"}, "DOCTOLIBRE_WORKER"},
 		{"url invalide", map[string]string{"DOCTOLIBRE_BASE_URL": "nope"}, "DOCTOLIBRE_BASE_URL"},
 		{"secret trop court", map[string]string{"DOCTOLIBRE_SECRET_KEY": "court"}, "DOCTOLIBRE_SECRET_KEY"},
 		{"secret manquant en prod", map[string]string{

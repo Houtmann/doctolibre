@@ -48,6 +48,7 @@ func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger)
 	require := a.RequireUser()
 	mux.Handle("POST /admin/logout", require(http.HandlerFunc(h.logout)))
 	mux.Handle("GET /admin", require(http.HandlerFunc(h.dashboard)))
+	d.messagesRoutes(mux, rd, require)
 }
 
 type adminHandlers struct {

@@ -32,6 +32,8 @@ type Config struct {
 	Timezone    string
 	// MetricsToken active /metrics (jeton Bearer) ; vide = endpoint désactivé.
 	MetricsToken string
+	// WorkerEnabled : lancer le worker outbox dans `serve` (DOCTOLIBRE_WORKER=off pour l'éteindre).
+	WorkerEnabled bool
 }
 
 // IsProd indique si l'application tourne en production.
@@ -72,6 +74,20 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 		Timezone:    get("DOCTOLIBRE_TIMEZONE", "Europe/Paris"),
 
 		MetricsToken: get("DOCTOLIBRE_METRICS_TOKEN", ""),
+	}
+	switch strings.ToLower(get("DOCTOLIBRE_WORKER", "on")) {
+	case "on":
+		c.WorkerEnabled = true
+	case "off":
+	default:
+		return Config{}, fmt.Errorf("DOCTOLIBRE_WORKER: %q invalide (on|off)", getenv("DOCTOLIBRE_WORKER"))
+	}
+	switch strings.ToLower(get("DOCTOLIBRE_WORKER", "on")) {
+	case "on":
+		c.WorkerEnabled = true
+	case "off":
+	default:
+		return Config{}, fmt.Errorf("DOCTOLIBRE_WORKER: %q invalide (on|off)", getenv("DOCTOLIBRE_WORKER"))
 	}
 	if c.BaseURL == "" && c.Env == EnvDev {
 		c.BaseURL = "http://localhost:8080"
