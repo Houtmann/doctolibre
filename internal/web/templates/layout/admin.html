@@ -4,6 +4,12 @@
     <ul><li><a class="brand" href="/admin">Doctolibre</a></li></ul>
     <ul>
       {{block "admin_nav" .}}{{end}}
+      <li>
+        <form method="post" action="/admin/logout">
+          {{csrf .CSRF}}
+          <button type="submit" class="secondary outline">Se déconnecter</button>
+        </form>
+      </li>
     </ul>
   </nav>
 </header>

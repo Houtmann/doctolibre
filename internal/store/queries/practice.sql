@@ -16,3 +16,6 @@ UPDATE practice SET
     booking_horizon = @booking_horizon, updated_at = now()
 WHERE id = @id
 RETURNING *;
+
+-- name: GetPracticeByName :one
+SELECT * FROM practice WHERE name = @name ORDER BY created_at, id LIMIT 1;

@@ -1,0 +1,16 @@
+{{define "title"}}Connexion{{end}}
+{{define "content"}}
+<section class="login">
+  <h1>Connexion</h1>
+  {{template "form_errors.html" .Data.Errors}}
+  <form method="post" action="/admin/login">
+    {{csrf .CSRF}}
+    <input type="hidden" name="next" value="{{.Data.Next}}">
+    <label for="email">Adresse email</label>
+    <input id="email" name="email" type="email" value="{{.Data.Email}}" autocomplete="username" required>
+    <label for="password">Mot de passe</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit">Se connecter</button>
+  </form>
+</section>
+{{end}}

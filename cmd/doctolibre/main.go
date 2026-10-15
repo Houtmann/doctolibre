@@ -40,8 +40,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	case "migrate":
 		return runMigrate(args[1:], stdout, stderr)
 	case "create-user":
-		_, _ = fmt.Fprintf(stderr, "doctolibre %s: not implemented\n", args[0])
-		return 2
+		return runCreateUser(args[1:], os.Stdin, stdout, stderr)
 	case "-h", "--help", "help":
 		usage(stdout)
 		return 0

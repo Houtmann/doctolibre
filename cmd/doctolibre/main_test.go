@@ -16,7 +16,7 @@ func TestRun(t *testing.T) {
 	}{
 		{[]string{"version"}, 0, version, ""},
 		{[]string{"migrate", "bogus"}, 2, "", "usage: doctolibre migrate"},
-		{[]string{"create-user"}, 2, "", "not implemented"},
+		{[]string{"create-user"}, 2, "", "usage: doctolibre create-user"},
 		{[]string{"nope"}, 2, "", "inconnue"},
 		{nil, 2, "", "usage"},
 	}

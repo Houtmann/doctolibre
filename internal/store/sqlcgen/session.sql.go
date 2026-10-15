@@ -13,14 +13,15 @@ import (
 )
 
 const createSession = `-- name: CreateSession :one
-INSERT INTO session (id, user_id, expires_at, user_agent, ip)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO session (id, user_id, created_at, expires_at, user_agent, ip)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id, user_id, expires_at, created_at, user_agent, ip
 `
 
 type CreateSessionParams struct {
 	ID        string
 	UserID    uuid.UUID
+	CreatedAt time.Time
 	ExpiresAt time.Time
 	UserAgent string
 	Ip        string
@@ -30,6 +31,7 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (S
 	row := q.db.QueryRow(ctx, createSession,
 		arg.ID,
 		arg.UserID,
+		arg.CreatedAt,
 		arg.ExpiresAt,
 		arg.UserAgent,
 		arg.Ip,
@@ -64,6 +66,29 @@ DELETE FROM session WHERE id = $1
 
 func (q *Queries) DeleteSession(ctx context.Context, id string) error {
 	_, err := q.db.Exec(ctx, deleteSession, id)
+	return err
+}
+
+const deleteSessionsByUser = `-- name: DeleteSessionsByUser :exec
+DELETE FROM session WHERE user_id = $1
+`
+
+func (q *Queries) DeleteSessionsByUser(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteSessionsByUser, userID)
+	return err
+}
+
+const extendSession = `-- name: ExtendSession :exec
+UPDATE session SET expires_at = $1 WHERE id = $2
+`
+
+type ExtendSessionParams struct {
+	ExpiresAt time.Time
+	ID        string
+}
+
+func (q *Queries) ExtendSession(ctx context.Context, arg ExtendSessionParams) error {
+	_, err := q.db.Exec(ctx, extendSession, arg.ExpiresAt, arg.ID)
 	return err
 }
 
