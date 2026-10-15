@@ -16,10 +16,10 @@ lint:
 	golangci-lint run ./...
 
 fmt:
-	gofmt -w .
+	gofmt -w $$(find . -name '*.go' -not -path './.claude/*')
 
 fmt-check:
-	@out="$$(gofmt -l .)"; if [ -n "$$out" ]; then echo "fichiers mal formatés:"; echo "$$out"; exit 1; fi
+	@out="$$(gofmt -l $$(find . -name '*.go' -not -path './.claude/*'))"; if [ -n "$$out" ]; then echo "fichiers mal formatés:"; echo "$$out"; exit 1; fi
 
 vet:
 	go vet ./...

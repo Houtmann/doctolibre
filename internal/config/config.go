@@ -38,6 +38,8 @@ type Config struct {
 	TrustedProxies []netip.Prefix
 	// AutoMigrate applique les migrations au démarrage de `serve` (défaut : true).
 	AutoMigrate bool
+	// SMS : fournisseur d'envoi (DOCTOLIBRE_SMS_*), voir sms.go.
+	SMS SMSConfig
 }
 
 // IsProd indique si l'application tourne en production.
@@ -97,6 +99,10 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 	if c.BaseURL == "" && c.Env == EnvDev {
 		c.BaseURL = "http://localhost:8080"
 	}
+	var smsErr error
+	if c.SMS, smsErr = loadSMS(get); smsErr != nil {
+		errs = append(errs, smsErr)
+	}
 	if err := c.Validate(); err != nil {
 		errs = append(errs, err)
 	}
@@ -125,6 +131,9 @@ func (c Config) Validate() error {
 	}
 	if c.MetricsToken != "" && len(c.MetricsToken) < minMetricsTokenLen {
 		errs = append(errs, fmt.Errorf("DOCTOLIBRE_METRICS_TOKEN: %d octets, %d minimum", len(c.MetricsToken), minMetricsTokenLen))
+	}
+	if err := c.SMS.Validate(); err != nil {
+		errs = append(errs, err)
 	}
 	if c.Env == EnvProd {
 		if c.SecretKey == "" {
