@@ -62,12 +62,21 @@ func TestMigrateUpDownUp(t *testing.T) {
 	t.Parallel()
 	db := testutil.DB(t) // up
 	ctx := context.Background()
-	if err := store.MigrateDown(ctx, db); err != nil { // retire 00002
+	if err := store.MigrateDown(ctx, db); err != nil { // retire la dernière (outbox_message)
 		t.Fatalf("down: %v", err)
 	}
-	var n int
-	if err := db.QueryRow(ctx, "SELECT count(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = 'appointment'").Scan(&n); err != nil || n != 0 {
-		t.Fatalf("appointment doit avoir disparu: n=%d err=%v", n, err)
+	count := func(table string) int {
+		var n int
+		if err := db.QueryRow(ctx, "SELECT count(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = $1", table).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	if n := count("outbox_message"); n != 0 {
+		t.Fatalf("outbox_message doit avoir disparu: n=%d", n)
+	}
+	if n := count("appointment"); n != 1 {
+		t.Fatalf("appointment ne doit pas être touchée: n=%d", n)
 	}
 	if err := store.Migrate(ctx, db); err != nil {
 		t.Fatalf("up again: %v", err)
