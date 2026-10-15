@@ -26,8 +26,8 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T002 | [PostgreSQL dev, goose, sqlc](T002-database-tooling.md) | 0 | T001 | done |
 | T003 | [Serveur HTTP et middlewares](T003-http-server.md) | 0 | T001 | done |
 | T004 | [Socle front : templates, htmx, CSS](T004-frontend-base.md) | 0 | T003 | in_progress |
-| T005 | [Infra de tests](T005-test-infra.md) | 0 | T002 | in_progress |
-| T010 | [Schéma de base v1](T010-schema-v1.md) | 1 | T002 | todo |
+| T005 | [Infra de tests](T005-test-infra.md) | 0 | T002 | done |
+| T010 | [Schéma de base v1](T010-schema-v1.md) | 1 | T002 | in_progress |
 | T011 | [Auth praticien](T011-auth-staff.md) | 1 | T004, T005, T010 | todo |
 | T012 | [Paramétrage cabinet, motifs, disponibilités](T012-availability-admin.md) | 1 | T011 | todo |
 | T013 | [Moteur de calcul de créneaux](T013-slot-engine.md) | 1 | T001 | done |
