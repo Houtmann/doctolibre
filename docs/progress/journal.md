@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-15 — T014 et T016 (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T012, T021, T022, T024, T040 → done (validées par l'humain) ; T014, T016 → review
+- **Fait** : réservation en ligne patient (créneaux, OTP SMS/email via l'outbox, patient retrouvé ou créé, page `/r/{token}` + .ics) ; agenda praticien jour/semaine (création, déplacement, annulation, statut, `<dialog>` htmx, liste mobile). `domain.NormalizePhone` partagé.
+- **Revue** : T014 en revue renforcée — transaction de `Book` relue (OTP consommé et créneau revalidé dans la même transaction, `EXCLUDE` tranche), test de concurrence 1 succès / 1 `ErrSlotTaken`. Conflits de merge résolus par union (`serve.go`, `routes.go`, `render_test.go`, `app.css`).
+- **Vérification** : `make check` ✅. Non vérifié : rendu 360 px, agenda au clavier en vrai navigateur.
+- **Reste / reprise** : relecture de T014/T016, puis T015, T017, T032, T041, T042.
+- **Décisions** : 7 entrées dans `decisions.md` (de « OTP de réservation » à « `store.MoveAppointment` »).
+
 ## 2026-10-15 — 5 tâches suivantes (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T012, T021, T022, T024, T040 → review

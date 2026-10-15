@@ -42,3 +42,10 @@ Format : `AAAA-MM-JJ — décision — pourquoi — alternative écartée`.
 - 2026-10-15 — `auth` dépend de `service` (préremplissage des motifs dans `auth.CreateUser`) ; `service` n'importe jamais `auth` et reçoit un `service.Actor` (T012) — dupliquer le seed dans `auth`.
 - 2026-10-15 — Motifs jamais supprimés, seulement désactivés (les RDV passés les référencent) (T012) — suppression en cascade.
 - 2026-10-15 — Migrations renumérotées séquentiellement au merge (00005 index outbox, 00006 plages, 00007 password_reset) ; `make check`/`gofmt` ignorent `.claude/` (worktrees) — numéros « réservés » par tâche (trous, ordre goose fragile).
+- 2026-10-15 — OTP de réservation : table `otp_challenge` (code salé par l'id, destinataire haché, `binding_hash` créneau + canal + coordonnées + consentements), 6 chiffres, 10 min, 5 essais comptés atomiquement, consommation dans la transaction de réservation, 3 codes/h/destinataire comptés en base sous verrou advisory (T014) — état en session / coordonnées en clair.
+- 2026-10-15 — Patient retrouvé par (téléphone ou email) + prénom + nom ; une fiche existante n'est jamais modifiée par une réservation en ligne (T014) — match sur le téléphone seul (une famille partage un numéro, seul le canal du code est vérifié).
+- 2026-10-15 — Jeton de gestion 32 octets base64url, sha256 en base ; confirmation sur `/r/{token}`, ICS minimal dans `internal/ics` (T014) — lien HMAC.
+- 2026-10-15 — Motifs réservables filtrés par `availability_rule.appointment_type_ids` (NULL = tous) ; `practitioner_appointment_type` inutilisée (T014) — alimenter la table de liaison.
+- 2026-10-15 — Agenda : RDV placés par classes CSS générées `.gr-N/.gs-N/.gc-N`, lignes indexées sur l'heure murale (T016) — `top/height` inline, interdit par la CSP.
+- 2026-10-15 — `service.EventSink` (`Emit`, `NopSink` par défaut) appelé après commit, événements avec IDs seulement (T016) ; T023 devra insérer l'outbox dans la transaction (changer la signature ou poser les messages dans le service).
+- 2026-10-15 — `store.MoveAppointment` unique point de déplacement (comme `CreateAppointment`) ; actions staff dans `audit_log`, qui sert d'historique (T016).

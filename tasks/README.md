@@ -31,9 +31,9 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T011 | [Auth praticien](T011-auth-staff.md) | 1 | T004, T005, T010 | done |
 | T012 | [Paramétrage cabinet, motifs, disponibilités](T012-availability-admin.md) | 1 | T011 | done |
 | T013 | [Moteur de calcul de créneaux](T013-slot-engine.md) | 1 | T001 | done |
-| T014 | [Réservation en ligne patient](T014-public-booking.md) | 1 | T012, T013 | in_progress |
+| T014 | [Réservation en ligne patient](T014-public-booking.md) | 1 | T012, T013 | review |
 | T015 | [Gestion du RDV par le patient](T015-patient-manage-link.md) | 1 | T014 | todo |
-| T016 | [Agenda praticien](T016-staff-calendar.md) | 1 | T012, T013 | in_progress |
+| T016 | [Agenda praticien](T016-staff-calendar.md) | 1 | T012, T013 | review |
 | T017 | [Fiches patients](T017-patients.md) | 1 | T016 | todo |
 | T020 | [Outbox et worker](T020-outbox-worker.md) | 2 | T010, T005 | done |
 | T021 | [Email SMTP générique](T021-email-smtp.md) | 2 | T020 | done |
