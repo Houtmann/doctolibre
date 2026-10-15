@@ -1,0 +1,11 @@
+<input type="hidden" name="type" value="{{.TypeID}}">
+<input type="hidden" name="start" value="{{.Start}}">
+<input type="hidden" name="first_name" value="{{.Form.FirstName}}">
+<input type="hidden" name="last_name" value="{{.Form.LastName}}">
+<input type="hidden" name="phone" value="{{.Form.Phone}}">
+<input type="hidden" name="email" value="{{.Form.Email}}">
+<input type="hidden" name="birth_date" value="{{.Form.BirthDate}}">
+<input type="hidden" name="channel" value="{{.Form.Channel}}">
+{{if .Form.SMSOptIn}}<input type="hidden" name="sms_opt_in" value="on">{{end}}
+{{if .Form.EmailOptIn}}<input type="hidden" name="email_opt_in" value="on">{{end}}
+{{if .Form.Consent}}<input type="hidden" name="consent" value="on">{{end}}

@@ -46,6 +46,7 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		deps.Auth = &auth.Service{Pool: pool, Clock: domain.SystemClock{}, Logger: logger, Secure: cfg.IsProd()}
 		deps.Messages = outbox.Queue{Pool: pool, Clock: domain.SystemClock{}}
 		deps.Practice = &service.Practice{Pool: pool, Clock: domain.SystemClock{}}
+		deps.Booking = &service.Booking{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}}
 	} else {
 		logger.Warn("DOCTOLIBRE_DATABASE_URL vide : l'espace /admin est désactivé")
 	}

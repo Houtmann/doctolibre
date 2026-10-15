@@ -1,0 +1,547 @@
+package web
+
+import (
+	"errors"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"golang.org/x/time/rate"
+
+	"doctolibre/internal/domain"
+	"doctolibre/internal/httpx"
+	"doctolibre/internal/ics"
+	"doctolibre/internal/service"
+	"doctolibre/internal/store/sqlcgen"
+)
+
+// Limites de la réservation en ligne : 10 requêtes par minute et par IP.
+const (
+	publicBurst    = 10
+	publicInterval = 6 * time.Second
+	// maxFormValue borne les champs texte relus (le service valide ensuite).
+	maxFormValue = 512
+)
+
+type publicHandlers struct {
+	svc    *service.Booking
+	rd     *Renderer
+	logger *slog.Logger
+}
+
+// publicRoutes enregistre la réservation en ligne (sans compte) et le lien du patient.
+func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
+	h := &publicHandlers{svc: d.Booking, rd: rd, logger: logger}
+	limit := func() httpx.Middleware {
+		return httpx.RateLimit(httpx.ClientIP, rate.Every(publicInterval), publicBurst)
+	}
+	search := limit() // grille et formulaire : un calcul de créneaux à chaque requête
+	const base = "/p/{practice}/{practitioner}/book"
+	mux.HandleFunc("GET /p/{practice}", h.practice)
+	mux.HandleFunc("GET /p/{practice}/{practitioner}", h.practitioner)
+	mux.Handle("GET "+base, httpx.Chain(http.HandlerFunc(h.grid), search))
+	mux.Handle("GET "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsForm), search))
+	mux.Handle("POST "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsSubmit), limit()))
+	mux.Handle("POST "+base+"/confirm", httpx.Chain(http.HandlerFunc(h.confirm), limit()))
+	mux.HandleFunc("GET /r/{token}", h.confirmed)
+	mux.HandleFunc("GET /r/{token}/ics", h.calendarFile)
+}
+
+// fail traduit une erreur non attendue en réponse HTTP (un seul endroit).
+func (h *publicHandlers) fail(w http.ResponseWriter, r *http.Request, err error) {
+	switch {
+	case errors.Is(err, domain.ErrNotFound):
+		h.rd.Error(w, r, http.StatusNotFound, "")
+	default:
+		httpx.LoggerFrom(r.Context()).Error("réservation en ligne en échec", slog.String("err", err.Error()))
+		h.rd.Error(w, r, http.StatusInternalServerError, "")
+	}
+}
+
+// --- Vues ---
+
+// PublicPracticeData est la donnée de la page public_practice.
+type PublicPracticeData struct {
+	Practice      sqlcgen.Practice
+	Practitioners []PractitionerView
+}
+
+// PractitionerView est un praticien affiché.
+type PractitionerView struct {
+	Name, Title, Bio, URL string
+}
+
+// TypeView est un motif réservable affiché.
+type TypeView struct {
+	ID       string
+	Name     string
+	Duration time.Duration
+	URL      string
+}
+
+// PublicPractitionerData est la donnée de la page public_practitioner.
+type PublicPractitionerData struct {
+	Practice     sqlcgen.Practice
+	Practitioner PractitionerView
+	Types        []TypeView
+}
+
+// Summary rappelle ce qui est en cours de réservation.
+type Summary struct {
+	Practice     string
+	Practitioner string
+	Type         string
+	Duration     time.Duration
+	Start        time.Time // dans le fuseau du cabinet
+}
+
+// GridData est la donnée de la grille de créneaux (page et partial).
+type GridData struct {
+	Practice     string
+	Practitioner string
+	Type         TypeView
+	WeekLabel    string
+	Days         []GridDay
+	PrevURL      string
+	NextURL      string
+	BackURL      string
+}
+
+// GridDay regroupe les créneaux d'un jour.
+type GridDay struct {
+	Label string
+	Slots []GridSlot
+}
+
+// GridSlot est un créneau cliquable.
+type GridSlot struct {
+	Time     time.Time
+	URL      string
+	Datetime string
+}
+
+// BookingForm est la saisie du formulaire de réservation.
+type BookingForm struct {
+	FirstName, LastName, Phone, Email, BirthDate string
+	Channel                                      string
+	SMSOptIn, EmailOptIn, Consent                bool
+}
+
+// DetailsData est la donnée de la page public_details.
+type DetailsData struct {
+	Summary Summary
+	Form    BookingForm
+	TypeID  string
+	Start   string
+	Action  string
+	BackURL string
+	Errors  []string
+}
+
+// VerifyData est la donnée de la page public_verify.
+type VerifyData struct {
+	Summary     Summary
+	Form        BookingForm
+	TypeID      string
+	Start       string
+	ChallengeID string
+	Channel     string
+	Destination string
+	Action      string
+	ResendURL   string
+	BackURL     string
+	Errors      []string
+}
+
+// ConfirmedData est la donnée de la page public_confirmed.
+type ConfirmedData struct {
+	Practice     sqlcgen.Practice
+	Practitioner string
+	Type         string
+	Duration     time.Duration
+	FirstName    string
+	Start, End   time.Time
+	Cancelled    bool
+	ICSURL       string
+}
+
+func practitionerView(practiceSlug string, p sqlcgen.Practitioner) PractitionerView {
+	return PractitionerView{
+		Name: strings.TrimSpace(p.FirstName + " " + p.LastName), Title: p.Title, Bio: p.Bio,
+		URL: "/p/" + url.PathEscape(practiceSlug) + "/" + url.PathEscape(p.Slug),
+	}
+}
+
+func typeDuration(t sqlcgen.AppointmentType) time.Duration {
+	return time.Duration(t.Duration.Microseconds+int64(t.Duration.Days)*24*int64(time.Hour/time.Microsecond)) * time.Microsecond
+}
+
+func basePath(r *http.Request) string {
+	return "/p/" + url.PathEscape(r.PathValue("practice")) + "/" + url.PathEscape(r.PathValue("practitioner"))
+}
+
+// --- Pages d'accueil ---
+
+func (h *publicHandlers) practice(w http.ResponseWriter, r *http.Request) {
+	p, err := h.svc.Practice(r.Context(), r.PathValue("practice"))
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	data := PublicPracticeData{Practice: p.Practice}
+	for _, pr := range p.Practitioners {
+		data.Practitioners = append(data.Practitioners, practitionerView(p.Practice.Slug, pr))
+	}
+	h.rd.Page(w, r, "public_practice", data)
+}
+
+func (h *publicHandlers) practitioner(w http.ResponseWriter, r *http.Request) {
+	p, err := h.svc.Practitioner(r.Context(), r.PathValue("practice"), r.PathValue("practitioner"))
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	pv := practitionerView(p.Practice.Slug, p.Practitioner)
+	data := PublicPractitionerData{Practice: p.Practice, Practitioner: pv}
+	for _, t := range p.Types {
+		data.Types = append(data.Types, TypeView{
+			ID: t.ID.String(), Name: t.Name, Duration: typeDuration(t),
+			URL: pv.URL + "/book?type=" + t.ID.String(),
+		})
+	}
+	h.rd.Page(w, r, "public_practitioner", data)
+}
+
+// --- Grille de créneaux ---
+
+// isoWeek formate une semaine au format « 2026-43 ».
+func isoWeek(t time.Time) string {
+	y, w := t.ISOWeek()
+	return fmt.Sprintf("%04d-%02d", y, w)
+}
+
+// mondayOf retourne le lundi 00:00 (heure murale de loc) de la semaine de t.
+func mondayOf(t time.Time, loc *time.Location) time.Time {
+	t = t.In(loc)
+	back := (int(t.Weekday()) + 6) % 7
+	return time.Date(t.Year(), t.Month(), t.Day()-back, 0, 0, 0, 0, loc)
+}
+
+// parseWeek lit « 2026-43 » et retourne le lundi de cette semaine ISO ; ok=false si invalide.
+func parseWeek(s string, loc *time.Location) (time.Time, bool) {
+	var y, w int
+	if n, err := fmt.Sscanf(s, "%d-%d", &y, &w); err != nil || n != 2 || y < 2000 || y > 2200 || w < 1 || w > 53 {
+		return time.Time{}, false
+	}
+	jan4 := time.Date(y, time.January, 4, 12, 0, 0, 0, loc) // le 4 janvier est toujours en semaine 1
+	mon := mondayOf(jan4, loc).AddDate(0, 0, (w-1)*7)
+	if yy, ww := mon.ISOWeek(); yy != y || ww != w { // semaine 53 inexistante cette année-là
+		return time.Time{}, false
+	}
+	return mon, true
+}
+
+func (h *publicHandlers) grid(w http.ResponseWriter, r *http.Request) {
+	typeID, err := uuid.Parse(r.URL.Query().Get("type"))
+	if err != nil {
+		httpx.Redirect(w, r, basePath(r))
+		return
+	}
+	t, err := h.svc.Target(r.Context(), r.PathValue("practice"), r.PathValue("practitioner"), typeID)
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	now := h.svc.Now()
+	minMon, maxMon := mondayOf(now, t.Loc), mondayOf(now.Add(t.Horizon), t.Loc)
+	mon, ok := parseWeek(r.URL.Query().Get("week"), t.Loc)
+	if !ok || mon.Before(minMon) {
+		mon = minMon
+	}
+	if mon.After(maxMon) {
+		mon = maxMon
+	}
+	next := mon.AddDate(0, 0, 7)
+	slots, err := h.svc.AvailableSlots(r.Context(), t.Practitioner.ID, t.Type.ID, mon, next)
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+
+	base := basePath(r)
+	gridURL := func(week time.Time) string {
+		return base + "/book?" + url.Values{"type": {typeID.String()}, "week": {isoWeek(week)}}.Encode()
+	}
+	data := GridData{
+		Practice: t.Practice.Name, Practitioner: practitionerView(t.Practice.Slug, t.Practitioner).Name,
+		Type:      TypeView{ID: typeID.String(), Name: t.Type.Name, Duration: typeDuration(t.Type)},
+		WeekLabel: fmt.Sprintf("du %s au %s", frenchDate(mon), frenchDate(mon.AddDate(0, 0, 6))),
+		BackURL:   base,
+	}
+	if mon.After(minMon) {
+		data.PrevURL = gridURL(mon.AddDate(0, 0, -7))
+	}
+	if next.Before(maxMon.AddDate(0, 0, 7)) {
+		data.NextURL = gridURL(next)
+	}
+	for i := range 7 {
+		day := mon.AddDate(0, 0, i)
+		gd := GridDay{Label: frenchDate(day)}
+		for _, s := range slots {
+			st := s.Start.In(t.Loc)
+			if st.Year() != day.Year() || st.YearDay() != day.YearDay() {
+				continue
+			}
+			gd.Slots = append(gd.Slots, GridSlot{
+				Time: st, Datetime: st.Format(time.RFC3339),
+				URL: base + "/book/details?" + url.Values{"type": {typeID.String()}, "start": {s.Start.UTC().Format(time.RFC3339)}}.Encode(),
+			})
+		}
+		if len(gd.Slots) > 0 {
+			data.Days = append(data.Days, gd)
+		}
+	}
+	// La réponse dépend de HX-Request : les caches ne doivent pas mélanger page et partial.
+	w.Header().Add("Vary", "HX-Request")
+	if httpx.IsHTMX(r) {
+		h.rd.Partial(w, r, "booking_grid", data)
+		return
+	}
+	h.rd.Page(w, r, "public_book", data)
+}
+
+// --- Détails, vérification, confirmation ---
+
+// bookingTarget résout cabinet, praticien, motif et créneau de la requête.
+// Une demande invalide (motif ou date illisibles, créneau hors disponibilités)
+// redirige vers la grille ou la page du praticien ; ok=false si la réponse est déjà écrite.
+func (h *publicHandlers) bookingTarget(w http.ResponseWriter, r *http.Request) (t service.Target, start time.Time, ok bool) {
+	typeID, err := uuid.Parse(r.FormValue("type"))
+	if err != nil {
+		httpx.Redirect(w, r, basePath(r))
+		return t, start, false
+	}
+	t, err = h.svc.Target(r.Context(), r.PathValue("practice"), r.PathValue("practitioner"), typeID)
+	if err != nil {
+		h.fail(w, r, err)
+		return t, start, false
+	}
+	start, err = time.Parse(time.RFC3339, r.FormValue("start"))
+	if err != nil {
+		h.slotGone(w, r, t, "Ce créneau n'est pas valide.")
+		return t, start, false
+	}
+	start = start.UTC()
+	if err := h.svc.CheckSlot(r.Context(), t.Practitioner.ID, t.Type.ID, start); err != nil {
+		if errors.Is(err, domain.ErrSlotTaken) {
+			h.slotGone(w, r, t, "Ce créneau n'est plus disponible. Choisissez-en un autre.")
+		} else {
+			h.fail(w, r, err)
+		}
+		return t, start, false
+	}
+	return t, start, true
+}
+
+// slotGone ramène à la grille de la semaine avec un message.
+func (h *publicHandlers) slotGone(w http.ResponseWriter, r *http.Request, t service.Target, msg string) {
+	h.rd.SetFlash(w, "error", msg)
+	httpx.Redirect(w, r, basePath(r)+"/book?"+url.Values{"type": {t.Type.ID.String()}}.Encode())
+}
+
+func (h *publicHandlers) summary(t service.Target, start time.Time) Summary {
+	return Summary{
+		Practice: t.Practice.Name, Practitioner: practitionerView(t.Practice.Slug, t.Practitioner).Name,
+		Type: t.Type.Name, Duration: typeDuration(t.Type), Start: start.In(t.Loc),
+	}
+}
+
+func formValue(r *http.Request, name string) string {
+	v := strings.TrimSpace(r.PostFormValue(name))
+	if len(v) > maxFormValue {
+		v = v[:maxFormValue]
+	}
+	return v
+}
+
+func readBookingForm(r *http.Request) BookingForm {
+	f := BookingForm{
+		FirstName: formValue(r, "first_name"), LastName: formValue(r, "last_name"),
+		Phone: formValue(r, "phone"), Email: formValue(r, "email"), BirthDate: formValue(r, "birth_date"),
+		Channel:  formValue(r, "channel"),
+		SMSOptIn: r.PostFormValue("sms_opt_in") != "", EmailOptIn: r.PostFormValue("email_opt_in") != "",
+		Consent: r.PostFormValue("consent") != "",
+	}
+	return f
+}
+
+func (f BookingForm) patient() service.PatientDetails {
+	return service.PatientDetails{
+		FirstName: f.FirstName, LastName: f.LastName, Phone: f.Phone, Email: f.Email,
+		BirthDate: f.BirthDate, SMSOptIn: f.SMSOptIn, EmailOptIn: f.EmailOptIn,
+	}
+}
+
+func (h *publicHandlers) renderDetails(w http.ResponseWriter, r *http.Request, status int, t service.Target, start time.Time, f BookingForm, errs []string) {
+	base := basePath(r)
+	w.Header().Set("Cache-Control", "no-store")
+	h.rd.PageStatus(w, r, status, "public_details", DetailsData{
+		Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
+		Action:  base + "/book/details",
+		BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}, "week": {isoWeek(start.In(t.Loc))}}.Encode(),
+		Errors:  errs,
+	})
+}
+
+func (h *publicHandlers) renderVerify(w http.ResponseWriter, r *http.Request, status int, t service.Target, start time.Time, f BookingForm, challenge uuid.UUID, errs []string) {
+	base := basePath(r)
+	dest := f.Phone
+	if n, err := domain.NormalizePhone(dest); err == nil {
+		dest = n
+	}
+	if f.Channel == "email" {
+		dest = f.Email
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	h.rd.PageStatus(w, r, status, "public_verify", VerifyData{
+		Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
+		ChallengeID: challenge.String(), Channel: f.Channel, Destination: maskRecipient(dest),
+		Action: base + "/book/confirm", ResendURL: base + "/book/details",
+		BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}, "week": {isoWeek(start.In(t.Loc))}}.Encode(),
+		Errors:  errs,
+	})
+}
+
+func (h *publicHandlers) detailsForm(w http.ResponseWriter, r *http.Request) {
+	t, start, ok := h.bookingTarget(w, r)
+	if !ok {
+		return
+	}
+	h.renderDetails(w, r, http.StatusOK, t, start, BookingForm{Channel: "sms", SMSOptIn: true, EmailOptIn: true}, nil)
+}
+
+func (h *publicHandlers) detailsSubmit(w http.ResponseWriter, r *http.Request) {
+	t, start, ok := h.bookingTarget(w, r)
+	if !ok {
+		return
+	}
+	f := readBookingForm(r)
+	if !f.Consent {
+		h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f, []string{"Vous devez accepter l'utilisation de vos coordonnées pour gérer ce rendez-vous."})
+		return
+	}
+	if formValue(r, "website") != "" { // piège à robots : on fait semblant, sans rien envoyer
+		h.renderVerify(w, r, http.StatusOK, t, start, f, uuid.New(), nil)
+		return
+	}
+	v, err := h.svc.StartVerification(r.Context(), service.VerifyInput{
+		PractitionerID: t.Practitioner.ID, TypeID: t.Type.ID, Start: start, Patient: f.patient(), Channel: f.Channel,
+	})
+	switch {
+	case err == nil:
+		h.renderVerify(w, r, http.StatusOK, t, start, f, v.ChallengeID, nil)
+	case errors.Is(err, service.ErrOTPRateLimited):
+		msg := "Trop de codes ont été demandés pour ce contact. Réessayez dans une heure"
+		if t.Practice.Phone != "" {
+			msg += " ou appelez le cabinet au " + t.Practice.Phone
+		}
+		h.renderDetails(w, r, http.StatusTooManyRequests, t, start, f, []string{msg + "."})
+	case errors.Is(err, domain.ErrSlotTaken):
+		h.slotGone(w, r, t, "Ce créneau vient d'être pris. Choisissez-en un autre.")
+	default:
+		if msgs := validation(err); msgs != nil {
+			h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f, msgs)
+			return
+		}
+		h.fail(w, r, err)
+	}
+}
+
+func (h *publicHandlers) confirm(w http.ResponseWriter, r *http.Request) {
+	t, start, ok := h.bookingTarget(w, r)
+	if !ok {
+		return
+	}
+	f := readBookingForm(r)
+	challenge, cerr := uuid.Parse(formValue(r, "challenge_id"))
+	if cerr != nil {
+		h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f, []string{"La vérification a expiré. Validez le formulaire pour recevoir un nouveau code."})
+		return
+	}
+	res, err := h.svc.Book(r.Context(), service.BookInput{
+		VerifyInput: service.VerifyInput{
+			PractitionerID: t.Practitioner.ID, TypeID: t.Type.ID, Start: start, Patient: f.patient(), Channel: f.Channel,
+		},
+		ChallengeID: challenge,
+		Code:        strings.Join(strings.Fields(r.PostFormValue("code")), ""),
+	})
+	switch {
+	case err == nil:
+		httpx.LoggerFrom(r.Context()).Info("rendez-vous réservé en ligne",
+			slog.String("appointment_id", res.Appointment.ID.String()), slog.String("practice_id", res.Appointment.PracticeID.String()))
+		httpx.Redirect(w, r, "/r/"+url.PathEscape(res.Token))
+	case errors.Is(err, service.ErrOTPWrong):
+		h.renderVerify(w, r, http.StatusUnprocessableEntity, t, start, f, challenge, []string{"Le code saisi est incorrect. Vérifiez-le et réessayez."})
+	case errors.Is(err, service.ErrOTPExpired):
+		h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f,
+			[]string{"Ce code a expiré, a déjà servi ou le nombre d'essais est dépassé. Validez le formulaire pour recevoir un nouveau code."})
+	case errors.Is(err, domain.ErrSlotTaken):
+		h.slotGone(w, r, t, "Ce créneau vient d'être pris. Choisissez-en un autre.")
+	default:
+		if msgs := validation(err); msgs != nil {
+			h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f, msgs)
+			return
+		}
+		h.fail(w, r, err)
+	}
+}
+
+// --- Page de confirmation et fichier .ics ---
+
+func (h *publicHandlers) confirmed(w http.ResponseWriter, r *http.Request) {
+	c, err := h.svc.Confirmation(r.Context(), r.PathValue("token"))
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	h.rd.Page(w, r, "public_confirmed", ConfirmedData{
+		Practice: c.Practice, Practitioner: practitionerView(c.Practice.Slug, c.Practitioner).Name, Type: c.Type.Name,
+		Duration: c.End.Sub(c.Start), FirstName: c.FirstName, Start: c.Start, End: c.End,
+		Cancelled: c.Appointment.Status == "cancelled",
+		ICSURL:    "/r/" + url.PathEscape(r.PathValue("token")) + "/ics",
+	})
+}
+
+func (h *publicHandlers) calendarFile(w http.ResponseWriter, r *http.Request) {
+	c, err := h.svc.Confirmation(r.Context(), r.PathValue("token"))
+	if err != nil || c.Appointment.Status == "cancelled" {
+		h.fail(w, r, errOrNotFound(err))
+		return
+	}
+	desc := ""
+	if c.Practice.Phone != "" {
+		desc = "Cabinet : " + c.Practice.Phone
+	}
+	ev := ics.Event{
+		UID: c.Appointment.ID.String() + "@doctolibre", Start: c.Start, End: c.End, Stamp: h.svc.Now(),
+		Summary: c.Type.Name + " - " + c.Practice.Name, Location: c.Practice.Address, Description: desc,
+	}
+	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="rendez-vous.ics"`)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Referrer-Policy", "no-referrer")
+	_, _ = w.Write(ev.Calendar())
+}
+
+func errOrNotFound(err error) error {
+	if err != nil {
+		return err
+	}
+	return domain.ErrNotFound
+}

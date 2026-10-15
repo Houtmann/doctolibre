@@ -1,0 +1,9 @@
+{{define "title"}}Votre code de vérification{{end}}
+{{define "content"}}
+<h1 style="margin:0 0 16px;font-size:20px;">Votre code de vérification</h1>
+<p style="margin:0 0 16px;">Bonjour,</p>
+<p style="margin:0 0 16px;">Voici le code à saisir pour confirmer votre rendez-vous chez {{.practice_name}} :</p>
+<p style="margin:0 0 16px;font-size:32px;font-weight:bold;letter-spacing:6px;font-family:'Courier New',monospace;">{{.code}}</p>
+<p style="margin:0 0 16px;font-size:14px;">Il est valable {{.valid_for}}. Ne le communiquez à personne.</p>
+<p style="margin:0;font-size:14px;">Si vous n'êtes pas à l'origine de cette demande, ignorez simplement cet email.</p>
+{{end}}

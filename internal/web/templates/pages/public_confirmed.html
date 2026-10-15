@@ -1,0 +1,15 @@
+{{define "title"}}Rendez-vous confirmé{{end}}
+{{define "content"}}
+<h1>{{if .Data.Cancelled}}Rendez-vous annulé{{else}}Rendez-vous confirmé{{end}}</h1>
+<article class="booking-summary">
+  <p>{{.Data.FirstName}}, votre rendez-vous{{if .Data.Cancelled}} était prévu{{else}} est réservé{{end}} :</p>
+  <p><strong>{{.Data.Type}}</strong> ({{formatDuration .Data.Duration}})<br>
+  avec {{.Data.Practitioner}}<br>
+  <time datetime="{{.Data.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Start}} à {{localTime .Data.Start}}</time></p>
+  <p>{{.Data.Practice.Name}}{{if .Data.Practice.Address}}<br>{{.Data.Practice.Address}}{{end}}{{if .Data.Practice.Phone}}<br>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}</p>
+</article>
+{{if not .Data.Cancelled}}
+<p><a href="{{.Data.ICSURL}}" role="button">Ajouter à mon agenda</a></p>
+{{end}}
+<p><small>Conservez l'adresse de cette page : elle vous permettra de retrouver votre rendez-vous. Ne la partagez pas.</small></p>
+{{end}}

@@ -1,0 +1,7 @@
+{{define "title"}}Choisir un créneau · {{.Data.Practice}}{{end}}
+{{define "content"}}
+<nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Changer de motif</a></nav>
+<h1>Choisir un créneau</h1>
+<p>{{.Data.Type.Name}} ({{formatDuration .Data.Type.Duration}}) avec {{.Data.Practitioner}}</p>
+{{template "booking_grid.html" .Data}}
+{{end}}
