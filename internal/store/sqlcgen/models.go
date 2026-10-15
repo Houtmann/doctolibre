@@ -3,3 +3,150 @@
 //   sqlc v1.31.1
 
 package sqlcgen
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+type AppUser struct {
+	ID             uuid.UUID
+	PracticeID     uuid.UUID
+	PractitionerID pgtype.UUID
+	Email          string
+	PasswordHash   string
+	Role           string
+	LastLoginAt    pgtype.Timestamptz
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type Appointment struct {
+	ID                uuid.UUID
+	PracticeID        uuid.UUID
+	PractitionerID    uuid.UUID
+	PatientID         uuid.UUID
+	AppointmentTypeID uuid.UUID
+	During            pgtype.Range[pgtype.Timestamptz]
+	BufferBefore      pgtype.Interval
+	BufferAfter       pgtype.Interval
+	DuringBlocked     pgtype.Range[pgtype.Timestamptz]
+	Status            string
+	Source            string
+	CarePlanID        pgtype.UUID
+	CancelledAt       pgtype.Timestamptz
+	CancelledBy       pgtype.Text
+	CancelReason      pgtype.Text
+	ManageTokenHash   pgtype.Text
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
+
+type AppointmentType struct {
+	ID             uuid.UUID
+	PracticeID     uuid.UUID
+	Name           string
+	Duration       pgtype.Interval
+	BufferBefore   pgtype.Interval
+	BufferAfter    pgtype.Interval
+	OnlineBookable bool
+	AtHome         bool
+	Color          string
+	Position       int32
+	Active         bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type AuditLog struct {
+	ID       int64
+	At       time.Time
+	UserID   pgtype.UUID
+	Actor    string
+	Action   string
+	Entity   string
+	EntityID pgtype.UUID
+	Meta     []byte
+}
+
+type AvailabilityException struct {
+	ID             uuid.UUID
+	PractitionerID uuid.UUID
+	During         pgtype.Range[pgtype.Timestamptz]
+	Kind           string
+	Reason         string
+	CreatedAt      time.Time
+}
+
+type AvailabilityRule struct {
+	ID                 uuid.UUID
+	PractitionerID     uuid.UUID
+	Weekday            int16
+	StartTime          pgtype.Time
+	EndTime            pgtype.Time
+	ValidFrom          pgtype.Date
+	ValidUntil         pgtype.Date
+	AppointmentTypeIds []uuid.UUID
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+}
+
+type Patient struct {
+	ID         uuid.UUID
+	PracticeID uuid.UUID
+	FirstName  string
+	LastName   string
+	BirthDate  pgtype.Date
+	Phone      pgtype.Text
+	Email      pgtype.Text
+	SmsOptIn   bool
+	EmailOptIn bool
+	NotesAdmin string
+	DeletedAt  pgtype.Timestamptz
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+type Practice struct {
+	ID               uuid.UUID
+	Name             string
+	Slug             string
+	Address          string
+	Phone            string
+	Timezone         string
+	MinBookingNotice pgtype.Interval
+	MinCancelNotice  pgtype.Interval
+	BookingHorizon   pgtype.Interval
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+type Practitioner struct {
+	ID         uuid.UUID
+	PracticeID uuid.UUID
+	FirstName  string
+	LastName   string
+	Slug       string
+	Title      string
+	Bio        string
+	Color      string
+	Active     bool
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+type PractitionerAppointmentType struct {
+	PractitionerID    uuid.UUID
+	AppointmentTypeID uuid.UUID
+}
+
+type Session struct {
+	ID        string
+	UserID    uuid.UUID
+	ExpiresAt time.Time
+	CreatedAt time.Time
+	UserAgent string
+	Ip        string
+}
