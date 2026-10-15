@@ -35,6 +35,8 @@ type Deps struct {
 	Messages MessageQueue
 	// Practice (service de paramétrage du cabinet) est optionnel : nil = pas de pages de configuration.
 	Practice *service.Practice
+	// Calendar (agenda du praticien) est optionnel : nil = pas de pages d'agenda.
+	Calendar *service.Calendar
 }
 
 const pingTimeout = 2 * time.Second

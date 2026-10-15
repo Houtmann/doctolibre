@@ -1,0 +1,68 @@
+<div id="appt-detail">
+  <h2 id="appt-dialog-title">Rendez-vous</h2>
+  {{template "form_errors.html" .Errors}}
+  {{with .D}}
+  <dl class="detail-list">
+    <dt>Patient</dt><dd>{{.Patient}}</dd>
+    {{if .Phone}}<dt>Téléphone</dt><dd>{{.Phone}}</dd>{{end}}
+    {{if .Email}}<dt>Email</dt><dd>{{.Email}}</dd>{{end}}
+    <dt>Motif</dt><dd>{{.TypeName}}</dd>
+    <dt>Date</dt><dd>{{localDate .Start}}, de {{localTime .Start}} à {{localTime .End}}</dd>
+    <dt>Statut</dt><dd>{{.StatusLabel}}</dd>
+    <dt>Origine</dt><dd>{{.SourceLabel}}, le {{localDate .CreatedAt}} à {{localTime .CreatedAt}}</dd>
+    {{if .CancelReason}}<dt>Motif d'annulation</dt><dd>{{.CancelReason}}</dd>{{end}}
+  </dl>
+  {{if .History}}
+  <h3>Historique</h3>
+  <ul>
+    {{range .History}}<li>{{localDate .At}} à {{localTime .At}} : {{.Text}}</li>{{end}}
+  </ul>
+  {{end}}
+  {{end}}
+
+  {{if ne .D.Status "cancelled"}}
+  <h3>Statut</h3>
+  <div class="inline-actions">
+    {{if ne .D.Status "done"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "done" "Label" "Marquer honoré")}}{{end}}
+    {{if ne .D.Status "no_show"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "no_show" "Label" "Marquer absent")}}{{end}}
+    {{if ne .D.Status "booked"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "booked" "Label" "Remettre à venir")}}{{end}}
+  </div>
+  {{end}}
+
+  {{if .D.CanMove}}
+  <h3>Déplacer</h3>
+  <form method="post" action="/admin/appointments/{{.D.ID}}/move" hx-post="/admin/appointments/{{.D.ID}}/move" hx-target="#appt-detail" hx-swap="outerHTML">
+    {{csrf .CSRF}}
+    <input type="hidden" name="view" value="{{.View}}">
+    <div class="grid">
+      <div>
+        <label for="move-date">Nouvelle date</label>
+        <input id="move-date" name="date" type="date" value="{{.Move.Date}}" required>
+      </div>
+      <div>
+        <label for="move-time">Nouvelle heure</label>
+        <input id="move-time" name="time" type="time" step="300" value="{{.Move.Time}}" required>
+      </div>
+    </div>
+    <label for="move-force">
+      <input id="move-force" type="checkbox" name="force" value="1"{{if .Move.Force}} checked{{end}}>
+      Hors horaires (autoriser en dehors des disponibilités)
+    </label>
+    <button type="submit">Déplacer</button>
+  </form>
+  {{end}}
+
+  {{if .D.CanCancel}}
+  <h3>Annuler</h3>
+  <form method="post" action="/admin/appointments/{{.D.ID}}/cancel" hx-post="/admin/appointments/{{.D.ID}}/cancel" hx-target="#appt-detail" hx-swap="outerHTML">
+    {{csrf .CSRF}}
+    <input type="hidden" name="date" value="{{.D.MoveDate}}">
+    <input type="hidden" name="view" value="{{.View}}">
+    <label for="cancel-reason">Motif de l'annulation (facultatif, visible du cabinet uniquement)</label>
+    <input id="cancel-reason" name="reason" value="{{.Reason}}" maxlength="200">
+    <button type="submit" class="secondary">Annuler le rendez-vous</button>
+  </form>
+  {{end}}
+
+  <p><a role="button" class="secondary outline" href="/admin/calendar">Fermer</a></p>
+</div>

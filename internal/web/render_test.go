@@ -64,6 +64,12 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = &AvailabilityPage{}
 			case "admin_absences":
 				data = &AbsencesPage{}
+			case "admin_calendar":
+				data = &CalendarPage{}
+			case "admin_appointment_new":
+				data = &FormPage{}
+			case "admin_appointment":
+				data = &DetailPage{}
 			}
 			rd.Page(rec, httptest.NewRequest("GET", "/", nil), n, data)
 			if rec.Code != 200 || !strings.Contains(rec.Body.String(), `<html lang="fr">`) {
