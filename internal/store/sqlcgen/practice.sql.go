@@ -74,6 +74,29 @@ func (q *Queries) GetPractice(ctx context.Context, id uuid.UUID) (Practice, erro
 	return i, err
 }
 
+const getPracticeByName = `-- name: GetPracticeByName :one
+SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at FROM practice WHERE name = $1 ORDER BY created_at, id LIMIT 1
+`
+
+func (q *Queries) GetPracticeByName(ctx context.Context, name string) (Practice, error) {
+	row := q.db.QueryRow(ctx, getPracticeByName, name)
+	var i Practice
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Address,
+		&i.Phone,
+		&i.Timezone,
+		&i.MinBookingNotice,
+		&i.MinCancelNotice,
+		&i.BookingHorizon,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getPracticeBySlug = `-- name: GetPracticeBySlug :one
 SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at FROM practice WHERE slug = $1
 `

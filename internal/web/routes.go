@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"doctolibre/internal/auth"
 	"doctolibre/internal/config"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/metrics"
@@ -27,6 +28,8 @@ type Deps struct {
 	// Config.MetricsToken != "" ; la mesure des requêtes ne dépend que de Metrics.
 	Metrics  *metrics.Metrics
 	Renderer *Renderer // optionnel : nil = construit depuis Config
+	// Auth est optionnel : nil = pas de routes /admin (pas de base de données).
+	Auth *auth.Service
 }
 
 const pingTimeout = 2 * time.Second
@@ -49,6 +52,9 @@ func Routes(d Deps) http.Handler {
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) { rd.Page(w, r, "home", nil) })
 	if rd != nil {
 		mux.Handle("GET /static/", rd.StaticHandler())
+	}
+	if d.Auth != nil && rd != nil {
+		d.adminRoutes(mux, rd, logger)
 	}
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) { rd.Error(w, r, http.StatusNotFound, "") })
 

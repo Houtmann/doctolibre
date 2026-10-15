@@ -21,9 +21,9 @@ Le personnel du cabinet se connecte par email + mot de passe ; l'espace `/admin`
 - Audit : `login_success`, `login_failure`, `logout`.
 
 ## Critères d'acceptation
-- [ ] Accès `/admin` sans session → redirection `/admin/login?next=…` (next validé : chemin relatif uniquement).
-- [ ] Session expirée ou révoquée → déconnecté.
-- [ ] Tests : hash/verify, login OK/KO, rate limit, open-redirect refusé.
+- [x] Accès `/admin` sans session → redirection `/admin/login?next=…` (next validé : chemin relatif uniquement).
+- [x] Session expirée ou révoquée → déconnecté.
+- [x] Tests : hash/verify, login OK/KO, rate limit, open-redirect refusé.
 
 ## Vérification
 ```bash
@@ -37,8 +37,8 @@ Mot de passe oublié (à ajouter après T021), 2FA, gestion multi-utilisateurs d
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-15 (sonnet).
+- **Fait** : internal/auth (password argon2id PHC m=64MiB t=1 p=2, Service Login/Authenticate/Logout, cookie, RequireUser, SafeNext, CreateUser, Slugify) ; routes GET/POST /admin/login, POST /admin/logout, GET /admin (pages login et admin_dashboard, bouton déconnexion dans layout admin) ; rate limit 5/15 min par IP et par email ; audit login_success/login_failure/logout ; sous-commande create-user (x/term, repli sur 1re ligne de stdin si non-TTY) ; serve ouvre le pool et active /admin si DOCTOLIBRE_DATABASE_URL défini ; requêtes sqlc ExtendSession, DeleteSessionsByUser, GetPracticeByName ; CreateSession prend created_at ; tests auth + web.
+- **Reste à faire** : rien (chemin TTY interactif de create-user non testé automatiquement).
+- **Notes de reprise** : aucune migration ajoutée. Tests DB : DOCTOLIBRE_TEST_DATABASE_URL.
+- **Ecarts avec la spécification** : cookie `session` en dev (HTTP) et `__Host-session` en prod, car le préfixe __Host- exige Secure ; durée absolue de 7 jours en plus de l expiration glissante 12 h ; mot de passe >= 12 caractères ; GetPracticeByName par nom exact ; ClientIP = RemoteAddr (derrière Caddy toutes les IP se confondent, voir rapport).

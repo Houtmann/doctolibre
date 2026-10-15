@@ -6,9 +6,12 @@ import (
 	"io"
 	"log/slog"
 
+	"doctolibre/internal/auth"
 	"doctolibre/internal/config"
+	"doctolibre/internal/domain"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/metrics"
+	"doctolibre/internal/store"
 	"doctolibre/internal/web"
 )
 
@@ -20,6 +23,17 @@ func serve(ctx context.Context, logOut io.Writer) error {
 	}
 	logger := newLogger(cfg, logOut)
 	deps := web.Deps{Config: cfg, Logger: logger}
+	if cfg.DatabaseURL != "" {
+		pool, err := store.Open(ctx, cfg.DatabaseURL)
+		if err != nil {
+			return fmt.Errorf("base de données: %w", err)
+		}
+		defer pool.Close()
+		deps.DB = pool
+		deps.Auth = &auth.Service{Pool: pool, Clock: domain.SystemClock{}, Logger: logger, Secure: cfg.IsProd()}
+	} else {
+		logger.Warn("DOCTOLIBRE_DATABASE_URL vide : l'espace /admin est désactivé")
+	}
 	if cfg.MetricsToken != "" {
 		deps.Metrics = metrics.New()
 	}
