@@ -14,6 +14,35 @@ import (
 
 func ok(w http.ResponseWriter, _ *http.Request) { _, _ = io.WriteString(w, "ok") }
 
+func TestLoggerMasksSecretTokens(t *testing.T) {
+	t.Parallel()
+	const secret = "s3cr3t-T0ken_abc"
+	tests := []struct {
+		name, path, wantPath string
+	}{
+		{"flux ICS", "/ics/" + secret + ".ics", `"path":"/ics/…"`},
+		{"lien patient", "/r/" + secret + "/cancel", `"path":"/r/…"`},
+		{"préfixe seul", "/r/", `"path":"/r/…"`},
+		{"chemin ordinaire", "/admin/calendar", `"path":"/admin/calendar"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var buf bytes.Buffer
+			logger := slog.New(slog.NewJSONHandler(&buf, nil))
+			h := Chain(http.HandlerFunc(ok), RequestID(logger), Logger())
+			h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, tt.path, nil))
+			out := buf.String()
+			if strings.Contains(out, secret) {
+				t.Errorf("jeton dans les logs : %s", out)
+			}
+			if !strings.Contains(out, tt.wantPath) {
+				t.Errorf("chemin attendu %s dans %s", tt.wantPath, out)
+			}
+		})
+	}
+}
+
 func TestRequestIDAndLogger(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer

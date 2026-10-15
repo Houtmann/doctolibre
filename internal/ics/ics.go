@@ -1,9 +1,9 @@
-// Package ics produit des fichiers iCalendar (RFC 5545) minimaux : un
-// événement par fichier, heures en UTC. Le flux complet d'un praticien est
-// l'affaire de T042.
+// Package ics produit des fichiers iCalendar (RFC 5545) minimaux, heures en UTC :
+// un événement seul (lien patient) ou un flux d'événements (abonnement praticien).
 package ics
 
 import (
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -18,6 +18,10 @@ type Event struct {
 	Summary     string
 	Location    string
 	Description string
+	// Status : "" (non émis), "CONFIRMED" ou "CANCELLED".
+	Status string
+	// Sequence : numéro de révision (SEQUENCE) ; 0 = non émis.
+	Sequence int
 }
 
 const (
@@ -26,8 +30,13 @@ const (
 	timeLayout = "20060102T150405Z"
 )
 
-// Calendar rend le fichier .ics complet (fins de ligne CRLF, lignes repliées à 75 octets).
-func (e Event) Calendar() []byte {
+// Calendar rend le fichier .ics complet d'un seul événement (fins de ligne CRLF,
+// lignes repliées à 75 octets).
+func (e Event) Calendar() []byte { return Feed("", []Event{e}) }
+
+// Feed rend un calendrier de plusieurs événements. name, s'il est non vide,
+// devient le nom d'abonnement affiché par les clients (X-WR-CALNAME).
+func Feed(name string, events []Event) []byte {
 	var b strings.Builder
 	line := func(s string) { b.WriteString(fold(s)) }
 	line("BEGIN:VCALENDAR")
@@ -35,19 +44,30 @@ func (e Event) Calendar() []byte {
 	line("PRODID:-//Doctolibre//FR")
 	line("CALSCALE:GREGORIAN")
 	line("METHOD:PUBLISH")
-	line("BEGIN:VEVENT")
-	line("UID:" + escape(e.UID))
-	line("DTSTAMP:" + e.Stamp.UTC().Format(timeLayout))
-	line("DTSTART:" + e.Start.UTC().Format(timeLayout))
-	line("DTEND:" + e.End.UTC().Format(timeLayout))
-	line("SUMMARY:" + escape(e.Summary))
-	if e.Location != "" {
-		line("LOCATION:" + escape(e.Location))
+	if name != "" {
+		line("X-WR-CALNAME:" + escape(name))
 	}
-	if e.Description != "" {
-		line("DESCRIPTION:" + escape(e.Description))
+	for _, e := range events {
+		line("BEGIN:VEVENT")
+		line("UID:" + escape(e.UID))
+		line("DTSTAMP:" + e.Stamp.UTC().Format(timeLayout))
+		line("DTSTART:" + e.Start.UTC().Format(timeLayout))
+		line("DTEND:" + e.End.UTC().Format(timeLayout))
+		if e.Sequence > 0 {
+			line("SEQUENCE:" + strconv.Itoa(e.Sequence))
+		}
+		if e.Status != "" {
+			line("STATUS:" + e.Status)
+		}
+		line("SUMMARY:" + escape(e.Summary))
+		if e.Location != "" {
+			line("LOCATION:" + escape(e.Location))
+		}
+		if e.Description != "" {
+			line("DESCRIPTION:" + escape(e.Description))
+		}
+		line("END:VEVENT")
 	}
-	line("END:VEVENT")
 	line("END:VCALENDAR")
 	return []byte(b.String())
 }

@@ -39,6 +39,8 @@ type Deps struct {
 	Calendar *service.Calendar
 	// Booking (réservation en ligne des patients) est optionnel : nil = pas de pages /p/… ni /r/….
 	Booking *service.Booking
+	// Feed (flux ICS du praticien) est optionnel : nil = pas de /ics/… ni de réglage d'abonnement.
+	Feed *service.CalendarFeed
 }
 
 const pingTimeout = 2 * time.Second
@@ -67,6 +69,9 @@ func Routes(d Deps) http.Handler {
 	}
 	if d.Booking != nil && rd != nil {
 		d.publicRoutes(mux, rd, logger)
+	}
+	if d.Feed != nil && rd != nil {
+		d.feedRoutes(mux, rd, logger)
 	}
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) { rd.Error(w, r, http.StatusNotFound, "") })
 
