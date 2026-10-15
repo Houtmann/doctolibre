@@ -25,12 +25,17 @@ const (
 
 // configRoutes enregistre les pages de paramétrage du cabinet (admin et praticien).
 func (d Deps) configRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
-	h := &configHandlers{svc: d.Practice, rd: rd, logger: logger}
+	h := &configHandlers{svc: d.Practice, feed: d.Feed, baseURL: d.Config.BaseURL, rd: rd, logger: logger}
 	require := d.Auth.RequireUser(domain.RoleAdmin, domain.RolePractitioner)
 	handle := func(pattern string, f http.HandlerFunc) { mux.Handle(pattern, require(f)) }
 
 	handle("GET "+pathSettings, h.settingsForm)
 	handle("POST "+pathSettings, h.settingsSubmit)
+	if d.Feed != nil {
+		handle("POST "+pathFeedSettings, h.feedGenerate)
+		handle("POST "+pathFeedSettings+"/options", h.feedOptions)
+		handle("POST "+pathFeedSettings+"/revoke", h.feedRevoke)
+	}
 
 	handle("GET "+pathTypes, h.typesList)
 	handle("POST "+pathTypes, h.typesCreate)
@@ -49,9 +54,11 @@ func (d Deps) configRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 }
 
 type configHandlers struct {
-	svc    *service.Practice
-	rd     *Renderer
-	logger *slog.Logger
+	svc     *service.Practice
+	feed    *service.CalendarFeed // optionnel
+	baseURL string
+	rd      *Renderer
+	logger  *slog.Logger
 }
 
 func actorFrom(r *http.Request) service.Actor {
@@ -129,6 +136,7 @@ func (h *configHandlers) succeed(w http.ResponseWriter, r *http.Request, path, m
 type SettingsPage struct {
 	Form   service.SettingsInput
 	Errors []string
+	Feed   *FeedPanel // nil = abonnement agenda non proposé
 }
 
 func settingsInputOf(s service.Settings) service.SettingsInput {
@@ -148,7 +156,12 @@ func (h *configHandlers) settingsForm(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, r, err)
 		return
 	}
-	h.rd.Page(w, r, "admin_settings", SettingsPage{Form: settingsInputOf(s)})
+	fp, err := h.feedPanel(r)
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.Page(w, r, "admin_settings", SettingsPage{Form: settingsInputOf(s), Feed: fp})
 }
 
 func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) {
@@ -162,7 +175,8 @@ func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) 
 	}
 	err := h.svc.UpdateSettings(r.Context(), actorFrom(r), in)
 	if msgs := validation(err); msgs != nil {
-		h.rd.PageStatus(w, r, http.StatusUnprocessableEntity, "admin_settings", SettingsPage{Form: in, Errors: msgs})
+		fp, _ := h.feedPanel(r)
+		h.rd.PageStatus(w, r, http.StatusUnprocessableEntity, "admin_settings", SettingsPage{Form: in, Errors: msgs, Feed: fp})
 		return
 	}
 	if err != nil {

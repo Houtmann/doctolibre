@@ -93,6 +93,13 @@ type AvailabilityRule struct {
 	UpdatedAt          time.Time
 }
 
+type CalendarFeedToken struct {
+	UserID    uuid.UUID
+	TokenHash string
+	FullNames bool
+	CreatedAt time.Time
+}
+
 type OtpChallenge struct {
 	ID            uuid.UUID
 	PracticeID    uuid.UUID

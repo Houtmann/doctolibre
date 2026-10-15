@@ -122,12 +122,25 @@ func Logger() Middleware {
 			}
 			LoggerFrom(r.Context()).Info("requête",
 				slog.String("method", r.Method),
-				slog.String("path", r.URL.Path),
+				slog.String("path", loggedPath(r.URL.Path)),
 				slog.Int("status", rec.status),
 				slog.Duration("duration", time.Since(start)),
 			)
 		})
 	}
+}
+
+// secretPrefixes : chemins dont le segment suivant est un jeton secret (flux ICS,
+// lien patient) ; il ne doit jamais apparaître dans les logs.
+var secretPrefixes = []string{"/ics/", "/r/"}
+
+func loggedPath(p string) string {
+	for _, pre := range secretPrefixes {
+		if strings.HasPrefix(p, pre) {
+			return pre + "…"
+		}
+	}
+	return p
 }
 
 // Recover transforme une panic en 500 (texte brut) et journalise la stack.

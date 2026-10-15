@@ -51,7 +51,7 @@ func newCalendarEnv(t *testing.T, role string) calEnv {
 	h := web.Routes(web.Deps{
 		Config: config.Config{Env: config.EnvDev}, Logger: logger, DB: db,
 		Auth:     &auth.Service{Pool: db, Clock: clock, Logger: logger},
-		Practice: practice, Calendar: cal,
+		Practice: practice, Calendar: cal, Feed: &service.CalendarFeed{Pool: db, Clock: clock},
 	})
 	c := newClient(t, h, "192.0.2.20")
 	if rec := c.login(userEmail, pw, "/admin"); rec.Code != 303 {

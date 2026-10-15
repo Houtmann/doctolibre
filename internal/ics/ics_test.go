@@ -1,14 +1,57 @@
 package ics_test
 
 import (
+	"bytes"
 	"flag"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"doctolibre/internal/ics"
 )
+
+var update = flag.Bool("update", false, "régénère les golden files")
+
+func TestFeedGolden(t *testing.T) {
+	t.Parallel()
+	stamp := time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC)
+	paris, _ := time.LoadLocation("Europe/Paris")
+	events := []ics.Event{
+		{ // avant le passage à l'heure d'hiver (CEST = UTC+2)
+			UID: "11111111-1111-1111-1111-111111111111@doctolibre", Stamp: stamp, Sequence: 1767225600, Status: "CONFIRMED",
+			Start: time.Date(2026, 10, 24, 9, 0, 0, 0, paris), End: time.Date(2026, 10, 24, 9, 30, 0, 0, paris),
+			Summary: "RDV L.D. - Séance, kiné",
+		},
+		{ // après (CET = UTC+1), annulé
+			UID: "22222222-2222-2222-2222-222222222222@doctolibre", Stamp: stamp, Sequence: 1767229200, Status: "CANCELLED",
+			Start: time.Date(2026, 10, 26, 9, 0, 0, 0, paris), End: time.Date(2026, 10, 26, 9, 30, 0, 0, paris),
+			Summary: "RDV A.M. - Rééducation; lombaire",
+		},
+	}
+	got := ics.Feed("Agenda Doctolibre", events)
+	path := filepath.Join("testdata", "feed.ics")
+	if *update {
+		if err := os.MkdirAll("testdata", 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, got, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want, err := os.ReadFile(path) //nolint:gosec // chemin constant de test
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Errorf("flux différent du golden file (-update pour régénérer)\n--- obtenu ---\n%s", got)
+	}
+	s := string(got)
+	if !strings.Contains(s, "STATUS:CANCELLED\r\n") || !strings.Contains(s, "DTSTART:20261024T070000Z\r\n") || !strings.Contains(s, "DTSTART:20261026T080000Z\r\n") {
+		t.Error("statut ou conversion UTC/DST inattendus")
+	}
+}
 
 func TestCalendar(t *testing.T) {
 	t.Parallel()
@@ -64,8 +107,6 @@ func TestFoldKeepsRunesAndLimit(t *testing.T) {
 		t.Error("le dépliage ne redonne pas le résumé d'origine")
 	}
 }
-
-var update = flag.Bool("update", false, "réécrit les golden files")
 
 func TestCalendarGolden(t *testing.T) {
 	t.Parallel()
