@@ -25,7 +25,7 @@ const (
 
 // calendarRoutes enregistre l'agenda du praticien (admin et praticien).
 func (d Deps) calendarRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
-	h := &calendarHandlers{svc: d.Calendar, rd: rd, logger: logger}
+	h := &calendarHandlers{svc: d.Calendar, plans: d.CarePlans, rd: rd, logger: logger}
 	require := d.Auth.RequireUser(domain.RoleAdmin, domain.RolePractitioner)
 	handle := func(pattern string, f http.HandlerFunc) { mux.Handle(pattern, require(f)) }
 
@@ -41,6 +41,7 @@ func (d Deps) calendarRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logg
 
 type calendarHandlers struct {
 	svc    *service.Calendar
+	plans  *service.CarePlans // optionnel
 	rd     *Renderer
 	logger *slog.Logger
 }
@@ -303,6 +304,7 @@ type DetailPage struct {
 	Reason string
 	View   string
 	Errors []string
+	Plan   *service.PlanBadge // série de séances, nil sinon
 }
 
 func (h *calendarHandlers) detailPage(w http.ResponseWriter, r *http.Request, id uuid.UUID, move *service.MoveInput, reason string, errs []string) {
@@ -314,6 +316,12 @@ func (h *calendarHandlers) detailPage(w http.ResponseWriter, r *http.Request, id
 	p := DetailPage{CSRF: httpx.CSRFToken(r.Context()), D: d, Move: service.MoveInput{Date: d.MoveDate, Time: d.MoveTime}, Reason: reason, View: r.FormValue("view"), Errors: errs}
 	if move != nil {
 		p.Move = *move
+	}
+	if h.plans != nil {
+		if p.Plan, err = h.plans.ForAppointment(r.Context(), actorFrom(r), id); err != nil {
+			h.fail(w, r, err)
+			return
+		}
 	}
 	h.show(w, r, "admin_appointment", "appointment_detail", p, len(errs) > 0)
 }

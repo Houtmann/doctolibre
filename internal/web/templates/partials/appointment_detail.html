@@ -12,6 +12,8 @@
       · <a href="{{osmURL .Address}}" rel="noopener noreferrer" target="_blank">OpenStreetMap</a>{{end}}</dd>{{end}}
     <dt>Date</dt><dd>{{localDate .Start}}, de {{localTime .Start}} à {{localTime .End}}</dd>
     <dt>Statut</dt><dd>{{.StatusLabel}}</dd>
+    {{with $.Plan}}<dt>Série</dt><dd>{{if .Ordinal}}<strong>Séance {{.Ordinal}}/{{.Prescribed}}</strong>{{else}}{{.Count}}/{{.Prescribed}} séances faites ou planifiées{{end}}{{if .Label}} — {{.Label}}{{end}}
+      · <a href="/admin/patients/{{.PatientID}}">Fiche patient</a></dd>{{end}}
     <dt>Origine</dt><dd>{{.SourceLabel}}, le {{localDate .CreatedAt}} à {{localTime .CreatedAt}}</dd>
     {{if .CancelReason}}<dt>Motif d'annulation</dt><dd>{{.CancelReason}}</dd>{{end}}
   </dl>
@@ -22,6 +24,18 @@
   </ul>
   {{end}}
   {{end}}
+
+  {{with .Plan}}{{with .Replacement}}
+  <h3>Remplacer la séance annulée</h3>
+  <p>Prochain créneau compatible avec la série : <strong>{{localDate .Start}} à {{localTime .Start}}</strong>.</p>
+  <form method="post" action="/admin/care-plans/{{.PlanID}}/replace">
+    {{csrf $.CSRF}}
+    <input type="hidden" name="appointment_id" value="{{$.D.ID}}">
+    <input type="hidden" name="date" value="{{.Date}}">
+    <input type="hidden" name="time" value="{{.Time}}">
+    <button type="submit">Planifier cette séance</button>
+  </form>
+  {{end}}{{end}}
 
   {{if ne .D.Status "cancelled"}}
   <h3>Statut</h3>

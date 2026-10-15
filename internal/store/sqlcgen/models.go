@@ -102,6 +102,24 @@ type CalendarFeedToken struct {
 	CreatedAt time.Time
 }
 
+type CarePlan struct {
+	ID                 uuid.UUID
+	PracticeID         uuid.UUID
+	PatientID          uuid.UUID
+	PractitionerID     uuid.UUID
+	AppointmentTypeID  uuid.UUID
+	Label              string
+	SessionsPrescribed int32
+	FrequencyPerWeek   int16
+	PreferredWeekdays  []int16
+	PreferredTimeStart pgtype.Time
+	PreferredTimeEnd   pgtype.Time
+	StartDate          pgtype.Date
+	Status             string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+}
+
 type OtpChallenge struct {
 	ID            uuid.UUID
 	PracticeID    uuid.UUID

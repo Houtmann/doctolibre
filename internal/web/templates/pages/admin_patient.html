@@ -18,6 +18,30 @@
 </ul>
 {{else}}<p>Aucun rendez-vous à venir.</p>{{end}}
 
+<h2>Séries de séances</h2>
+<p><a role="button" class="secondary outline" href="/admin/patients/{{.Data.ID}}/care-plans/new">Nouvelle série</a></p>
+{{range .Data.Plans}}{{$plan := .}}
+<article>
+  <h3>{{if .Label}}{{.Label}}{{else}}Série de séances{{end}} <small>({{.StatusLabel}})</small></h3>
+  <p><strong>{{.Count}}/{{.Prescribed}} séances</strong> faites ou planifiées ({{.Done}} faites, {{.Booked}} à venir) — {{.PerWeek}} par semaine{{if .Weekdays}}, de préférence {{.Weekdays}}{{end}} — {{.TypeName}}</p>
+  {{if .Sessions}}
+  <ul>
+    {{range .Sessions}}<li><a href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a>{{if .Ordinal}} — séance {{.Ordinal}}/{{$plan.Prescribed}}{{end}} ({{.StatusLabel}})</li>{{end}}
+  </ul>
+  {{end}}
+  <form method="post" action="/admin/care-plans/{{.ID}}/status" class="inline-actions">
+    {{csrf $.CSRF}}
+    {{if .Active}}
+    <button type="submit" name="status" value="completed" class="secondary outline">Terminer la série</button>
+    <button type="submit" name="status" value="cancelled" class="secondary outline">Abandonner la série</button>
+    {{else}}
+    <button type="submit" name="status" value="active" class="secondary outline">Rouvrir la série</button>
+    {{end}}
+  </form>
+  <small>Terminer ou abandonner ne modifie pas les rendez-vous déjà planifiés.</small>
+</article>
+{{else}}<p>Aucune série de séances.</p>{{end}}
+
 <h2>Historique</h2>
 <p>Absences : <strong>{{.Data.NoShows}}</strong></p>
 {{if .Data.History}}
