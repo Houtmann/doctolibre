@@ -28,8 +28,8 @@ Un système de rendu HTML serveur simple, embarqué dans le binaire, avec htmx e
 
 ## Critères d'acceptation
 - [ ] `/` rend une page d'accueil via le layout public, sans erreur console, CSP respectée (pas de script inline).
-- [ ] Une page d'erreur 404 / 500 stylée.
-- [ ] Test : chaque template parse ; rendu de `home` contient le titre attendu.
+- [x] Une page d'erreur 404 / 500 stylée.
+- [x] Test : chaque template parse ; rendu de `home` contient le titre attendu.
 - [ ] Lighthouse mobile accessibilité ≥ 95 sur `/` (vérif manuelle, noter le score dans la PR).
 
 ## Vérification
@@ -44,8 +44,9 @@ Pages métier (T012+).
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-15 (sonnet)
+- **Fait** : static (htmx 2.0.4, pico 2.0.6, app.css, app.js), templates (layout base/public/admin, partials flash/form_errors, pages home/error), `internal/web/render.go` (Renderer, Page/PageStatus/Partial/Error, flash cookie signé HMAC, FuncMap, StaticHandler avec ?v=empreinte), routes (/, /static/, 404 stylé, panic -> 500 stylé via `httpx.RecoverWith`), tests `render_test.go`.
+- **Vendored** (jsdelivr, versions fixes) : `htmx.org@2.0.4/dist/htmx.min.js` sha256 `e209dda5c8235479f3166defc7750e1dbcd5a5c1808b7792fc2e6733768fb447` ; `@picocss/pico@2.0.6/css/pico.min.css` sha256 `dd5fd5591afd81ee21dcc117ad85c014dc3f1f19dc2d7b7d101ea0acc29274c2`.
+- **Reste à faire** : vérif manuelle navigateur (console sans erreur CSP) et score Lighthouse mobile a11y >= 95 sur `/` (`make run`).
+- **Notes de reprise** : les templates reçoivent `View{CSRF, Flash, Data}` (`.Data` = donnée de la page) ; `Partial` passe la donnée brute. Layout d'une page : première ligne `{{/* layout: admin */}}` (défaut public). Formulaire : `{{csrf .CSRF}}`. htmx : `hx-headers` sur <body> + meta htmx-config (includeIndicatorStyles/allowEval off pour la CSP ; styles d'indicateur dans app.css). Rechargement à chaud si env != prod, depuis `internal/web/templates` quand le cwd est la racine du dépôt.
+- **Écarts avec la spécification** : `csrf` prend le jeton (pas la requête) ; rechargement à chaud selon `DOCTOLIBRE_ENV` (pas `ENV`) ; `httpx.Recover` conservé, ajout de `httpx.RecoverWith` (middleware.go) ; fuseau = `Config.Timezone` (cabinet pas encore en base) ; critère 1 non coché (pas de vérif console navigateur).

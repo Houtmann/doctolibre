@@ -1,0 +1,4 @@
+{{if .}}<div class="form-errors" role="alert" id="form-errors">
+  <strong>Le formulaire contient des erreurs :</strong>
+  <ul>{{range .}}<li>{{.}}</li>{{end}}</ul>
+</div>{{end}}

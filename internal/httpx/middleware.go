@@ -127,8 +127,11 @@ func Logger() Middleware {
 	}
 }
 
-// Recover transforme une panic en 500 et journalise la stack.
-func Recover() Middleware {
+// Recover transforme une panic en 500 (texte brut) et journalise la stack.
+func Recover() Middleware { return RecoverWith(Error) }
+
+// RecoverWith est Recover avec un rendu d'erreur personnalisé (page HTML stylée).
+func RecoverWith(onPanic func(w http.ResponseWriter, r *http.Request, status int, msg string)) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
@@ -143,7 +146,7 @@ func Recover() Middleware {
 					slog.Any("panic", rec),
 					slog.String("stack", string(debug.Stack())),
 				)
-				Error(w, r, http.StatusInternalServerError, "erreur interne")
+				onPanic(w, r, http.StatusInternalServerError, "erreur interne")
 			}()
 			next.ServeHTTP(w, r)
 		})
