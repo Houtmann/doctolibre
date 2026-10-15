@@ -17,7 +17,10 @@ const (
 	EnvProd = "prod"
 )
 
-const minSecretLen = 32
+const (
+	minSecretLen       = 32
+	minMetricsTokenLen = 16
+)
 
 // Config est la configuration de l'application.
 type Config struct {
@@ -27,6 +30,8 @@ type Config struct {
 	SecretKey   string
 	Env         string
 	Timezone    string
+	// MetricsToken active /metrics (jeton Bearer) ; vide = endpoint désactivé.
+	MetricsToken string
 }
 
 // IsProd indique si l'application tourne en production.
@@ -65,6 +70,8 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 		SecretKey:   get("DOCTOLIBRE_SECRET_KEY", ""),
 		Env:         get("DOCTOLIBRE_ENV", EnvDev),
 		Timezone:    get("DOCTOLIBRE_TIMEZONE", "Europe/Paris"),
+
+		MetricsToken: get("DOCTOLIBRE_METRICS_TOKEN", ""),
 	}
 	if c.BaseURL == "" && c.Env == EnvDev {
 		c.BaseURL = "http://localhost:8080"
@@ -91,6 +98,9 @@ func (c Config) Validate() error {
 	}
 	if c.SecretKey != "" && len(c.SecretKey) < minSecretLen {
 		errs = append(errs, fmt.Errorf("DOCTOLIBRE_SECRET_KEY: %d octets, %d minimum", len(c.SecretKey), minSecretLen))
+	}
+	if c.MetricsToken != "" && len(c.MetricsToken) < minMetricsTokenLen {
+		errs = append(errs, fmt.Errorf("DOCTOLIBRE_METRICS_TOKEN: %d octets, %d minimum", len(c.MetricsToken), minMetricsTokenLen))
 	}
 	if c.Env == EnvProd {
 		if c.SecretKey == "" {

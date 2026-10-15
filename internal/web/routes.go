@@ -10,6 +10,7 @@ import (
 
 	"doctolibre/internal/config"
 	"doctolibre/internal/httpx"
+	"doctolibre/internal/metrics"
 )
 
 // Pinger vérifie la disponibilité d'une dépendance (ex. *pgxpool.Pool).
@@ -22,6 +23,9 @@ type Deps struct {
 	Config config.Config
 	Logger *slog.Logger
 	DB     Pinger // optionnel : nil = pas de ping DB dans /healthz
+	// Metrics est optionnel. /metrics n'est exposé que si Metrics != nil ET
+	// Config.MetricsToken != "" ; la mesure des requêtes ne dépend que de Metrics.
+	Metrics *metrics.Metrics
 }
 
 const pingTimeout = 2 * time.Second
@@ -36,7 +40,15 @@ func Routes(d Deps) http.Handler {
 	mux.HandleFunc("GET /healthz", d.healthz)
 	mux.HandleFunc("GET /{$}", index)
 
-	return httpx.Chain(mux,
+	var root http.Handler = mux
+	if d.Metrics != nil {
+		if d.Config.MetricsToken != "" {
+			mux.Handle("GET /metrics", d.Metrics.Handler(d.Config.MetricsToken))
+		}
+		root = d.Metrics.Middleware(mux)
+	}
+
+	return httpx.Chain(root,
 		httpx.RequestID(logger),
 		httpx.Logger(),
 		httpx.Recover(),
