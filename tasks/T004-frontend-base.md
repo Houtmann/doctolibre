@@ -27,7 +27,7 @@ Un système de rendu HTML serveur simple, embarqué dans le binaire, avec htmx e
 - Accessibilité : labels sur tous les champs, focus visible, contrastes AA.
 
 ## Critères d'acceptation
-- [ ] `/` rend une page d'accueil via le layout public, sans erreur console, CSP respectée (pas de script inline).
+- [x] `/` rend une page d'accueil via le layout public, sans erreur console, CSP respectée (pas de script inline). _(vérifié par Opus dans le navigateur, 2026-10-15)_
 - [x] Une page d'erreur 404 / 500 stylée.
 - [x] Test : chaque template parse ; rendu de `home` contient le titre attendu.
 - [ ] Lighthouse mobile accessibilité ≥ 95 sur `/` (vérif manuelle, noter le score dans la PR).
