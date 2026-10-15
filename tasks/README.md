@@ -29,22 +29,22 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T005 | [Infra de tests](T005-test-infra.md) | 0 | T002 | done |
 | T010 | [Schéma de base v1](T010-schema-v1.md) | 1 | T002 | done |
 | T011 | [Auth praticien](T011-auth-staff.md) | 1 | T004, T005, T010 | done |
-| T012 | [Paramétrage cabinet, motifs, disponibilités](T012-availability-admin.md) | 1 | T011 | review |
+| T012 | [Paramétrage cabinet, motifs, disponibilités](T012-availability-admin.md) | 1 | T011 | done |
 | T013 | [Moteur de calcul de créneaux](T013-slot-engine.md) | 1 | T001 | done |
-| T014 | [Réservation en ligne patient](T014-public-booking.md) | 1 | T012, T013 | todo |
+| T014 | [Réservation en ligne patient](T014-public-booking.md) | 1 | T012, T013 | in_progress |
 | T015 | [Gestion du RDV par le patient](T015-patient-manage-link.md) | 1 | T014 | todo |
-| T016 | [Agenda praticien](T016-staff-calendar.md) | 1 | T012, T013 | todo |
+| T016 | [Agenda praticien](T016-staff-calendar.md) | 1 | T012, T013 | in_progress |
 | T017 | [Fiches patients](T017-patients.md) | 1 | T016 | todo |
 | T020 | [Outbox et worker](T020-outbox-worker.md) | 2 | T010, T005 | done |
-| T021 | [Email SMTP générique](T021-email-smtp.md) | 2 | T020 | review |
-| T022 | [SMS : interface et fournisseurs](T022-sms-providers.md) | 2 | T020 | review |
+| T021 | [Email SMTP générique](T021-email-smtp.md) | 2 | T020 | done |
+| T022 | [SMS : interface et fournisseurs](T022-sms-providers.md) | 2 | T020 | done |
 | T023 | [Confirmations et rappels](T023-reminders.md) | 2 | T021, T022, T015 | todo |
-| T024 | [Outbox : câblage du worker et page admin](T024-outbox-wiring.md) | 2 | T020, T011 | review |
+| T024 | [Outbox : câblage du worker et page admin](T024-outbox-wiring.md) | 2 | T020, T011 | done |
 | T030 | [Séries de séances kiné](T030-care-plans.md) | 3 | T016, T017 | todo |
 | T031 | [Liste d'attente](T031-waitlist.md) | 3 | T023 | todo |
 | T032 | [Visites à domicile](T032-home-visits.md) | 3 | T014 | todo |
 | T033 | [Multi-praticiens et rôles](T033-multi-practitioner.md) | 3 | T016, T021 | todo |
-| T040 | [Packaging Docker + Caddy](T040-packaging.md) | 4 | T004, T010 | review |
+| T040 | [Packaging Docker + Caddy](T040-packaging.md) | 4 | T004, T010 | done |
 | T041 | [Sauvegardes et restauration](T041-backups.md) | 4 | T040 | todo |
 | T042 | [Flux ICS](T042-ics-feed.md) | 4 | T016 | todo |
 | T043 | [RGPD : export, purge, audit](T043-gdpr.md) | 4 | T017 | todo |
