@@ -32,9 +32,9 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T012 | [Paramétrage cabinet, motifs, disponibilités](T012-availability-admin.md) | 1 | T011 | done |
 | T013 | [Moteur de calcul de créneaux](T013-slot-engine.md) | 1 | T001 | done |
 | T014 | [Réservation en ligne patient](T014-public-booking.md) | 1 | T012, T013 | review |
-| T015 | [Gestion du RDV par le patient](T015-patient-manage-link.md) | 1 | T014 | todo |
+| T015 | [Gestion du RDV par le patient](T015-patient-manage-link.md) | 1 | T014 | review |
 | T016 | [Agenda praticien](T016-staff-calendar.md) | 1 | T012, T013 | review |
-| T017 | [Fiches patients](T017-patients.md) | 1 | T016 | todo |
+| T017 | [Fiches patients](T017-patients.md) | 1 | T016 | review |
 | T020 | [Outbox et worker](T020-outbox-worker.md) | 2 | T010, T005 | done |
 | T021 | [Email SMTP générique](T021-email-smtp.md) | 2 | T020 | done |
 | T022 | [SMS : interface et fournisseurs](T022-sms-providers.md) | 2 | T020 | done |
@@ -42,11 +42,11 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T024 | [Outbox : câblage du worker et page admin](T024-outbox-wiring.md) | 2 | T020, T011 | done |
 | T030 | [Séries de séances kiné](T030-care-plans.md) | 3 | T016, T017 | todo |
 | T031 | [Liste d'attente](T031-waitlist.md) | 3 | T023 | todo |
-| T032 | [Visites à domicile](T032-home-visits.md) | 3 | T014 | todo |
+| T032 | [Visites à domicile](T032-home-visits.md) | 3 | T014 | review |
 | T033 | [Multi-praticiens et rôles](T033-multi-practitioner.md) | 3 | T016, T021 | todo |
 | T040 | [Packaging Docker + Caddy](T040-packaging.md) | 4 | T004, T010 | done |
-| T041 | [Sauvegardes et restauration](T041-backups.md) | 4 | T040 | todo |
-| T042 | [Flux ICS](T042-ics-feed.md) | 4 | T016 | todo |
+| T041 | [Sauvegardes et restauration](T041-backups.md) | 4 | T040 | review |
+| T042 | [Flux ICS](T042-ics-feed.md) | 4 | T016 | review |
 | T043 | [RGPD : export, purge, audit](T043-gdpr.md) | 4 | T017 | todo |
 | T044 | [Documentation d'installation](T044-install-docs.md) | 4 | T040, T041 | todo |
 | T045 | [Observabilité légère](T045-observability.md) | 4 | T003 | done |

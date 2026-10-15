@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-15 — T015, T017, T032, T041, T042 (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T015, T017, T032, T041, T042 → review (lancées sur T014/T016 encore en review, code déjà sur `main`)
+- **Fait** : annulation/déplacement par le patient via `/r/{token}` ; fiches patients (recherche sans accents, fusion de doublons) ; visites à domicile (trajet dans `during_blocked`, zones, adresse) ; sauvegardes chiffrées age + restauration testée ; flux ICS praticien à jeton révocable.
+- **Revue** : 2 corrections renvoyées (T015 : SQL brut remplacé par une requête sqlc `FOR UPDATE` ; T042 : test du masquage des jetons dans les logs). Migrations pré-numérotées 00009–00011, pas de collision. Conflits résolus : `ics_test.go` (flag `-update` en double), `public.go` (union T015/T032), `sqlcgen` régénéré.
+- **Vérification** : `make check` ✅ après chaque merge. `TestCalendarWeekWith150AppointmentsIsFast` a échoué une fois sous forte charge (load 20, agents en parallèle), passe seul. Non vérifié : rendu 360 px, import ICS dans un vrai client, S3 réel.
+- **Reste / reprise** : relecture humaine des 7 tâches en review ; puis T023 (notifications), T030, T033, T043, T044.
+- **Décisions** : 6 entrées dans `decisions.md` (de « Sauvegardes » à « Domicile »).
+
 ## 2026-10-15 — T014 et T016 (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T012, T021, T022, T024, T040 → done (validées par l'humain) ; T014, T016 → review

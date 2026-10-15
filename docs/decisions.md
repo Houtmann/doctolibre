@@ -49,3 +49,9 @@ Format : `AAAA-MM-JJ — décision — pourquoi — alternative écartée`.
 - 2026-10-15 — Agenda : RDV placés par classes CSS générées `.gr-N/.gs-N/.gc-N`, lignes indexées sur l'heure murale (T016) — `top/height` inline, interdit par la CSP.
 - 2026-10-15 — `service.EventSink` (`Emit`, `NopSink` par défaut) appelé après commit, événements avec IDs seulement (T016) ; T023 devra insérer l'outbox dans la transaction (changer la signature ou poser les messages dans le service).
 - 2026-10-15 — `store.MoveAppointment` unique point de déplacement (comme `CreateAppointment`) ; actions staff dans `audit_log`, qui sert d'historique (T016).
+- 2026-10-15 — Sauvegardes : scripts shell + service compose `backup` (pg_dump | age, clé publique seule sur le serveur, rétention 7 j + 4 sem., S3 optionnel via rclone) (T041) — sous-commande Go avec `filippo.io/age` (dépendance hors liste).
+- 2026-10-15 — Déplacement par le patient = `UPDATE` en place via `store.MoveAppointment`, jeton inchangé ; `min_cancel_notice` borne annulation et déplacement (T015) — annuler + recréer avec nouveau jeton.
+- 2026-10-15 — Flux ICS : un jeton par utilisateur (`calendar_feed_token`, sha256), titre minimisé (initiales + motif) sauf option « nom complet », `SEQUENCE` dérivé de `updated_at` (T042) — colonne `version` sur `appointment`.
+- 2026-10-15 — Les chemins à jeton secret (`/ics/`, `/r/`) sont masqués dans les logs de requêtes (`httpx.loggedPath`) (T042).
+- 2026-10-15 — Recherche patient : index GIN trigram partiel sur `patient_search_text()` (unaccent qualifié `public.`, fonction IMMUTABLE) ; fusion = soft-delete du doublon avec `merged_into` + audit (T017) — recherche ILIKE sans index.
+- 2026-10-15 — Domicile : règle unique `domain.HomeBuffers` (marges du motif + trajet) utilisée par le moteur et copiée dans `during_blocked` ; zones = codes postaux/communes par cabinet, non appliquées à la saisie cabinet ; adresse incluse dans le binding OTP (T032).
