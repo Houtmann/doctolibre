@@ -422,8 +422,8 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 			add("new_phone", "Renseignez un téléphone ou un email.")
 		}
 		if in.NewPhone != "" {
-			var ok bool
-			if phone, ok = normalizePhoneTmp(in.NewPhone); !ok {
+			var perr error
+			if phone, perr = domain.NormalizePhone(in.NewPhone); perr != nil {
 				add("new_phone", "Numéro de téléphone invalide.")
 			}
 		}
@@ -772,35 +772,6 @@ func (c *Calendar) SearchPatients(ctx context.Context, a Actor, query string) ([
 		return nil, fmt.Errorf("recherche de patients: %w", err)
 	}
 	return ps, nil
-}
-
-// normalizePhoneTmp normalise un numéro : garde chiffres et « + » initial, 0X…
-// devient +33X… TODO(orchestrateur): remplacer par domain.NormalizePhone (T014).
-func normalizePhoneTmp(s string) (string, bool) {
-	var b strings.Builder
-	for i, r := range strings.TrimSpace(s) {
-		switch {
-		case r >= '0' && r <= '9':
-			b.WriteRune(r)
-		case r == '+' && i == 0:
-			b.WriteRune(r)
-		case r == ' ' || r == '.' || r == '-' || r == '(' || r == ')':
-		default:
-			return "", false
-		}
-	}
-	n := b.String()
-	if strings.HasPrefix(n, "00") {
-		n = "+" + n[2:]
-	}
-	if strings.HasPrefix(n, "0") && len(n) == 10 {
-		n = "+33" + n[1:]
-	}
-	digits := strings.TrimPrefix(n, "+")
-	if !strings.HasPrefix(n, "+") || len(digits) < 8 || len(digits) > 15 {
-		return "", false
-	}
-	return n, true
 }
 
 // Patient retourne un patient du cabinet (ErrNotFound sinon).
