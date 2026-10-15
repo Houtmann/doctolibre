@@ -1,0 +1,88 @@
+# Production : cd deploy && cp .env.example .env && (éditer .env) && docker compose up -d
+# Le fichier .env de ce dossier est lu automatiquement par docker compose.
+name: doctolibre
+
+services:
+  app:
+    # Image publiée sur GHCR par la release ; pour construire localement :
+    #   docker compose up -d --build
+    image: ${DOCTOLIBRE_IMAGE:-ghcr.io/doctolibre/doctolibre:latest}
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    mem_limit: 256m
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DOCTOLIBRE_ENV: prod
+      DOCTOLIBRE_HTTP_ADDR: ":8080"
+      DOCTOLIBRE_BASE_URL: https://${DOMAIN:?DOMAIN est obligatoire (voir .env.example)}
+      DOCTOLIBRE_DATABASE_URL: postgres://doctolibre:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}@postgres:5432/doctolibre?sslmode=disable
+      DOCTOLIBRE_SECRET_KEY: ${DOCTOLIBRE_SECRET_KEY:?DOCTOLIBRE_SECRET_KEY est obligatoire (openssl rand -hex 32)}
+      DOCTOLIBRE_TIMEZONE: ${DOCTOLIBRE_TIMEZONE:-Europe/Paris}
+      DOCTOLIBRE_AUTO_MIGRATE: ${DOCTOLIBRE_AUTO_MIGRATE:-true}
+      DOCTOLIBRE_METRICS_TOKEN: ${DOCTOLIBRE_METRICS_TOKEN:-}
+      # Caddy est le seul pair fiable : son X-Forwarded-For donne l'IP du client.
+      DOCTOLIBRE_TRUSTED_PROXIES: 172.30.0.0/24
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "/doctolibre", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: doctolibre
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}
+      POSTGRES_DB: doctolibre
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U doctolibre -d doctolibre"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - internal
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    mem_limit: 128m
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN est obligatoire}
+      # Email ACME de l'exploitant (Let's Encrypt) ou "internal" (test local).
+      CADDY_TLS: ${CADDY_TLS:?CADDY_TLS requis (email ACME ou internal)}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - internal
+
+networks:
+  internal:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

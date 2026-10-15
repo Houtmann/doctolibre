@@ -1,0 +1,11 @@
+.git
+.github
+.claude
+bin
+tmp
+.env
+deploy/.env
+docs
+tasks
+*.md
+!README.md
