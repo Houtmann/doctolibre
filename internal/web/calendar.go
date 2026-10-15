@@ -162,6 +162,7 @@ type FormValues struct {
 	NewFirstName, NewLastName, NewPhone, NewEmail string
 	TypeID                                        string
 	Date, Time                                    string
+	Address                                       string
 	Force                                         bool
 	View                                          string
 	Query                                         string
@@ -256,11 +257,12 @@ func (h *calendarHandlers) create(w http.ResponseWriter, r *http.Request) {
 		NewFirstName: r.PostFormValue("new_first_name"), NewLastName: r.PostFormValue("new_last_name"),
 		NewPhone: r.PostFormValue("new_phone"), NewEmail: r.PostFormValue("new_email"),
 		TypeID: r.PostFormValue("type_id"), Date: r.PostFormValue("date"), Time: r.PostFormValue("time"),
-		Force: r.PostFormValue("force") == "1", View: r.PostFormValue("view"),
+		Address: r.PostFormValue("address"),
+		Force:   r.PostFormValue("force") == "1", View: r.PostFormValue("view"),
 	}
 	_, err := h.svc.Create(r.Context(), actorFrom(r), service.NewAppointmentInput{
 		PatientID: f.PatientID, NewFirstName: f.NewFirstName, NewLastName: f.NewLastName,
-		NewPhone: f.NewPhone, NewEmail: f.NewEmail, TypeID: f.TypeID, Date: f.Date, Time: f.Time, Force: f.Force,
+		NewPhone: f.NewPhone, NewEmail: f.NewEmail, TypeID: f.TypeID, Date: f.Date, Time: f.Time, Force: f.Force, Address: f.Address,
 	})
 	if msgs, ok := formErrors(err); ok {
 		p, perr := h.formPage(r, f, msgs)

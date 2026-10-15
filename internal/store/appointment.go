@@ -24,6 +24,7 @@ type NewAppointment struct {
 	BufferAfter       time.Duration
 	Source            string // online | staff
 	ManageTokenHash   string // vide = aucun
+	Address           string // visite à domicile ; vide = aucune
 }
 
 // CreateAppointment calcule during_blocked via domain.BlockedRange puis insère.
@@ -44,6 +45,7 @@ func CreateAppointment(ctx context.Context, q *sqlcgen.Queries, n NewAppointment
 		Status:            "booked",
 		Source:            n.Source,
 		ManageTokenHash:   pgtype.Text{String: n.ManageTokenHash, Valid: n.ManageTokenHash != ""},
+		Address:           pgtype.Text{String: n.Address, Valid: n.Address != ""},
 	})
 	if err != nil {
 		if IsExclusionViolation(err) && constraintName(err) == "appointment_no_overlap" {

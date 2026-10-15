@@ -5,7 +5,7 @@ SELECT a.id, a.status, a.source, a.patient_id,
        lower(a.during)::timestamptz AS starts_at,
        upper(a.during)::timestamptz AS ends_at,
        p.first_name, p.last_name,
-       t.name AS type_name
+       t.name AS type_name, t.at_home AS type_at_home
 FROM appointment a
 JOIN patient p ON p.id = a.patient_id
 JOIN appointment_type t ON t.id = a.appointment_type_id
@@ -22,7 +22,7 @@ SELECT a.id, a.practitioner_id, a.patient_id, a.appointment_type_id, a.status, a
        upper(a.during)::timestamptz AS ends_at,
        a.cancelled_at, a.cancelled_by, a.cancel_reason, a.created_at,
        p.first_name, p.last_name, p.phone, p.email,
-       t.name AS type_name
+       t.name AS type_name, t.at_home AS type_at_home, a.address
 FROM appointment a
 JOIN patient p ON p.id = a.patient_id
 JOIN appointment_type t ON t.id = a.appointment_type_id

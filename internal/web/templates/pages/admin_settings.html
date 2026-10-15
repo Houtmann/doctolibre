@@ -25,6 +25,13 @@
     <input id="horizon_days" name="horizon_days" type="number" inputmode="numeric" min="1" max="730" value="{{.HorizonDays}}" required>
   </fieldset>
   <fieldset>
+    <legend>Visites à domicile</legend>
+    <label><input type="checkbox" name="home_visit_online" value="1"{{if .HomeVisitOnline}} checked{{end}}> Autoriser la réservation en ligne des visites à domicile</label>
+    <label for="home_visit_zones">Zones desservies (codes postaux ou communes, un par ligne)</label>
+    <textarea id="home_visit_zones" name="home_visit_zones" rows="4" maxlength="4000" aria-describedby="zones-help">{{.HomeVisitZones}}</textarea>
+    <small id="zones-help">Une adresse est acceptée si elle contient l'un de ces codes postaux ou l'une de ces communes. Sans zone, les visites à domicile ne sont pas réservables en ligne. Les rendez-vous saisis par le cabinet ne sont pas limités à ces zones.</small>
+  </fieldset>
+  <fieldset>
     <legend>Profil public du praticien</legend>
     <label for="first_name">Prénom</label>
     <input id="first_name" name="first_name" value="{{.FirstName}}" maxlength="80" required autocomplete="given-name">

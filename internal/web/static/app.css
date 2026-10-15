@@ -361,3 +361,5 @@ dialog#appt-dialog article { margin: 0; }
 .resend { margin-top: 1rem; }
 /* Piège à robots : hors écran, jamais display:none (certains robots l'ignorent alors). */
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.home-badge { font-weight: 700; }

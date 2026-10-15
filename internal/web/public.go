@@ -134,12 +134,14 @@ type GridSlot struct {
 // BookingForm est la saisie du formulaire de réservation.
 type BookingForm struct {
 	FirstName, LastName, Phone, Email, BirthDate string
+	Address                                      string
 	Channel                                      string
 	SMSOptIn, EmailOptIn, Consent                bool
 }
 
 // DetailsData est la donnée de la page public_details.
 type DetailsData struct {
+	AtHome  bool // visite à domicile : l'adresse est demandée
 	Summary Summary
 	Form    BookingForm
 	TypeID  string
@@ -151,6 +153,7 @@ type DetailsData struct {
 
 // VerifyData est la donnée de la page public_verify.
 type VerifyData struct {
+	AtHome      bool
 	Summary     Summary
 	Form        BookingForm
 	TypeID      string
@@ -178,6 +181,8 @@ type ConfirmedData struct {
 	Changeable bool
 	ManageURL  string
 	MinCancel  time.Duration
+	AtHome     bool
+	Address    string // adresse de la visite à domicile
 }
 
 func practitionerView(practiceSlug string, p sqlcgen.Practitioner) PractitionerView {
@@ -383,6 +388,7 @@ func readBookingForm(r *http.Request) BookingForm {
 	f := BookingForm{
 		FirstName: formValue(r, "first_name"), LastName: formValue(r, "last_name"),
 		Phone: formValue(r, "phone"), Email: formValue(r, "email"), BirthDate: formValue(r, "birth_date"),
+		Address:  formValue(r, "address"),
 		Channel:  formValue(r, "channel"),
 		SMSOptIn: r.PostFormValue("sms_opt_in") != "", EmailOptIn: r.PostFormValue("email_opt_in") != "",
 		Consent: r.PostFormValue("consent") != "",
@@ -393,7 +399,7 @@ func readBookingForm(r *http.Request) BookingForm {
 func (f BookingForm) patient() service.PatientDetails {
 	return service.PatientDetails{
 		FirstName: f.FirstName, LastName: f.LastName, Phone: f.Phone, Email: f.Email,
-		BirthDate: f.BirthDate, SMSOptIn: f.SMSOptIn, EmailOptIn: f.EmailOptIn,
+		BirthDate: f.BirthDate, Address: f.Address, SMSOptIn: f.SMSOptIn, EmailOptIn: f.EmailOptIn,
 	}
 }
 
@@ -401,7 +407,7 @@ func (h *publicHandlers) renderDetails(w http.ResponseWriter, r *http.Request, s
 	base := basePath(r)
 	w.Header().Set("Cache-Control", "no-store")
 	h.rd.PageStatus(w, r, status, "public_details", DetailsData{
-		Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
+		AtHome: t.Type.AtHome, Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
 		Action:  base + "/book/details",
 		BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}, "week": {isoWeek(start.In(t.Loc))}}.Encode(),
 		Errors:  errs,
@@ -419,7 +425,7 @@ func (h *publicHandlers) renderVerify(w http.ResponseWriter, r *http.Request, st
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	h.rd.PageStatus(w, r, status, "public_verify", VerifyData{
-		Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
+		AtHome: t.Type.AtHome, Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
 		ChallengeID: challenge.String(), Channel: f.Channel, Destination: maskRecipient(dest),
 		Action: base + "/book/confirm", ResendURL: base + "/book/details",
 		BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}, "week": {isoWeek(start.In(t.Loc))}}.Encode(),
@@ -527,6 +533,7 @@ func (h *publicHandlers) confirmed(w http.ResponseWriter, r *http.Request) {
 		Cancelled:  c.Appointment.Status == "cancelled",
 		ICSURL:     manageURL(r.PathValue("token")) + "/ics",
 		Changeable: c.Changeable, ManageURL: manageURL(r.PathValue("token")), MinCancel: c.MinCancel,
+		AtHome: c.Type.AtHome, Address: c.Appointment.Address.String,
 	})
 }
 
@@ -540,9 +547,13 @@ func (h *publicHandlers) calendarFile(w http.ResponseWriter, r *http.Request) {
 	if c.Practice.Phone != "" {
 		desc = "Cabinet : " + c.Practice.Phone
 	}
+	location := c.Practice.Address
+	if c.Type.AtHome && c.Appointment.Address.String != "" {
+		location = c.Appointment.Address.String // le praticien se déplace
+	}
 	ev := ics.Event{
 		UID: c.Appointment.ID.String() + "@doctolibre", Start: c.Start, End: c.End, Stamp: h.svc.Now(),
-		Summary: c.Type.Name + " - " + c.Practice.Name, Location: c.Practice.Address, Description: desc,
+		Summary: c.Type.Name + " - " + c.Practice.Name, Location: location, Description: desc,
 	}
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="rendez-vous.ics"`)

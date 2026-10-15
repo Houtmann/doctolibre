@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -147,6 +148,7 @@ func settingsInputOf(s service.Settings) service.SettingsInput {
 		HorizonDays:        strconv.Itoa(s.HorizonDays),
 		FirstName:          s.Practitioner.FirstName, LastName: s.Practitioner.LastName,
 		Title: s.Practitioner.Title, Bio: s.Practitioner.Bio, Slug: s.Practitioner.Slug,
+		HomeVisitOnline: s.Practice.HomeVisitOnline, HomeVisitZones: strings.Join(s.Practice.HomeVisitZones, "\n"),
 	}
 }
 
@@ -172,6 +174,7 @@ func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) 
 		HorizonDays:        r.PostFormValue("horizon_days"),
 		FirstName:          r.PostFormValue("first_name"), LastName: r.PostFormValue("last_name"),
 		Title: r.PostFormValue("title"), Bio: r.PostFormValue("bio"), Slug: r.PostFormValue("slug"),
+		HomeVisitOnline: r.PostFormValue("home_visit_online") == "1", HomeVisitZones: r.PostFormValue("home_visit_zones"),
 	}
 	err := h.svc.UpdateSettings(r.Context(), actorFrom(r), in)
 	if msgs := validation(err); msgs != nil {
@@ -194,6 +197,7 @@ type TypeRow struct {
 	ID                      string
 	Name, Color             string
 	Duration, Before, After int
+	Travel                  int
 	Online, AtHome, Active  bool
 	First, Last             bool
 }
@@ -209,14 +213,14 @@ type TypesPage struct {
 }
 
 func defaultTypeForm() service.AppointmentTypeInput {
-	return service.AppointmentTypeInput{DurationMin: "30", BufferBeforeMin: "0", BufferAfterMin: "0", Color: "#2563eb", OnlineBookable: true}
+	return service.AppointmentTypeInput{DurationMin: "30", BufferBeforeMin: "0", BufferAfterMin: "0", TravelBufferMin: "15", Color: "#2563eb", OnlineBookable: true}
 }
 
 func typeFormOf(t sqlcgen.AppointmentType) service.AppointmentTypeInput {
 	d, b, a := service.TypeMinutes(t)
 	return service.AppointmentTypeInput{
 		Name: t.Name, DurationMin: strconv.Itoa(d), BufferBeforeMin: strconv.Itoa(b), BufferAfterMin: strconv.Itoa(a),
-		Color: t.Color, OnlineBookable: t.OnlineBookable, AtHome: t.AtHome,
+		Color: t.Color, OnlineBookable: t.OnlineBookable, AtHome: t.AtHome, TravelBufferMin: strconv.Itoa(service.TravelMinutes(t)),
 	}
 }
 
@@ -224,7 +228,8 @@ func typeFormFrom(r *http.Request) service.AppointmentTypeInput {
 	return service.AppointmentTypeInput{
 		Name: r.PostFormValue("name"), DurationMin: r.PostFormValue("duration"),
 		BufferBeforeMin: r.PostFormValue("buffer_before"), BufferAfterMin: r.PostFormValue("buffer_after"),
-		Color: r.PostFormValue("color"), OnlineBookable: r.PostFormValue("online_bookable") == "1", AtHome: r.PostFormValue("at_home") == "1",
+		TravelBufferMin: r.PostFormValue("travel_buffer"),
+		Color:           r.PostFormValue("color"), OnlineBookable: r.PostFormValue("online_bookable") == "1", AtHome: r.PostFormValue("at_home") == "1",
 	}
 }
 
@@ -237,7 +242,7 @@ func (h *configHandlers) typesPage(r *http.Request, form service.AppointmentType
 	for i, t := range ts {
 		d, b, a := service.TypeMinutes(t)
 		p.Rows = append(p.Rows, TypeRow{
-			ID: t.ID.String(), Name: t.Name, Color: t.Color, Duration: d, Before: b, After: a,
+			ID: t.ID.String(), Name: t.Name, Color: t.Color, Duration: d, Before: b, After: a, Travel: service.TravelMinutes(t),
 			Online: t.OnlineBookable, AtHome: t.AtHome, Active: t.Active, First: i == 0, Last: i == len(ts)-1,
 		})
 	}

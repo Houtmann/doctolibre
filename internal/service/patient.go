@@ -23,6 +23,7 @@ type PatientDetails struct {
 	FirstName, LastName string
 	Phone, Email        string
 	BirthDate           string // "2006-01-02", optionnelle
+	Address             string // adresse de la visite à domicile (ignorée sinon)
 	SMSOptIn            bool
 	EmailOptIn          bool
 }
@@ -33,6 +34,7 @@ type details struct {
 	phone               string // E.164 ou ""
 	email               string // minuscules ou ""
 	birth               pgtype.Date
+	address             string
 	smsOptIn            bool
 	emailOptIn          bool
 }
@@ -49,11 +51,14 @@ func (d details) recipient(channel string) string {
 // a été vérifié ne peut être modifié entre l'envoi du code et la réservation.
 func (d details) binding(practitioner, typeID uuid.UUID, start time.Time, channel string) string {
 	return sha256Hex(practitioner.String(), typeID.String(), fmt.Sprint(start.UTC().Unix()), channel,
-		d.firstName, d.lastName, d.phone, d.email, fmt.Sprint(d.birth.Valid, d.birth.Time.Format("2006-01-02")),
+		d.firstName, d.lastName, d.phone, d.email, fmt.Sprint(d.birth.Valid, d.birth.Time.Format("2006-01-02")), d.address,
 		fmt.Sprint(d.smsOptIn), fmt.Sprint(d.emailOptIn))
 }
 
-const maxNameLen = 80
+const (
+	maxNameLen    = 80
+	maxAddressLen = 300
+)
 
 func validName(s string) bool {
 	if s == "" || utf8.RuneCountInString(s) > maxNameLen {
@@ -123,6 +128,12 @@ func parseDetails(in PatientDetails, channel string, now time.Time) (details, er
 			d.birth = pgtype.Date{Time: t, Valid: true}
 		}
 	}
+	if a := strings.TrimSpace(in.Address); a != "" {
+		if tooLong(a, maxAddressLen) || strings.ContainsFunc(a, unicode.IsControl) {
+			add("address", "L'adresse n'est pas valide (300 caractères maximum, sans retour à la ligne).")
+		}
+		d.address = a
+	}
 	if len(errs) > 0 {
 		return details{}, errs
 	}
@@ -188,6 +199,7 @@ func findOrCreatePatient(ctx context.Context, q *sqlcgen.Queries, practiceID uui
 		Phone:    pgtype.Text{String: d.phone, Valid: d.phone != ""},
 		Email:    pgtype.Text{String: d.email, Valid: d.email != ""},
 		SmsOptIn: d.smsOptIn && d.phone != "", EmailOptIn: d.emailOptIn && d.email != "",
+		Address: pgtype.Text{String: d.address, Valid: d.address != ""},
 	})
 	if err != nil {
 		return sqlcgen.Patient{}, fmt.Errorf("création patient: %w", err)

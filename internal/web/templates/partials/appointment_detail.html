@@ -7,6 +7,9 @@
     {{if .Phone}}<dt>Téléphone</dt><dd>{{.Phone}}</dd>{{end}}
     {{if .Email}}<dt>Email</dt><dd>{{.Email}}</dd>{{end}}
     <dt>Motif</dt><dd>{{.TypeName}}</dd>
+    {{if .AtHome}}<dt>Lieu</dt><dd>À domicile{{if .Address}} : {{.Address}}
+      <br><a href="{{geoURL .Address}}">Ouvrir dans l'application de cartes</a>
+      · <a href="{{osmURL .Address}}" rel="noopener noreferrer" target="_blank">OpenStreetMap</a>{{end}}</dd>{{end}}
     <dt>Date</dt><dd>{{localDate .Start}}, de {{localTime .Start}} à {{localTime .End}}</dd>
     <dt>Statut</dt><dd>{{.StatusLabel}}</dd>
     <dt>Origine</dt><dd>{{.SourceLabel}}, le {{localDate .CreatedAt}} à {{localTime .CreatedAt}}</dd>

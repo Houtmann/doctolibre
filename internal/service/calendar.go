@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -70,6 +71,7 @@ type CalAppt struct {
 	Source     string
 	Past       bool
 	StatusName string // libellé français du statut
+	AtHome     bool   // visite à domicile
 }
 
 // CalBand est une zone hors disponibilité (grisée).
@@ -210,7 +212,7 @@ func (c *Calendar) View(ctx context.Context, a Actor, in ViewInput) (CalendarVie
 		byDay[day.Format("2006-01-02")] = append(byDay[day.Format("2006-01-02")], CalAppt{
 			ID: ap.ID, Start: st, End: en, Row: r0 + 2, Span: max(r1-r0, 1),
 			Patient: name, TypeName: ap.TypeName, Status: ap.Status, StatusName: statusLabels[ap.Status], Source: ap.Source,
-			Past: !en.After(now),
+			Past: !en.After(now), AtHome: ap.TypeAtHome,
 		})
 	}
 	for i := 0; i < n; i++ {
@@ -386,6 +388,7 @@ type NewAppointmentInput struct {
 	TypeID                                        string
 	Date, Time                                    string // heure du cabinet
 	Force                                         bool   // autorise le hors horaires
+	Address                                       string // requise pour un motif à domicile
 }
 
 // ErrSlotTakenMsg est le message affiché quand un RDV en chevauche un autre.
@@ -441,6 +444,10 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 	if startErr != nil {
 		errs = append(errs, domain.FieldErrors(startErr)...)
 	}
+	in.Address = strings.TrimSpace(in.Address)
+	if tooLong(in.Address, maxAddressLen) || strings.ContainsFunc(in.Address, unicode.IsControl) {
+		add("address", "L'adresse n'est pas valide (300 caractères maximum, sans retour à la ligne).")
+	}
 	if len(errs) > 0 {
 		return sqlcgen.Appointment{}, errs
 	}
@@ -458,6 +465,13 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 		if err != nil {
 			return fmt.Errorf("lecture motif: %w", err)
 		}
+		if t.AtHome && in.Address == "" {
+			return domain.ErrValidation{Field: "address", Msg: "L'adresse de la visite à domicile est requise."}
+		}
+		address := ""
+		if t.AtHome {
+			address = in.Address
+		}
 		end := start.Add(intervalDuration(t.Duration))
 		if !in.Force {
 			ok, err := withinOpeningHours(ctx, q, pr.ID, typeID, start, end, loc)
@@ -474,6 +488,7 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 				Phone:    pgtype.Text{String: phone, Valid: phone != ""},
 				Email:    pgtype.Text{String: in.NewEmail, Valid: in.NewEmail != ""},
 				SmsOptIn: true, EmailOptIn: true,
+				Address: pgtype.Text{String: address, Valid: address != ""},
 			})
 			if err != nil {
 				return fmt.Errorf("création patient: %w", err)
@@ -484,9 +499,10 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 		} else if err != nil {
 			return fmt.Errorf("lecture patient: %w", err)
 		}
+		bb, ba := domain.HomeBuffers(t.AtHome, intervalDuration(t.BufferBefore), intervalDuration(t.BufferAfter), intervalDuration(t.TravelBuffer))
 		out, err = store.CreateAppointment(ctx, q, store.NewAppointment{
 			PracticeID: a.PracticeID, PractitionerID: pr.ID, PatientID: patientID, AppointmentTypeID: typeID,
-			Start: start, End: end, BufferBefore: intervalDuration(t.BufferBefore), BufferAfter: intervalDuration(t.BufferAfter),
+			Start: start, End: end, BufferBefore: bb, BufferAfter: ba, Address: address,
 			Source: "staff",
 		})
 		if err != nil {
@@ -675,6 +691,8 @@ type AppointmentDetail struct {
 	CancelledAt        time.Time
 	CreatedAt          time.Time
 	History            []HistoryEntry
+	AtHome             bool
+	Address            string // adresse de la visite à domicile
 	CanMove, CanCancel bool
 	MoveDate, MoveTime string // valeurs par défaut du formulaire de déplacement
 }
@@ -698,7 +716,7 @@ func (c *Calendar) Detail(ctx context.Context, a Actor, id uuid.UUID) (Appointme
 	d := AppointmentDetail{
 		ID: r.ID, Start: r.StartsAt.In(loc), End: r.EndsAt.In(loc), Status: r.Status, StatusLabel: statusLabels[r.Status],
 		Source: r.Source, Patient: r.FirstName + " " + r.LastName, Phone: r.Phone.String, Email: r.Email.String,
-		TypeName: r.TypeName, CancelReason: r.CancelReason.String, CreatedAt: r.CreatedAt.In(loc),
+		TypeName: r.TypeName, AtHome: r.TypeAtHome, Address: r.Address.String, CancelReason: r.CancelReason.String, CreatedAt: r.CreatedAt.In(loc),
 		CanMove: r.Status == "booked", CanCancel: r.Status == "booked",
 	}
 	d.SourceLabel = map[string]string{"online": "Réservation en ligne", "staff": "Saisi par le cabinet"}[r.Source]

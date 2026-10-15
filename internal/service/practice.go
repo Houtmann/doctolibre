@@ -57,6 +57,9 @@ type SettingsInput struct {
 	HorizonDays          string
 
 	FirstName, LastName, Title, Bio, Slug string
+
+	HomeVisitOnline bool   // réservation en ligne des visites à domicile
+	HomeVisitZones  string // codes postaux ou communes, séparés par des virgules ou des retours à la ligne
 }
 
 var slugRe = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
@@ -194,6 +197,12 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 	if len(in.Slug) > 60 || !slugRe.MatchString(in.Slug) {
 		add("slug", "L'identifiant d'URL ne peut contenir que des lettres minuscules, chiffres et tirets (60 caractères maximum).")
 	}
+	zones, zerr := parseZones(in.HomeVisitZones)
+	if zerr != "" {
+		add("home_visit_zones", zerr)
+	} else if in.HomeVisitOnline && len(zones) == 0 {
+		add("home_visit_zones", "Indiquez au moins une commune ou un code postal pour ouvrir les visites à domicile à la réservation en ligne.")
+	}
 	if len(errs) > 0 {
 		return errs
 	}
@@ -217,6 +226,11 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 		}); err != nil {
 			return fmt.Errorf("mise à jour cabinet: %w", err)
 		}
+		if err := q.SetPracticeHomeVisit(ctx, sqlcgen.SetPracticeHomeVisitParams{
+			ID: pc.ID, HomeVisitOnline: in.HomeVisitOnline, HomeVisitZones: zones,
+		}); err != nil {
+			return fmt.Errorf("zones de visite à domicile: %w", err)
+		}
 		_, err = q.UpdatePractitioner(ctx, sqlcgen.UpdatePractitionerParams{
 			ID: pr.ID, PracticeID: a.PracticeID, FirstName: in.FirstName, LastName: in.LastName,
 			Slug: in.Slug, Title: in.Title, Bio: in.Bio, Color: pr.Color, Active: pr.Active,
@@ -230,6 +244,31 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 		return nil
 	})
 	return err
+}
+
+// maxZones borne la liste des zones desservies.
+const maxZones = 200
+
+// parseZones découpe la saisie (virgules, points-virgules, retours à la ligne),
+// retire les doublons et borne la taille ; le second résultat est un message d'erreur.
+func parseZones(s string) ([]string, string) {
+	zones := []string{}
+	seen := map[string]bool{}
+	for _, z := range strings.FieldsFunc(s, func(r rune) bool { return r == ',' || r == ';' || r == '\n' || r == '\r' }) {
+		z = strings.TrimSpace(z)
+		if z == "" || seen[strings.ToLower(z)] {
+			continue
+		}
+		if tooLong(z, 60) {
+			return nil, "Chaque zone est limitée à 60 caractères."
+		}
+		seen[strings.ToLower(z)] = true
+		zones = append(zones, z)
+	}
+	if len(zones) > maxZones {
+		return nil, "Trop de zones (200 maximum)."
+	}
+	return zones, ""
 }
 
 // location charge le fuseau du cabinet.

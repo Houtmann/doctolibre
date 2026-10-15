@@ -17,6 +17,11 @@
   <small id="phone-help">Exemple : 06 12 34 56 78</small>
   <label for="email">Adresse email</label>
   <input id="email" name="email" type="email" value="{{.Data.Form.Email}}" autocomplete="email" maxlength="254">
+  {{if .Data.AtHome}}
+  <label for="address">Adresse de la visite à domicile</label>
+  <textarea id="address" name="address" rows="3" maxlength="300" autocomplete="street-address" required aria-describedby="address-help">{{.Data.Form.Address}}</textarea>
+  <small id="address-help">Numéro, rue, code postal et commune. Le praticien se déplace uniquement dans la zone desservie.</small>
+  {{end}}
   <label for="birth_date">Date de naissance (facultatif)</label>
   <input id="birth_date" name="birth_date" type="date" value="{{.Data.Form.BirthDate}}" autocomplete="bday">
 

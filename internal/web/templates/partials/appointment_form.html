@@ -56,6 +56,9 @@
         <input id="appt-time" name="time" type="time" step="300" value="{{.Form.Time}}" required>
       </div>
     </div>
+    <label for="appt-address">Adresse (visites à domicile uniquement)</label>
+    <textarea id="appt-address" name="address" rows="2" maxlength="300" autocomplete="off">{{.Form.Address}}</textarea>
+
     <label for="appt-force">
       <input id="appt-force" type="checkbox" name="force" value="1"{{if .Form.Force}} checked{{end}}>
       Hors horaires (autoriser en dehors des disponibilités)

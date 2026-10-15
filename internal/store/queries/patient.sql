@@ -1,6 +1,6 @@
 -- name: CreatePatient :one
-INSERT INTO patient (practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin)
-VALUES (@practice_id, @first_name, @last_name, @birth_date, @phone, @email, @sms_opt_in, @email_opt_in, @notes_admin)
+INSERT INTO patient (practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, address)
+VALUES (@practice_id, @first_name, @last_name, @birth_date, @phone, @email, @sms_opt_in, @email_opt_in, @notes_admin, @address)
 RETURNING *;
 
 -- name: GetPatient :one
