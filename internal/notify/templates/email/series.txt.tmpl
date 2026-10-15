@@ -1,0 +1,12 @@
+Bonjour {{.first_name}},
+
+{{.count}} séances ({{.type_name}}) avec {{.practitioner}} ont été planifiées pour vous :
+{{range .sessions}}
+  - {{.}}{{end}}
+
+  {{.practice_name}}{{if .practice_address}}
+  {{.practice_address}}{{end}}
+{{if .practice_phone}}
+Une question ou un empêchement ? Appelez le {{.practice_phone}}.
+{{end}}
+{{.signature}}

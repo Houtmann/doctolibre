@@ -19,6 +19,7 @@ import (
 // Chemins de l'administration du cabinet.
 const (
 	pathSettings     = "/admin/settings"
+	pathNotify       = "/admin/settings/notifications"
 	pathTypes        = "/admin/appointment-types"
 	pathAvailability = "/admin/availability"
 	pathAbsences     = "/admin/absences"
@@ -32,6 +33,8 @@ func (d Deps) configRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 
 	handle("GET "+pathSettings, h.settingsForm)
 	handle("POST "+pathSettings, h.settingsSubmit)
+	handle("GET "+pathNotify, h.notifyForm)
+	handle("POST "+pathNotify, h.notifySubmit)
 	if d.Feed != nil {
 		handle("POST "+pathFeedSettings, h.feedGenerate)
 		handle("POST "+pathFeedSettings+"/options", h.feedOptions)
@@ -516,4 +519,51 @@ func (h *configHandlers) absencesDelete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	h.absencesDone(w, r, "Absence supprimée.")
+}
+
+// --- Notifications ---
+
+// NotifyPage est la donnée de la page admin_notifications.
+type NotifyPage struct {
+	Form     service.NotificationInput
+	Errors   []string
+	Estimate service.SMSEstimate
+}
+
+func (h *configHandlers) notifyPage(w http.ResponseWriter, r *http.Request, status int, in service.NotificationInput, errs []string) {
+	est, err := h.svc.EstimateSMS(r.Context(), actorFrom(r), in)
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.PageStatus(w, r, status, "admin_notifications", NotifyPage{Form: in, Errors: errs, Estimate: est})
+}
+
+func (h *configHandlers) notifyForm(w http.ResponseWriter, r *http.Request) {
+	in, err := h.svc.Notifications(r.Context(), actorFrom(r))
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.notifyPage(w, r, http.StatusOK, in, nil)
+}
+
+func (h *configHandlers) notifySubmit(w http.ResponseWriter, r *http.Request) {
+	in := service.NotificationInput{
+		ConfirmationChannel: r.PostFormValue("confirmation_channel"), ReminderChannel: r.PostFormValue("reminder_channel"),
+		ChangeChannel: r.PostFormValue("change_channel"), ReminderDayBefore: r.PostFormValue("reminder_day_before") == "1",
+		ReminderHour: r.PostFormValue("reminder_hour"), ReminderTwoHours: r.PostFormValue("reminder_two_hours") == "1",
+		ReminderSeries: r.PostFormValue("reminder_series") == "1", Signature: r.PostFormValue("signature"),
+	}
+	err := h.svc.UpdateNotifications(r.Context(), actorFrom(r), in)
+	if msgs := validation(err); msgs != nil {
+		h.notifyPage(w, r, http.StatusUnprocessableEntity, in, msgs)
+		return
+	}
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.SetFlash(w, "success", "Réglages de notification enregistrés.")
+	httpx.Redirect(w, r, pathNotify)
 }

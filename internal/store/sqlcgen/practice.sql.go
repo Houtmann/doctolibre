@@ -15,7 +15,7 @@ import (
 const createPractice = `-- name: CreatePractice :one
 INSERT INTO practice (name, slug, address, phone, timezone)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones
+RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones, notify_confirmation_channel, notify_reminder_channel, notify_change_channel, reminder_day_before, reminder_day_before_hour, reminder_two_hours, reminder_series, notify_signature
 `
 
 type CreatePracticeParams struct {
@@ -49,12 +49,20 @@ func (q *Queries) CreatePractice(ctx context.Context, arg CreatePracticeParams) 
 		&i.UpdatedAt,
 		&i.HomeVisitOnline,
 		&i.HomeVisitZones,
+		&i.NotifyConfirmationChannel,
+		&i.NotifyReminderChannel,
+		&i.NotifyChangeChannel,
+		&i.ReminderDayBefore,
+		&i.ReminderDayBeforeHour,
+		&i.ReminderTwoHours,
+		&i.ReminderSeries,
+		&i.NotifySignature,
 	)
 	return i, err
 }
 
 const getPractice = `-- name: GetPractice :one
-SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones FROM practice WHERE id = $1
+SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones, notify_confirmation_channel, notify_reminder_channel, notify_change_channel, reminder_day_before, reminder_day_before_hour, reminder_two_hours, reminder_series, notify_signature FROM practice WHERE id = $1
 `
 
 func (q *Queries) GetPractice(ctx context.Context, id uuid.UUID) (Practice, error) {
@@ -74,12 +82,20 @@ func (q *Queries) GetPractice(ctx context.Context, id uuid.UUID) (Practice, erro
 		&i.UpdatedAt,
 		&i.HomeVisitOnline,
 		&i.HomeVisitZones,
+		&i.NotifyConfirmationChannel,
+		&i.NotifyReminderChannel,
+		&i.NotifyChangeChannel,
+		&i.ReminderDayBefore,
+		&i.ReminderDayBeforeHour,
+		&i.ReminderTwoHours,
+		&i.ReminderSeries,
+		&i.NotifySignature,
 	)
 	return i, err
 }
 
 const getPracticeByName = `-- name: GetPracticeByName :one
-SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones FROM practice WHERE name = $1 ORDER BY created_at, id LIMIT 1
+SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones, notify_confirmation_channel, notify_reminder_channel, notify_change_channel, reminder_day_before, reminder_day_before_hour, reminder_two_hours, reminder_series, notify_signature FROM practice WHERE name = $1 ORDER BY created_at, id LIMIT 1
 `
 
 func (q *Queries) GetPracticeByName(ctx context.Context, name string) (Practice, error) {
@@ -99,12 +115,20 @@ func (q *Queries) GetPracticeByName(ctx context.Context, name string) (Practice,
 		&i.UpdatedAt,
 		&i.HomeVisitOnline,
 		&i.HomeVisitZones,
+		&i.NotifyConfirmationChannel,
+		&i.NotifyReminderChannel,
+		&i.NotifyChangeChannel,
+		&i.ReminderDayBefore,
+		&i.ReminderDayBeforeHour,
+		&i.ReminderTwoHours,
+		&i.ReminderSeries,
+		&i.NotifySignature,
 	)
 	return i, err
 }
 
 const getPracticeBySlug = `-- name: GetPracticeBySlug :one
-SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones FROM practice WHERE slug = $1
+SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones, notify_confirmation_channel, notify_reminder_channel, notify_change_channel, reminder_day_before, reminder_day_before_hour, reminder_two_hours, reminder_series, notify_signature FROM practice WHERE slug = $1
 `
 
 func (q *Queries) GetPracticeBySlug(ctx context.Context, slug string) (Practice, error) {
@@ -124,8 +148,68 @@ func (q *Queries) GetPracticeBySlug(ctx context.Context, slug string) (Practice,
 		&i.UpdatedAt,
 		&i.HomeVisitOnline,
 		&i.HomeVisitZones,
+		&i.NotifyConfirmationChannel,
+		&i.NotifyReminderChannel,
+		&i.NotifyChangeChannel,
+		&i.ReminderDayBefore,
+		&i.ReminderDayBeforeHour,
+		&i.ReminderTwoHours,
+		&i.ReminderSeries,
+		&i.NotifySignature,
 	)
 	return i, err
+}
+
+const listPracticesPage = `-- name: ListPracticesPage :many
+SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones, notify_confirmation_channel, notify_reminder_channel, notify_change_channel, reminder_day_before, reminder_day_before_hour, reminder_two_hours, reminder_series, notify_signature FROM practice WHERE id > $1 ORDER BY id LIMIT $2
+`
+
+type ListPracticesPageParams struct {
+	AfterID  uuid.UUID
+	PageSize int32
+}
+
+// Parcours par clé (id) pour les tâches périodiques multi-cabinets.
+func (q *Queries) ListPracticesPage(ctx context.Context, arg ListPracticesPageParams) ([]Practice, error) {
+	rows, err := q.db.Query(ctx, listPracticesPage, arg.AfterID, arg.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Practice
+	for rows.Next() {
+		var i Practice
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.Address,
+			&i.Phone,
+			&i.Timezone,
+			&i.MinBookingNotice,
+			&i.MinCancelNotice,
+			&i.BookingHorizon,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.HomeVisitOnline,
+			&i.HomeVisitZones,
+			&i.NotifyConfirmationChannel,
+			&i.NotifyReminderChannel,
+			&i.NotifyChangeChannel,
+			&i.ReminderDayBefore,
+			&i.ReminderDayBeforeHour,
+			&i.ReminderTwoHours,
+			&i.ReminderSeries,
+			&i.NotifySignature,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const setPracticeHomeVisit = `-- name: SetPracticeHomeVisit :exec
@@ -144,13 +228,54 @@ func (q *Queries) SetPracticeHomeVisit(ctx context.Context, arg SetPracticeHomeV
 	return err
 }
 
+const setPracticeNotifications = `-- name: SetPracticeNotifications :exec
+UPDATE practice SET
+    notify_confirmation_channel = $1,
+    notify_reminder_channel = $2,
+    notify_change_channel = $3,
+    reminder_day_before = $4,
+    reminder_day_before_hour = $5,
+    reminder_two_hours = $6,
+    reminder_series = $7,
+    notify_signature = $8,
+    updated_at = now()
+WHERE id = $9
+`
+
+type SetPracticeNotificationsParams struct {
+	NotifyConfirmationChannel string
+	NotifyReminderChannel     string
+	NotifyChangeChannel       string
+	ReminderDayBefore         bool
+	ReminderDayBeforeHour     int16
+	ReminderTwoHours          bool
+	ReminderSeries            bool
+	NotifySignature           string
+	ID                        uuid.UUID
+}
+
+func (q *Queries) SetPracticeNotifications(ctx context.Context, arg SetPracticeNotificationsParams) error {
+	_, err := q.db.Exec(ctx, setPracticeNotifications,
+		arg.NotifyConfirmationChannel,
+		arg.NotifyReminderChannel,
+		arg.NotifyChangeChannel,
+		arg.ReminderDayBefore,
+		arg.ReminderDayBeforeHour,
+		arg.ReminderTwoHours,
+		arg.ReminderSeries,
+		arg.NotifySignature,
+		arg.ID,
+	)
+	return err
+}
+
 const updatePractice = `-- name: UpdatePractice :one
 UPDATE practice SET
     name = $1, address = $2, phone = $3, timezone = $4,
     min_booking_notice = $5, min_cancel_notice = $6,
     booking_horizon = $7, updated_at = now()
 WHERE id = $8
-RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones
+RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones, notify_confirmation_channel, notify_reminder_channel, notify_change_channel, reminder_day_before, reminder_day_before_hour, reminder_two_hours, reminder_series, notify_signature
 `
 
 type UpdatePracticeParams struct {
@@ -190,6 +315,14 @@ func (q *Queries) UpdatePractice(ctx context.Context, arg UpdatePracticeParams) 
 		&i.UpdatedAt,
 		&i.HomeVisitOnline,
 		&i.HomeVisitZones,
+		&i.NotifyConfirmationChannel,
+		&i.NotifyReminderChannel,
+		&i.NotifyChangeChannel,
+		&i.ReminderDayBefore,
+		&i.ReminderDayBeforeHour,
+		&i.ReminderTwoHours,
+		&i.ReminderSeries,
+		&i.NotifySignature,
 	)
 	return i, err
 }

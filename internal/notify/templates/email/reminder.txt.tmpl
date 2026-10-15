@@ -1,0 +1,14 @@
+Bonjour {{.first_name}},
+
+Nous vous rappelons votre rendez-vous ({{.type_name}}) avec {{.practitioner}} :
+
+  {{.date}} à {{.time}}
+  {{.practice_name}}{{if .practice_address}}
+  {{.practice_address}}{{end}}
+{{if .manage_url}}
+Un empêchement ? Déplacez ou annulez le rendez-vous :
+{{.manage_url}}
+{{else}}
+Un empêchement ? Prévenez le cabinet{{if .practice_phone}} au {{.practice_phone}}{{end}}.
+{{end}}
+{{.signature}}

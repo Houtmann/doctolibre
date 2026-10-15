@@ -25,6 +25,8 @@ type NewAppointment struct {
 	Source            string // online | staff
 	ManageTokenHash   string // vide = aucun
 	Address           string // visite à domicile ; vide = aucune
+	// VerifiedChannel : canal (email|sms) dont le contact a été vérifié par code ; vide = aucun.
+	VerifiedChannel string
 }
 
 // CreateAppointment calcule during_blocked via domain.BlockedRange puis insère.
@@ -46,6 +48,7 @@ func CreateAppointment(ctx context.Context, q *sqlcgen.Queries, n NewAppointment
 		Source:            n.Source,
 		ManageTokenHash:   pgtype.Text{String: n.ManageTokenHash, Valid: n.ManageTokenHash != ""},
 		Address:           pgtype.Text{String: n.Address, Valid: n.Address != ""},
+		VerifiedChannel:   pgtype.Text{String: n.VerifiedChannel, Valid: n.VerifiedChannel != ""},
 	})
 	if err != nil {
 		if IsExclusionViolation(err) && constraintName(err) == "appointment_no_overlap" {

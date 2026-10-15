@@ -1,0 +1,7 @@
+Bonjour {{.first_name}},
+
+Votre rendez-vous ({{.type_name}}) du {{.date}} à {{.time}} avec {{.practitioner}} a été annulé par le cabinet.
+{{if .practice_phone}}
+Pour en prendre un nouveau, appelez le {{.practice_phone}}.
+{{end}}
+{{.signature}}

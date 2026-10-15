@@ -43,6 +43,7 @@ type Appointment struct {
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	Address           pgtype.Text
+	VerifiedChannel   pgtype.Text
 }
 
 type AppointmentType struct {
@@ -179,19 +180,27 @@ type Patient struct {
 }
 
 type Practice struct {
-	ID               uuid.UUID
-	Name             string
-	Slug             string
-	Address          string
-	Phone            string
-	Timezone         string
-	MinBookingNotice pgtype.Interval
-	MinCancelNotice  pgtype.Interval
-	BookingHorizon   pgtype.Interval
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	HomeVisitOnline  bool
-	HomeVisitZones   []string
+	ID                        uuid.UUID
+	Name                      string
+	Slug                      string
+	Address                   string
+	Phone                     string
+	Timezone                  string
+	MinBookingNotice          pgtype.Interval
+	MinCancelNotice           pgtype.Interval
+	BookingHorizon            pgtype.Interval
+	CreatedAt                 time.Time
+	UpdatedAt                 time.Time
+	HomeVisitOnline           bool
+	HomeVisitZones            []string
+	NotifyConfirmationChannel string
+	NotifyReminderChannel     string
+	NotifyChangeChannel       string
+	ReminderDayBefore         bool
+	ReminderDayBeforeHour     int16
+	ReminderTwoHours          bool
+	ReminderSeries            bool
+	NotifySignature           string
 }
 
 type Practitioner struct {

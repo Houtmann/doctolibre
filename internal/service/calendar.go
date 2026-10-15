@@ -16,6 +16,7 @@ import (
 
 	"doctolibre/internal/booking"
 	"doctolibre/internal/domain"
+	"doctolibre/internal/outbox"
 	"doctolibre/internal/store"
 	"doctolibre/internal/store/sqlcgen"
 )
@@ -36,8 +37,12 @@ const (
 type Calendar struct {
 	Pool   *pgxpool.Pool
 	Clock  domain.Clock
-	Events EventSink // nil = NopSink
+	Events EventSink // nil = NopSink ; appelé après commit
+	// BaseURL : adresse publique pour les liens de gestion des messages (vide = sans lien).
+	BaseURL string
 }
+
+func (c *Calendar) notifier() notifier { return notifier{clock: c.Clock, baseURL: c.BaseURL} }
 
 func (c *Calendar) practice() *Practice { return &Practice{Pool: c.Pool, Clock: c.Clock} }
 
@@ -456,8 +461,13 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 		return sqlcgen.Appointment{}, err
 	}
 
+	// Jeton du lien de gestion du patient (T015) : seul son haché est stocké.
+	token, err := newManageToken()
+	if err != nil {
+		return sqlcgen.Appointment{}, err
+	}
 	var out sqlcgen.Appointment
-	err = store.WithTx(ctx, c.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+	err = store.WithTx(ctx, c.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		t, err := q.GetAppointmentType(ctx, sqlcgen.GetAppointmentTypeParams{ID: typeID, PracticeID: a.PracticeID})
 		if errors.Is(err, pgx.ErrNoRows) || (err == nil && !t.Active) {
 			return domain.ErrValidation{Field: "type_id", Msg: "Motif inconnu ou désactivé."}
@@ -503,12 +513,15 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 		out, err = store.CreateAppointment(ctx, q, store.NewAppointment{
 			PracticeID: a.PracticeID, PractitionerID: pr.ID, PatientID: patientID, AppointmentTypeID: typeID,
 			Start: start, End: end, BufferBefore: bb, BufferAfter: ba, Address: address,
-			Source: "staff",
+			Source: "staff", ManageTokenHash: ManageTokenHash(token),
 		})
 		if err != nil {
 			return err
 		}
-		return audit(ctx, q, a, EventAppointmentCreated, out.ID, map[string]string{"start": start.UTC().Format(time.RFC3339), "forced": fmt.Sprint(in.Force)})
+		if err := audit(ctx, q, a, EventAppointmentCreated, out.ID, map[string]string{"start": start.UTC().Format(time.RFC3339), "forced": fmt.Sprint(in.Force)}); err != nil {
+			return err
+		}
+		return c.notifier().booked(ctx, tx, q, out, token)
 	})
 	if err != nil {
 		return sqlcgen.Appointment{}, err
@@ -553,7 +566,7 @@ func (c *Calendar) Move(ctx context.Context, a Actor, id uuid.UUID, in MoveInput
 		return err
 	}
 	var from time.Time
-	err = store.WithTx(ctx, c.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+	err = store.WithTx(ctx, c.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		ap, err := q.GetAppointment(ctx, sqlcgen.GetAppointmentParams{ID: id, PracticeID: a.PracticeID})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.ErrNotFound
@@ -575,12 +588,17 @@ func (c *Calendar) Move(ctx context.Context, a Actor, id uuid.UUID, in MoveInput
 				return domain.ErrValidation{Field: "date", Msg: "Ce créneau est hors des horaires d'ouverture ; cochez « Hors horaires » pour le forcer."}
 			}
 		}
-		if _, err := store.MoveAppointment(ctx, q, a.PracticeID, id, start, end, intervalDuration(ap.BufferBefore), intervalDuration(ap.BufferAfter)); err != nil {
+		moved, err := store.MoveAppointment(ctx, q, a.PracticeID, id, start, end, intervalDuration(ap.BufferBefore), intervalDuration(ap.BufferAfter))
+		if err != nil {
 			return err
 		}
-		return audit(ctx, q, a, EventAppointmentMoved, id, map[string]string{
+		if err := audit(ctx, q, a, EventAppointmentMoved, id, map[string]string{
 			"from": from.UTC().Format(time.RFC3339), "to": start.UTC().Format(time.RFC3339), "forced": fmt.Sprint(in.Force),
-		})
+		}); err != nil {
+			return err
+		}
+		// Le jeton de gestion n'est pas connu du cabinet : le message n'a pas de lien.
+		return c.notifier().rescheduled(ctx, tx, q, moved, from, "")
 	})
 	if err != nil {
 		return err
@@ -595,8 +613,8 @@ func (c *Calendar) Cancel(ctx context.Context, a Actor, id uuid.UUID, reason str
 	if tooLong(reason, 200) {
 		return domain.ErrValidation{Field: "reason", Msg: "Le motif d'annulation est trop long (200 caractères maximum)."}
 	}
-	err := store.WithTx(ctx, c.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
-		_, err := q.CancelAppointment(ctx, sqlcgen.CancelAppointmentParams{
+	err := store.WithTx(ctx, c.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
+		cancelled, err := q.CancelAppointment(ctx, sqlcgen.CancelAppointmentParams{
 			ID: id, PracticeID: a.PracticeID,
 			CancelledAt:  pgtype.Timestamptz{Time: c.Clock.Now(), Valid: true},
 			CancelledBy:  pgtype.Text{String: "staff", Valid: true},
@@ -614,7 +632,10 @@ func (c *Calendar) Cancel(ctx context.Context, a Actor, id uuid.UUID, reason str
 		if err != nil {
 			return fmt.Errorf("annulation: %w", err)
 		}
-		return audit(ctx, q, a, EventAppointmentCancelled, id, map[string]string{"has_reason": fmt.Sprint(reason != "")})
+		if err := audit(ctx, q, a, EventAppointmentCancelled, id, map[string]string{"has_reason": fmt.Sprint(reason != "")}); err != nil {
+			return err
+		}
+		return c.notifier().cancelled(ctx, tx, q, cancelled, true)
 	})
 	if err != nil {
 		return err
@@ -631,7 +652,7 @@ func (c *Calendar) SetStatus(ctx context.Context, a Actor, id uuid.UUID, status 
 	default:
 		return domain.ErrValidation{Field: "status", Msg: "Statut inconnu."}
 	}
-	err := store.WithTx(ctx, c.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+	err := store.WithTx(ctx, c.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		ap, err := q.GetAppointment(ctx, sqlcgen.GetAppointmentParams{ID: id, PracticeID: a.PracticeID})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.ErrNotFound
@@ -644,6 +665,12 @@ func (c *Calendar) SetStatus(ctx context.Context, a Actor, id uuid.UUID, status 
 		}
 		if _, err := q.SetAppointmentStatus(ctx, sqlcgen.SetAppointmentStatusParams{ID: id, PracticeID: a.PracticeID, Status: status}); err != nil {
 			return fmt.Errorf("changement de statut: %w", err)
+		}
+		if status != "booked" {
+			// Honoré ou absent : plus de rappel à envoyer.
+			if err := outbox.CancelForAppointment(ctx, tx, c.Clock, id); err != nil {
+				return err
+			}
 		}
 		return audit(ctx, q, a, EventAppointmentStatus, id, map[string]string{"status": status})
 	})

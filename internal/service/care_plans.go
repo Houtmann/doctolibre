@@ -39,8 +39,12 @@ var planStatusLabels = map[string]string{planStatusActive: "En cours", planStatu
 type CarePlans struct {
 	Pool   *pgxpool.Pool
 	Clock  domain.Clock
-	Events EventSink // nil = NopSink
+	Events EventSink // nil = NopSink ; appelé après commit
+	// BaseURL : adresse publique (messages aux patients) ; vide = messages sans lien.
+	BaseURL string
 }
+
+func (s *CarePlans) notifier() notifier { return notifier{clock: s.Clock, baseURL: s.BaseURL} }
 
 func (s *CarePlans) practice() *Practice { return &Practice{Pool: s.Pool, Clock: s.Clock} }
 
@@ -419,7 +423,7 @@ func (s *CarePlans) Create(ctx context.Context, a Actor, in CreateInput) (sqlcge
 	}
 	var plan sqlcgen.CarePlan
 	var ids []uuid.UUID
-	err = store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+	err = store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		sc, err := staffSlotContext(ctx, q, a.PracticeID, pr.ID, p.typeID)
 		if err != nil {
 			return err
@@ -461,7 +465,19 @@ func (s *CarePlans) Create(ctx context.Context, a Actor, in CreateInput) (sqlcge
 		if ids, err = insertSessions(ctx, q, a, sc, p.patientID, plan.ID, p.address, lines); err != nil {
 			return err
 		}
-		return auditPlan(ctx, q, a, "care_plan.created", plan.ID, map[string]string{"sessions": fmt.Sprint(len(ids)), "prescribed": fmt.Sprint(p.prescribed)})
+		if err := auditPlan(ctx, q, a, "care_plan.created", plan.ID, map[string]string{"sessions": fmt.Sprint(len(ids)), "prescribed": fmt.Sprint(p.prescribed)}); err != nil {
+			return err
+		}
+		// Une seule confirmation pour toute la série ; les rappels restent par séance.
+		appts := make([]sqlcgen.Appointment, 0, len(ids))
+		for _, id := range ids {
+			ap, err := q.GetAppointment(ctx, sqlcgen.GetAppointmentParams{ID: id, PracticeID: a.PracticeID})
+			if err != nil {
+				return fmt.Errorf("lecture rendez-vous: %w", err)
+			}
+			appts = append(appts, ap)
+		}
+		return s.notifier().seriesBooked(ctx, tx, q, appts)
 	})
 	if err != nil {
 		return sqlcgen.CarePlan{}, err
@@ -696,7 +712,7 @@ func winOr(w *[2]booking.LocalTime, i int) booking.LocalTime {
 // d'une séance annulée, ou séance manquante). Refusée si la série est complète.
 func (s *CarePlans) AddSession(ctx context.Context, a Actor, planID uuid.UUID, date, clock string) (sqlcgen.Appointment, error) {
 	var out sqlcgen.Appointment
-	err := store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+	err := store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		cp, err := q.LockCarePlan(ctx, sqlcgen.LockCarePlanParams{ID: planID, PracticeID: a.PracticeID})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.ErrNotFound
@@ -744,7 +760,11 @@ func (s *CarePlans) AddSession(ctx context.Context, a Actor, planID uuid.UUID, d
 		if out, err = q.GetAppointment(ctx, sqlcgen.GetAppointmentParams{ID: ids[0], PracticeID: a.PracticeID}); err != nil {
 			return fmt.Errorf("lecture rendez-vous: %w", err)
 		}
-		return auditPlan(ctx, q, a, "care_plan.session_added", planID, map[string]string{"appointment": ids[0].String()})
+		if err := auditPlan(ctx, q, a, "care_plan.session_added", planID, map[string]string{"appointment": ids[0].String()}); err != nil {
+			return err
+		}
+		// Séance ajoutée (remplacement) : le patient reçoit sa date, comme pour un RDV du cabinet.
+		return s.notifier().booked(ctx, tx, q, out, "")
 	})
 	if err != nil {
 		return sqlcgen.Appointment{}, err

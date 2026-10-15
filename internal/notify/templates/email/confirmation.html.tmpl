@@ -1,0 +1,10 @@
+{{define "title"}}Rendez-vous confirmé{{end}}
+{{define "content"}}
+<h1 style="margin:0 0 16px;font-size:20px;">Rendez-vous confirmé</h1>
+<p style="margin:0 0 16px;">Bonjour {{.first_name}},</p>
+<p style="margin:0 0 16px;">Votre rendez-vous ({{.type_name}}) avec {{.practitioner}} est confirmé :</p>
+<p style="margin:0 0 16px;font-size:18px;"><strong>{{.date}} à {{.time}}</strong><br>{{.practice_name}}{{if .practice_address}}<br>{{.practice_address}}{{end}}</p>
+{{if .manage_url}}<p style="margin:0 0 16px;"><a href="{{.manage_url}}">Consulter, déplacer ou annuler ce rendez-vous</a></p>{{end}}
+{{if .practice_phone}}<p style="margin:0 0 16px;font-size:14px;">Une question ? Appelez le {{.practice_phone}}.</p>{{end}}
+<p style="margin:0;font-size:14px;">{{.signature}}</p>
+{{end}}

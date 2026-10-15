@@ -47,10 +47,10 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		deps.Messages = outbox.Queue{Pool: pool, Clock: domain.SystemClock{}}
 		deps.Practice = &service.Practice{Pool: pool, Clock: domain.SystemClock{}}
 		deps.Feed = &service.CalendarFeed{Pool: pool, Clock: domain.SystemClock{}}
-		deps.Calendar = &service.Calendar{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}}
+		deps.Calendar = &service.Calendar{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL}
 		deps.Patients = &service.Patients{Pool: pool, Clock: domain.SystemClock{}}
-		deps.CarePlans = &service.CarePlans{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}}
-		deps.Booking = &service.Booking{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}}
+		deps.CarePlans = &service.CarePlans{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL}
+		deps.Booking = &service.Booking{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL}
 	} else {
 		logger.Warn("DOCTOLIBRE_DATABASE_URL vide : l'espace /admin est désactivé")
 	}
