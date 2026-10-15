@@ -304,6 +304,37 @@ func (q *Queries) ListAppointmentsForPractitioner(ctx context.Context, arg ListA
 	return items, nil
 }
 
+const lockAppointmentByManageToken = `-- name: LockAppointmentByManageToken :one
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at FROM appointment WHERE manage_token_hash = $1 FOR UPDATE
+`
+
+// Lecture verrouillée (dans une transaction) du RDV d'un lien patient.
+func (q *Queries) LockAppointmentByManageToken(ctx context.Context, manageTokenHash pgtype.Text) (Appointment, error) {
+	row := q.db.QueryRow(ctx, lockAppointmentByManageToken, manageTokenHash)
+	var i Appointment
+	err := row.Scan(
+		&i.ID,
+		&i.PracticeID,
+		&i.PractitionerID,
+		&i.PatientID,
+		&i.AppointmentTypeID,
+		&i.During,
+		&i.BufferBefore,
+		&i.BufferAfter,
+		&i.DuringBlocked,
+		&i.Status,
+		&i.Source,
+		&i.CarePlanID,
+		&i.CancelledAt,
+		&i.CancelledBy,
+		&i.CancelReason,
+		&i.ManageTokenHash,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const setAppointmentStatus = `-- name: SetAppointmentStatus :one
 UPDATE appointment SET status = $1, updated_at = now()
 WHERE id = $2 AND practice_id = $3

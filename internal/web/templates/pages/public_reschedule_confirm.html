@@ -1,0 +1,13 @@
+{{define "title"}}Confirmer le déplacement{{end}}
+{{define "content"}}
+<nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Changer de créneau</a></nav>
+<h1>Confirmer le déplacement</h1>
+<p>Rendez-vous actuel : <time datetime="{{.Data.Previous.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Previous}} à {{localTime .Data.Previous}}</time></p>
+<p>Nouveau rendez-vous :</p>
+{{template "booking_summary.html" .Data.Summary}}
+<form method="post" action="{{.Data.Action}}">
+  {{csrf .CSRF}}
+  <input type="hidden" name="start" value="{{.Data.Start}}">
+  <button type="submit">Confirmer le déplacement</button>
+</form>
+{{end}}

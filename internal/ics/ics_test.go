@@ -1,6 +1,8 @@
 package ics_test
 
 import (
+	"flag"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -60,5 +62,35 @@ func TestFoldKeepsRunesAndLimit(t *testing.T) {
 	}
 	if !strings.Contains(unfolded.String(), "SUMMARY:"+strings.Repeat("é", 100)) {
 		t.Error("le dépliage ne redonne pas le résumé d'origine")
+	}
+}
+
+var update = flag.Bool("update", false, "réécrit les golden files")
+
+func TestCalendarGolden(t *testing.T) {
+	t.Parallel()
+	paris, _ := time.LoadLocation("Europe/Paris")
+	e := ics.Event{
+		UID:         "00000000-0000-0000-0000-000000000001@doctolibre",
+		Start:       time.Date(2026, 10, 20, 9, 0, 0, 0, paris),
+		End:         time.Date(2026, 10, 20, 9, 30, 0, 0, paris),
+		Stamp:       time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC),
+		Summary:     "Séance de kinésithérapie - Cabinet des Lilas, Paris",
+		Location:    "12 rue des Lilas, 75020 Paris",
+		Description: "Cabinet : 01 23 45 67 89",
+	}
+	got := e.Calendar()
+	const path = "testdata/appointment.ics"
+	if *update {
+		if err := os.WriteFile(path, got, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("ICS différent du golden file (-update pour régénérer)\n--- got\n%s\n--- want\n%s", got, want)
 	}
 }

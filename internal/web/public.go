@@ -47,8 +47,15 @@ func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	mux.Handle("GET "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsForm), search))
 	mux.Handle("POST "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsSubmit), limit()))
 	mux.Handle("POST "+base+"/confirm", httpx.Chain(http.HandlerFunc(h.confirm), limit()))
-	mux.HandleFunc("GET /r/{token}", h.confirmed)
-	mux.HandleFunc("GET /r/{token}/ics", h.calendarFile)
+	// Lien de gestion : limité par IP (le jeton est un secret de 256 bits, mais pas de sondage gratuit).
+	manage := limit()
+	mux.Handle("GET /r/{token}", httpx.Chain(http.HandlerFunc(h.confirmed), manage))
+	mux.Handle("GET /r/{token}/ics", httpx.Chain(http.HandlerFunc(h.calendarFile), manage))
+	mux.Handle("GET /r/{token}/cancel", httpx.Chain(http.HandlerFunc(h.cancelForm), manage))
+	mux.Handle("POST /r/{token}/cancel", httpx.Chain(http.HandlerFunc(h.cancelSubmit), manage))
+	mux.Handle("GET /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleGrid), manage))
+	mux.Handle("GET /r/{token}/reschedule/confirm", httpx.Chain(http.HandlerFunc(h.rescheduleConfirm), manage))
+	mux.Handle("POST /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleSubmit), manage))
 }
 
 // fail traduit une erreur non attendue en réponse HTTP (un seul endroit).
@@ -167,6 +174,10 @@ type ConfirmedData struct {
 	Start, End   time.Time
 	Cancelled    bool
 	ICSURL       string
+	// Changeable : annulation et déplacement encore possibles (délai du cabinet respecté).
+	Changeable bool
+	ManageURL  string
+	MinCancel  time.Duration
 }
 
 func practitionerView(practiceSlug string, p sqlcgen.Practitioner) PractitionerView {
@@ -513,8 +524,9 @@ func (h *publicHandlers) confirmed(w http.ResponseWriter, r *http.Request) {
 	h.rd.Page(w, r, "public_confirmed", ConfirmedData{
 		Practice: c.Practice, Practitioner: practitionerView(c.Practice.Slug, c.Practitioner).Name, Type: c.Type.Name,
 		Duration: c.End.Sub(c.Start), FirstName: c.FirstName, Start: c.Start, End: c.End,
-		Cancelled: c.Appointment.Status == "cancelled",
-		ICSURL:    "/r/" + url.PathEscape(r.PathValue("token")) + "/ics",
+		Cancelled:  c.Appointment.Status == "cancelled",
+		ICSURL:     manageURL(r.PathValue("token")) + "/ics",
+		Changeable: c.Changeable, ManageURL: manageURL(r.PathValue("token")), MinCancel: c.MinCancel,
 	})
 }
 
