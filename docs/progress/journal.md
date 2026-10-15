@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-15 — 10 premières tâches (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T001, T002, T003, T004, T005, T010, T011, T013, T020, T045 → done ; créées : T024 (reste de T020), T046 (reste de T045)
+- **Fait** : phase 0 complète ; schéma v1 + EXCLUDE buffers inclus ; moteur de créneaux ; auth praticien ; outbox + worker ; socle métriques. Exécution en parallèle dans des worktrees, merge `--no-ff` par l'orchestrateur.
+- **Revue** : 2 corrections renvoyées et faites — T005 (course `CREATE EXTENSION` entre process `go test`), T020 (double envoi possible quand un lot dépasse `StuckAfter`). Vérifications Opus : `make check` après chaque merge, `-race` sur store/outbox, page d'accueil dans le navigateur (console, CSP), login/logout de bout en bout en curl.
+- **Vérification** : `make check` ✅ (avec `DOCTOLIBRE_TEST_DATABASE_URL` sur Postgres.app 17). Non vérifié : Docker (`make db-up`), CI (pas de remote), Lighthouse.
+- **Reste / reprise** : T012 en priorité (chemin du MVP), puis T021/T022, T024, T040. IP client derrière Caddy à traiter dans T040.
+- **Décisions** : 10 entrées dans `decisions.md` (2026-10-15, de « go.mod en go 1.26.0 » à « Travail parallèle »)
+
 ## 2026-10-15 — Répartition Opus / Sonnet (Claude Opus)
 
 - **Tâches** : toutes (champ **Exécution** ajouté)

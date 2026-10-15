@@ -7,35 +7,41 @@
 
 ## Où on en est
 
-- **Phase** : 0 — Fondations (pas commencée)
-- **Code** : aucun. Le plan, les conventions et les 27 tâches sont écrits et ont été revus (review externe intégrée).
-- **Dépôt** : git initialisé (branche `main`), commit initial de la documentation `629f231`.
+- **Phase 0 (Fondations) terminée.** Le binaire démarre (`serve`, `migrate`, `create-user`, `version`), avec la page d'accueil et le 404 stylé, et les tests DB isolés par schéma.
+- **Cœur RDV en cours** :
+  - schéma v1 avec la contrainte anti-chevauchement buffers inclus (T010) ;
+  - moteur de créneaux pur, testé sur les changements d'heure et par fuzz (T013) ;
+  - connexion praticien (T011).
+- **Notifications** : l'outbox et le worker existent (T020), mais le worker n'est pas encore lancé par le binaire (T024).
+- **Dépôt** : branche `main`, un commit et un merge par tâche. Il y a 29 tâches : T024 et T046 ont été créées pour ce qui n'a pas pu être fait dans T020 et T045.
 
 ## En cours
 
 _Aucune tâche en cours._
 
-<!-- Format :
-- [Txxx](../../tasks/Txxx-....md) — session du AAAA-MM-JJ — arrêté à : <étape> — reprise : voir section « Suivi » de la tâche
--->
-
 ## Prochaine action
 
-1. ~~Premier commit de la documentation~~ (fait).
-2. `/run-task T001` — [T001 — Bootstrap du dépôt Go](../../tasks/T001-bootstrap.md).
-3. Ensuite, en parallèle : [T002](../../tasks/T002-database-tooling.md), [T003](../../tasks/T003-http-server.md), [T013](../../tasks/T013-slot-engine.md).
+Tâches prêtes (dépendances `done`), parallélisables :
+1. [T012 — Paramétrage cabinet, motifs, disponibilités](../../tasks/T012-availability-admin.md) : débloque T014 et T016, donc le MVP.
+2. [T021 — Email SMTP](../../tasks/T021-email-smtp.md) et [T022 — SMS](../../tasks/T022-sms-providers.md), en parallèle.
+3. [T024 — Câblage du worker outbox et page admin](../../tasks/T024-outbox-wiring.md).
+4. [T040 — Packaging Docker + Caddy](../../tasks/T040-packaging.md) : inclut maintenant la gestion de l'IP client derrière le proxy.
 
 ## Blocages et questions ouvertes pour l'humain
 
-- Nom de l'organisation / du module Go (`github.com/<org>/doctolibre`) — T001 utilisera `doctolibre` par défaut.
-- Hébergement du dépôt (GitHub, Codeberg, GitLab ?) — impacte la CI (T005) et la release (T040).
+- Nom de l'organisation et du module Go : `doctolibre` provisoirement.
+- Hébergement du dépôt (GitHub, Codeberg ou GitLab) : la CI (`.github/workflows/ci.yml`) est écrite mais n'a jamais tourné, faute de remote.
+- Vérifications manuelles restantes :
+  - Lighthouse accessibilité ≥ 95 sur `/` (T004) ;
+  - `make db-up` avec Docker (T002, T005) : le daemon Docker n'était pas lancé, tout a été vérifié sur le Postgres.app local.
+- Relecture humaine des 10 tâches marquées `done` : contrôlées par Opus (`make check`, diff, revue renforcée pour T010, T011, T013 et T020), mais pas encore relues par un humain.
 
 ## Avancement par phase
 
 | Phase | Tâches | Faites |
 |---|---|---|
-| 0 — Fondations | 5 | 0 |
-| 1 — Cœur RDV | 8 | 0 |
-| 2 — Notifications | 4 | 0 |
+| 0 — Fondations | 5 | 5 |
+| 1 — Cœur RDV | 8 | 3 |
+| 2 — Notifications | 5 | 1 |
 | 3 — Spécificités kiné | 4 | 0 |
-| 4 — Exploitation | 6 | 0 |
+| 4 — Exploitation | 7 | 1 |

@@ -15,6 +15,7 @@ Un praticien (ou son informaticien) installe Doctolibre sur un VPS avec `docker 
 - `deploy/Dockerfile` : multi-stage, build `CGO_ENABLED=0 -trimpath -ldflags "-s -w -X main.version=…"`, image finale `gcr.io/distroless/static:nonroot`, ≤ 30 Mo. `ENTRYPOINT ["/doctolibre"]`, `CMD ["serve"]`. Migrations appliquées au démarrage si `DOCTOLIBRE_AUTO_MIGRATE=true` (défaut).
 - `deploy/docker-compose.yml` (prod) : `app`, `postgres:17-alpine` (volume, healthcheck, pas de port exposé), `caddy:2-alpine` (80/443, `Caddyfile` avec `{$DOMAIN}`), réseau interne, `restart: unless-stopped`, limites mémoire (app 256 Mo, pg 512 Mo).
 - `deploy/.env.example` documenté ligne par ligne.
+- **IP client derrière Caddy** (remonté par T011) : `httpx.ClientIP` n'utilise que `RemoteAddr`, donc derrière le proxy toutes les requêtes ont l'IP de Caddy et le rate limit « par IP » devient global. Ajouter `DOCTOLIBRE_TRUSTED_PROXIES` (CIDR) : `X-Forwarded-For` n'est lu que si `RemoteAddr` est dans cette liste (prendre l'adresse la plus à droite non fiable). Test obligatoire.
 - Variante sans Docker : binaire + unit **systemd** (`deploy/doctolibre.service`) + Postgres du système.
 - GitHub Actions `release.yml` : sur tag `v*`, binaires linux amd64/arm64 + image multi-arch sur GHCR.
 - Cible arm64 testée (Raspberry Pi 4/5 = option « au cabinet »).

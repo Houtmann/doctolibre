@@ -28,7 +28,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T004 | [Socle front : templates, htmx, CSS](T004-frontend-base.md) | 0 | T003 | done |
 | T005 | [Infra de tests](T005-test-infra.md) | 0 | T002 | done |
 | T010 | [Schéma de base v1](T010-schema-v1.md) | 1 | T002 | done |
-| T011 | [Auth praticien](T011-auth-staff.md) | 1 | T004, T005, T010 | in_progress |
+| T011 | [Auth praticien](T011-auth-staff.md) | 1 | T004, T005, T010 | done |
 | T012 | [Paramétrage cabinet, motifs, disponibilités](T012-availability-admin.md) | 1 | T011 | todo |
 | T013 | [Moteur de calcul de créneaux](T013-slot-engine.md) | 1 | T001 | done |
 | T014 | [Réservation en ligne patient](T014-public-booking.md) | 1 | T012, T013 | todo |
