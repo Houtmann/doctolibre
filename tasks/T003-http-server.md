@@ -26,9 +26,9 @@
 - `internal/httpx/respond.go` : helpers `Error(w, r, status, msg)`, `Redirect`, détection htmx (`IsHTMX(r)`).
 
 ## Critères d'acceptation
-- [ ] `doctolibre serve` répond sur `/healthz`, s'arrête proprement sur Ctrl-C.
-- [ ] Tests `httptest` : request id propagé, recover renvoie 500, CSRF rejette un POST sans jeton, rate limit renvoie 429.
-- [ ] Headers de sécurité présents sur toutes les réponses.
+- [x] `doctolibre serve` répond sur `/healthz`, s'arrête proprement sur Ctrl-C.
+- [x] Tests `httptest` : request id propagé, recover renvoie 500, CSRF rejette un POST sans jeton, rate limit renvoie 429.
+- [x] Headers de sécurité présents sur toutes les réponses.
 
 ## Vérification
 ```bash
@@ -42,8 +42,8 @@ Templates HTML (T004), auth (T011).
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-15 (sonnet)
+- **Fait** : `internal/httpx` (server.go New+Run, middleware.go RequestID/Logger/Recover/SecureHeaders/CSRF/RateLimit/Chain, respond.go), `internal/web/routes.go` (Routes, /healthz avec Pinger optionnel, GET /{$}), `cmd/doctolibre/serve.go` + case "serve" dans main.go, tests httptest. `make check` vert, `serve` + healthz + SIGINT vérifiés.
+- **Reste à faire** : rien.
+- **Notes de reprise** : CSRF = double-submit cookie `csrf_token` (HttpOnly) ; token lisible via `httpx.CSRFToken(ctx)` pour les templates (champ `csrf_token` ou header `X-CSRF-Token`). `ClientIP` n'utilise pas X-Forwarded-For (à traiter derrière Caddy, T040). Le middleware RateLimit n'est pas encore branché sur des routes (login/OTP/réservation à venir). `Deps.DB` attend un `Pinger` (le pool pgx le satisfait) ; non câblé dans `serve` (pas de DB ici).
+- **Écarts avec la spécification** : x/time v0.14.0 (seule version en cache compatible go 1.24) ; la ligne `serve` du test `TestRun` retirée (plus « not implemented »).
