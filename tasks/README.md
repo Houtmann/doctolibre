@@ -35,10 +35,11 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T015 | [Gestion du RDV par le patient](T015-patient-manage-link.md) | 1 | T014 | todo |
 | T016 | [Agenda praticien](T016-staff-calendar.md) | 1 | T012, T013 | todo |
 | T017 | [Fiches patients](T017-patients.md) | 1 | T016 | todo |
-| T020 | [Outbox et worker](T020-outbox-worker.md) | 2 | T010, T005 | in_progress |
+| T020 | [Outbox et worker](T020-outbox-worker.md) | 2 | T010, T005 | done |
 | T021 | [Email SMTP générique](T021-email-smtp.md) | 2 | T020 | todo |
 | T022 | [SMS : interface et fournisseurs](T022-sms-providers.md) | 2 | T020 | todo |
 | T023 | [Confirmations et rappels](T023-reminders.md) | 2 | T021, T022, T015 | todo |
+| T024 | [Outbox : câblage du worker et page admin](T024-outbox-wiring.md) | 2 | T020, T011 | todo |
 | T030 | [Séries de séances kiné](T030-care-plans.md) | 3 | T016, T017 | todo |
 | T031 | [Liste d'attente](T031-waitlist.md) | 3 | T023 | todo |
 | T032 | [Visites à domicile](T032-home-visits.md) | 3 | T014 | todo |
