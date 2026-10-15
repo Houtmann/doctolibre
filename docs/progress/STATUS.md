@@ -12,7 +12,7 @@
 - **Notifications** : outbox, worker, email SMTP, SMS 4 drivers, `/admin/messages` faits ; confirmations et rappels (T023) en `review` → v0.1 complète côté code.
 - **Kiné** : visites à domicile (T032) et séries de séances (T030) en `review`.
 - **Exploitation** : métriques (T045) et Docker + Caddy (T040) faits ; sauvegardes (T041) et flux ICS (T042) en `review`.
-- Migrations : 00001, 00002, 00004–00011 (00009 recherche patient, 00010 domicile, 00011 jeton flux ICS, 00012 notifications, 00013 care_plan).
+- Migrations : 00001, 00002, 00004–00013 (00009 recherche patient, 00010 domicile, 00011 jeton flux ICS, 00012 notifications, 00013 care_plan).
 
 ## En cours
 
