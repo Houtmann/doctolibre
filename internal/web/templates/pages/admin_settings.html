@@ -2,6 +2,7 @@
 {{define "title"}}Paramètres du cabinet{{end}}
 {{define "content"}}
 <h1>Paramètres du cabinet</h1>
+<p><a href="/admin/settings/notifications">Réglages des notifications (confirmations, rappels, SMS)</a></p>
 {{template "form_errors.html" .Data.Errors}}
 <form method="post" action="/admin/settings">
   {{csrf .CSRF}}

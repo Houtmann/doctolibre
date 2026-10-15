@@ -1,0 +1,59 @@
+{{/* layout: admin */}}
+{{define "title"}}Notifications aux patients{{end}}
+{{define "content"}}
+<h1>Notifications aux patients</h1>
+<p><a href="/admin/settings">Retour aux paramètres du cabinet</a></p>
+{{template "form_errors.html" .Data.Errors}}
+<form method="post" action="/admin/settings/notifications">
+  {{csrf .CSRF}}
+  {{with .Data.Form}}
+  <fieldset>
+    <legend>Canal par type de message</legend>
+    <label for="confirmation_channel">Confirmation de rendez-vous</label>
+    <select id="confirmation_channel" name="confirmation_channel">
+      <option value="email"{{if eq .ConfirmationChannel "email"}} selected{{end}}>Email (SMS si le patient n'a pas d'email)</option>
+      <option value="sms"{{if eq .ConfirmationChannel "sms"}} selected{{end}}>SMS</option>
+      <option value="both"{{if eq .ConfirmationChannel "both"}} selected{{end}}>Email et SMS</option>
+      <option value="none"{{if eq .ConfirmationChannel "none"}} selected{{end}}>Aucun</option>
+    </select>
+    <label for="reminder_channel">Rappels</label>
+    <select id="reminder_channel" name="reminder_channel">
+      <option value="sms"{{if eq .ReminderChannel "sms"}} selected{{end}}>SMS (email si le patient n'a pas de téléphone)</option>
+      <option value="email"{{if eq .ReminderChannel "email"}} selected{{end}}>Email (SMS si le patient n'a pas d'email)</option>
+      <option value="both"{{if eq .ReminderChannel "both"}} selected{{end}}>Email et SMS</option>
+      <option value="none"{{if eq .ReminderChannel "none"}} selected{{end}}>Aucun</option>
+    </select>
+    <label for="change_channel">Annulation ou déplacement par le cabinet</label>
+    <select id="change_channel" name="change_channel">
+      <option value="email"{{if eq .ChangeChannel "email"}} selected{{end}}>Email (SMS si le patient n'a pas d'email)</option>
+      <option value="sms"{{if eq .ChangeChannel "sms"}} selected{{end}}>SMS</option>
+      <option value="both"{{if eq .ChangeChannel "both"}} selected{{end}}>Email et SMS</option>
+      <option value="none"{{if eq .ChangeChannel "none"}} selected{{end}}>Aucun</option>
+    </select>
+  </fieldset>
+  <fieldset>
+    <legend>Rappels</legend>
+    <label><input type="checkbox" name="reminder_day_before" value="1"{{if .ReminderDayBefore}} checked{{end}}> Rappel la veille du rendez-vous</label>
+    <label for="reminder_hour">Heure d'envoi la veille (0 à 23)</label>
+    <input id="reminder_hour" name="reminder_hour" type="number" inputmode="numeric" min="0" max="23" value="{{.ReminderHour}}" required aria-describedby="hour-help">
+    <small id="hour-help">Les SMS ne partent jamais entre 20 h et 8 h : ils sont décalés à 8 h.</small>
+    <label><input type="checkbox" name="reminder_two_hours" value="1"{{if .ReminderTwoHours}} checked{{end}}> Rappel 2 heures avant le rendez-vous</label>
+    <label><input type="checkbox" name="reminder_series" value="1"{{if .ReminderSeries}} checked{{end}}> Rappeler aussi les séances d'une série de soins</label>
+  </fieldset>
+  <fieldset>
+    <legend>Signature</legend>
+    <label for="signature">Signature des emails (nom du cabinet par défaut)</label>
+    <input id="signature" name="signature" value="{{.Signature}}" maxlength="200">
+  </fieldset>
+  {{end}}
+  <button type="submit">Enregistrer</button>
+</form>
+{{with .Data.Estimate}}
+<section aria-labelledby="estimate-title">
+  <h2 id="estimate-title">Estimation des SMS</h2>
+  <p>Sur la base de vos rendez-vous des 4 dernières semaines (environ {{.Appointments}} par mois) et des réglages enregistrés ci-dessus,
+    vous enverriez environ <strong>{{.PerMonth}} SMS par mois</strong> : {{.Confirmation}} confirmations et {{.Reminders}} rappels.
+    Les annulations, les déplacements et les codes de vérification ne sont pas comptés.</p>
+</section>
+{{end}}
+{{end}}

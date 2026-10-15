@@ -1,0 +1,10 @@
+{{define "title"}}Rappel de rendez-vous{{end}}
+{{define "content"}}
+<h1 style="margin:0 0 16px;font-size:20px;">Rappel de rendez-vous</h1>
+<p style="margin:0 0 16px;">Bonjour {{.first_name}},</p>
+<p style="margin:0 0 16px;">Nous vous rappelons votre rendez-vous ({{.type_name}}) avec {{.practitioner}} :</p>
+<p style="margin:0 0 16px;font-size:18px;"><strong>{{.date}} à {{.time}}</strong><br>{{.practice_name}}{{if .practice_address}}<br>{{.practice_address}}{{end}}</p>
+{{if .manage_url}}<p style="margin:0 0 16px;">Un empêchement ? <a href="{{.manage_url}}">Déplacez ou annulez le rendez-vous</a>.</p>
+{{else}}<p style="margin:0 0 16px;font-size:14px;">Un empêchement ? Prévenez le cabinet{{if .practice_phone}} au {{.practice_phone}}{{end}}.</p>{{end}}
+<p style="margin:0;font-size:14px;">{{.signature}}</p>
+{{end}}

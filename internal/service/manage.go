@@ -55,7 +55,7 @@ func (b *Booking) lockByToken(ctx context.Context, q *sqlcgen.Queries, token str
 // Erreurs : domain.ErrNotFound (jeton inconnu), ErrChangeTooLate (hors délai).
 func (b *Booking) CancelByPatient(ctx context.Context, token string) error {
 	var appt sqlcgen.Appointment
-	err := store.WithTx(ctx, b.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+	err := store.WithTx(ctx, b.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		a, err := b.lockByToken(ctx, q, token)
 		if err != nil {
 			return err
@@ -71,7 +71,8 @@ func (b *Booking) CancelByPatient(ctx context.Context, token string) error {
 		if err != nil {
 			return fmt.Errorf("annulation: %w", err)
 		}
-		return nil
+		// Annulée par le patient : on supprime les rappels, sans message d'annulation.
+		return b.notifier().cancelled(ctx, tx, q, appt, false)
 	})
 	if err != nil {
 		return err
@@ -118,7 +119,7 @@ func (b *Booking) RescheduleSlots(ctx context.Context, token string, from, to ti
 func (b *Booking) RescheduleByPatient(ctx context.Context, token string, start time.Time) error {
 	var appt sqlcgen.Appointment
 	var from time.Time
-	err := store.WithTx(ctx, b.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+	err := store.WithTx(ctx, b.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		a, err := b.lockByToken(ctx, q, token)
 		if err != nil {
 			return err
@@ -134,7 +135,10 @@ func (b *Booking) RescheduleByPatient(ctx context.Context, token string, start t
 		}
 		appt, err = store.MoveAppointment(ctx, q, a.PracticeID, a.ID, slot.Start, slot.End,
 			microsToDuration(intervalMicros(sc.typ.BufferBefore)), microsToDuration(intervalMicros(sc.typ.BufferAfter)))
-		return err
+		if err != nil {
+			return err
+		}
+		return b.notifier().rescheduled(ctx, tx, q, appt, from, token)
 	})
 	if err != nil {
 		return err

@@ -26,9 +26,15 @@ type Booking struct {
 	Pool  *pgxpool.Pool
 	Clock domain.Clock
 	OTP   OTPSender
-	// Events reçoit les faits métier (nil = NopSink) ; les notifications sont branchées en T023.
+	// Events reçoit les faits métier après commit (nil = NopSink). Les messages aux
+	// patients ne passent pas par lui : ils sont enfilés dans la transaction métier.
 	Events EventSink
+	// BaseURL : adresse publique (DOCTOLIBRE_BASE_URL) pour les liens /r/{jeton} des
+	// messages ; vide = messages sans lien.
+	BaseURL string
 }
+
+func (b *Booking) notifier() notifier { return notifier{clock: b.Clock, baseURL: b.BaseURL} }
 
 // PublicPractice est la page d'accueil publique d'un cabinet.
 type PublicPractice struct {
@@ -437,7 +443,7 @@ func (b *Booking) Book(ctx context.Context, in BookInput) (BookResult, error) {
 		return BookResult{}, err
 	}
 	var appt sqlcgen.Appointment
-	err = store.WithTx(ctx, b.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+	err = store.WithTx(ctx, b.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		// 2. Le code ne sert qu'une fois (annulé avec la transaction si la suite échoue).
 		n, err := q.ConsumeOTPChallenge(ctx, sqlcgen.ConsumeOTPChallengeParams{ID: in.ChallengeID, Now: now})
 		if err != nil {
@@ -477,8 +483,13 @@ func (b *Booking) Book(ctx context.Context, in BookInput) (BookResult, error) {
 			Address:         d.address,
 			Source:          "online",
 			ManageTokenHash: ManageTokenHash(token),
+			// Seul le contact du canal du code est vérifié : les messages n'iront que là.
+			VerifiedChannel: in.Channel,
 		})
-		return err
+		if err != nil {
+			return err
+		}
+		return b.notifier().booked(ctx, tx, q, appt, token)
 	})
 	if err != nil {
 		return BookResult{}, err

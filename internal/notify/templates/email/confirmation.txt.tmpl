@@ -1,0 +1,14 @@
+Bonjour {{.first_name}},
+
+Votre rendez-vous ({{.type_name}}) avec {{.practitioner}} est confirmé :
+
+  {{.date}} à {{.time}}
+  {{.practice_name}}{{if .practice_address}}
+  {{.practice_address}}{{end}}
+{{if .manage_url}}
+Pour consulter, déplacer ou annuler ce rendez-vous :
+{{.manage_url}}
+{{end}}{{if .practice_phone}}
+Une question ? Appelez le {{.practice_phone}}.
+{{end}}
+{{.signature}}
