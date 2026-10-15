@@ -25,7 +25,8 @@ type Deps struct {
 	DB     Pinger // optionnel : nil = pas de ping DB dans /healthz
 	// Metrics est optionnel. /metrics n'est exposé que si Metrics != nil ET
 	// Config.MetricsToken != "" ; la mesure des requêtes ne dépend que de Metrics.
-	Metrics *metrics.Metrics
+	Metrics  *metrics.Metrics
+	Renderer *Renderer // optionnel : nil = construit depuis Config
 }
 
 const pingTimeout = 2 * time.Second
@@ -36,9 +37,20 @@ func Routes(d Deps) http.Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
+	rd := d.Renderer
+	if rd == nil {
+		var err error
+		if rd, err = d.newRenderer(); err != nil {
+			logger.Error("templates: initialisation en échec", slog.String("err", err.Error()))
+		}
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", d.healthz)
-	mux.HandleFunc("GET /{$}", index)
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) { rd.Page(w, r, "home", nil) })
+	if rd != nil {
+		mux.Handle("GET /static/", rd.StaticHandler())
+	}
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) { rd.Error(w, r, http.StatusNotFound, "") })
 
 	var root http.Handler = mux
 	if d.Metrics != nil {
@@ -51,7 +63,7 @@ func Routes(d Deps) http.Handler {
 	return httpx.Chain(root,
 		httpx.RequestID(logger),
 		httpx.Logger(),
-		httpx.Recover(),
+		httpx.RecoverWith(rd.Error),
 		httpx.SecureHeaders(d.Config.IsProd()),
 		httpx.CSRF(d.Config.IsProd()),
 	)
@@ -71,7 +83,15 @@ func (d Deps) healthz(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprint(w, "ok")
 }
 
-func index(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	_, _ = fmt.Fprintln(w, "Doctolibre")
+func (d Deps) newRenderer() (*Renderer, error) {
+	loc, err := time.LoadLocation(d.Config.Timezone)
+	if err != nil {
+		loc = time.UTC
+	}
+	return NewRenderer(RendererOptions{
+		SecretKey: d.Config.SecretKey,
+		Location:  loc,
+		Reload:    !d.Config.IsProd(),
+		Secure:    d.Config.IsProd(),
+	})
 }

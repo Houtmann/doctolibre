@@ -74,8 +74,9 @@ func TestMetricsRouteLabelIsPattern(t *testing.T) {
 	if !strings.Contains(body, `route="GET /healthz"`) {
 		t.Errorf("label route pattern absent:\n%s", body)
 	}
-	if !strings.Contains(body, `route="unmatched"`) {
-		t.Error("route inconnue devrait être « unmatched »")
+	// Depuis T004, le 404 stylé est servi par le fallback « GET / » : c'est son pattern qui sert de label.
+	if !strings.Contains(body, `route="GET /"`) {
+		t.Error("route inconnue devrait être étiquetée « GET / » (fallback 404)")
 	}
 	if strings.Contains(body, "12345") || strings.Contains(body, "a@b.fr") {
 		t.Error("chemin brut ou query dans les métriques")

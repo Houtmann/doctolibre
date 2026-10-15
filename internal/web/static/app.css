@@ -1,0 +1,66 @@
+/* Surcharges de Pico CSS. Aucune ressource externe (CSP : default-src 'self'). */
+:root {
+  --pico-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --app-success-bg: #e6f4ea;
+  --app-success-fg: #0b4a1d;
+  --app-error-bg: #fdecea;
+  --app-error-fg: #7a1010;
+  --app-info-bg: #e8f0fe;
+  --app-info-fg: #0b2f6b;
+}
+
+/* Focus toujours visible (accessibilité clavier). */
+:where(a, button, input, select, textarea, summary, [role="button"]):focus-visible {
+  outline: 3px solid var(--pico-primary);
+  outline-offset: 2px;
+}
+
+/* Lien d'évitement. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: var(--pico-background-color);
+  color: var(--pico-color);
+}
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+}
+
+.site-header nav a.brand {
+  font-weight: 700;
+  text-decoration: none;
+}
+.site-footer {
+  color: var(--pico-muted-color);
+  font-size: 0.875rem;
+}
+
+/* Messages flash et erreurs de formulaire. */
+.flash {
+  padding: 0.75rem 1rem;
+  border-radius: var(--pico-border-radius);
+  margin-bottom: 1rem;
+}
+.flash-success { background: var(--app-success-bg); color: var(--app-success-fg); }
+.flash-error   { background: var(--app-error-bg);   color: var(--app-error-fg); }
+.flash-info    { background: var(--app-info-bg);    color: var(--app-info-fg); }
+.form-errors {
+  background: var(--app-error-bg);
+  color: var(--app-error-fg);
+  padding: 0.75rem 1rem;
+  border-radius: var(--pico-border-radius);
+  margin-bottom: 1rem;
+}
+.form-errors ul { margin: 0.25rem 0 0; }
+
+/* Indicateur htmx (le style inline de htmx est désactivé pour la CSP). */
+.htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator { opacity: 1; }
+
+.error-page { text-align: center; padding-block: 3rem; }
+.error-page .status { font-size: 4rem; font-weight: 700; margin: 0; }

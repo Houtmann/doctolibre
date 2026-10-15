@@ -1,0 +1,14 @@
+{{define "chrome"}}
+<header class="container site-header">
+  <nav aria-label="Navigation principale">
+    <ul><li><a class="brand" href="/">Doctolibre</a></li></ul>
+  </nav>
+</header>
+<main id="main" class="container">
+  {{template "flash.html" .Flash}}
+  {{block "content" .}}{{end}}
+</main>
+<footer class="container site-footer">
+  <p><small>Doctolibre, prise de rendez-vous libre et auto-hébergeable.</small></p>
+</footer>
+{{end}}
