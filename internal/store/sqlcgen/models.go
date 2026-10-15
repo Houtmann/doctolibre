@@ -154,6 +154,7 @@ type Patient struct {
 	DeletedAt  pgtype.Timestamptz
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
+	MergedInto pgtype.UUID
 }
 
 type Practice struct {
