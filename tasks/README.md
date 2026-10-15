@@ -23,14 +23,14 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | ID | Tâche | Phase | Dépend de | Statut |
 |---|---|---|---|---|
 | T001 | [Bootstrap du dépôt Go](T001-bootstrap.md) | 0 | — | done |
-| T002 | [PostgreSQL dev, goose, sqlc](T002-database-tooling.md) | 0 | T001 | todo |
-| T003 | [Serveur HTTP et middlewares](T003-http-server.md) | 0 | T001 | todo |
+| T002 | [PostgreSQL dev, goose, sqlc](T002-database-tooling.md) | 0 | T001 | in_progress |
+| T003 | [Serveur HTTP et middlewares](T003-http-server.md) | 0 | T001 | done |
 | T004 | [Socle front : templates, htmx, CSS](T004-frontend-base.md) | 0 | T003 | todo |
 | T005 | [Infra de tests](T005-test-infra.md) | 0 | T002 | todo |
 | T010 | [Schéma de base v1](T010-schema-v1.md) | 1 | T002 | todo |
 | T011 | [Auth praticien](T011-auth-staff.md) | 1 | T004, T005, T010 | todo |
 | T012 | [Paramétrage cabinet, motifs, disponibilités](T012-availability-admin.md) | 1 | T011 | todo |
-| T013 | [Moteur de calcul de créneaux](T013-slot-engine.md) | 1 | T001 | todo |
+| T013 | [Moteur de calcul de créneaux](T013-slot-engine.md) | 1 | T001 | in_progress |
 | T014 | [Réservation en ligne patient](T014-public-booking.md) | 1 | T012, T013 | todo |
 | T015 | [Gestion du RDV par le patient](T015-patient-manage-link.md) | 1 | T014 | todo |
 | T016 | [Agenda praticien](T016-staff-calendar.md) | 1 | T012, T013 | todo |

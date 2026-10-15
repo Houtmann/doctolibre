@@ -5,3 +5,5 @@
 *.local
 *.test
 *.out
+.claude/worktrees/
+.idea/
