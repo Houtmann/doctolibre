@@ -48,7 +48,8 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T042 | [Flux ICS](T042-ics-feed.md) | 4 | T016 | todo |
 | T043 | [RGPD : export, purge, audit](T043-gdpr.md) | 4 | T017 | todo |
 | T044 | [Documentation d'installation](T044-install-docs.md) | 4 | T040, T041 | todo |
-| T045 | [Observabilité légère](T045-observability.md) | 4 | T003 | in_progress |
+| T045 | [Observabilité légère](T045-observability.md) | 4 | T003 | done |
+| T046 | [Observabilité : branchements et /admin/status](T046-observability-wiring.md) | 4 | T045, T014, T020, T041 | todo |
 
 ## Parallélisation possible
 
