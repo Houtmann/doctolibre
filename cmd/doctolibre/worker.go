@@ -54,7 +54,11 @@ func runWorker(ctx context.Context, logOut io.Writer) error {
 	}
 	defer pool.Close()
 	cfg.WorkerEnabled = true // la sous-commande est explicite
-	_, wait := startWorker(ctx, cfg, pool, newDispatcher(nil, nil, logger), logger)
+	dispatcher, err := buildDispatcher(cfg, logger)
+	if err != nil {
+		return fmt.Errorf("notifications: %w", err)
+	}
+	_, wait := startWorker(ctx, cfg, pool, dispatcher, logger)
 	wait()
 	return nil
 }

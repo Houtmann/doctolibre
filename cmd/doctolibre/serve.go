@@ -57,11 +57,15 @@ func serve(ctx context.Context, logOut io.Writer) error {
 			}
 		}
 	}
+	dispatcher, err := buildDispatcher(cfg, logger)
+	if err != nil {
+		return fmt.Errorf("notifications: %w", err)
+	}
 	handler := web.Routes(deps)
 
 	// Le worker partage le contexte du serveur : un signal arrête les deux. On
 	// attend la fin du worker avant de fermer le pool (defer pool.Close).
-	_, waitWorker := startWorker(ctx, cfg, pool, newDispatcher(nil, nil, logger), logger)
+	_, waitWorker := startWorker(ctx, cfg, pool, dispatcher, logger)
 	err = httpx.Run(ctx, httpx.New(cfg, handler), logger)
 	stop() // erreur HTTP sans signal : arrêter aussi le worker
 	waitWorker()
