@@ -1,0 +1,57 @@
+<div id="absences-panel">
+  {{if .Notice}}<div class="flash flash-success" role="status">{{.Notice}}</div>{{end}}
+  {{template "form_errors.html" .Errors}}
+
+  <h2>Absences à venir</h2>
+  {{if .Closures}}
+  <ul>
+    {{range .Closures}}
+    <li>
+      {{if .AllDay}}
+        {{if eq (.Start.Format "2006-01-02") (.LastDay.Format "2006-01-02")}}Le {{localDate .Start}}{{else}}Du {{localDate .Start}} au {{localDate .LastDay}}{{end}}
+      {{else}}
+        Du {{localDate .Start}} à {{localTime .Start}} au {{localDate .End}} à {{localTime .End}}
+      {{end}}
+      {{if .Reason}}<small>({{.Reason}})</small>{{end}}
+      <form method="post" action="/admin/absences/{{.ID}}/delete" hx-post="/admin/absences/{{.ID}}/delete" hx-target="#absences-panel" hx-swap="outerHTML">
+        {{csrf $.CSRF}}
+        <button type="submit" class="outline secondary">Supprimer</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p>Aucune absence à venir.</p>
+  {{end}}
+
+  <h2>Ajouter une absence</h2>
+  <form method="post" action="/admin/absences" hx-post="/admin/absences" hx-target="#absences-panel" hx-swap="outerHTML">
+    {{csrf .CSRF}}
+    {{with .Form}}
+    <div class="grid">
+      <div>
+        <label for="abs-start-date">Du (date)</label>
+        <input id="abs-start-date" name="start_date" type="date" value="{{.StartDate}}" required>
+      </div>
+      <div>
+        <label for="abs-end-date">Au (date, incluse)</label>
+        <input id="abs-end-date" name="end_date" type="date" value="{{.EndDate}}">
+      </div>
+    </div>
+    <div class="grid">
+      <div>
+        <label for="abs-start-time">Heure de début</label>
+        <input id="abs-start-time" name="start_time" type="time" value="{{.StartTime}}" aria-describedby="abs-time-help">
+      </div>
+      <div>
+        <label for="abs-end-time">Heure de fin</label>
+        <input id="abs-end-time" name="end_time" type="time" value="{{.EndTime}}" aria-describedby="abs-time-help">
+      </div>
+    </div>
+    <small id="abs-time-help">Laissez les heures vides pour des journées entières.</small>
+    <label for="abs-reason">Motif (facultatif, visible du cabinet uniquement)</label>
+    <input id="abs-reason" name="reason" value="{{.Reason}}" maxlength="200">
+    {{end}}
+    <button type="submit">Ajouter l'absence</button>
+  </form>
+</div>

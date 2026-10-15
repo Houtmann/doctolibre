@@ -12,6 +12,7 @@ import (
 	"doctolibre/internal/config"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/metrics"
+	"doctolibre/internal/service"
 )
 
 // Pinger vérifie la disponibilité d'une dépendance (ex. *pgxpool.Pool).
@@ -30,6 +31,8 @@ type Deps struct {
 	Renderer *Renderer // optionnel : nil = construit depuis Config
 	// Auth est optionnel : nil = pas de routes /admin (pas de base de données).
 	Auth *auth.Service
+	// Practice (service de paramétrage du cabinet) est optionnel : nil = pas de pages de configuration.
+	Practice *service.Practice
 }
 
 const pingTimeout = 2 * time.Second

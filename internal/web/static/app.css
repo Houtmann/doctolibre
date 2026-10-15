@@ -64,3 +64,28 @@
 
 .error-page { text-align: center; padding-block: 3rem; }
 .error-page .status { font-size: 4rem; font-weight: 700; margin: 0; }
+
+/* Administration du cabinet. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.is-inactive { color: var(--pico-muted-color); }
+.row-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.row-actions form { margin: 0; }
+.row-actions button { margin: 0; padding: 0.25rem 0.75rem; }
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.week-day h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+.week-day ul { list-style: none; padding: 0; margin: 0; }
+.week-day li { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+.week-day li form { margin: 0; }
+.week-day li button { margin: 0; padding: 0.15rem 0.6rem; }

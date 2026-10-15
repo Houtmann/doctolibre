@@ -11,6 +11,7 @@ import (
 	"doctolibre/internal/domain"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/metrics"
+	"doctolibre/internal/service"
 	"doctolibre/internal/store"
 	"doctolibre/internal/web"
 )
@@ -31,6 +32,7 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		defer pool.Close()
 		deps.DB = pool
 		deps.Auth = &auth.Service{Pool: pool, Clock: domain.SystemClock{}, Logger: logger, Secure: cfg.IsProd()}
+		deps.Practice = &service.Practice{Pool: pool, Clock: domain.SystemClock{}}
 	} else {
 		logger.Warn("DOCTOLIBRE_DATABASE_URL vide : l'espace /admin est désactivé")
 	}

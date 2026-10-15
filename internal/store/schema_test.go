@@ -62,24 +62,25 @@ func TestMigrateUpDownUp(t *testing.T) {
 	t.Parallel()
 	db := testutil.DB(t) // up
 	ctx := context.Background()
-	if err := store.MigrateDown(ctx, db); err != nil { // retire la dernière (outbox_message)
-		t.Fatalf("down: %v", err)
-	}
-	count := func(table string) int {
+	applied := func() int {
 		var n int
-		if err := db.QueryRow(ctx, "SELECT count(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = $1", table).Scan(&n); err != nil {
+		if err := db.QueryRow(ctx, "SELECT count(*) FROM goose_db_version WHERE is_applied").Scan(&n); err != nil {
 			t.Fatal(err)
 		}
 		return n
 	}
-	if n := count("outbox_message"); n != 0 {
-		t.Fatalf("outbox_message doit avoir disparu: n=%d", n)
+	before := applied()
+	if err := store.MigrateDown(ctx, db); err != nil { // retire la dernière migration
+		t.Fatalf("down: %v", err)
 	}
-	if n := count("appointment"); n != 1 {
-		t.Fatalf("appointment ne doit pas être touchée: n=%d", n)
+	if n := applied(); n != before-1 {
+		t.Fatalf("migrations appliquées après down: %d, attendu %d", n, before-1)
 	}
 	if err := store.Migrate(ctx, db); err != nil {
 		t.Fatalf("up again: %v", err)
+	}
+	if n := applied(); n != before {
+		t.Fatalf("migrations appliquées après up: %d, attendu %d", n, before)
 	}
 }
 

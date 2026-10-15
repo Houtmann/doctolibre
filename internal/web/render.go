@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"doctolibre/internal/httpx"
+	"doctolibre/internal/service"
 )
 
 //go:embed templates static
@@ -420,18 +421,22 @@ var (
 	moisFR  = [...]string{"janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"}
 )
 
+func frenchDate(t time.Time) string {
+	day := fmt.Sprint(t.Day())
+	if t.Day() == 1 {
+		day = "1er"
+	}
+	return fmt.Sprintf("%s %s %s %d", joursFR[t.Weekday()], day, moisFR[t.Month()-1], t.Year())
+}
+
 func (r *Renderer) funcMap() template.FuncMap {
 	loc := r.opts.Location
 	return template.FuncMap{
 		// "mardi 15 octobre 2026", dans le fuseau du cabinet.
-		"formatDate": func(t time.Time) string {
-			t = t.In(loc)
-			day := fmt.Sprint(t.Day())
-			if t.Day() == 1 {
-				day = "1er"
-			}
-			return fmt.Sprintf("%s %s %s %d", joursFR[t.Weekday()], day, moisFR[t.Month()-1], t.Year())
-		},
+		"formatDate": func(t time.Time) string { return frenchDate(t.In(loc)) },
+		// Idem, mais dans le fuseau porté par t (déjà celui du cabinet).
+		"localDate": frenchDate,
+		"localTime": func(t time.Time) string { return t.Format("15h04") },
 		// "14h30".
 		"formatTime": func(t time.Time) string { return t.In(loc).Format("15h04") },
 		// "45 min", "1 h", "1 h 30".
@@ -465,5 +470,7 @@ func (r *Renderer) funcMap() template.FuncMap {
 			return template.HTML(`<input type="hidden" name="` + httpx.CSRFFormField + `" value="` + html.EscapeString(token) + `">`) //nolint:gosec // valeur échappée, nom constant
 		},
 		"asset": r.AssetURL,
+		// "Lundi" pour 0 … "Dimanche" pour 6 (convention availability_rule.weekday).
+		"weekdayName": func(w int) string { return service.Capitalize(service.WeekdayName(w)) },
 	}
 }
