@@ -35,7 +35,6 @@ _Aucune tâche en cours._ 9 tâches en `review` (T014, T015, T016, T017, T023, T
 - À vérifier à la main : import du flux ICS dans un vrai client (T042), envoi S3 et `docker compose --profile backup up` sur serveur réel (T041).
 - Réservation en ligne : seul le contact du canal du code (SMS ou email) est vérifié ; T023 pourrait notifier un contact non vérifié.
 - À traiter plus tard : jeton de réinitialisation en clair dans `outbox_message.payload` après envoi (T043) ; purge des `password_reset` expirés jamais appelée ; jeton de gestion en clair dans le payload des confirmations (T043).
-- Stash git `t023-wip-sonnet` laissé par un sous-agent dans la pile partagée : à supprimer (`git stash list`).
 - Vérification bout en bout réservation → Mailpit + SMS dans les logs non faite (T023).
 
 ## Avancement par phase
