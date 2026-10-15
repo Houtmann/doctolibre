@@ -25,7 +25,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T001 | [Bootstrap du dépôt Go](T001-bootstrap.md) | 0 | — | done |
 | T002 | [PostgreSQL dev, goose, sqlc](T002-database-tooling.md) | 0 | T001 | done |
 | T003 | [Serveur HTTP et middlewares](T003-http-server.md) | 0 | T001 | done |
-| T004 | [Socle front : templates, htmx, CSS](T004-frontend-base.md) | 0 | T003 | in_progress |
+| T004 | [Socle front : templates, htmx, CSS](T004-frontend-base.md) | 0 | T003 | done |
 | T005 | [Infra de tests](T005-test-infra.md) | 0 | T002 | done |
 | T010 | [Schéma de base v1](T010-schema-v1.md) | 1 | T002 | in_progress |
 | T011 | [Auth praticien](T011-auth-staff.md) | 1 | T004, T005, T010 | todo |
