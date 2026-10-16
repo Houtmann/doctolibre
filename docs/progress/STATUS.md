@@ -8,7 +8,7 @@
 ## Où on en est
 
 - **Phases 0 à 4 terminées** : 29 `done`.
-- **Phase 5 — Retours terrain** ouverte : 19 tâches (T050–T068, dont T063–T068 = migration vers le design system v2 de `design/`) ; T050–T061 issues d'une liste de propositions challengée le 2026-10-16. Écartés : tournées par secteur (fusion de marges incompatible avec `during_blocked` stocké), Web Push / Wallet / manifest, re-confirmation J-2 avec libération auto, PDF, capacité N des ressources (v1 = capacité 1).
+- **Phase 5 — Retours terrain** ouverte : 23 tâches (T050–T068, dont T063–T068 = migration vers le design system v2 de `design/`, et T070–T073 ajoutées le 2026-10-16 : consignes par motif, auto-planification de série par le patient, « Ma journée » + pointage, statistiques pour rétrocession) ; T050–T061 issues d'une liste de propositions challengée le 2026-10-16. Écartés : tournées par secteur (fusion de marges incompatible avec `during_blocked` stocké), Web Push / Wallet / manifest, re-confirmation J-2 avec libération auto, PDF, capacité N des ressources (v1 = capacité 1).
 - **Cœur RDV** : réservation (T014), gestion par le patient (T015), agenda (T016), fiches patients (T017) `done`.
 - **Notifications** : confirmations et rappels (T023) `done`.
 - **Kiné** : séries (T030), liste d'attente (T031), domicile (T032), multi-praticiens et rôles (T033) `done`.
@@ -21,7 +21,7 @@ En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours 
 
 ## Prochaine action
 
-1. Design v2 : relire T065–T067 (pages admin authentifiées à regarder : agenda, dialogue, formulaires, tableaux), puis T068 (retrait de Pico). T057 et T061 possibles maintenant.
+1. Design v2 : relire T065–T067 (pages admin authentifiées à regarder : agenda, dialogue, formulaires, tableaux), puis T068 (retrait de Pico). T057 et T061 possibles maintenant. Nouvelles : T072 prête ; T070 dès que T058 est `done` ; T071 après T055 ; T073 après T072 + T059.
 2. Relire et passer en `done` T050 (débloque T051, T055), T052, T058, T062 (débloque T057, T061). Prêtes en parallèle : T053, T054, T056, T059, T060 (attention aux numéros de migration : 00020 et suivants, un seul agent à la fois sur `sqlc`).
 3. Passage navigateur : rendu 360 px de toutes les pages, agenda au clavier, vue jour à 4 praticiens à 1280 px (critère T033 non coché) ; `/dev/styleguide` sert de page de contrôle.
 4. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
@@ -57,4 +57,4 @@ En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours 
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 19 | 2 | 7 |
+| 5 — Retours terrain | 23 | 2 | 7 |

@@ -70,13 +70,17 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T066 | [Design v2 : parcours patient](T066-design-v2-booking.md) | 5 | T064 | review |
 | T067 | [Design v2 : agenda et dialogue de RDV](T067-design-v2-calendar.md) | 5 | T064 | review |
 | T068 | [Design v2 : retrait de Pico et de l'ancien CSS](T068-design-v2-cleanup.md) | 5 | T065, T066, T067 | todo |
+| T070 | [Consignes par motif et prérequis à la réservation](T070-appointment-type-instructions.md) | 5 | T014, T023, T058 | todo |
+| T071 | [Auto-planification de la série par le patient](T071-care-plan-self-scheduling.md) | 5 | T055, T030, T014 | todo |
+| T072 | [« Ma journée » : tournée domicile et pointage en un clic](T072-my-day-check-in.md) | 5 | T016, T032, T033 | todo |
+| T073 | [Statistiques de séances et export pour rétrocession](T073-session-stats.md) | 5 | T072, T059 | todo |
 
 ## Parallélisation possible
 
 - Après T001 : **T002**, **T003**, **T013** en parallèle (fichiers disjoints).
 - Après T020 : **T021** et **T022** en parallèle.
 - Phase 3 et 4 : la plupart des tâches sont indépendantes entre elles.
-- Phase 5 : T050 d'abord (débloque T051, T055) ; T052, T053, T054, T056, T058 indépendantes. T062 (design system) avant T057 et T061, qui touchent aussi `app.css` : pas en parallèle. Design v2 (`design/`) : T063 → T064 → {T065, T066, T067 en parallèle, templates disjoints} → T068 ; T057 et T061 après T064 ou à coordonner (`app.css`, agenda).
+- Phase 5 : T050 d'abord (débloque T051, T055) ; T052, T053, T054, T056, T058 indépendantes. T062 (design system) avant T057 et T061, qui touchent aussi `app.css` : pas en parallèle. Design v2 (`design/`) : T063 → T064 → {T065, T066, T067 en parallèle, templates disjoints} → T068 ; T057 et T061 après T064 ou à coordonner (`app.css`, agenda). T070 et T072 indépendantes (T070 attend T058, en review) ; T071 après T055 ; T073 après T072 et T059. T070, T071, T072 ajoutent chacune une migration : numéros à attribuer au lancement, un seul agent à la fois sur `sqlc`.
 
 ```
 T001 ─┬─ T002 ─┬─ T005 ─┐
