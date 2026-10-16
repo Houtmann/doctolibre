@@ -151,18 +151,18 @@ func TestCalendarPageWeekAndDay(t *testing.T) {
 	}
 	rec := e.c.do("GET", "/admin/calendar?view=week&date=2026-10-21", nil)
 	mustContain(t, rec, 200,
-		`id="calendar"`, `hx-trigger="every 60s"`, `cal-cols-7`, `Semaine du lundi 19 octobre au dimanche 25 octobre`,
+		`id="calendar"`, `hx-trigger="every 60s"`, `dl-cal cols-7`, `Semaine du lundi 19 octobre au dimanche 25 octobre`,
 		// 09:00 → ligne (9-7)×4+2 = 10, 30 min → 2 lignes, colonne du lundi = 2.
-		`class="cal-appt gr-10 gs-2 gc-2 st-booked"`, `Durand Léa`, `cal-band`, `<dialog id="appt-dialog"`,
+		`class="dl-appt gr-10 gs-2 gc-2 st-booked"`, `Durand Léa`, `dl-cal__band`, `<dialog id="appt-dialog" class="dl-dialog"`,
 		`href="/admin/calendar?date=2026-10-14&amp;view=week"`, `href="/admin/calendar?date=2026-10-28&amp;view=week"`,
-		`class="cal-list"`,
+		`class="dl-cal-list"`,
 	)
-	if strings.Contains(rec.Body.String(), `<div class="cal-now`) {
+	if strings.Contains(rec.Body.String(), `<div class="dl-cal__now`) {
 		t.Errorf("ligne « maintenant » hors de la vue du jour")
 	}
 	// htmx : le fragment de la grille seul.
 	rec = e.c.doHXGet("/admin/calendar?view=day&date=2026-10-15")
-	mustContain(t, rec, 200, `id="calendar"`, `class="cal-now gr-18 gc-2"`, `jeudi 15 octobre`)
+	mustContain(t, rec, 200, `id="calendar"`, `class="dl-cal__now gr-18 gc-2"`, `jeudi 15 octobre`)
 	if strings.Contains(rec.Body.String(), "<html") || strings.Contains(rec.Body.String(), "<dialog") {
 		t.Errorf("le fragment htmx contient le layout")
 	}
@@ -288,6 +288,42 @@ func TestCalendarMoveCancelStatusFlow(t *testing.T) {
 	mustContain(t, e.c.do("POST", base+"/cancel", url.Values{}), 422, `Seul un rendez-vous à venir peut être annulé`)
 }
 
+// Chaque RDV affiché porte un libellé d'état accessible (jamais la couleur seule),
+// dans la grille comme dans la liste mobile ; le détail l'affiche en badge.
+func TestCalendarAppointmentsExposeStateLabel(t *testing.T) {
+	t.Parallel()
+	e := newCalendarEnv(t, domain.RoleAdmin)
+	for _, h := range []string{"09:00", "10:00", "11:00"} {
+		if rec := e.c.do("POST", "/admin/appointments", e.form("2026-10-20", h)); rec.Code != 303 {
+			t.Fatalf("création %s: %d %s", h, rec.Code, rec.Body.String())
+		}
+	}
+	rows := e.c.do("GET", "/admin/calendar?view=day&date=2026-10-20", nil).Body.String()
+	var ids []string
+	for _, m := range regexp.MustCompile(`<a class="dl-appt [^"]*" href="/admin/appointments/([0-9a-f-]{36})"`).FindAllStringSubmatch(rows, -1) {
+		ids = append(ids, m[1])
+	}
+	if len(ids) != 3 {
+		t.Fatalf("RDV introuvables: %v", ids)
+	}
+	for i, st := range []string{"done", "no_show"} {
+		if rec := e.c.do("POST", "/admin/appointments/"+ids[i]+"/status", url.Values{"status": {st}, "date": {"2026-10-20"}}); rec.Code != 303 {
+			t.Fatalf("statut %s: %d", st, rec.Code)
+		}
+	}
+	body := e.c.do("GET", "/admin/calendar?view=day&date=2026-10-20", nil).Body.String()
+	for _, want := range []string{
+		`st-done`, `st-no_show`, `st-booked`,
+		`<span class="dl-visually-hidden"> (Honoré)</span>`, `<span class="dl-visually-hidden"> (Absent)</span>`, `<span class="dl-visually-hidden"> (À venir)</span>`,
+		`<small>(Honoré)</small>`, `<small>(Absent)</small>`, `<small>(À venir)</small>`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("agenda sans %q", want)
+		}
+	}
+	mustContain(t, e.c.do("GET", "/admin/appointments/"+ids[0], nil), 200, `dl-dialog__header`, `dl-badge dl-badge--st-`, `dl-dialog__footer`)
+}
+
 func TestCalendarOtherPracticeIsNotFound(t *testing.T) {
 	t.Parallel()
 	e := newCalendarEnv(t, domain.RoleAdmin)
@@ -354,8 +390,8 @@ func TestCalendarWeekWith150AppointmentsIsFast(t *testing.T) {
 		start := time.Now()
 		rec := e.c.do("GET", "/admin/calendar?view=week&date=2026-10-21", nil)
 		d := time.Since(start)
-		if rec.Code != 200 || strings.Count(rec.Body.String(), `class="cal-appt `) != 150 {
-			t.Fatalf("page: %d, %d RDV", rec.Code, strings.Count(rec.Body.String(), `class="cal-appt `))
+		if rec.Code != 200 || strings.Count(rec.Body.String(), `class="dl-appt `) != 150 {
+			t.Fatalf("page: %d, %d RDV", rec.Code, strings.Count(rec.Body.String(), `class="dl-appt `))
 		}
 		best = min(best, d)
 	}
