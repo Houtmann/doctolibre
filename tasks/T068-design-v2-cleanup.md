@@ -12,6 +12,7 @@ L'application ne charge plus que `base.css`, `tokens.css`, `components.css`, `gr
 `design/README.md`, `design/MIGRATION.md`, la ou les cartes `design/previews/` citées ci-dessous, `/dev/styleguide/v2` (T063), `layout/base.html`, `internal/web/static/{app.css,pico.min.css,base.css}`, `design/grid.css`, `docs/design-system.md`, `pages/dev_styleguide.html` (v1), `internal/web/styleguide.go`, `AGENTS.md` section Front, `PLAN.md` (ligne Front : Pico CSS).
 
 ## Spécification
+- **Garde-fou avant suppression** : lister les éléments que Pico stylisait par élément et qui n'ont pas de classe `.dl-*` (`button`, `a[role=button]`, `input` non caché, `select`, `textarea`, `table`, `dialog`, `article`, `nav ul`, `details`, `progress`). Chaque occurrence restante est migrée dans cette tâche, ou couverte par `base.css` si un style par élément suffit (ex. `table` dans un contenu éditorial). Liste et traitement consignés dans Suivi.
 - Lier `base.css` ; déplacer les classes `.gr/.gs/.gc` d'`app.css` vers `static/grid.css` (identiques à `design/grid.css`) ; supprimer `pico.min.css` et sa ligne dans le layout.
 - `app.css` : supprimer jetons `--app-*` et classes v1 mortes ; ce qui reste est réécrit avec des jetons `--dl-*` ou migré en composant. Si `app.css` devient vide, le supprimer.
 - Styleguide : `/dev/styleguide` devient le styleguide v2 (l'ancienne page v1 et `/dev/styleguide/v2` fusionnent ; garder un seul test dev/prod).
@@ -23,6 +24,7 @@ L'application ne charge plus que `base.css`, `tokens.css`, `components.css`, `gr
 ## Critères d'acceptation
 - [ ] `grep -rn 'pico\|--app-' internal/ docs/design-system.md AGENTS.md` vide (hors `decisions.md`/journal).
 - [ ] Toutes les pages (liste dans `render_test.go`) vérifiées à 360 px sans débordement horizontal, clair et sombre (orchestrateur).
+- [ ] Garde-fou : `grep -rnE '<(button|select|textarea|table|dialog|article)\b' internal/web/templates | grep -v 'dl-'` vide ou chaque ligne restante justifiée dans Suivi.
 - [ ] Binaire allégé : taille avant/après notée dans Suivi.
 - [ ] `make check` vert, aucun `style=` ajouté.
 - [ ] Vérifié dans le navigateur à 360 et 1280 px, clair et sombre, et au clavier (focus visible).
