@@ -1,97 +1,97 @@
 {{/* layout: admin */}}
 {{define "title"}}Nouvelle série de séances{{end}}
 {{define "content"}}
-<h1>Nouvelle série de séances</h1>
-<p>Patient : <a href="/admin/patients/{{.Data.PatientID}}">{{.Data.PatientName}}</a></p>
+<h1 class="text-2xl font-semibold">Nouvelle série de séances</h1>
+<p>Patient : <a class="link link-primary" href="/admin/patients/{{.Data.PatientID}}">{{.Data.PatientName}}</a></p>
 {{template "form_errors.html" .Data.Errors}}
 
-<form class="dl-form" method="post" action="/admin/patients/{{.Data.PatientID}}/care-plans/propose">
+<form class="space-y-4 max-w-2xl" method="post" action="/admin/patients/{{.Data.PatientID}}/care-plans/propose">
   {{csrf .CSRF}}
-  <div class="dl-field">
-    <label class="dl-label" for="cp-type">Motif des séances</label>
-    <select class="dl-select" id="cp-type" name="type_id" required>
-    <option value="">Choisir…</option>
-    {{range .Data.Types}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}} ({{.Minutes}} min)</option>{{end}}
-  </select>
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="cp-type">Motif des séances</label>
+    <select class="select w-full" id="cp-type" name="type_id" required>
+      <option value="">Choisir…</option>
+      {{range .Data.Types}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}} ({{.Minutes}} min)</option>{{end}}
+    </select>
   </div>
 
-  <div class="dl-field">
-    <label class="dl-label" for="cp-label">Libellé (facultatif)</label>
-    <input class="dl-input" id="cp-label" name="label" value="{{.Data.Values.Label}}" maxlength="100" autocomplete="off">
-    <p class="dl-note-warning">Note administrative uniquement : n'indiquez ni pathologie, ni diagnostic, ni contenu d'ordonnance.</p>
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="cp-label">Libellé (facultatif)</label>
+    <input class="input w-full" id="cp-label" name="label" value="{{.Data.Values.Label}}" maxlength="100" autocomplete="off">
+    <p class="alert alert-warning alert-soft text-sm">Note administrative uniquement : n'indiquez ni pathologie, ni diagnostic, ni contenu d'ordonnance.</p>
   </div>
 
-  <div class="dl-field-row">
-    <div class="dl-field">
-      <label class="dl-label" for="cp-prescribed">Nombre de séances</label>
-      <input class="dl-input" id="cp-prescribed" name="prescribed" type="number" min="1" max="100" value="{{.Data.Values.Prescribed}}" required>
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="cp-prescribed">Nombre de séances</label>
+      <input class="input w-full" id="cp-prescribed" name="prescribed" type="number" min="1" max="100" value="{{.Data.Values.Prescribed}}" required>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="cp-per-week">Séances par semaine</label>
-      <input class="dl-input" id="cp-per-week" name="per_week" type="number" min="1" max="7" value="{{.Data.Values.PerWeek}}" required>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="cp-per-week">Séances par semaine</label>
+      <input class="input w-full" id="cp-per-week" name="per_week" type="number" min="1" max="7" value="{{.Data.Values.PerWeek}}" required>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="cp-start">À partir du</label>
-      <input class="dl-input" id="cp-start" name="start_date" type="date" value="{{.Data.Values.StartDate}}" required>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="cp-start">À partir du</label>
+      <input class="input w-full" id="cp-start" name="start_date" type="date" value="{{.Data.Values.StartDate}}" required>
     </div>
   </div>
 
-  <fieldset class="dl-fieldset">
-    <legend>Jours préférés (aucun = tous les jours)</legend>
-    <div class="dl-checks">
-    {{range .Data.Weekdays}}<label class="dl-check"><input type="checkbox" name="weekdays" value="{{.Value}}"{{if .Checked}} checked{{end}}> {{.Label}}</label>{{end}}
+  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+    <legend class="fieldset-legend">Jours préférés (aucun = tous les jours)</legend>
+    <div class="flex flex-wrap gap-x-4 gap-y-2">
+    {{range .Data.Weekdays}}<label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="weekdays" value="{{.Value}}"{{if .Checked}} checked{{end}}> {{.Label}}</label>{{end}}
     </div>
   </fieldset>
 
-  <div class="dl-field-row">
-    <div class="dl-field">
-      <label class="dl-label" for="cp-win-start">Plage horaire souhaitée, de (facultatif)</label>
-      <input class="dl-input" id="cp-win-start" name="window_start" type="time" value="{{.Data.Values.WindowStart}}">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="cp-win-start">Plage horaire souhaitée, de (facultatif)</label>
+      <input class="input w-full" id="cp-win-start" name="window_start" type="time" value="{{.Data.Values.WindowStart}}">
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="cp-win-end">à</label>
-      <input class="dl-input" id="cp-win-end" name="window_end" type="time" value="{{.Data.Values.WindowEnd}}">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="cp-win-end">à</label>
+      <input class="input w-full" id="cp-win-end" name="window_end" type="time" value="{{.Data.Values.WindowEnd}}">
     </div>
   </div>
 
   {{if .Data.AtHome}}
-  <div class="dl-field">
-    <label class="dl-label" for="cp-address">Adresse de la visite à domicile</label>
-    <textarea class="dl-textarea" id="cp-address" name="address" rows="2" maxlength="300" autocomplete="off">{{.Data.Values.Address}}</textarea>
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="cp-address">Adresse de la visite à domicile</label>
+    <textarea class="textarea w-full" id="cp-address" name="address" rows="2" maxlength="300" autocomplete="off">{{.Data.Values.Address}}</textarea>
   </div>
   {{end}}
 
   {{if .Data.Lines}}
-  <h2>Séances proposées</h2>
+  <h2 class="text-xl font-semibold pt-2">Séances proposées</h2>
   <p>{{.Data.Found}} séance(s) placée(s) sur {{.Data.Want}}. Ajustez chaque ligne si besoin (date et heure du cabinet), puis validez : toutes les séances sont créées ensemble, ou aucune en cas de conflit.</p>
-  <div class="dl-table-wrap">
-  <table class="dl-table">
+  <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+  <table class="table">
     <thead><tr><th scope="col">Séance</th><th scope="col">Date</th><th scope="col">Heure</th></tr></thead>
     <tbody>
       {{$conflict := .Data.ConflictRow}}
       {{range .Data.Lines}}
       <tr>
         <th scope="row">{{.Row}}</th>
-        <td><div class="dl-field{{if eq .Row $conflict}} is-invalid{{end}}">
-  <label class="dl-label dl-visually-hidden" for="cp-d{{.Row}}">Date de la séance {{.Row}}</label>
-  <input class="dl-input" id="cp-d{{.Row}}" name="line_date" type="date" value="{{.Date}}"{{if eq .Row $conflict}} aria-invalid="true"{{end}}>
+        <td><div class="space-y-1">
+  <label class="sr-only" for="cp-d{{.Row}}">Date de la séance {{.Row}}</label>
+  <input class="input w-full min-w-36{{if eq .Row $conflict}} input-error{{end}}" id="cp-d{{.Row}}" name="line_date" type="date" value="{{.Date}}"{{if eq .Row $conflict}} aria-invalid="true"{{end}}>
 </div></td>
-        <td><div class="dl-field{{if eq .Row $conflict}} is-invalid{{end}}">
-  <label class="dl-label dl-visually-hidden" for="cp-t{{.Row}}">Heure de la séance {{.Row}}</label>
-  <input class="dl-input" id="cp-t{{.Row}}" name="line_time" type="time" step="300" value="{{.Time}}"{{if eq .Row $conflict}} aria-invalid="true"{{end}}>
+        <td><div class="space-y-1">
+  <label class="sr-only" for="cp-t{{.Row}}">Heure de la séance {{.Row}}</label>
+  <input class="input w-full min-w-36{{if eq .Row $conflict}} input-error{{end}}" id="cp-t{{.Row}}" name="line_time" type="time" step="300" value="{{.Time}}"{{if eq .Row $conflict}} aria-invalid="true"{{end}}>
 </div></td>
       </tr>
       {{end}}
     </tbody>
   </table>
   </div>
-  <p class="dl-help">Une ligne vide est ignorée. « Recalculer » remplace vos ajustements par une nouvelle proposition.</p>
-  <div class="dl-cluster">
-    <button class="dl-btn dl-btn--outline" type="submit">Recalculer la proposition</button>
-    <button class="dl-btn" type="submit" formaction="/admin/patients/{{.Data.PatientID}}/care-plans">Valider la série</button>
+  <p class="text-sm text-base-content/70">Une ligne vide est ignorée. « Recalculer » remplace vos ajustements par une nouvelle proposition.</p>
+  <div class="flex flex-wrap items-center gap-2">
+    <button class="btn btn-outline" type="submit">Recalculer la proposition</button>
+    <button class="btn btn-primary" type="submit" formaction="/admin/patients/{{.Data.PatientID}}/care-plans">Valider la série</button>
   </div>
   {{else}}
-  <button class="dl-btn" type="submit">Proposer les séances</button>
+  <button class="btn btn-primary" type="submit">Proposer les séances</button>
   {{end}}
 </form>
 {{end}}

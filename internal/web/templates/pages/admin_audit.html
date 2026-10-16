@@ -1,41 +1,41 @@
 {{/* layout: admin */}}
 {{define "title"}}Journal d'accès{{end}}
 {{define "content"}}
-<h1>Journal d'accès</h1>
+<h1 class="text-2xl font-semibold">Journal d'accès</h1>
 <p>Consultations de fiches patients, exports, suppressions, connexions et modifications. Le journal ne contient que des identifiants, jamais de coordonnées de patients.</p>
-<form class="dl-search" method="get" action="/admin/audit" role="search">
-  <div class="dl-field">
-    <label class="dl-label" for="action">Filtrer par action (exemples : patient_view, patient.exported, login_success)</label>
-    <input class="dl-input" id="action" type="search" name="action" value="{{.Data.Action}}" maxlength="64" autocomplete="off">
+<form class="flex flex-wrap items-end gap-2 max-w-2xl" method="get" action="/admin/audit" role="search">
+  <div class="space-y-1 grow basis-64">
+    <label class="block text-sm font-medium" for="action">Filtrer par action (exemples : patient_view, patient.exported, login_success)</label>
+    <input class="input w-full" id="action" type="search" name="action" value="{{.Data.Action}}" maxlength="64" autocomplete="off">
   </div>
-  <button class="dl-btn dl-btn--outline" type="submit">Filtrer</button>
+  <button class="btn btn-outline" type="submit">Filtrer</button>
 </form>
 {{if .Data.Rows}}
-<div class="dl-table-wrap">
-<table class="dl-table">
-  <caption class="dl-visually-hidden">Journal d'accès</caption>
+<div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+<table class="table">
+  <caption class="sr-only">Journal d'accès</caption>
   <thead>
     <tr>
       <th scope="col">Date</th>
-      <th scope="col">Utilisateur</th>
+      <th scope="col" class="hidden sm:table-cell">Utilisateur</th>
       <th scope="col">Action</th>
-      <th scope="col">Objet</th>
-      <th scope="col">Détails</th>
+      <th scope="col" class="hidden md:table-cell">Objet</th>
+      <th scope="col" class="hidden md:table-cell">Détails</th>
     </tr>
   </thead>
   <tbody>
     {{range .Data.Rows}}
     <tr>
-      <td class="dl-num">{{formatDate .At}} {{formatTime .At}}</td>
-      <td>{{.User}}</td>
+      <td class="tabular-nums whitespace-nowrap">{{formatDate .At}} {{formatTime .At}}</td>
+      <td class="hidden sm:table-cell">{{.User}}</td>
       <td>{{.Action}}</td>
-      <td>{{if .EntityURL}}<a href="{{.EntityURL}}">{{.Entity}}</a>{{else}}{{.Entity}}{{end}}{{if .EntityID}} <small>{{.EntityID}}</small>{{end}}</td>
-      <td><small>{{.Meta}}</small></td>
+      <td class="hidden md:table-cell">{{if .EntityURL}}<a class="link link-primary" href="{{.EntityURL}}">{{.Entity}}</a>{{else}}{{.Entity}}{{end}}{{if .EntityID}} <span class="text-sm text-base-content/70">{{.EntityID}}</span>{{end}}</td>
+      <td class="hidden md:table-cell text-sm text-base-content/70">{{.Meta}}</td>
     </tr>
     {{end}}
   </tbody>
 </table>
 </div>
-{{if .Data.NextURL}}<p><a class="dl-btn dl-btn--outline" href="{{.Data.NextURL}}">Entrées plus anciennes</a></p>{{end}}
-{{else}}<p class="dl-empty">Aucune entrée.</p>{{end}}
+{{if .Data.NextURL}}<div class="join"><a class="btn btn-outline join-item" href="{{.Data.NextURL}}">Entrées plus anciennes</a></div>{{end}}
+{{else}}<div class="alert alert-info alert-soft" role="status">Aucune entrée.</div>{{end}}
 {{end}}

@@ -1,37 +1,35 @@
-<div class="dl-field-row">
-  <div class="dl-field{{if .Invalid.last_name}} is-invalid{{end}}">
-    <label class="dl-label" for="pf-last-name">Nom</label>
-    <input class="dl-input" id="pf-last-name" name="last_name" value="{{.LastName}}" maxlength="80" required autocomplete="off"{{if .Invalid.last_name}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
+<div class="grid gap-4 sm:grid-cols-2">
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="pf-last-name">Nom</label>
+    <input class="input w-full{{if .Invalid.last_name}} input-error{{end}}" id="pf-last-name" name="last_name" value="{{.LastName}}" maxlength="80" required autocomplete="off"{{if .Invalid.last_name}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
   </div>
-  <div class="dl-field{{if .Invalid.first_name}} is-invalid{{end}}">
-    <label class="dl-label" for="pf-first-name">Prénom</label>
-    <input class="dl-input" id="pf-first-name" name="first_name" value="{{.FirstName}}" maxlength="80" required autocomplete="off"{{if .Invalid.first_name}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="pf-first-name">Prénom</label>
+    <input class="input w-full{{if .Invalid.first_name}} input-error{{end}}" id="pf-first-name" name="first_name" value="{{.FirstName}}" maxlength="80" required autocomplete="off"{{if .Invalid.first_name}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
   </div>
-</div>
-<div class="dl-field-row">
-  <div class="dl-field{{if .Invalid.phone}} is-invalid{{end}}">
-    <label class="dl-label" for="pf-phone">Téléphone</label>
-    <input class="dl-input" id="pf-phone" name="phone" type="tel" value="{{.Phone}}" autocomplete="off" aria-describedby="pf-contact-help{{if .Invalid.phone}} form-errors{{end}}"{{if .Invalid.phone}} aria-invalid="true"{{end}}>
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="pf-phone">Téléphone</label>
+    <input class="input w-full{{if .Invalid.phone}} input-error{{end}}" id="pf-phone" name="phone" type="tel" value="{{.Phone}}" autocomplete="off" aria-describedby="pf-contact-help{{if .Invalid.phone}} form-errors{{end}}"{{if .Invalid.phone}} aria-invalid="true"{{end}}>
   </div>
-  <div class="dl-field{{if .Invalid.email}} is-invalid{{end}}">
-    <label class="dl-label" for="pf-email">Email</label>
-    <input class="dl-input" id="pf-email" name="email" type="email" value="{{.Email}}" autocomplete="off" aria-describedby="pf-contact-help{{if .Invalid.email}} form-errors{{end}}"{{if .Invalid.email}} aria-invalid="true"{{end}}>
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="pf-email">Email</label>
+    <input class="input w-full{{if .Invalid.email}} input-error{{end}}" id="pf-email" name="email" type="email" value="{{.Email}}" autocomplete="off" aria-describedby="pf-contact-help{{if .Invalid.email}} form-errors{{end}}"{{if .Invalid.email}} aria-invalid="true"{{end}}>
   </div>
 </div>
-<p class="dl-help" id="pf-contact-help">Un téléphone ou un email est requis.</p>
-<div class="dl-field{{if .Invalid.birth_date}} is-invalid{{end}}">
-  <label class="dl-label" for="pf-birth">Date de naissance <span class="dl-optional">(facultative)</span></label>
-  <input class="dl-input" id="pf-birth" name="birth_date" type="date" value="{{.BirthDate}}"{{if .Invalid.birth_date}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
+<p class="text-sm text-base-content/70" id="pf-contact-help">Un téléphone ou un email est requis.</p>
+<div class="space-y-1">
+  <label class="block text-sm font-medium" for="pf-birth">Date de naissance <span class="text-base-content/70">(facultative)</span></label>
+  <input class="input w-full{{if .Invalid.birth_date}} input-error{{end}}" id="pf-birth" name="birth_date" type="date" value="{{.BirthDate}}"{{if .Invalid.birth_date}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
 </div>
-<fieldset class="dl-fieldset">
-  <legend>Notifications</legend>
-  <div class="dl-checks">
-    <label class="dl-check" for="pf-sms"><input id="pf-sms" type="checkbox" name="sms_opt_in" value="1"{{if eq .SMSOptIn "1"}} checked{{end}}> Accepte les SMS</label>
-    <label class="dl-check" for="pf-mail"><input id="pf-mail" type="checkbox" name="email_opt_in" value="1"{{if eq .EmailOptIn "1"}} checked{{end}}> Accepte les emails</label>
+<fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+  <legend class="fieldset-legend">Notifications</legend>
+  <div class="flex flex-wrap gap-x-4 gap-y-2">
+    <label class="flex items-center gap-2 text-sm" for="pf-sms"><input class="checkbox checkbox-primary checkbox-sm" id="pf-sms" type="checkbox" name="sms_opt_in" value="1"{{if eq .SMSOptIn "1"}} checked{{end}}> Accepte les SMS</label>
+    <label class="flex items-center gap-2 text-sm" for="pf-mail"><input class="checkbox checkbox-primary checkbox-sm" id="pf-mail" type="checkbox" name="email_opt_in" value="1"{{if eq .EmailOptIn "1"}} checked{{end}}> Accepte les emails</label>
   </div>
 </fieldset>
-<div class="dl-field{{if .Invalid.notes_admin}} is-invalid{{end}}">
-  <label class="dl-label" for="pf-notes">Note administrative</label>
-  <textarea class="dl-textarea" id="pf-notes" name="notes_admin" rows="3" maxlength="500" aria-describedby="pf-notes-warning{{if .Invalid.notes_admin}} form-errors{{end}}"{{if .Invalid.notes_admin}} aria-invalid="true"{{end}}>{{.Notes}}</textarea>
-  <p class="dl-note-warning" id="pf-notes-warning">Pas de données médicales : cette note est réservée à l'organisation du cabinet (500 caractères maximum).</p>
+<div class="space-y-1">
+  <label class="block text-sm font-medium" for="pf-notes">Note administrative</label>
+  <textarea class="textarea w-full{{if .Invalid.notes_admin}} textarea-error{{end}}" id="pf-notes" name="notes_admin" rows="3" maxlength="500" aria-describedby="pf-notes-warning{{if .Invalid.notes_admin}} form-errors{{end}}"{{if .Invalid.notes_admin}} aria-invalid="true"{{end}}>{{.Notes}}</textarea>
+  <p class="alert alert-warning alert-soft text-sm" id="pf-notes-warning">Pas de données médicales : cette note est réservée à l'organisation du cabinet (500 caractères maximum).</p>
 </div>

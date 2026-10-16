@@ -1,26 +1,28 @@
 {{/* layout: admin */}}
 {{define "title"}}Nouveau patient{{end}}
 {{define "content"}}
-<h1>Nouveau patient</h1>
+<h1 class="text-2xl font-semibold">Nouveau patient</h1>
 {{template "form_errors.html" .Data.Errors}}
 {{if .Data.Duplicates}}
-<div class="dl-alert dl-alert--warning" role="alert"><div>
+<div class="alert alert-warning items-start" role="alert"><div>
   <strong>Un patient avec le même téléphone ou le même email existe déjà :</strong>
-  <ul>
-    {{range .Data.Duplicates}}<li><a href="/admin/patients/{{.ID}}">{{.Name}}</a> <span class="dl-muted dl-small">{{.Phone}} {{.Email}}</span></li>{{end}}
+  <ul class="list-disc pl-5">
+    {{range .Data.Duplicates}}<li><a class="link link-primary" href="/admin/patients/{{.ID}}">{{.Name}}</a> <span class="text-sm text-base-content/70">{{.Phone}} {{.Email}}</span></li>{{end}}
   </ul>
   <p>Ouvrez la fiche existante, ou créez quand même une nouvelle fiche avec le bouton ci-dessous.</p>
 </div></div>
 {{end}}
-<form class="dl-form" method="post" action="/admin/patients">
+<form class="space-y-4 max-w-2xl" method="post" action="/admin/patients">
   {{csrf .CSRF}}
   {{template "patient_fields.html" .Data.Form}}
-  {{if .Data.Duplicates}}
-  <input type="hidden" name="force" value="1">
-  <button class="dl-btn" type="submit">Créer quand même</button>
-  {{else}}
-  <button class="dl-btn" type="submit">Créer la fiche</button>
-  {{end}}
-  <a class="dl-btn dl-btn--outline" href="/admin/patients">Annuler</a>
+  <div class="flex flex-wrap gap-2">
+    {{if .Data.Duplicates}}
+    <input type="hidden" name="force" value="1">
+    <button class="btn btn-primary" type="submit">Créer quand même</button>
+    {{else}}
+    <button class="btn btn-primary" type="submit">Créer la fiche</button>
+    {{end}}
+    <a class="btn btn-outline" href="/admin/patients">Annuler</a>
+  </div>
 </form>
 {{end}}

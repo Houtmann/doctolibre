@@ -1,19 +1,19 @@
 {{/* layout: admin */}}
 {{define "title"}}Messages envoyés{{end}}
 {{define "content"}}
-<h1>Messages</h1>
+<h1 class="text-2xl font-semibold">Messages</h1>
 <p>Les 50 derniers emails et SMS du cabinet. Les destinataires sont masqués.</p>
 {{if .Data.Messages}}
-<div class="dl-table-wrap">
-<table class="dl-table">
-  <caption class="dl-visually-hidden">Derniers messages</caption>
+<div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+<table class="table">
+  <caption class="sr-only">Derniers messages</caption>
   <thead>
     <tr>
       <th scope="col">Date</th>
       <th scope="col">Type</th>
       <th scope="col">Destinataire</th>
       <th scope="col">Statut</th>
-      <th scope="col">Tentatives</th>
+      <th scope="col" class="hidden sm:table-cell">Tentatives</th>
       <th scope="col">Erreur</th>
       <th scope="col">Action</th>
     </tr>
@@ -21,17 +21,17 @@
   <tbody>
     {{range .Data.Messages}}
     <tr>
-      <td class="dl-num">{{formatDate .CreatedAt}} {{formatTime .CreatedAt}}</td>
+      <td class="tabular-nums whitespace-nowrap">{{formatDate .CreatedAt}} {{formatTime .CreatedAt}}</td>
       <td>{{if eq .Kind "sms"}}SMS{{else}}Email{{end}}</td>
       <td>{{.Recipient}}</td>
       <td>{{if eq .Status "pending"}}En attente{{else if eq .Status "sending"}}En cours{{else if eq .Status "sent"}}Envoyé{{else if eq .Status "failed"}}Échec{{else if eq .Status "cancelled"}}Annulé{{else}}{{.Status}}{{end}}</td>
-      <td class="dl-num">{{.Attempts}}</td>
+      <td class="tabular-nums hidden sm:table-cell">{{.Attempts}}</td>
       <td>{{.LastError}}</td>
       <td>
         {{if .CanResend}}
         <form method="post" action="/admin/messages/{{.ID}}/resend">
           {{csrf $.CSRF}}
-          <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit">Renvoyer</button>
+          <button class="btn btn-outline btn-sm" type="submit">Renvoyer</button>
         </form>
         {{end}}
       </td>
@@ -41,6 +41,6 @@
 </table>
 </div>
 {{else}}
-<p class="dl-empty">Aucun message pour le moment.</p>
+<div class="alert alert-info alert-soft" role="status">Aucun message pour le moment.</div>
 {{end}}
 {{end}}

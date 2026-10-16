@@ -1,16 +1,16 @@
 {{/* layout: admin */}}
 {{define "title"}}Absences{{end}}
 {{define "content"}}
-<h1>Absences</h1>
+<h1 class="text-2xl font-semibold">Absences</h1>
 {{with .Data.Switch}}
-<form method="get" action="{{.Action}}" class="dl-cluster" role="search">
-  <div class="dl-field">
-    <label class="dl-label" for="practitioner-select">Praticien</label>
-    <select class="dl-select" id="practitioner-select" name="practitioner">
+<form method="get" action="{{.Action}}" class="flex flex-wrap items-end gap-2" role="search">
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="practitioner-select">Praticien</label>
+    <select class="select w-full" id="practitioner-select" name="practitioner">
     {{range .Options}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
   </select>
   </div>
-  <button class="dl-btn dl-btn--outline" type="submit">Afficher</button>
+  <button class="btn btn-outline" type="submit">Afficher</button>
 </form>
 {{end}}
 {{template "absences_panel.html" .Data}}

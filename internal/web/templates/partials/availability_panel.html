@@ -1,64 +1,64 @@
-<div id="availability-panel">
-  {{if .Notice}}<div class="dl-alert dl-alert--success" role="status">{{.Notice}}</div>{{end}}
+<div id="availability-panel" class="space-y-4">
+  {{if .Notice}}<div class="alert alert-success" role="status">{{.Notice}}</div>{{end}}
   {{template "form_errors.html" .Errors}}
 
-  <div class="week-grid">
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     {{range .Days}}
-    <section class="week-day" aria-labelledby="day-{{.Weekday}}">
-      <h2 id="day-{{.Weekday}}">{{weekdayName .Weekday}}</h2>
+    <section class="card card-border bg-base-100" aria-labelledby="day-{{.Weekday}}"><div class="card-body p-4 gap-2">
+      <h2 class="font-semibold" id="day-{{.Weekday}}">{{weekdayName .Weekday}}</h2>
       {{if .Rules}}
-      <ul>
+      <ul class="space-y-2">
         {{range .Rules}}
-        <li>
+        <li class="space-y-1">
           <strong>{{.Start}} – {{.End}}</strong>
-          {{if not .AllTypes}}<small>({{range $i, $n := .TypeNames}}{{if $i}}, {{end}}{{$n}}{{end}})</small>{{end}}
+          {{if not .AllTypes}}<span class="block text-sm text-base-content/70">({{range $i, $n := .TypeNames}}{{if $i}}, {{end}}{{$n}}{{end}})</span>{{end}}
           <form method="post" action="/admin/availability/{{.ID}}/delete{{$.Q}}" hx-post="/admin/availability/{{.ID}}/delete{{$.Q}}" hx-target="#availability-panel" hx-swap="outerHTML">
             {{csrf $.CSRF}}
-            <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit" aria-label="Supprimer la plage de {{.Start}} à {{.End}} du {{weekdayName .Weekday}}">Supprimer</button>
+            <button class="btn btn-outline btn-sm" type="submit" aria-label="Supprimer la plage de {{.Start}} à {{.End}} du {{weekdayName .Weekday}}">Supprimer</button>
           </form>
         </li>
         {{end}}
       </ul>
       {{else}}
-      <p class="dl-muted dl-small">Fermé</p>
+      <p class="text-sm text-base-content/70">Fermé</p>
       {{end}}
-    </section>
+    </div></section>
     {{end}}
   </div>
 
-  <h2>Ajouter une plage horaire</h2>
-  <form class="dl-form" method="post" action="/admin/availability{{.Q}}" hx-post="/admin/availability{{.Q}}" hx-target="#availability-panel" hx-swap="outerHTML">
+  <h2 class="text-xl font-semibold pt-2">Ajouter une plage horaire</h2>
+  <form class="space-y-4 max-w-2xl" method="post" action="/admin/availability{{.Q}}" hx-post="/admin/availability{{.Q}}" hx-target="#availability-panel" hx-swap="outerHTML">
     {{csrf .CSRF}}
     {{with .Form}}
-    <fieldset class="dl-fieldset">
-      <legend>Jours</legend>
-      <div class="dl-checks">
-      <label class="dl-check"><input type="checkbox" name="weekday" value="0"{{if index .Weekdays "0"}} checked{{end}}> Lundi</label>
-      <label class="dl-check"><input type="checkbox" name="weekday" value="1"{{if index .Weekdays "1"}} checked{{end}}> Mardi</label>
-      <label class="dl-check"><input type="checkbox" name="weekday" value="2"{{if index .Weekdays "2"}} checked{{end}}> Mercredi</label>
-      <label class="dl-check"><input type="checkbox" name="weekday" value="3"{{if index .Weekdays "3"}} checked{{end}}> Jeudi</label>
-      <label class="dl-check"><input type="checkbox" name="weekday" value="4"{{if index .Weekdays "4"}} checked{{end}}> Vendredi</label>
-      <label class="dl-check"><input type="checkbox" name="weekday" value="5"{{if index .Weekdays "5"}} checked{{end}}> Samedi</label>
-      <label class="dl-check"><input type="checkbox" name="weekday" value="6"{{if index .Weekdays "6"}} checked{{end}}> Dimanche</label>
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">Jours</legend>
+      <div class="flex flex-wrap gap-x-4 gap-y-2">
+      <label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="weekday" value="0"{{if index .Weekdays "0"}} checked{{end}}> Lundi</label>
+      <label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="weekday" value="1"{{if index .Weekdays "1"}} checked{{end}}> Mardi</label>
+      <label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="weekday" value="2"{{if index .Weekdays "2"}} checked{{end}}> Mercredi</label>
+      <label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="weekday" value="3"{{if index .Weekdays "3"}} checked{{end}}> Jeudi</label>
+      <label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="weekday" value="4"{{if index .Weekdays "4"}} checked{{end}}> Vendredi</label>
+      <label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="weekday" value="5"{{if index .Weekdays "5"}} checked{{end}}> Samedi</label>
+      <label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="weekday" value="6"{{if index .Weekdays "6"}} checked{{end}}> Dimanche</label>
       </div>
     </fieldset>
-    <div class="dl-field-row">
-      <div class="dl-field">
-        <label class="dl-label" for="rule-start">De</label>
-        <input class="dl-input" id="rule-start" name="start" type="time" value="{{.Start}}" required>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="rule-start">De</label>
+        <input class="input w-full" id="rule-start" name="start" type="time" value="{{.Start}}" required>
       </div>
-      <div class="dl-field">
-        <label class="dl-label" for="rule-end">À</label>
-        <input class="dl-input" id="rule-end" name="end" type="time" value="{{.End}}" required>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="rule-end">À</label>
+        <input class="input w-full" id="rule-end" name="end" type="time" value="{{.End}}" required>
       </div>
     </div>
     {{end}}
-    <fieldset class="dl-fieldset">
-      <legend>Motifs acceptés sur cette plage</legend>
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">Motifs acceptés sur cette plage</legend>
       {{range .Types}}
-      <label class="dl-check"><input type="checkbox" name="type" value="{{.ID}}"{{if .Checked}} checked{{end}}> {{.Name}}</label>
+      <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="type" value="{{.ID}}"{{if .Checked}} checked{{end}}> {{.Name}}</label>
       {{end}}
     </fieldset>
-    <button class="dl-btn dl-btn--sm" type="submit">Ajouter</button>
+    <button class="btn btn-primary" type="submit">Ajouter</button>
   </form>
 </div>

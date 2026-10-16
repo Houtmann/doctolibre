@@ -14,6 +14,13 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T082 back-office en daisyUI (sonnet ; contrôle : opus)
+
+- **Tâches** : T082 (todo → review)
+- **Fait** : 14 pages `admin_*` et 5 partials (patient_fields, patient_results, types/availability/absences_panel) en daisyUI : tables `overflow-x-auto` avec colonnes secondaires masquées en petit écran, pagination `join`, états vides et note administrative en `alert`, erreurs de champ `input-error` + `aria-invalid`/`aria-describedby`. Après revue : select de rôle de l'équipe lisible à 375 px, journal d'accès réduit à Date + Action sur mobile (lignes de 130 à 46 px).
+- **Vérification** : `make check` ✅ ; aucun `id`/`name`/`hx-*`/`action`/`aria-*` perdu, aucun `style=`, plus de `dl-` ; navigateur (base demo) : 375 px sombre sur toutes les pages sans débordement, formulaire patient en erreur, focus visible.
+- **Reste** : états avec données non vus (liste d'attente, absences, invitations, pagination) → contrôle final T084 ; `admin_test.go` et `styleguide_test.go` cherchent encore `dl-field is-invalid` (login et styleguide, T084).
+
 ## 2026-10-16 — T081 parcours patient public en daisyUI (sonnet ; contrôle : opus)
 
 - **Tâches** : T081 (todo → review)

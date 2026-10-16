@@ -1,59 +1,59 @@
-<div id="absences-panel">
-  {{if .Notice}}<div class="dl-alert dl-alert--success" role="status">{{.Notice}}</div>{{end}}
+<div id="absences-panel" class="space-y-4">
+  {{if .Notice}}<div class="alert alert-success" role="status">{{.Notice}}</div>{{end}}
   {{template "form_errors.html" .Errors}}
 
-  <h2>Absences à venir</h2>
+  <h2 class="text-xl font-semibold pt-2">Absences à venir</h2>
   {{if .Closures}}
-  <ul>
+  <ul class="space-y-2">
     {{range .Closures}}
-    <li>
+    <li class="flex flex-wrap items-center gap-x-3 gap-y-1">
       {{if .AllDay}}
         {{if eq (.Start.Format "2006-01-02") (.LastDay.Format "2006-01-02")}}Le {{localDate .Start}}{{else}}Du {{localDate .Start}} au {{localDate .LastDay}}{{end}}
       {{else}}
         Du {{localDate .Start}} à {{localTime .Start}} au {{localDate .End}} à {{localTime .End}}
       {{end}}
-      {{if .Reason}}<small>({{.Reason}})</small>{{end}}
+      {{if .Reason}}<span class="text-sm text-base-content/70">({{.Reason}})</span>{{end}}
       <form method="post" action="/admin/absences/{{.ID}}/delete{{$.Q}}" hx-post="/admin/absences/{{.ID}}/delete{{$.Q}}" hx-target="#absences-panel" hx-swap="outerHTML">
         {{csrf $.CSRF}}
-        <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit">Supprimer</button>
+        <button class="btn btn-outline btn-sm" type="submit">Supprimer</button>
       </form>
     </li>
     {{end}}
   </ul>
   {{else}}
-  <p>Aucune absence à venir.</p>
+  <div class="alert alert-info alert-soft" role="status">Aucune absence à venir.</div>
   {{end}}
 
-  <h2>Ajouter une absence</h2>
-  <form class="dl-form" method="post" action="/admin/absences{{.Q}}" hx-post="/admin/absences{{.Q}}" hx-target="#absences-panel" hx-swap="outerHTML">
+  <h2 class="text-xl font-semibold pt-2">Ajouter une absence</h2>
+  <form class="space-y-4 max-w-2xl" method="post" action="/admin/absences{{.Q}}" hx-post="/admin/absences{{.Q}}" hx-target="#absences-panel" hx-swap="outerHTML">
     {{csrf .CSRF}}
     {{with .Form}}
-    <div class="dl-field-row">
-      <div class="dl-field">
-        <label class="dl-label" for="abs-start-date">Du (date)</label>
-        <input class="dl-input" id="abs-start-date" name="start_date" type="date" value="{{.StartDate}}" required>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="abs-start-date">Du (date)</label>
+        <input class="input w-full" id="abs-start-date" name="start_date" type="date" value="{{.StartDate}}" required>
       </div>
-      <div class="dl-field">
-        <label class="dl-label" for="abs-end-date">Au (date, incluse)</label>
-        <input class="dl-input" id="abs-end-date" name="end_date" type="date" value="{{.EndDate}}">
-      </div>
-    </div>
-    <div class="dl-field-row">
-      <div class="dl-field">
-        <label class="dl-label" for="abs-start-time">Heure de début</label>
-        <input class="dl-input" id="abs-start-time" name="start_time" type="time" value="{{.StartTime}}" aria-describedby="abs-time-help">
-      </div>
-      <div class="dl-field">
-        <label class="dl-label" for="abs-end-time">Heure de fin</label>
-        <input class="dl-input" id="abs-end-time" name="end_time" type="time" value="{{.EndTime}}" aria-describedby="abs-time-help">
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="abs-end-date">Au (date, incluse)</label>
+        <input class="input w-full" id="abs-end-date" name="end_date" type="date" value="{{.EndDate}}">
       </div>
     </div>
-    <p class="dl-help" id="abs-time-help">Laissez les heures vides pour des journées entières.</p>
-    <div class="dl-field">
-      <label class="dl-label" for="abs-reason">Motif (facultatif, visible du cabinet uniquement)</label>
-      <input class="dl-input" id="abs-reason" name="reason" value="{{.Reason}}" maxlength="200">
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="abs-start-time">Heure de début</label>
+        <input class="input w-full" id="abs-start-time" name="start_time" type="time" value="{{.StartTime}}" aria-describedby="abs-time-help">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="abs-end-time">Heure de fin</label>
+        <input class="input w-full" id="abs-end-time" name="end_time" type="time" value="{{.EndTime}}" aria-describedby="abs-time-help">
+      </div>
+    </div>
+    <p class="text-sm text-base-content/70" id="abs-time-help">Laissez les heures vides pour des journées entières.</p>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="abs-reason">Motif (facultatif, visible du cabinet uniquement)</label>
+      <input class="input w-full" id="abs-reason" name="reason" value="{{.Reason}}" maxlength="200">
     </div>
     {{end}}
-    <button class="dl-btn dl-btn--sm" type="submit">Ajouter l'absence</button>
+    <button class="btn btn-primary" type="submit">Ajouter l'absence</button>
   </form>
 </div>

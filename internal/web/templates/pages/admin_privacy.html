@@ -1,55 +1,55 @@
 {{/* layout: admin */}}
 {{define "title"}}Confidentialité et RGPD{{end}}
 {{define "content"}}
-<h1>Confidentialité et RGPD</h1>
-<p>Vous êtes responsable du traitement des données de vos patients. Cette page règle les durées de conservation ; elle ne remplace pas un conseil juridique (voir <code>docs/rgpd.md</code>). <a href="/admin/audit">Journal d'accès</a></p>
+<h1 class="text-2xl font-semibold">Confidentialité et RGPD</h1>
+<p>Vous êtes responsable du traitement des données de vos patients. Cette page règle les durées de conservation ; elle ne remplace pas un conseil juridique (voir <code>docs/rgpd.md</code>). <a class="link link-primary" href="/admin/audit">Journal d'accès</a></p>
 {{template "form_errors.html" .Data.Errors}}
-<form class="dl-form" method="post" action="/admin/privacy">
+<form class="space-y-4 max-w-2xl" method="post" action="/admin/privacy">
   {{csrf .CSRF}}
   {{with .Data.Form}}
-  <fieldset class="dl-fieldset">
-    <legend>Durées de conservation</legend>
-    <div class="dl-field">
-      <label class="dl-label" for="retention_outbox_days">Contenu des emails et SMS envoyés (jours)</label>
-      <input class="dl-input" id="retention_outbox_days" name="retention_outbox_days" type="number" inputmode="numeric" min="1" max="3650" value="{{.OutboxDays}}" required aria-describedby="outbox-help">
-      <p class="dl-help" id="outbox-help">Passé ce délai, le texte et le destinataire des messages sont effacés (seule la trace « un message a été envoyé » reste).</p>
+  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+    <legend class="fieldset-legend">Durées de conservation</legend>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="retention_outbox_days">Contenu des emails et SMS envoyés (jours)</label>
+      <input class="input w-full" id="retention_outbox_days" name="retention_outbox_days" type="number" inputmode="numeric" min="1" max="3650" value="{{.OutboxDays}}" required aria-describedby="outbox-help">
+      <p class="text-sm text-base-content/70" id="outbox-help">Passé ce délai, le texte et le destinataire des messages sont effacés (seule la trace « un message a été envoyé » reste).</p>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="retention_audit_days">Journal d'accès (jours)</label>
-      <input class="dl-input" id="retention_audit_days" name="retention_audit_days" type="number" inputmode="numeric" min="30" max="3650" value="{{.AuditDays}}" required>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="retention_audit_days">Journal d'accès (jours)</label>
+      <input class="input w-full" id="retention_audit_days" name="retention_audit_days" type="number" inputmode="numeric" min="30" max="3650" value="{{.AuditDays}}" required>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="retention_patient_years">Patients sans rendez-vous depuis (années)</label>
-      <input class="dl-input" id="retention_patient_years" name="retention_patient_years" type="number" inputmode="numeric" min="1" max="30" value="{{.PatientYears}}" required>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="retention_patient_years">Patients sans rendez-vous depuis (années)</label>
+      <input class="input w-full" id="retention_patient_years" name="retention_patient_years" type="number" inputmode="numeric" min="1" max="30" value="{{.PatientYears}}" required>
     </div>
-    <label class="dl-check"><input type="checkbox" name="patient_purge_enabled" value="1"{{if .PurgeEnabled}} checked{{end}}> Anonymiser automatiquement ces patients (tous les jours)</label>
+    <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="patient_purge_enabled" value="1"{{if .PurgeEnabled}} checked{{end}}> Anonymiser automatiquement ces patients (tous les jours)</label>
   </fieldset>
-  <fieldset class="dl-fieldset">
-    <legend>Mentions d'information des patients</legend>
-    <div class="dl-field">
-      <label class="dl-label" for="privacy_contact">Contact pour exercer ses droits (email ou adresse postale)</label>
-      <input class="dl-input" id="privacy_contact" name="privacy_contact" value="{{.Contact}}" maxlength="200" autocomplete="off">
-      <p class="dl-help">Affiché sur la <a href="/p/{{$.Data.Slug}}/privacy">page d'information publique</a>. À défaut, le téléphone du cabinet est affiché.</p>
+  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+    <legend class="fieldset-legend">Mentions d'information des patients</legend>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="privacy_contact">Contact pour exercer ses droits (email ou adresse postale)</label>
+      <input class="input w-full" id="privacy_contact" name="privacy_contact" value="{{.Contact}}" maxlength="200" autocomplete="off">
+      <p class="text-sm text-base-content/70">Affiché sur la <a class="link link-primary" href="/p/{{$.Data.Slug}}/privacy">page d'information publique</a>. À défaut, le téléphone du cabinet est affiché.</p>
     </div>
   </fieldset>
   {{end}}
-  <button class="dl-btn" type="submit">Enregistrer</button>
+  <button class="btn btn-primary" type="submit">Enregistrer</button>
 </form>
 
-<h2>Patients qui seraient anonymisés</h2>
+<h2 class="text-xl font-semibold pt-2">Patients qui seraient anonymisés</h2>
 <p>Dernière activité (création, modification ou rendez-vous) avant le {{formatDate .Data.Preview.Cutoff}}. Vérifiez cette liste avant d'activer l'anonymisation automatique : elle est irréversible.</p>
 {{if .Data.Preview.Candidates}}
 <p><strong>{{.Data.Preview.Total}}</strong> patient(s) concerné(s){{if gt .Data.Preview.Total 50}} (50 affichés){{end}}.</p>
-<div class="dl-table-wrap">
-<table class="dl-table">
-  <caption class="dl-visually-hidden">Patients inactifs</caption>
+<div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+<table class="table">
+  <caption class="sr-only">Patients inactifs</caption>
   <thead><tr><th scope="col">Patient</th><th scope="col">Dernière activité</th></tr></thead>
   <tbody>
     {{range .Data.Preview.Candidates}}
-    <tr><td><a href="/admin/patients/{{.ID}}">{{.Name}}</a></td><td class="dl-num">{{formatDate .LastActivity}}</td></tr>
+    <tr><td><a class="link link-primary" href="/admin/patients/{{.ID}}">{{.Name}}</a></td><td class="tabular-nums">{{formatDate .LastActivity}}</td></tr>
     {{end}}
   </tbody>
 </table>
 </div>
-{{else}}<p class="dl-empty">Aucun patient concerné.</p>{{end}}
+{{else}}<div class="alert alert-info alert-soft" role="status">Aucun patient concerné.</div>{{end}}
 {{end}}

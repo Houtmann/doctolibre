@@ -1,28 +1,28 @@
 {{/* layout: admin */}}
 {{define "title"}}Patients{{end}}
 {{define "content"}}
-<h1>Patients</h1>
-<form class="dl-search" method="get" action="/admin/patients" role="search">
-  <div class="dl-field">
-    <label class="dl-label" for="patient-q">Rechercher (nom, prénom, téléphone ou email)</label>
-    <input class="dl-input" id="patient-q" type="search" name="q" value="{{.Data.Query}}" autocomplete="off">
+<h1 class="text-2xl font-semibold">Patients</h1>
+<form class="flex flex-wrap items-end gap-2 max-w-2xl" method="get" action="/admin/patients" role="search">
+  <div class="space-y-1 grow basis-64">
+    <label class="block text-sm font-medium" for="patient-q">Rechercher (nom, prénom, téléphone ou email)</label>
+    <input class="input w-full" id="patient-q" type="search" name="q" value="{{.Data.Query}}" autocomplete="off">
   </div>
-  <button class="dl-btn" type="submit">Rechercher</button>
+  <button class="btn btn-primary" type="submit">Rechercher</button>
 </form>
-<p><a class="dl-btn dl-btn--outline" href="{{.Data.NewURL}}">Nouveau patient</a></p>
+<p><a class="btn btn-outline" href="{{.Data.NewURL}}">Nouveau patient</a></p>
 {{if .Data.Rows}}
-<div class="dl-table-wrap">
-<table class="dl-table">
-  <thead><tr><th scope="col">Nom</th><th scope="col">Téléphone</th><th scope="col">Email</th></tr></thead>
+<div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+<table class="table">
+  <thead><tr><th scope="col">Nom</th><th scope="col">Téléphone</th><th scope="col" class="hidden sm:table-cell">Email</th></tr></thead>
   <tbody>
     {{range .Data.Rows}}
-    <tr><td><a href="/admin/patients/{{.ID}}">{{.Name}}</a></td><td class="dl-num">{{.Phone}}</td><td>{{.Email}}</td></tr>
+    <tr><td><a class="link link-primary" href="/admin/patients/{{.ID}}">{{.Name}}</a></td><td class="tabular-nums">{{.Phone}}</td><td class="hidden sm:table-cell">{{.Email}}</td></tr>
     {{end}}
   </tbody>
 </table>
 </div>
-{{if .Data.NextURL}}<p><a href="{{.Data.NextURL}}">Page suivante</a></p>{{end}}
+{{if .Data.NextURL}}<div class="join"><a class="btn btn-outline join-item" href="{{.Data.NextURL}}">Page suivante</a></div>{{end}}
 {{else}}
-<p class="dl-empty">Aucun patient{{if .Data.Query}} ne correspond à « {{.Data.Query}} »{{end}}.</p>
+<div class="alert alert-info alert-soft" role="status">Aucun patient{{if .Data.Query}} ne correspond à « {{.Data.Query}} »{{end}}.</div>
 {{end}}
 {{end}}

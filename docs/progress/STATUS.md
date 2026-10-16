@@ -3,7 +3,7 @@
 > Tableau de bord **réécrit à la fin de chaque session** (pas d'historique ici : voir [`journal.md`](journal.md)).
 > Le statut détaillé de chaque tâche est dans [`tasks/README.md`](../../tasks/README.md), seule source de vérité.
 
-**Mis à jour le** : 2026-10-16 (T081 en review)
+**Mis à jour le** : 2026-10-16 (T082 en review)
 
 ## Où on en est
 
@@ -17,11 +17,11 @@
 
 ## En cours
 
-En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system), **T080** (outillage Tailwind + daisyUI, layouts ; pages non migrées volontairement sommaires jusqu’à T082–T084), **T081** (parcours patient public en daisyUI, vérifié dans le navigateur à 360/1280 px, clair et sombre). T063–T067 `done` (T065–T067 mergées, leur CSS `dl-*` sera supprimé en T084). T068 `superseded` (absorbée par T084).
+En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system), **T080** (outillage Tailwind + daisyUI, layouts ; pages non migrées volontairement sommaires jusqu’à T082–T084), **T081** (parcours patient public en daisyUI, vérifié dans le navigateur à 360/1280 px, clair et sombre), **T082** (back-office en daisyUI : 14 pages admin et 5 partials ; vérifié à 375 px sombre sur toutes les pages, erreurs de champ et focus clavier ; états avec données non vus : liste d'attente remplie, absences, invitations, pagination). T063–T067 `done` (T065–T067 mergées, leur CSS `dl-*` sera supprimé en T084). T068 `superseded` (absorbée par T084).
 
 ## Prochaine action
 
-1. **Migration front (daisyUI)** : relire **T080** et **T081** (en review), puis lancer **T082, T083** (une à la fois ou en parallèle) (templates disjoints ; `ui.css` est généré : relancer `make css` en cas de conflit), puis **T084** (pages restantes, retrait de Pico et de l'ancien CSS). T057, T061 et T070–T073 (UI) après T080.
+1. **Migration front (daisyUI)** : relire **T080**, **T081** et **T082** (en review), puis lancer **T083** (agenda EventCalendar), puis **T084** (pages restantes, retrait de Pico et de l'ancien CSS). T057, T061 et T070–T073 (UI) après T080.
 2. Relire et passer en `done` T050 (débloque T051, T055), T052, T058, T062. Prêtes en parallèle (hors UI) : T053, T054, T056, T059, T060 (attention aux numéros de migration : 00020 et suivants, un seul agent à la fois sur `sqlc`). T072 prête ; T070 dès que T058 est `done` ; T071 après T055 ; T073 après T072 + T059.
 3. Passage navigateur : rendu 360 px de toutes les pages, agenda au clavier, vue jour à 4 praticiens à 1280 px (critère T033 non coché) ; repris dans le contrôle final de T084.
 4. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
@@ -58,4 +58,4 @@ En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours 
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 28 (dont 1 remplacée) | 5 | 6 |
+| 5 — Retours terrain | 28 (dont 1 remplacée) | 5 | 7 |

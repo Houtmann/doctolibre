@@ -1,85 +1,85 @@
 {{/* layout: admin */}}
 {{define "title"}}{{.Data.Name}}{{end}}
 {{define "content"}}
-<h1>{{.Data.Name}}</h1>
+<h1 class="text-2xl font-semibold">{{.Data.Name}}</h1>
 {{template "form_errors.html" .Data.Errors}}
 
-<h2>Coordonnées</h2>
-<form class="dl-form" method="post" action="/admin/patients/{{.Data.ID}}">
+<h2 class="text-xl font-semibold pt-2">Coordonnées</h2>
+<form class="space-y-4 max-w-2xl" method="post" action="/admin/patients/{{.Data.ID}}">
   {{csrf .CSRF}}
   {{template "patient_fields.html" .Data.Form}}
-  <button class="dl-btn" type="submit">Enregistrer</button>
+  <button class="btn btn-primary" type="submit">Enregistrer</button>
 </form>
 
-<h2>Rendez-vous à venir</h2>
+<h2 class="text-xl font-semibold pt-2">Rendez-vous à venir</h2>
 {{if .Data.Upcoming}}
-<ul>
-  {{range .Data.Upcoming}}<li><a href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a> — {{.TypeName}}</li>{{end}}
+<ul class="list-disc pl-5 space-y-1">
+  {{range .Data.Upcoming}}<li><a class="link link-primary" href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a> — {{.TypeName}}</li>{{end}}
 </ul>
-{{else}}<p>Aucun rendez-vous à venir.</p>{{end}}
+{{else}}<p class="text-base-content/70">Aucun rendez-vous à venir.</p>{{end}}
 
-<h2>Séries de séances</h2>
-<p><a class="dl-btn dl-btn--outline" href="/admin/patients/{{.Data.ID}}/care-plans/new">Nouvelle série</a></p>
+<h2 class="text-xl font-semibold pt-2">Séries de séances</h2>
+<p><a class="btn btn-outline" href="/admin/patients/{{.Data.ID}}/care-plans/new">Nouvelle série</a></p>
 {{range .Data.Plans}}{{$plan := .}}
-<article>
-  <h3>{{if .Label}}{{.Label}}{{else}}Série de séances{{end}} <small>({{.StatusLabel}})</small></h3>
+<article class="card card-border bg-base-100"><div class="card-body gap-3">
+  <h3 class="text-lg font-semibold">{{if .Label}}{{.Label}}{{else}}Série de séances{{end}} <span class="badge badge-soft">{{.StatusLabel}}</span></h3>
   <p><strong>{{.Count}}/{{.Prescribed}} séances</strong> faites ou planifiées ({{.Done}} faites, {{.Booked}} à venir) — {{.PerWeek}} par semaine{{if .Weekdays}}, de préférence {{.Weekdays}}{{end}} — {{.TypeName}}</p>
   {{if .Sessions}}
-  <ul>
-    {{range .Sessions}}<li><a href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a>{{if .Ordinal}} — séance {{.Ordinal}}/{{$plan.Prescribed}}{{end}} ({{.StatusLabel}})</li>{{end}}
+  <ul class="list-disc pl-5 space-y-1">
+    {{range .Sessions}}<li><a class="link link-primary" href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a>{{if .Ordinal}} — séance {{.Ordinal}}/{{$plan.Prescribed}}{{end}} ({{.StatusLabel}})</li>{{end}}
   </ul>
   {{end}}
-  <form method="post" action="/admin/care-plans/{{.ID}}/status" class="dl-cluster">
+  <form method="post" action="/admin/care-plans/{{.ID}}/status" class="flex flex-wrap items-center gap-2">
     {{csrf $.CSRF}}
     {{if .Active}}
-    <button class="dl-btn dl-btn--outline" type="submit" name="status" value="completed">Terminer la série</button>
-    <button class="dl-btn dl-btn--outline" type="submit" name="status" value="cancelled">Abandonner la série</button>
+    <button class="btn btn-outline" type="submit" name="status" value="completed">Terminer la série</button>
+    <button class="btn btn-outline" type="submit" name="status" value="cancelled">Abandonner la série</button>
     {{else}}
-    <button class="dl-btn dl-btn--outline" type="submit" name="status" value="active">Rouvrir la série</button>
+    <button class="btn btn-outline" type="submit" name="status" value="active">Rouvrir la série</button>
     {{end}}
   </form>
-  <p class="dl-help">Terminer ou abandonner ne modifie pas les rendez-vous déjà planifiés.</p>
-</article>
-{{else}}<p>Aucune série de séances.</p>{{end}}
+  <p class="text-sm text-base-content/70">Terminer ou abandonner ne modifie pas les rendez-vous déjà planifiés.</p>
+</div></article>
+{{else}}<p class="text-base-content/70">Aucune série de séances.</p>{{end}}
 
-<h2>Historique</h2>
+<h2 class="text-xl font-semibold pt-2">Historique</h2>
 <p>Absences : <strong>{{.Data.NoShows}}</strong></p>
 {{if .Data.History}}
-<ul>
-  {{range .Data.History}}<li><a href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a> — {{.TypeName}} ({{.StatusLabel}})</li>{{end}}
+<ul class="list-disc pl-5 space-y-1">
+  {{range .Data.History}}<li><a class="link link-primary" href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a> — {{.TypeName}} ({{.StatusLabel}})</li>{{end}}
 </ul>
-{{else}}<p>Aucun rendez-vous passé.</p>{{end}}
+{{else}}<p class="text-base-content/70">Aucun rendez-vous passé.</p>{{end}}
 
 {{if .Data.CanManage}}
-<h2>Données personnelles (RGPD)</h2>
-<p>Droit d'accès : <a href="/admin/patients/{{.Data.ID}}/export.json" download>exporter en JSON</a> ou <a href="/admin/patients/{{.Data.ID}}/export.csv" download>en CSV</a>. Chaque export est enregistré dans le journal d'accès.</p>
-<form method="post" action="/admin/patients/{{.Data.ID}}/delete">
+<h2 class="text-xl font-semibold pt-2">Données personnelles (RGPD)</h2>
+<p>Droit d'accès : <a class="link link-primary" href="/admin/patients/{{.Data.ID}}/export.json" download>exporter en JSON</a> ou <a class="link link-primary" href="/admin/patients/{{.Data.ID}}/export.csv" download>en CSV</a>. Chaque export est enregistré dans le journal d'accès.</p>
+<form class="space-y-3 max-w-2xl" method="post" action="/admin/patients/{{.Data.ID}}/delete">
   {{csrf .CSRF}}
   <p>Droit à l'effacement : le nom, les coordonnées, la note et l'adresse sont effacés. Les rendez-vous passés sont conservés sans identité pour les statistiques. Cette action est irréversible ; les rendez-vous à venir doivent d'abord être annulés.</p>
-  <label class="dl-check"><input type="checkbox" name="confirm" value="1" required> Je confirme la suppression de cette fiche</label>
-  <button class="dl-btn dl-btn--danger" type="submit">Supprimer la fiche</button>
+  <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="confirm" value="1" required> Je confirme la suppression de cette fiche</label>
+  <button class="btn btn-error" type="submit">Supprimer la fiche</button>
 </form>
 {{end}}
 
-<h2>Fusionner un doublon</h2>
+<h2 class="text-xl font-semibold pt-2">Fusionner un doublon</h2>
 <p>Cette fiche sera fusionnée dans la fiche choisie : ses rendez-vous y seront rattachés, puis elle sera supprimée.</p>
-<form class="dl-search" method="get" action="/admin/patients/{{.Data.ID}}" role="search">
-  <div class="dl-field">
-    <label class="dl-label" for="merge-q">Rechercher la fiche à conserver</label>
-    <input class="dl-input" id="merge-q" type="search" name="mq" value="{{.Data.MergeQuery}}" autocomplete="off">
+<form class="flex flex-wrap items-end gap-2 max-w-2xl" method="get" action="/admin/patients/{{.Data.ID}}" role="search">
+  <div class="space-y-1 grow basis-64">
+    <label class="block text-sm font-medium" for="merge-q">Rechercher la fiche à conserver</label>
+    <input class="input w-full" id="merge-q" type="search" name="mq" value="{{.Data.MergeQuery}}" autocomplete="off">
   </div>
-  <button class="dl-btn dl-btn--outline" type="submit">Rechercher</button>
+  <button class="btn btn-outline" type="submit">Rechercher</button>
 </form>
 {{if .Data.Candidates}}
-<form method="post" action="/admin/patients/{{.Data.ID}}/merge">
+<form class="space-y-3 max-w-2xl" method="post" action="/admin/patients/{{.Data.ID}}/merge">
   {{csrf .CSRF}}
-  <fieldset class="dl-fieldset">
-    <legend>Fiche à conserver</legend>
+  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+    <legend class="fieldset-legend">Fiche à conserver</legend>
     {{range .Data.Candidates}}
-    <label class="dl-check"><input type="radio" name="into" value="{{.ID}}" required> {{.Name}} <small>{{.Phone}} {{.Email}}</small></label>
+    <label class="flex items-start gap-3 text-sm"><input class="radio radio-primary radio-sm mt-0.5" type="radio" name="into" value="{{.ID}}" required> {{.Name}} <span class="text-sm text-base-content/70">{{.Phone}} {{.Email}}</span></label>
     {{end}}
   </fieldset>
-  <button class="dl-btn dl-btn--secondary" type="submit">Fusionner dans la fiche choisie</button>
+  <button class="btn btn-secondary" type="submit">Fusionner dans la fiche choisie</button>
 </form>
-{{else if .Data.MergeQuery}}<p><small>Aucune autre fiche trouvée.</small></p>{{end}}
+{{else if .Data.MergeQuery}}<p class="text-sm text-base-content/70">Aucune autre fiche trouvée.</p>{{end}}
 {{end}}

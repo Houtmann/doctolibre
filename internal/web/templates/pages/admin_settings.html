@@ -1,104 +1,104 @@
 {{/* layout: admin */}}
 {{define "title"}}Paramètres du cabinet{{end}}
 {{define "content"}}
-<h1>Paramètres du cabinet</h1>
-<p><a href="/admin/settings/notifications">Réglages des notifications (confirmations, rappels, SMS)</a></p>
+<h1 class="text-2xl font-semibold">Paramètres du cabinet</h1>
+<p><a class="link link-primary" href="/admin/settings/notifications">Réglages des notifications (confirmations, rappels, SMS)</a></p>
 {{template "form_errors.html" .Data.Errors}}
-<form class="dl-form" method="post" action="/admin/settings">
+<form class="space-y-4 max-w-2xl" method="post" action="/admin/settings">
   {{csrf .CSRF}}
   {{with .Data.Form}}
-  <fieldset class="dl-fieldset">
-    <legend>Cabinet</legend>
-    <div class="dl-field">
-      <label class="dl-label" for="name">Nom du cabinet</label>
-      <input class="dl-input" id="name" name="name" value="{{.Name}}" maxlength="120" required>
+  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+    <legend class="fieldset-legend">Cabinet</legend>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="name">Nom du cabinet</label>
+      <input class="input w-full" id="name" name="name" value="{{.Name}}" maxlength="120" required>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="address">Adresse</label>
-      <textarea class="dl-textarea" id="address" name="address" rows="2" maxlength="300">{{.Address}}</textarea>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="address">Adresse</label>
+      <textarea class="textarea w-full" id="address" name="address" rows="2" maxlength="300">{{.Address}}</textarea>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="phone">Téléphone</label>
-      <input class="dl-input" id="phone" name="phone" type="tel" value="{{.Phone}}" maxlength="30" autocomplete="tel">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="phone">Téléphone</label>
+      <input class="input w-full" id="phone" name="phone" type="tel" value="{{.Phone}}" maxlength="30" autocomplete="tel">
     </div>
-    <label class="dl-check"><input type="checkbox" name="close_on_holidays" value="1"{{if .CloseOnHolidays}} checked{{end}} aria-describedby="holidays-help"> Fermer le cabinet les jours fériés français</label>
-    <label class="dl-check"><input type="checkbox" name="holidays_alsace_moselle" value="1"{{if .HolidaysAlsaceMoselle}} checked{{end}}> Alsace-Moselle (ajoute le Vendredi saint et le 26 décembre)</label>
-    <p class="dl-help" id="holidays-help">Aucun créneau n'est proposé ces jours-là. Les rendez-vous déjà pris ne sont pas modifiés, et une ouverture exceptionnelle rouvre la journée.</p>
+    <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="close_on_holidays" value="1"{{if .CloseOnHolidays}} checked{{end}} aria-describedby="holidays-help"> Fermer le cabinet les jours fériés français</label>
+    <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="holidays_alsace_moselle" value="1"{{if .HolidaysAlsaceMoselle}} checked{{end}}> Alsace-Moselle (ajoute le Vendredi saint et le 26 décembre)</label>
+    <p class="text-sm text-base-content/70" id="holidays-help">Aucun créneau n'est proposé ces jours-là. Les rendez-vous déjà pris ne sont pas modifiés, et une ouverture exceptionnelle rouvre la journée.</p>
   </fieldset>
-  <fieldset class="dl-fieldset">
-    <legend>Réservation en ligne</legend>
-    <div class="dl-field">
-      <label class="dl-label" for="booking_notice_hours">Délai minimal avant un rendez-vous (heures)</label>
-      <input class="dl-input" id="booking_notice_hours" name="booking_notice_hours" type="number" inputmode="numeric" min="0" max="720" value="{{.BookingNoticeHours}}" required>
+  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+    <legend class="fieldset-legend">Réservation en ligne</legend>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="booking_notice_hours">Délai minimal avant un rendez-vous (heures)</label>
+      <input class="input w-full" id="booking_notice_hours" name="booking_notice_hours" type="number" inputmode="numeric" min="0" max="720" value="{{.BookingNoticeHours}}" required>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="cancel_notice_hours">Délai minimal pour annuler (heures)</label>
-      <input class="dl-input" id="cancel_notice_hours" name="cancel_notice_hours" type="number" inputmode="numeric" min="0" max="720" value="{{.CancelNoticeHours}}" required>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="cancel_notice_hours">Délai minimal pour annuler (heures)</label>
+      <input class="input w-full" id="cancel_notice_hours" name="cancel_notice_hours" type="number" inputmode="numeric" min="0" max="720" value="{{.CancelNoticeHours}}" required>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="horizon_days">Réservation possible jusqu'à (jours à l'avance)</label>
-      <input class="dl-input" id="horizon_days" name="horizon_days" type="number" inputmode="numeric" min="1" max="730" value="{{.HorizonDays}}" required>
-    </div>
-  </fieldset>
-  <fieldset class="dl-fieldset">
-    <legend>Visites à domicile</legend>
-    <label class="dl-check"><input type="checkbox" name="home_visit_online" value="1"{{if .HomeVisitOnline}} checked{{end}}> Autoriser la réservation en ligne des visites à domicile</label>
-    <div class="dl-field">
-      <label class="dl-label" for="home_visit_zones">Zones desservies (codes postaux ou communes, un par ligne)</label>
-      <textarea class="dl-textarea" id="home_visit_zones" name="home_visit_zones" rows="4" maxlength="4000" aria-describedby="zones-help">{{.HomeVisitZones}}</textarea>
-      <p class="dl-help" id="zones-help">Une adresse est acceptée si elle contient l'un de ces codes postaux ou l'une de ces communes. Sans zone, les visites à domicile ne sont pas réservables en ligne. Les rendez-vous saisis par le cabinet ne sont pas limités à ces zones.</p>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="horizon_days">Réservation possible jusqu'à (jours à l'avance)</label>
+      <input class="input w-full" id="horizon_days" name="horizon_days" type="number" inputmode="numeric" min="1" max="730" value="{{.HorizonDays}}" required>
     </div>
   </fieldset>
-  <fieldset class="dl-fieldset">
-    <legend>Profil public du praticien</legend>
-    <div class="dl-field">
-      <label class="dl-label" for="first_name">Prénom</label>
-      <input class="dl-input" id="first_name" name="first_name" value="{{.FirstName}}" maxlength="80" required autocomplete="given-name">
+  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+    <legend class="fieldset-legend">Visites à domicile</legend>
+    <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="home_visit_online" value="1"{{if .HomeVisitOnline}} checked{{end}}> Autoriser la réservation en ligne des visites à domicile</label>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="home_visit_zones">Zones desservies (codes postaux ou communes, un par ligne)</label>
+      <textarea class="textarea w-full" id="home_visit_zones" name="home_visit_zones" rows="4" maxlength="4000" aria-describedby="zones-help">{{.HomeVisitZones}}</textarea>
+      <p class="text-sm text-base-content/70" id="zones-help">Une adresse est acceptée si elle contient l'un de ces codes postaux ou l'une de ces communes. Sans zone, les visites à domicile ne sont pas réservables en ligne. Les rendez-vous saisis par le cabinet ne sont pas limités à ces zones.</p>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="last_name">Nom</label>
-      <input class="dl-input" id="last_name" name="last_name" value="{{.LastName}}" maxlength="80" required autocomplete="family-name">
+  </fieldset>
+  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+    <legend class="fieldset-legend">Profil public du praticien</legend>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="first_name">Prénom</label>
+      <input class="input w-full" id="first_name" name="first_name" value="{{.FirstName}}" maxlength="80" required autocomplete="given-name">
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="title">Titre (ex. Masseur-kinésithérapeute)</label>
-      <input class="dl-input" id="title" name="title" value="{{.Title}}" maxlength="80">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="last_name">Nom</label>
+      <input class="input w-full" id="last_name" name="last_name" value="{{.LastName}}" maxlength="80" required autocomplete="family-name">
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="bio">Présentation</label>
-      <textarea class="dl-textarea" id="bio" name="bio" rows="4" maxlength="2000">{{.Bio}}</textarea>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="title">Titre (ex. Masseur-kinésithérapeute)</label>
+      <input class="input w-full" id="title" name="title" value="{{.Title}}" maxlength="80">
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="slug">Identifiant dans l'adresse de réservation</label>
-      <input class="dl-input" id="slug" name="slug" value="{{.Slug}}" maxlength="60" pattern="[a-z0-9]+(-[a-z0-9]+)*" required aria-describedby="slug-help">
-      <p class="dl-help" id="slug-help">Lettres minuscules, chiffres et tirets.</p>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="bio">Présentation</label>
+      <textarea class="textarea w-full" id="bio" name="bio" rows="4" maxlength="2000">{{.Bio}}</textarea>
+    </div>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="slug">Identifiant dans l'adresse de réservation</label>
+      <input class="input w-full" id="slug" name="slug" value="{{.Slug}}" maxlength="60" pattern="[a-z0-9]+(-[a-z0-9]+)*" required aria-describedby="slug-help">
+      <p class="text-sm text-base-content/70" id="slug-help">Lettres minuscules, chiffres et tirets.</p>
     </div>
   </fieldset>
   {{end}}
-  <button class="dl-btn" type="submit">Enregistrer</button>
+  <button class="btn btn-primary" type="submit">Enregistrer</button>
 </form>
 {{with .Data.Feed}}
-<section aria-labelledby="feed-title">
-  <h2 id="feed-title">Abonnement à l'agenda (ICS)</h2>
+<section class="space-y-4 max-w-2xl" aria-labelledby="feed-title">
+  <h2 class="text-xl font-semibold pt-2" id="feed-title">Abonnement à l'agenda (ICS)</h2>
   <p>Lecture seule dans Google Agenda, Apple Calendrier ou Thunderbird. Toute personne qui possède le lien voit vos rendez-vous : ne le partagez pas.</p>
   {{if .URL}}
   <p><strong>Votre lien, affiché une seule fois :</strong></p>
-  <div class="dl-field"><label class="dl-label" for="feed-url">Lien d'abonnement</label><input class="dl-input" id="feed-url" type="text" readonly value="{{.URL}}"></div>
+  <div class="space-y-1"><label class="block text-sm font-medium" for="feed-url">Lien d'abonnement</label><input class="input w-full" id="feed-url" type="text" readonly value="{{.URL}}"></div>
   {{end}}
-  <form class="dl-form" method="post" action="/admin/settings/feed">
+  <form class="space-y-4 max-w-2xl" method="post" action="/admin/settings/feed">
     {{csrf $.CSRF}}
-    <label class="dl-check" for="feed-full-names"><input id="feed-full-names" type="checkbox" name="full_names" value="1"{{if .FullNames}} checked{{end}}> Afficher le nom complet des patients</label>
-    <p class="dl-help">Par défaut, seuls les initiales et le motif sont publiés. Avec cette option, les noms transitent par le service d'agenda qui lit le flux (Google, Apple…).</p>
-    <button class="dl-btn" type="submit">{{if .Enabled}}Générer un nouveau lien (l'ancien cesse de fonctionner){{else}}Activer l'abonnement{{end}}</button>
+    <label class="flex items-start gap-3 text-sm" for="feed-full-names"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" id="feed-full-names" type="checkbox" name="full_names" value="1"{{if .FullNames}} checked{{end}}> Afficher le nom complet des patients</label>
+    <p class="text-sm text-base-content/70">Par défaut, seuls les initiales et le motif sont publiés. Avec cette option, les noms transitent par le service d'agenda qui lit le flux (Google, Apple…).</p>
+    <button class="btn btn-primary" type="submit">{{if .Enabled}}Générer un nouveau lien (l'ancien cesse de fonctionner){{else}}Activer l'abonnement{{end}}</button>
   </form>
   {{if .Enabled}}
-  <form class="dl-form" method="post" action="/admin/settings/feed/options">
+  <form class="space-y-4 max-w-2xl" method="post" action="/admin/settings/feed/options">
     {{csrf $.CSRF}}
-    <label class="dl-check" for="feed-full-names-2"><input id="feed-full-names-2" type="checkbox" name="full_names" value="1"{{if .FullNames}} checked{{end}}> Afficher le nom complet des patients</label>
-    <button class="dl-btn dl-btn--secondary" type="submit">Enregistrer l'option sans changer le lien</button>
+    <label class="flex items-start gap-3 text-sm" for="feed-full-names-2"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" id="feed-full-names-2" type="checkbox" name="full_names" value="1"{{if .FullNames}} checked{{end}}> Afficher le nom complet des patients</label>
+    <button class="btn btn-secondary" type="submit">Enregistrer l'option sans changer le lien</button>
   </form>
   <form method="post" action="/admin/settings/feed/revoke">
     {{csrf $.CSRF}}
-    <button class="dl-btn dl-btn--danger" type="submit">Révoquer l'abonnement</button>
+    <button class="btn btn-error" type="submit">Révoquer l'abonnement</button>
   </form>
   {{end}}
 </section>
