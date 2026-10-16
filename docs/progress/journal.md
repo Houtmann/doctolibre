@@ -14,6 +14,16 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T065, T066, T067 en parallèle (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T064 (review → done, validée par l'humain) ; T065, T066, T067 (todo → review) en trois worktrees, fusionnées sur main.
+- **Fait** : formulaires et tableaux admin en `.dl-field`/`.dl-table` avec erreurs par champ (patient, connexion) ; parcours patient en `.dl-steps`/`.dl-choices`/`.dl-slots`/`.dl-card` ; agenda en `.dl-cal`/`.dl-appt`, `.dl-segmented`, dialogue `.dl-dialog`.
+- **Fusion** : conflits attendus en fin de `components.css` (blocs concaténés, `.dl-field-row` dédoublonné) et dans `app.css` (suppressions des deux côtés).
+- **Vérification** : `make check` ✅ sur main après fusion ; navigateur : parcours public 375 px sombre, styleguide 1280 px clair. Pages admin authentifiées non revues (session de démo expirée).
+- **Incidents** : deux agents ont fait `pkill -f 'doctolibre serve'` (serveurs des autres tués) ; cache Go vidé avant lancement (15 → 23 Go libres).
+- **Reste / reprise** : relecture humaine des pages admin (agenda, dialogue, formulaires, tableaux) ; puis T068 (retrait de Pico).
+- **Décisions** : `decisions.md`, 2026-10-16 (T065–T067).
+
 ## 2026-10-16 — T064 habillage v2 (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T063 (review → done, validée par l'humain), T064 (todo → review).

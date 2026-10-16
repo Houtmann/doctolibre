@@ -66,9 +66,9 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T062 | [Design system léger : tokens, catalogue, styleguide](T062-design-system.md) | 5 | T004, T016 | review |
 | T063 | [Design v2 : socle embarqué et styleguide v2](T063-design-v2-foundation.md) | 5 | T062 | done |
 | T064 | [Design v2 : layouts, navigation, messages, boutons](T064-design-v2-shell.md) | 5 | T063 | done |
-| T065 | [Design v2 : formulaires et tableaux](T065-design-v2-forms.md) | 5 | T064 | in_progress |
-| T066 | [Design v2 : parcours patient](T066-design-v2-booking.md) | 5 | T064 | in_progress |
-| T067 | [Design v2 : agenda et dialogue de RDV](T067-design-v2-calendar.md) | 5 | T064 | in_progress |
+| T065 | [Design v2 : formulaires et tableaux](T065-design-v2-forms.md) | 5 | T064 | review |
+| T066 | [Design v2 : parcours patient](T066-design-v2-booking.md) | 5 | T064 | review |
+| T067 | [Design v2 : agenda et dialogue de RDV](T067-design-v2-calendar.md) | 5 | T064 | review |
 | T068 | [Design v2 : retrait de Pico et de l'ancien CSS](T068-design-v2-cleanup.md) | 5 | T065, T066, T067 | todo |
 
 ## Parallélisation possible
