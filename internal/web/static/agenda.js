@@ -18,6 +18,12 @@
   } catch (e) {
     resources = [];
   }
+  // Couleur #rrggbb seulement (le serveur la garantit déjà) : elle ne passe jamais ailleurs que dans une propriété CSS.
+  var COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+  var prColors = {};
+  resources.forEach(function (r) {
+    if (COLOR_RE.test(r.color || "")) prColors[r.id] = r.color;
+  });
   var VIEW_TO_EC = { week: "timeGridWeek", day: "timeGridDay", practitioners: "resourceTimeGridDay" };
   var EC_TO_VIEW = { timeGridWeek: "week", timeGridDay: "day", resourceTimeGridDay: "practitioners" };
 
@@ -188,6 +194,8 @@
       if (ev.display === "background") return;
       var p = ev.extendedProps || {};
       var el = info.el;
+      // CSSOM (setProperty) : autorisé par la CSP, contrairement à l'attribut style. input.css lit --ty-color.
+      if (COLOR_RE.test(p.type_color || "")) el.style.setProperty("--ty-color", p.type_color);
       el.setAttribute("tabindex", "0");
       el.setAttribute("role", "button");
       el.setAttribute("aria-label", [info.timeText, ev.title, p.type, p.status_label].filter(Boolean).join(", "));
@@ -197,6 +205,14 @@
           openDetail(ev.id);
         }
       });
+    },
+    resourceLabelDidMount: function (info) {
+      var c = info.resource && prColors[info.resource.id];
+      if (!c) return;
+      // info.el est le libellé ; la couleur va sur la cellule d'en-tête de colonne qui le contient.
+      var head = info.el.closest(".ec-col-head") || info.el;
+      head.classList.add("agenda-pr-head");
+      head.style.setProperty("--pr-color", c);
     },
     eventClick: function (info) {
       if (info.event.display !== "background") openDetail(info.event.id);

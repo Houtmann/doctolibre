@@ -39,6 +39,7 @@ type AgendaAppt struct {
 	Status                   string
 	StatusName               string
 	AtHome                   bool
+	TypeColor                string // #rrggbb garanti (défaut si la base contient autre chose)
 }
 
 // AgendaClosed est une plage d'indisponibilité d'un praticien (hors horaires,
@@ -150,6 +151,7 @@ func apptFromRow(r sqlcgen.ListCalendarAppointmentsRow, loc *time.Location) Agen
 		BlockedStart: r.BlockedStart.In(loc), BlockedEnd: r.BlockedEnd.In(loc),
 		Patient: r.LastName + " " + r.FirstName, TypeName: r.TypeName,
 		Status: r.Status, StatusName: statusLabels[r.Status], AtHome: r.TypeAtHome,
+		TypeColor: domain.ColorOrDefault(r.TypeColor),
 	}
 }
 
@@ -196,7 +198,7 @@ func (c *Calendar) AgendaDay(ctx context.Context, a Actor, date string, sel Sele
 	names := map[uuid.UUID]string{}
 	ids := make([]uuid.UUID, 0, len(prs))
 	for _, p := range prs {
-		ag.Practitioners = append(ag.Practitioners, CalPractitioner{ID: p.ID, Name: PractitionerName(p)})
+		ag.Practitioners = append(ag.Practitioners, CalPractitioner{ID: p.ID, Name: PractitionerName(p), Color: domain.ColorOrDefault(p.Color)})
 		names[p.ID] = PractitionerName(p)
 		ids = append(ids, p.ID)
 	}

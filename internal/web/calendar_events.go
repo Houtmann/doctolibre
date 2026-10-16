@@ -86,7 +86,7 @@ func (h *calendarHandlers) events(w http.ResponseWriter, r *http.Request) {
 			Start: a.Start.Format(time.RFC3339), End: a.End.Format(time.RFC3339),
 			Title: a.Patient, ClassNames: []string{apptClass(a.Status)},
 			ExtendedProps: map[string]any{
-				"status": a.Status, "status_label": a.StatusName, "type": a.TypeName, "home": a.AtHome,
+				"status": a.Status, "status_label": a.StatusName, "type": a.TypeName, "type_color": a.TypeColor, "home": a.AtHome,
 				"blocked_start": a.BlockedStart.Format(time.RFC3339), "blocked_end": a.BlockedEnd.Format(time.RFC3339),
 			},
 		})

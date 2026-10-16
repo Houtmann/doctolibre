@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T057 couleurs dans l'agenda (sonnet ; contrôle : opus)
+
+- **Tâches** : T057 (todo → review), spécification réécrite par l'orchestrateur pour EventCalendar (plus de route `/admin/colors.css`)
+- **Fait** : `domain.ValidColor` / `ColorOrDefault` (validation unique, défaut `#2563eb`) ; `type_color` dans le JSON de l'agenda et `color` dans les ressources de la page ; `agenda.js` pose `--ty-color` (liseré du RDV) et `--pr-color` (liseré bas de l'en-tête de colonne) par CSSOM ; le statut reste porté par le fond, le texte, le libellé et le barré.
+- **Vérification** : `make check` ✅ (relancé par l'orchestrateur) ; couleurs corrompues en base remplacées par le défaut (test) ; navigateur : vue par praticien 1280 px clair et sombre, en-têtes et liserés colorés, aucune violation CSP.
+- **Reste** : pas de champ couleur pour le praticien (en-têtes tous au défaut tant qu'aucune UI ne la règle) ; non vu : 360 px, changement de couleur d'un motif via l'écran.
+- **Décisions** : couleurs par JSON + CSSOM (voir decisions.md).
+
 ## 2026-10-16 — T084 pages restantes, retrait de Pico et de l'ancien CSS (sonnet ; contrôle : opus)
 
 - **Tâches** : T084 (todo → review)

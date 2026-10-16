@@ -137,7 +137,7 @@ SELECT a.id, a.practitioner_id, a.status, a.source, a.patient_id,
        lower(a.during_blocked)::timestamptz AS blocked_start,
        upper(a.during_blocked)::timestamptz AS blocked_end,
        p.first_name, p.last_name,
-       t.name AS type_name, t.at_home AS type_at_home
+       t.name AS type_name, t.at_home AS type_at_home, t.color AS type_color
 FROM appointment a
 JOIN patient p ON p.id = a.patient_id
 JOIN appointment_type t ON t.id = a.appointment_type_id
@@ -169,6 +169,7 @@ type ListCalendarAppointmentsRow struct {
 	LastName       string
 	TypeName       string
 	TypeAtHome     bool
+	TypeColor      string
 }
 
 // Agenda de plusieurs praticiens d'un cabinet : RDV non annulés dont la zone
@@ -202,6 +203,7 @@ func (q *Queries) ListCalendarAppointments(ctx context.Context, arg ListCalendar
 			&i.LastName,
 			&i.TypeName,
 			&i.TypeAtHome,
+			&i.TypeColor,
 		); err != nil {
 			return nil, err
 		}

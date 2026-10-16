@@ -58,7 +58,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T054 | [Garde-fou absences répétées](T054-no-show-guard.md) | 5 | T014, T017 | todo |
 | T055 | [Lien de série pour le patient](T055-care-plan-patient-link.md) | 5 | T050 | todo |
 | T056 | [Réglages : profil vs cabinet, séries au secrétariat](T056-settings-split-and-secretary-plans.md) | 5 | T033, T030 | todo |
-| T057 | [Couleurs dans l'agenda compatibles CSP](T057-calendar-colors.md) | 5 | T016 | todo |
+| T057 | [Couleurs dans l'agenda compatibles CSP](T057-calendar-colors.md) | 5 | T016, T083 | review |
 | T058 | [Alarmes dans les fichiers ICS patient](T058-ics-valarm.md) | 5 | T042 | review |
 | T059 | [Remplaçant : accès borné dans le temps](T059-locum-delegation.md) | 5 | T033 | todo |
 | T060 | [Ressources partagées (box, appareils)](T060-shared-resources.md) | 5 | T013, T014, T016 | todo |

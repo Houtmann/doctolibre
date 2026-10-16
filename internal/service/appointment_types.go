@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/google/uuid"
@@ -15,9 +14,7 @@ import (
 	"doctolibre/internal/store/sqlcgen"
 )
 
-const defaultTypeColor = "#2563eb"
-
-var colorRe = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+const defaultTypeColor = domain.DefaultColor
 
 // AppointmentTypeInput est la saisie du formulaire d'un motif (durées en minutes, en texte).
 type AppointmentTypeInput struct {
@@ -123,7 +120,7 @@ func validateType(in AppointmentTypeInput) (typeValues, error) {
 	}
 	if v.color == "" {
 		v.color = defaultTypeColor
-	} else if !colorRe.MatchString(v.color) {
+	} else if !domain.ValidColor(v.color) {
 		add("color", "La couleur doit être au format #rrggbb.")
 	}
 	if len(errs) > 0 {

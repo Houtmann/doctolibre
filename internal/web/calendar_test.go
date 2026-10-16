@@ -449,6 +449,45 @@ func TestCalendarEventsJSON(t *testing.T) {
 	}
 }
 
+// type_color est toujours un #rrggbb : une valeur corrompue en base est remplacée par le défaut,
+// et la couleur du praticien (ressources de la page) suit la même règle.
+func TestCalendarEventsTypeColor(t *testing.T) {
+	t.Parallel()
+	e := newCalendarEnv(t, domain.RoleAdmin)
+	if rec := e.c.do("POST", "/admin/appointments", e.form("2026-10-20", "09:00")); rec.Code != 303 {
+		t.Fatalf("création: %d", rec.Code)
+	}
+	colorOf := func() string {
+		for _, ev := range e.events(t, "start=2026-10-19&end=2026-10-26") {
+			if ev.Display == "" {
+				c, _ := ev.ExtendedProps["type_color"].(string)
+				return c
+			}
+		}
+		t.Fatal("aucun RDV")
+		return ""
+	}
+	if got := colorOf(); got != "#2563eb" {
+		t.Errorf("type_color = %q", got)
+	}
+	for _, c := range []string{"#ABCDEF", "red", "", "#12345", "url(javascript:x)", "#123456;}"} {
+		if _, err := e.db.Exec(context.Background(), `UPDATE appointment_type SET color = $1 WHERE id = $2`, c, e.typeID); err != nil {
+			t.Fatal(err)
+		}
+		want := domain.ColorOrDefault(c)
+		if got := colorOf(); got != want || !domain.ValidColor(got) {
+			t.Errorf("couleur en base %q : type_color = %q, attendu %q", c, got, want)
+		}
+	}
+	if _, err := e.db.Exec(context.Background(), `UPDATE practitioner SET color = 'zzz'`); err != nil {
+		t.Fatal(err)
+	}
+	body := e.c.do("GET", "/admin/calendar?view=week&date=2026-10-19", nil).Body.String()
+	if !strings.Contains(body, "&#34;color&#34;:&#34;#2563eb&#34;") {
+		t.Errorf("couleur de ressource non normalisée dans la page")
+	}
+}
+
 func TestCalendarEventsValidationAndAccess(t *testing.T) {
 	t.Parallel()
 	e := newCalendarEnv(t, domain.RoleAdmin)

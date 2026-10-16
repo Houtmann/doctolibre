@@ -102,7 +102,7 @@ type CalendarPage struct {
 	A    service.Agenda
 	// View : « week », « day » ou « practitioners » (vue par praticien) ; vide = le défaut du navigateur.
 	View string
-	// ResourcesJSON : praticiens affichés, [{"id","title"}], pour EventCalendar.
+	// ResourcesJSON : praticiens affichés, [{"id","title","color"}] (color = #rrggbb), pour EventCalendar.
 	ResourcesJSON string
 	PrevURL       string
 	NextURL       string
@@ -201,7 +201,7 @@ func (h *calendarHandlers) calendar(w http.ResponseWriter, r *http.Request) {
 	}
 	res := make([]calendarResource, len(ag.Practitioners))
 	for i, p := range ag.Practitioners {
-		res[i] = calendarResource{ID: p.ID.String(), Title: p.Name}
+		res[i] = calendarResource{ID: p.ID.String(), Title: p.Name, Color: p.Color}
 	}
 	resJSON, err := json.Marshal(res)
 	if err != nil {
@@ -229,6 +229,7 @@ func (h *calendarHandlers) calendar(w http.ResponseWriter, r *http.Request) {
 type calendarResource struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
+	Color string `json:"color"`
 }
 
 // picker construit le sélecteur de praticiens ; nil si un seul est accessible.

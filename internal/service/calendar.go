@@ -77,8 +77,9 @@ type CalAppt struct {
 
 // CalPractitioner est un praticien affiché dans l'agenda.
 type CalPractitioner struct {
-	ID   uuid.UUID
-	Name string
+	ID    uuid.UUID
+	Name  string
+	Color string // #rrggbb garanti
 }
 
 // PractitionerName retourne « Prénom Nom » (ou le nom seul).
