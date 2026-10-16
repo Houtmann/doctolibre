@@ -20,10 +20,10 @@ Terminer ce que T045 n'a pas pu faire faute de code dans `main` : brancher les m
 - Documenter `DOCTOLIBRE_METRICS_TOKEN` dans `.env.example`.
 
 ## Critères d'acceptation
-- [ ] `/metrics` expose les métriques outbox et pool sur une instance avec DB.
-- [ ] `/admin/status` : 403 pour un non-admin, page complète pour un admin.
-- [ ] Une alerte n'est émise qu'une fois par fenêtre (test).
-- [ ] Aucune PII dans les logs d'une réservation complète (test).
+- [x] `/metrics` expose les métriques outbox et pool sur une instance avec DB.
+- [x] `/admin/status` : 403 pour un non-admin, page complète pour un admin.
+- [x] Une alerte n'est émise qu'une fois par fenêtre (test).
+- [x] Aucune PII dans les logs d'une réservation complète (test).
 
 ## Vérification
 ```bash
@@ -37,8 +37,8 @@ Tableaux de bord Grafana, traces, alerting externe.
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** : —
-- **Écarts avec la spécification** : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** : `registerDBMetrics` (serve.go) : `RegisterOutbox` + `RegisterPool` ; `OnCreated(source)` sur `service.Booking` ("online") et `service.Calendar` ("staff"), appelé après commit, branché sur `AppointmentsCreated` quand les métriques sont actives. `service.Status` + page `/admin/status` (rôle admin : version, uptime, version de migration, taille DB, messages failed, dernière sauvegarde). `service.Alerts` (tâche périodique 10 min lancée par `startWorker`) : emails `admin_alert` aux admins, dédoublonnés par `dedup_key` (heure UTC pour les échecs de la dernière heure, jour UTC pour la sauvegarde > 48 h). Migration 00017 (index partiel `outbox_message_failed_idx`). `DOCTOLIBRE_BACKUP_DIR` (config, compose, `.env.example`) ; `DOCTOLIBRE_METRICS_TOKEN` était déjà documenté. Tests : `internal/web/observability_test.go` (parcours de réservation complet sans PII + compteur, page status 303/403/200), `internal/service/alerts_test.go`, `cmd/doctolibre/metrics_wiring_test.go`.
+- **Reste à faire** : rien dans le périmètre.
+- **Notes de reprise** : dernière sauvegarde = fichier `.last_success` écrit par `deploy/backup/backup.sh` ; le volume `backups` est monté en lecture seule (`/backups:ro`) dans le service `app` et `DOCTOLIBRE_BACKUP_DIR=/backups` l'active (vide = pas de suivi ni d'alerte). Un cabinet sans marqueur n'est alerté qu'après 48 h d'existence. `schema_test.go` : borne de la boucle de descente de migrations portée de 10 à 40 (elle cassait avec la 00017).
+- **Écarts avec la spécification** : alerte « failed » = échecs dont `updated_at` est dans la dernière heure (hors messages `admin_alert`). `CarePlans` (séries) ne compte pas encore dans `AppointmentsCreated`. Pas de lien vers `/admin/status` dans le tableau de bord (page partagée par tous les rôles). EXPLAIN non exécuté (base de test vide) ; les comptages s'appuient sur l'index partiel `outbox_message_failed_idx`.

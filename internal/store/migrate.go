@@ -66,3 +66,16 @@ func MigrateStatus(ctx context.Context, pool *pgxpool.Pool, w io.Writer) error {
 	}
 	return nil
 }
+
+// MigrationVersion retourne la version de la dernière migration appliquée.
+func MigrationVersion(ctx context.Context, pool *pgxpool.Pool) (int64, error) {
+	p, err := newProvider(pool)
+	if err != nil {
+		return 0, err
+	}
+	v, err := p.GetDBVersion(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("migration version: %w", err)
+	}
+	return v, nil
+}

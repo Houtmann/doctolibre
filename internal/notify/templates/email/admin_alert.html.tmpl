@@ -1,0 +1,7 @@
+{{define "title"}}{{.title}}{{end}}
+{{define "content"}}
+<h1 style="margin:0 0 16px;font-size:20px;">{{.title}}</h1>
+<p style="margin:0 0 16px;">{{.message}}</p>
+{{if .status_url}}<p style="margin:0 0 16px;"><a href="{{.status_url}}">Voir l'état de l'instance</a></p>{{end}}
+<p style="margin:0;font-size:14px;">Vous recevez ce message parce que vous êtes administrateur du cabinet.</p>
+{{end}}

@@ -51,15 +51,19 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		deps.Patients = &service.Patients{Pool: pool, Clock: domain.SystemClock{}}
 		deps.CarePlans = &service.CarePlans{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL}
 		deps.Booking = &service.Booking{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL}
+		deps.Status = &service.Status{Pool: pool, Clock: domain.SystemClock{}, Version: version, StartedAt: domain.SystemClock{}.Now(), BackupDir: cfg.BackupDir}
 	} else {
 		logger.Warn("DOCTOLIBRE_DATABASE_URL vide : l'espace /admin est désactivé")
 	}
 	if cfg.MetricsToken != "" {
 		deps.Metrics = metrics.New()
 		if pool != nil {
-			if err := deps.Metrics.RegisterOutbox(outbox.Queue{Pool: pool, Clock: domain.SystemClock{}}); err != nil {
-				return fmt.Errorf("métriques outbox: %w", err)
+			if err := registerDBMetrics(deps.Metrics, pool); err != nil {
+				return err
 			}
+			created := func(source string) { deps.Metrics.AppointmentsCreated.WithLabelValues(source).Inc() }
+			deps.Booking.OnCreated = created
+			deps.Calendar.OnCreated = created
 		}
 	}
 	dispatcher, err := buildDispatcher(cfg, logger)
@@ -76,6 +80,21 @@ func serve(ctx context.Context, logOut io.Writer) error {
 	waitWorker()
 	logger.Info("arrêt complet")
 	return err
+}
+
+// registerDBMetrics branche les métriques de l'outbox et du pool de connexions.
+func registerDBMetrics(m *metrics.Metrics, pool *pgxpool.Pool) error {
+	if err := m.RegisterOutbox(outbox.Queue{Pool: pool, Clock: domain.SystemClock{}}); err != nil {
+		return fmt.Errorf("métriques outbox: %w", err)
+	}
+	err := m.RegisterPool(func() metrics.PoolStats {
+		s := pool.Stat()
+		return metrics.PoolStats{Acquired: s.AcquiredConns(), Idle: s.IdleConns(), Total: s.TotalConns(), Max: s.MaxConns()}
+	})
+	if err != nil {
+		return fmt.Errorf("métriques pool: %w", err)
+	}
+	return nil
 }
 
 // newLogger : JSON en prod, texte lisible en dev.

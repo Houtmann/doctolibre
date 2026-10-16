@@ -24,6 +24,7 @@ services:
       DOCTOLIBRE_TIMEZONE: ${DOCTOLIBRE_TIMEZONE:-Europe/Paris}
       DOCTOLIBRE_AUTO_MIGRATE: ${DOCTOLIBRE_AUTO_MIGRATE:-true}
       DOCTOLIBRE_METRICS_TOKEN: ${DOCTOLIBRE_METRICS_TOKEN:-}
+      DOCTOLIBRE_BACKUP_DIR: ${DOCTOLIBRE_BACKUP_DIR:-}
       DOCTOLIBRE_WORKER: ${DOCTOLIBRE_WORKER:-on}
       DOCTOLIBRE_EMAIL_DRIVER: ${DOCTOLIBRE_EMAIL_DRIVER:-smtp}
       DOCTOLIBRE_SMTP_HOST: ${DOCTOLIBRE_SMTP_HOST:-}
@@ -52,6 +53,9 @@ services:
       DOCTOLIBRE_SMS_HTTP_BEARER: ${DOCTOLIBRE_SMS_HTTP_BEARER:-}
       # Caddy est le seul pair fiable : son X-Forwarded-For donne l'IP du client.
       DOCTOLIBRE_TRUSTED_PROXIES: 172.30.0.0/24
+    volumes:
+      # Marqueur de dernière sauvegarde réussie, en lecture seule (voir DOCTOLIBRE_BACKUP_DIR).
+      - backups:/backups:ro
     expose:
       - "8080"
     healthcheck:
