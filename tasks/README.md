@@ -7,7 +7,7 @@ Chaque fichier `Txxx-*.md` est une tâche **autonome, exécutable par un LLM en 
 
 **Mode normal : orchestré.** Dans une session Opus, lancer `/run-task` (ou `/run-task Txxx`) : Opus choisit et contrôle, le sous-agent Sonnet `task-implementer` implémente. Rôles détaillés dans [`AGENTS.md`](../AGENTS.md).
 
-Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043.
+Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043, T050, T051, T052, T053, T055, T059, T060.
 
 Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS.md) (début / pendant / fin). En résumé :
 
@@ -31,32 +31,45 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T011 | [Auth praticien](T011-auth-staff.md) | 1 | T004, T005, T010 | done |
 | T012 | [Paramétrage cabinet, motifs, disponibilités](T012-availability-admin.md) | 1 | T011 | done |
 | T013 | [Moteur de calcul de créneaux](T013-slot-engine.md) | 1 | T001 | done |
-| T014 | [Réservation en ligne patient](T014-public-booking.md) | 1 | T012, T013 | review |
-| T015 | [Gestion du RDV par le patient](T015-patient-manage-link.md) | 1 | T014 | review |
-| T016 | [Agenda praticien](T016-staff-calendar.md) | 1 | T012, T013 | review |
-| T017 | [Fiches patients](T017-patients.md) | 1 | T016 | review |
+| T014 | [Réservation en ligne patient](T014-public-booking.md) | 1 | T012, T013 | done |
+| T015 | [Gestion du RDV par le patient](T015-patient-manage-link.md) | 1 | T014 | done |
+| T016 | [Agenda praticien](T016-staff-calendar.md) | 1 | T012, T013 | done |
+| T017 | [Fiches patients](T017-patients.md) | 1 | T016 | done |
 | T020 | [Outbox et worker](T020-outbox-worker.md) | 2 | T010, T005 | done |
 | T021 | [Email SMTP générique](T021-email-smtp.md) | 2 | T020 | done |
 | T022 | [SMS : interface et fournisseurs](T022-sms-providers.md) | 2 | T020 | done |
-| T023 | [Confirmations et rappels](T023-reminders.md) | 2 | T021, T022, T015 | review |
+| T023 | [Confirmations et rappels](T023-reminders.md) | 2 | T021, T022, T015 | done |
 | T024 | [Outbox : câblage du worker et page admin](T024-outbox-wiring.md) | 2 | T020, T011 | done |
-| T030 | [Séries de séances kiné](T030-care-plans.md) | 3 | T016, T017 | review |
-| T031 | [Liste d'attente](T031-waitlist.md) | 3 | T023 | review |
-| T032 | [Visites à domicile](T032-home-visits.md) | 3 | T014 | review |
-| T033 | [Multi-praticiens et rôles](T033-multi-practitioner.md) | 3 | T016, T021 | review |
+| T030 | [Séries de séances kiné](T030-care-plans.md) | 3 | T016, T017 | done |
+| T031 | [Liste d'attente](T031-waitlist.md) | 3 | T023 | done |
+| T032 | [Visites à domicile](T032-home-visits.md) | 3 | T014 | done |
+| T033 | [Multi-praticiens et rôles](T033-multi-practitioner.md) | 3 | T016, T021 | done |
 | T040 | [Packaging Docker + Caddy](T040-packaging.md) | 4 | T004, T010 | done |
-| T041 | [Sauvegardes et restauration](T041-backups.md) | 4 | T040 | review |
-| T042 | [Flux ICS](T042-ics-feed.md) | 4 | T016 | review |
-| T043 | [RGPD : export, purge, audit](T043-gdpr.md) | 4 | T017 | review |
-| T044 | [Documentation d'installation](T044-install-docs.md) | 4 | T040, T041 | review |
+| T041 | [Sauvegardes et restauration](T041-backups.md) | 4 | T040 | done |
+| T042 | [Flux ICS](T042-ics-feed.md) | 4 | T016 | done |
+| T043 | [RGPD : export, purge, audit](T043-gdpr.md) | 4 | T017 | done |
+| T044 | [Documentation d'installation](T044-install-docs.md) | 4 | T040, T041 | done |
 | T045 | [Observabilité légère](T045-observability.md) | 4 | T003 | done |
-| T046 | [Observabilité : branchements et /admin/status](T046-observability-wiring.md) | 4 | T045, T014, T020, T041 | review |
+| T046 | [Observabilité : branchements et /admin/status](T046-observability-wiring.md) | 4 | T045, T014, T020, T041 | done |
+| T050 | [Jeton de gestion dérivé (HMAC)](T050-derived-manage-token.md) | 5 | T023, T030 | todo |
+| T051 | [Absence imprévue : annulation groupée](T051-sick-day-bulk-cancel.md) | 5 | T050 | todo |
+| T052 | [Jours fériés français automatiques](T052-public-holidays.md) | 5 | T013 | todo |
+| T053 | [Import CSV des patients](T053-patient-csv-import.md) | 5 | T017 | todo |
+| T054 | [Garde-fou absences répétées](T054-no-show-guard.md) | 5 | T014, T017 | todo |
+| T055 | [Lien de série pour le patient](T055-care-plan-patient-link.md) | 5 | T050 | todo |
+| T056 | [Réglages : profil vs cabinet, séries au secrétariat](T056-settings-split-and-secretary-plans.md) | 5 | T033, T030 | todo |
+| T057 | [Couleurs dans l'agenda compatibles CSP](T057-calendar-colors.md) | 5 | T016 | todo |
+| T058 | [Alarmes dans les fichiers ICS patient](T058-ics-valarm.md) | 5 | T042 | todo |
+| T059 | [Remplaçant : accès borné dans le temps](T059-locum-delegation.md) | 5 | T033 | todo |
+| T060 | [Ressources partagées (box, appareils)](T060-shared-resources.md) | 5 | T013, T014, T016 | todo |
+| T061 | [Affiche imprimable avec QR code](T061-qr-poster.md) | 5 | T014 | blocked |
 
 ## Parallélisation possible
 
 - Après T001 : **T002**, **T003**, **T013** en parallèle (fichiers disjoints).
 - Après T020 : **T021** et **T022** en parallèle.
 - Phase 3 et 4 : la plupart des tâches sont indépendantes entre elles.
+- Phase 5 : T050 d'abord (débloque T051, T055) ; T052, T053, T054, T056, T057, T058 indépendantes.
 
 ```
 T001 ─┬─ T002 ─┬─ T005 ─┐
