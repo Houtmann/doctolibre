@@ -40,11 +40,15 @@ type Calendar struct {
 	Events EventSink // nil = NopSink ; appelé après commit
 	// BaseURL : adresse publique pour les liens de gestion des messages (vide = sans lien).
 	BaseURL string
+	// ManageKey dérive les jetons des liens de gestion des RDV (obligatoire).
+	ManageKey ManageKey
 	// OnCreated est appelé (source "staff") après le commit d'un rendez-vous créé ; nil = rien.
 	OnCreated func(source string)
 }
 
-func (c *Calendar) notifier() notifier { return notifier{clock: c.Clock, baseURL: c.BaseURL} }
+func (c *Calendar) notifier() notifier {
+	return notifier{clock: c.Clock, baseURL: c.BaseURL, key: c.ManageKey}
+}
 
 func (c *Calendar) practice() *Practice { return &Practice{Pool: c.Pool, Clock: c.Clock} }
 
@@ -588,7 +592,7 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 	}
 
 	// Jeton du lien de gestion du patient (T015) : seul son haché est stocké.
-	token, err := newManageToken()
+	apptID, token, tokenHash, err := c.ManageKey.mint()
 	if err != nil {
 		return sqlcgen.Appointment{}, err
 	}
@@ -637,9 +641,9 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 		}
 		bb, ba := domain.HomeBuffers(t.AtHome, intervalDuration(t.BufferBefore), intervalDuration(t.BufferAfter), intervalDuration(t.TravelBuffer))
 		out, err = store.CreateAppointment(ctx, q, store.NewAppointment{
-			PracticeID: a.PracticeID, PractitionerID: pr.ID, PatientID: patientID, AppointmentTypeID: typeID,
+			ID: apptID, PracticeID: a.PracticeID, PractitionerID: pr.ID, PatientID: patientID, AppointmentTypeID: typeID,
 			Start: start, End: end, BufferBefore: bb, BufferAfter: ba, Address: address,
-			Source: "staff", ManageTokenHash: ManageTokenHash(token),
+			Source: "staff", ManageTokenHash: tokenHash,
 		})
 		if err != nil {
 			return err

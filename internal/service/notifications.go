@@ -51,6 +51,7 @@ const minLeadBeforeStart = 30 * time.Minute
 type notifier struct {
 	clock   domain.Clock
 	baseURL string
+	key     ManageKey
 }
 
 // recipient regroupe les coordonnées d'un patient utilisables pour écrire.
@@ -239,8 +240,8 @@ func (n notifier) booked(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, app
 
 // seriesBooked enfile UNE confirmation pour toute une série de séances créée d'un
 // coup (pas N messages). Un seul rendez-vous : confirmation ordinaire. Le message
-// est rattaché à la première séance. Pas de lien de gestion (jetons non générés
-// pour les séances d'une série).
+// est rattaché à la première séance. Pas de lien de gestion dans ce message (lien
+// de série : T055) ; chaque séance a pourtant son jeton, repris dans ses rappels.
 func (n notifier) seriesBooked(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, appts []sqlcgen.Appointment) error {
 	switch len(appts) {
 	case 0:
@@ -276,7 +277,7 @@ func (n notifier) cancelled(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, 
 		if err != nil {
 			return err
 		}
-		if _, err := n.enqueue(ctx, tx, v, v.practice.NotifyChangeChannel, TemplateCancellation, n.data(v, ""), time.Time{}, TemplateCancellation, ""); err != nil {
+		if _, err := n.enqueue(ctx, tx, v, v.practice.NotifyChangeChannel, TemplateCancellation, n.data(v, n.key.forAppointment(appt)), time.Time{}, TemplateCancellation, ""); err != nil {
 			return err
 		}
 	}

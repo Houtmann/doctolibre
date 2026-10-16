@@ -14,6 +14,7 @@ import (
 	"doctolibre/internal/notify"
 	"doctolibre/internal/notify/sms"
 	"doctolibre/internal/service"
+	"doctolibre/internal/testutil"
 )
 
 const baseURL = "https://rdv.example.fr"
@@ -91,7 +92,7 @@ func bookOnline(t *testing.T, e *bookingEnv, start time.Time) service.BookResult
 }
 
 func (e *bookingEnv) reminders() *service.Reminders {
-	return &service.Reminders{Pool: e.db, Clock: e.clock}
+	return &service.Reminders{Pool: e.db, Clock: e.clock, BaseURL: baseURL, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 }
 
 func TestBookEnqueuesConfirmationInTransaction(t *testing.T) {
@@ -193,8 +194,8 @@ func TestReminderDayBefore(t *testing.T) {
 	if want := "reminder-24h:" + apptID.String() + ":sms:" + itoa(tuesday9.Unix()); r.DedupKey != want {
 		t.Errorf("dedup_key = %q, attendu %q", r.DedupKey, want)
 	}
-	if strings.Contains(r.Payload, "/r/") {
-		t.Errorf("le rappel ne doit pas contenir de lien (jeton non stocké en clair) : %s", r.Payload)
+	if !strings.Contains(r.body(t), baseURL+"/r/"+res.Token) {
+		t.Errorf("le rappel doit contenir le lien de gestion recalculé : %q", r.body(t))
 	}
 	if b := r.body(t); !strings.Contains(b, "20/10") || !strings.Contains(b, "9h00") {
 		t.Errorf("corps = %q", b)

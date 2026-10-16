@@ -1,17 +1,23 @@
 -- name: CreateAppointment :one
 -- during_blocked est calculé en Go (domain.BlockedRange) et passé en bornes.
 INSERT INTO appointment (
-    practice_id, practitioner_id, patient_id, appointment_type_id,
+    id, practice_id, practitioner_id, patient_id, appointment_type_id,
     during, buffer_before, buffer_after, during_blocked,
     status, source, manage_token_hash, address, verified_channel
 ) VALUES (
-    @practice_id, @practitioner_id, @patient_id, @appointment_type_id,
+    @id, @practice_id, @practitioner_id, @patient_id, @appointment_type_id,
     tstzrange(@starts_at::timestamptz, @ends_at::timestamptz, '[)'),
     @buffer_before, @buffer_after,
     tstzrange(@blocked_start::timestamptz, @blocked_end::timestamptz, '[)'),
     @status, @source, @manage_token_hash, @address, @verified_channel
 )
 RETURNING *;
+
+-- name: SetManageToken :exec
+-- Révocation du lien de gestion (T050) : nouvelle version et nouveau haché. updated_at
+-- n'est pas touché (il pilote l'éligibilité des rappels).
+UPDATE appointment SET manage_token_version = @version, manage_token_hash = @manage_token_hash
+WHERE id = @id AND practice_id = @practice_id;
 
 -- name: GetAppointment :one
 SELECT * FROM appointment WHERE id = @id AND practice_id = @practice_id;

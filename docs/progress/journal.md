@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — Phase 5 ouverte, T050 (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T014–T046 en review → done (validées par l'humain) ; 12 tâches T050–T061 créées (phase 5 « Retours terrain ») ; T050 → review.
+- **Fait** : liste de propositions produit challengée contre le code (écartés : tournées par secteur, Web Push/Wallet, re-confirmation J-2 avec libération auto, PDF, capacité N). T050 : jeton de gestion dérivé HMAC (`manage_token_version`, migration 00018), lien dans les rappels J-1 et les annulations par le cabinet, séances de série gérables par lien, bouton « Reprendre rendez-vous » sur un RDV annulé, `DOCTOLIBRE_SECRET_KEY` obligatoire partout.
+- **Revue** : spec T050 corrigée avant délégation (l'annulation ne révoque pas le lien, sinon la page « reprendre RDV » serait inaccessible ; UUID tiré en Go avant l'INSERT). Diff relu en entier.
+- **Vérification** : `make check` ✅, tests DB lancés sans cache.
+- **Reste / reprise** : un `.env` de dev existant doit recevoir `DOCTOLIBRE_SECRET_KEY`. Le déplacement par le cabinet (`Calendar.Move`) envoie encore un message sans lien. Prochaines : T051, T055 (débloquées après validation de T050), ou T052–T058 en parallèle.
+- **Décisions** : jeton dérivé HMAC et rotation de clé (`decisions.md`, 2026-10-16).
+
 ## 2026-10-16 — T031, T033, T043, T044, T046 (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T031, T033, T043, T044, T046 → review — toutes les tâches du plan sont implémentées.

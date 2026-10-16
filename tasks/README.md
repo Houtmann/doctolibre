@@ -51,7 +51,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T044 | [Documentation d'installation](T044-install-docs.md) | 4 | T040, T041 | done |
 | T045 | [Observabilité légère](T045-observability.md) | 4 | T003 | done |
 | T046 | [Observabilité : branchements et /admin/status](T046-observability-wiring.md) | 4 | T045, T014, T020, T041 | done |
-| T050 | [Jeton de gestion dérivé (HMAC)](T050-derived-manage-token.md) | 5 | T023, T030 | todo |
+| T050 | [Jeton de gestion dérivé (HMAC)](T050-derived-manage-token.md) | 5 | T023, T030 | review |
 | T051 | [Absence imprévue : annulation groupée](T051-sick-day-bulk-cancel.md) | 5 | T050 | todo |
 | T052 | [Jours fériés français automatiques](T052-public-holidays.md) | 5 | T013 | todo |
 | T053 | [Import CSV des patients](T053-patient-csv-import.md) | 5 | T017 | todo |

@@ -15,6 +15,9 @@ import (
 // NewAppointment décrit un RDV à créer. Les buffers sont ceux du motif au
 // moment de la création (copiés, pas référencés).
 type NewAppointment struct {
+	// ID : identifiant du RDV, connu avant l'insertion (le jeton de gestion en dépend) ;
+	// uuid.Nil = généré ici.
+	ID                uuid.UUID
 	PracticeID        uuid.UUID
 	PractitionerID    uuid.UUID
 	PatientID         uuid.UUID
@@ -32,8 +35,16 @@ type NewAppointment struct {
 // CreateAppointment calcule during_blocked via domain.BlockedRange puis insère.
 // Un chevauchement (contrainte appointment_no_overlap) devient domain.ErrSlotTaken.
 func CreateAppointment(ctx context.Context, q *sqlcgen.Queries, n NewAppointment) (sqlcgen.Appointment, error) {
+	if n.ID == uuid.Nil {
+		id, err := uuid.NewRandom()
+		if err != nil {
+			return sqlcgen.Appointment{}, fmt.Errorf("id du rendez-vous: %w", err)
+		}
+		n.ID = id
+	}
 	bs, be := domain.BlockedRange(n.Start, n.End, n.BufferBefore, n.BufferAfter)
 	a, err := q.CreateAppointment(ctx, sqlcgen.CreateAppointmentParams{
+		ID:                n.ID,
 		PracticeID:        n.PracticeID,
 		PractitionerID:    n.PractitionerID,
 		PatientID:         n.PatientID,

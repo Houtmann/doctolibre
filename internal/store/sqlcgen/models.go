@@ -25,26 +25,27 @@ type AppUser struct {
 }
 
 type Appointment struct {
-	ID                uuid.UUID
-	PracticeID        uuid.UUID
-	PractitionerID    uuid.UUID
-	PatientID         uuid.UUID
-	AppointmentTypeID uuid.UUID
-	During            pgtype.Range[pgtype.Timestamptz]
-	BufferBefore      pgtype.Interval
-	BufferAfter       pgtype.Interval
-	DuringBlocked     pgtype.Range[pgtype.Timestamptz]
-	Status            string
-	Source            string
-	CarePlanID        pgtype.UUID
-	CancelledAt       pgtype.Timestamptz
-	CancelledBy       pgtype.Text
-	CancelReason      pgtype.Text
-	ManageTokenHash   pgtype.Text
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	Address           pgtype.Text
-	VerifiedChannel   pgtype.Text
+	ID                 uuid.UUID
+	PracticeID         uuid.UUID
+	PractitionerID     uuid.UUID
+	PatientID          uuid.UUID
+	AppointmentTypeID  uuid.UUID
+	During             pgtype.Range[pgtype.Timestamptz]
+	BufferBefore       pgtype.Interval
+	BufferAfter        pgtype.Interval
+	DuringBlocked      pgtype.Range[pgtype.Timestamptz]
+	Status             string
+	Source             string
+	CarePlanID         pgtype.UUID
+	CancelledAt        pgtype.Timestamptz
+	CancelledBy        pgtype.Text
+	CancelReason       pgtype.Text
+	ManageTokenHash    pgtype.Text
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	Address            pgtype.Text
+	VerifiedChannel    pgtype.Text
+	ManageTokenVersion int32
 }
 
 type AppointmentType struct {

@@ -47,7 +47,7 @@ func newCalFixture(t *testing.T) calFixture {
 	f := newFixture(t)
 	sink := &recSink{}
 	clock := testutil.NewFixedClock(time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC))
-	cal := &service.Calendar{Pool: f.db, Clock: clock, Events: sink}
+	cal := &service.Calendar{Pool: f.db, Clock: clock, Events: sink, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 	ctx := context.Background()
 	if err := f.svc.AddRules(ctx, f.act, service.RuleInput{
 		Weekdays: []string{"0", "1", "2", "3", "4", "6"}, Start: "08:00", End: "12:00", TypeIDs: allTypeIDs(t, f),

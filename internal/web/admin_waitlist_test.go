@@ -33,7 +33,7 @@ func TestAdminWaitlistScreen(t *testing.T) {
 	h := web.Routes(web.Deps{
 		Config: config.Config{Env: config.EnvDev}, Logger: logger, DB: db,
 		Auth:     &auth.Service{Pool: db, Clock: clock, Logger: logger},
-		Waitlist: &service.Waitlist{Pool: db, Clock: clock},
+		Waitlist: &service.Waitlist{Pool: db, Clock: clock, ManageKey: service.NewManageKey(testutil.ManageSecret)},
 	})
 	c := newClient(t, h, "192.0.2.62")
 	if rec := c.do("GET", "/admin/waitlist", nil); rec.Code != 303 {

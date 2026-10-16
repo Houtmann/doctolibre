@@ -52,7 +52,7 @@ func TestPatientCancelFlow(t *testing.T) {
 		t.Fatalf("annulation: %d %q", rec.Code, rec.Header().Get("Location"))
 	}
 	rec = c.do("GET", manage, nil)
-	mustContain(t, rec, 200, "Rendez-vous annulé", "Votre rendez-vous est annulé.")
+	mustContain(t, rec, 200, "Rendez-vous annulé", "Votre rendez-vous est annulé.", "Reprendre rendez-vous", `href="`+e.base()+`"`)
 	if strings.Contains(rec.Body.String(), "Annuler le rendez-vous") {
 		t.Error("un rendez-vous annulé ne propose plus d'action")
 	}

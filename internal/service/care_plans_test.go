@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"doctolibre/internal/testutil"
 	"errors"
 	"strings"
 	"testing"
@@ -30,7 +31,7 @@ func newPlanFixture(t *testing.T) planFixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	plans := &service.CarePlans{Pool: f.db, Clock: f.cal.Clock, Events: f.sink}
+	plans := &service.CarePlans{Pool: f.db, Clock: f.cal.Clock, Events: f.sink, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 	return planFixture{calFixture: f, plans: plans, patient: p}
 }
 

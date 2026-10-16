@@ -43,13 +43,17 @@ type Waitlist struct {
 	OTP OTPSender
 	// BaseURL : adresse publique pour le lien de gestion du rendez-vous obtenu.
 	BaseURL string
+	// ManageKey dérive les jetons des liens de gestion des RDV obtenus (obligatoire).
+	ManageKey ManageKey
 	// Logger de la tâche d'expiration (nil = slog.Default()).
 	Logger *slog.Logger
 	// Every : période de Run (défaut DefaultWaitlistEvery).
 	Every time.Duration
 }
 
-func (w *Waitlist) notifier() notifier { return notifier{clock: w.Clock, baseURL: w.BaseURL} }
+func (w *Waitlist) notifier() notifier {
+	return notifier{clock: w.Clock, baseURL: w.BaseURL, key: w.ManageKey}
+}
 
 // WindowInput est la saisie brute des créneaux souhaités.
 type WindowInput struct {
@@ -539,7 +543,7 @@ func (w *Waitlist) Claim(ctx context.Context, token string) (BookResult, error) 
 	if err != nil {
 		return BookResult{}, err
 	}
-	manage, err := newManageToken()
+	apptID, manage, manageHash, err := w.ManageKey.mint()
 	if err != nil {
 		return BookResult{}, err
 	}
@@ -576,9 +580,9 @@ func (w *Waitlist) Claim(ctx context.Context, token string) (BookResult, error) 
 		}
 		bb, ba := sc.buffers()
 		appt, err = store.CreateAppointment(ctx, q, store.NewAppointment{
-			PracticeID: o.PracticeID, PractitionerID: o.PractitionerID, PatientID: e.PatientID, AppointmentTypeID: sc.typ.ID,
+			ID: apptID, PracticeID: o.PracticeID, PractitionerID: o.PractitionerID, PatientID: e.PatientID, AppointmentTypeID: sc.typ.ID,
 			Start: slot.Start, End: slot.End, BufferBefore: bb, BufferAfter: ba,
-			Source: "online", ManageTokenHash: ManageTokenHash(manage), VerifiedChannel: e.VerifiedChannel.String,
+			Source: "online", ManageTokenHash: manageHash, VerifiedChannel: e.VerifiedChannel.String,
 		})
 		if err != nil {
 			return err

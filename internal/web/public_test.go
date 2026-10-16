@@ -85,7 +85,7 @@ func newPublicEnv(t *testing.T) *publicEnv {
 	}
 	otp := &otpCapture{}
 	clock := testutil.NewFixedClock(time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC))
-	svc := &service.Booking{Pool: db, Clock: clock, OTP: otp}
+	svc := &service.Booking{Pool: db, Clock: clock, OTP: otp, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 	h := web.Routes(web.Deps{
 		Config:  config.Config{Env: config.EnvDev},
 		Logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),

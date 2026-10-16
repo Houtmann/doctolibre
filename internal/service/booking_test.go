@@ -74,7 +74,7 @@ func newBookingEnv(t *testing.T, now time.Time) *bookingEnv {
 	clock := testutil.NewFixedClock(now)
 	otp := &captureOTP{}
 	return &bookingEnv{db: db, clock: clock, otp: otp, pc: pc, pr: pr, typ: typ,
-		svc: &service.Booking{Pool: db, Clock: clock, OTP: otp}}
+		svc: &service.Booking{Pool: db, Clock: clock, OTP: otp, ManageKey: service.NewManageKey(testutil.ManageSecret)}}
 }
 
 // addRule ajoute une plage hebdomadaire (0 = lundi) valable depuis 2026-01-01.
@@ -520,7 +520,7 @@ func TestAllowedTypesFollowRules(t *testing.T) {
 	if _, err := db.Exec(ctx, "UPDATE appointment_type SET online_bookable = false WHERE id = $1", t2.ID); err != nil {
 		t.Fatal(err)
 	}
-	svc := &service.Booking{Pool: db, Clock: testutil.NewFixedClock(thursday), OTP: &captureOTP{}}
+	svc := &service.Booking{Pool: db, Clock: testutil.NewFixedClock(thursday), OTP: &captureOTP{}, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 
 	// t2 n'est pas réservable en ligne : refusé même s'il est autorisé par une plage.
 	if _, err := svc.AvailableSlots(ctx, pr.ID, t2.ID, tuesday9, tuesday9.Add(time.Hour)); !errors.Is(err, domain.ErrNotFound) {

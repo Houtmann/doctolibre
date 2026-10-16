@@ -18,7 +18,7 @@ UPDATE appointment SET
     status = 'cancelled', cancelled_at = $1, cancelled_by = $2,
     cancel_reason = $3, updated_at = now()
 WHERE id = $4 AND practice_id = $5 AND status = 'booked'
-RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel
+RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version
 `
 
 type CancelAppointmentParams struct {
@@ -59,26 +59,28 @@ func (q *Queries) CancelAppointment(ctx context.Context, arg CancelAppointmentPa
 		&i.UpdatedAt,
 		&i.Address,
 		&i.VerifiedChannel,
+		&i.ManageTokenVersion,
 	)
 	return i, err
 }
 
 const createAppointment = `-- name: CreateAppointment :one
 INSERT INTO appointment (
-    practice_id, practitioner_id, patient_id, appointment_type_id,
+    id, practice_id, practitioner_id, patient_id, appointment_type_id,
     during, buffer_before, buffer_after, during_blocked,
     status, source, manage_token_hash, address, verified_channel
 ) VALUES (
-    $1, $2, $3, $4,
-    tstzrange($5::timestamptz, $6::timestamptz, '[)'),
-    $7, $8,
-    tstzrange($9::timestamptz, $10::timestamptz, '[)'),
-    $11, $12, $13, $14, $15
+    $1, $2, $3, $4, $5,
+    tstzrange($6::timestamptz, $7::timestamptz, '[)'),
+    $8, $9,
+    tstzrange($10::timestamptz, $11::timestamptz, '[)'),
+    $12, $13, $14, $15, $16
 )
-RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel
+RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version
 `
 
 type CreateAppointmentParams struct {
+	ID                uuid.UUID
 	PracticeID        uuid.UUID
 	PractitionerID    uuid.UUID
 	PatientID         uuid.UUID
@@ -99,6 +101,7 @@ type CreateAppointmentParams struct {
 // during_blocked est calculé en Go (domain.BlockedRange) et passé en bornes.
 func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (Appointment, error) {
 	row := q.db.QueryRow(ctx, createAppointment,
+		arg.ID,
 		arg.PracticeID,
 		arg.PractitionerID,
 		arg.PatientID,
@@ -137,12 +140,13 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 		&i.UpdatedAt,
 		&i.Address,
 		&i.VerifiedChannel,
+		&i.ManageTokenVersion,
 	)
 	return i, err
 }
 
 const getAppointment = `-- name: GetAppointment :one
-SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel FROM appointment WHERE id = $1 AND practice_id = $2
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version FROM appointment WHERE id = $1 AND practice_id = $2
 `
 
 type GetAppointmentParams struct {
@@ -174,12 +178,13 @@ func (q *Queries) GetAppointment(ctx context.Context, arg GetAppointmentParams) 
 		&i.UpdatedAt,
 		&i.Address,
 		&i.VerifiedChannel,
+		&i.ManageTokenVersion,
 	)
 	return i, err
 }
 
 const getAppointmentByManageToken = `-- name: GetAppointmentByManageToken :one
-SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel FROM appointment WHERE manage_token_hash = $1
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version FROM appointment WHERE manage_token_hash = $1
 `
 
 func (q *Queries) GetAppointmentByManageToken(ctx context.Context, manageTokenHash pgtype.Text) (Appointment, error) {
@@ -206,12 +211,13 @@ func (q *Queries) GetAppointmentByManageToken(ctx context.Context, manageTokenHa
 		&i.UpdatedAt,
 		&i.Address,
 		&i.VerifiedChannel,
+		&i.ManageTokenVersion,
 	)
 	return i, err
 }
 
 const listAppointmentsForPatient = `-- name: ListAppointmentsForPatient :many
-SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel FROM appointment
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version FROM appointment
 WHERE patient_id = $1 AND practice_id = $2
 ORDER BY lower(during) DESC, id
 LIMIT $3
@@ -253,6 +259,7 @@ func (q *Queries) ListAppointmentsForPatient(ctx context.Context, arg ListAppoin
 			&i.UpdatedAt,
 			&i.Address,
 			&i.VerifiedChannel,
+			&i.ManageTokenVersion,
 		); err != nil {
 			return nil, err
 		}
@@ -265,7 +272,7 @@ func (q *Queries) ListAppointmentsForPatient(ctx context.Context, arg ListAppoin
 }
 
 const listAppointmentsForPractitioner = `-- name: ListAppointmentsForPractitioner :many
-SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel FROM appointment
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version FROM appointment
 WHERE practitioner_id = $1
   AND status <> 'cancelled'
   AND during_blocked && tstzrange($2::timestamptz, $3::timestamptz, '[)')
@@ -309,6 +316,7 @@ func (q *Queries) ListAppointmentsForPractitioner(ctx context.Context, arg ListA
 			&i.UpdatedAt,
 			&i.Address,
 			&i.VerifiedChannel,
+			&i.ManageTokenVersion,
 		); err != nil {
 			return nil, err
 		}
@@ -415,7 +423,7 @@ func (q *Queries) ListReminderCandidates(ctx context.Context, arg ListReminderCa
 }
 
 const lockAppointment = `-- name: LockAppointment :one
-SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel FROM appointment WHERE id = $1 FOR UPDATE
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version FROM appointment WHERE id = $1 FOR UPDATE
 `
 
 // Lecture verrouillée (dans une transaction) : sérialise l'enfilement d'un rappel avec une annulation.
@@ -443,12 +451,13 @@ func (q *Queries) LockAppointment(ctx context.Context, id uuid.UUID) (Appointmen
 		&i.UpdatedAt,
 		&i.Address,
 		&i.VerifiedChannel,
+		&i.ManageTokenVersion,
 	)
 	return i, err
 }
 
 const lockAppointmentByManageToken = `-- name: LockAppointmentByManageToken :one
-SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel FROM appointment WHERE manage_token_hash = $1 FOR UPDATE
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version FROM appointment WHERE manage_token_hash = $1 FOR UPDATE
 `
 
 // Lecture verrouillée (dans une transaction) du RDV d'un lien patient.
@@ -476,6 +485,7 @@ func (q *Queries) LockAppointmentByManageToken(ctx context.Context, manageTokenH
 		&i.UpdatedAt,
 		&i.Address,
 		&i.VerifiedChannel,
+		&i.ManageTokenVersion,
 	)
 	return i, err
 }
@@ -517,7 +527,7 @@ func (q *Queries) NotificationVolume(ctx context.Context, arg NotificationVolume
 const setAppointmentStatus = `-- name: SetAppointmentStatus :one
 UPDATE appointment SET status = $1, updated_at = now()
 WHERE id = $2 AND practice_id = $3
-RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel
+RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version
 `
 
 type SetAppointmentStatusParams struct {
@@ -550,6 +560,31 @@ func (q *Queries) SetAppointmentStatus(ctx context.Context, arg SetAppointmentSt
 		&i.UpdatedAt,
 		&i.Address,
 		&i.VerifiedChannel,
+		&i.ManageTokenVersion,
 	)
 	return i, err
+}
+
+const setManageToken = `-- name: SetManageToken :exec
+UPDATE appointment SET manage_token_version = $1, manage_token_hash = $2
+WHERE id = $3 AND practice_id = $4
+`
+
+type SetManageTokenParams struct {
+	Version         int32
+	ManageTokenHash pgtype.Text
+	ID              uuid.UUID
+	PracticeID      uuid.UUID
+}
+
+// Révocation du lien de gestion (T050) : nouvelle version et nouveau haché. updated_at
+// n'est pas touché (il pilote l'éligibilité des rappels).
+func (q *Queries) SetManageToken(ctx context.Context, arg SetManageTokenParams) error {
+	_, err := q.db.Exec(ctx, setManageToken,
+		arg.Version,
+		arg.ManageTokenHash,
+		arg.ID,
+		arg.PracticeID,
+	)
+	return err
 }

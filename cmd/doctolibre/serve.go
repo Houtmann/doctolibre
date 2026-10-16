@@ -42,6 +42,7 @@ func serve(ctx context.Context, logOut io.Writer) error {
 				return fmt.Errorf("migrations: %w", err)
 			}
 		}
+		manageKey := service.NewManageKey(cfg.SecretKey)
 		deps.DB = pool
 		deps.Auth = &auth.Service{Pool: pool, Clock: domain.SystemClock{}, Logger: logger, Secure: cfg.IsProd()}
 		deps.Messages = outbox.Queue{Pool: pool, Clock: domain.SystemClock{}}
@@ -49,12 +50,12 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		deps.Privacy = &service.Privacy{Pool: pool, Clock: domain.SystemClock{}, Logger: logger}
 		deps.Audit = &service.Audit{Pool: pool, Clock: domain.SystemClock{}}
 		deps.Feed = &service.CalendarFeed{Pool: pool, Clock: domain.SystemClock{}}
-		deps.Calendar = &service.Calendar{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL}
+		deps.Calendar = &service.Calendar{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
 		deps.Patients = &service.Patients{Pool: pool, Clock: domain.SystemClock{}}
-		deps.CarePlans = &service.CarePlans{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL}
-		deps.Booking = &service.Booking{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL}
+		deps.CarePlans = &service.CarePlans{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
+		deps.Booking = &service.Booking{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
 		deps.Status = &service.Status{Pool: pool, Clock: domain.SystemClock{}, Version: version, StartedAt: domain.SystemClock{}.Now(), BackupDir: cfg.BackupDir}
-		deps.Waitlist = &service.Waitlist{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL}
+		deps.Waitlist = &service.Waitlist{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
 	} else {
 		logger.Warn("DOCTOLIBRE_DATABASE_URL vide : l'espace /admin est désactivé")
 	}

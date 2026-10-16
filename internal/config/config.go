@@ -156,10 +156,11 @@ func (c Config) Validate() error {
 	if err := c.Email.validate(); err != nil {
 		errs = append(errs, err)
 	}
+	if c.SecretKey == "" {
+		// Les liens de gestion des rendez-vous en sont dérivés : obligatoire partout.
+		errs = append(errs, errors.New("DOCTOLIBRE_SECRET_KEY: obligatoire (32 octets minimum, ex. openssl rand -hex 32)"))
+	}
 	if c.Env == EnvProd {
-		if c.SecretKey == "" {
-			errs = append(errs, errors.New("DOCTOLIBRE_SECRET_KEY: obligatoire en prod"))
-		}
 		if c.DatabaseURL == "" {
 			errs = append(errs, errors.New("DOCTOLIBRE_DATABASE_URL: obligatoire en prod"))
 		}

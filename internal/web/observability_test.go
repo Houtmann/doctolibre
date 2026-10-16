@@ -65,7 +65,7 @@ func TestBookingJourneyNoPIIAndMetrics(t *testing.T) {
 	clock := testutil.NewFixedClock(time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC))
 	m := metrics.New()
 	logs := &syncBuffer{}
-	svc := &service.Booking{Pool: db, Clock: clock, OTP: otp,
+	svc := &service.Booking{Pool: db, Clock: clock, OTP: otp, ManageKey: service.NewManageKey(testutil.ManageSecret),
 		OnCreated: func(source string) { m.AppointmentsCreated.WithLabelValues(source).Inc() }}
 	h := web.Routes(web.Deps{
 		Config:  config.Config{Env: config.EnvDev, MetricsToken: obsToken},

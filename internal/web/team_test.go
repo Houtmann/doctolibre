@@ -68,13 +68,13 @@ func newGroupEnv(t *testing.T) groupEnv {
 
 	clock := testutil.NewFixedClock(time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC))
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	cal := &service.Calendar{Pool: db, Clock: clock, Events: service.NopSink{}}
+	cal := &service.Calendar{Pool: db, Clock: clock, Events: service.NopSink{}, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 	svc := &service.Practice{Pool: db, Clock: clock}
 	h := web.Routes(web.Deps{
 		Config: config.Config{Env: config.EnvDev, BaseURL: "https://rdv.example.test"}, Logger: logger, DB: db,
 		Auth:     &auth.Service{Pool: db, Clock: clock, Logger: logger},
 		Practice: svc, Calendar: cal, Feed: &service.CalendarFeed{Pool: db, Clock: clock},
-		Booking: &service.Booking{Pool: db, Clock: clock},
+		Booking: &service.Booking{Pool: db, Clock: clock, ManageKey: service.NewManageKey(testutil.ManageSecret)},
 	})
 	e := groupEnv{h: h, db: db, cal: cal, svc: svc}
 	e.practice = mustPractice(t, db, adminU.PracticeID)

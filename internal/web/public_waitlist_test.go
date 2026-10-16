@@ -2,6 +2,7 @@ package web_test
 
 import (
 	"context"
+	"doctolibre/internal/testutil"
 	"io"
 	"log/slog"
 	"net/url"
@@ -25,7 +26,7 @@ var offerLinkRe = regexp.MustCompile(`https://rdv\.test/w/([A-Za-z0-9_-]+)`)
 func withWaitlist(t *testing.T, e *publicEnv) *service.Waitlist {
 	t.Helper()
 	e.svc.BaseURL = waitlistBaseURL
-	wl := &service.Waitlist{Pool: e.db, Clock: e.clock, OTP: e.otp, BaseURL: waitlistBaseURL}
+	wl := &service.Waitlist{Pool: e.db, Clock: e.clock, OTP: e.otp, BaseURL: waitlistBaseURL, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 	e.h = web.Routes(web.Deps{
 		Config: config.Config{Env: config.EnvDev}, Logger: slog.New(slog.NewTextHandler(io.Discard, nil)), DB: e.db,
 		Booking: e.svc, Waitlist: wl,

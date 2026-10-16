@@ -7,8 +7,18 @@ import (
 	"testing"
 )
 
+// env lit m ; DOCTOLIBRE_SECRET_KEY (obligatoire partout) vaut une clé valide sauf
+// si m la définit explicitement (même vide).
 func env(m map[string]string) func(string) string {
-	return func(k string) string { return m[k] }
+	return func(k string) string {
+		if v, ok := m[k]; ok {
+			return v
+		}
+		if k == "DOCTOLIBRE_SECRET_KEY" {
+			return strings.Repeat("s", 32)
+		}
+		return ""
+	}
 }
 
 func TestLoadFromDefaults(t *testing.T) {
@@ -45,9 +55,10 @@ func TestLoadFromErrors(t *testing.T) {
 		{"worker invalide", map[string]string{"DOCTOLIBRE_WORKER": "maybe"}, "DOCTOLIBRE_WORKER"},
 		{"url invalide", map[string]string{"DOCTOLIBRE_BASE_URL": "nope"}, "DOCTOLIBRE_BASE_URL"},
 		{"secret trop court", map[string]string{"DOCTOLIBRE_SECRET_KEY": "court"}, "DOCTOLIBRE_SECRET_KEY"},
+		{"secret manquant en dev", map[string]string{"DOCTOLIBRE_SECRET_KEY": ""}, "DOCTOLIBRE_SECRET_KEY: obligatoire"},
 		{"secret manquant en prod", map[string]string{
-			"DOCTOLIBRE_ENV": "prod", "DOCTOLIBRE_DATABASE_URL": "postgres://x", "DOCTOLIBRE_BASE_URL": "https://a.fr",
-		}, "obligatoire en prod"},
+			"DOCTOLIBRE_ENV": "prod", "DOCTOLIBRE_SECRET_KEY": "", "DOCTOLIBRE_DATABASE_URL": "postgres://x", "DOCTOLIBRE_BASE_URL": "https://a.fr",
+		}, "DOCTOLIBRE_SECRET_KEY: obligatoire"},
 		{"base de données manquante en prod", map[string]string{
 			"DOCTOLIBRE_ENV": "prod", "DOCTOLIBRE_SECRET_KEY": good, "DOCTOLIBRE_BASE_URL": "https://a.fr",
 		}, "DOCTOLIBRE_DATABASE_URL"},

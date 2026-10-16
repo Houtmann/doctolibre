@@ -193,6 +193,8 @@ type ConfirmedData struct {
 	MinCancel  time.Duration
 	AtHome     bool
 	Address    string // adresse de la visite à domicile
+	// RebookURL : page du praticien, pour reprendre rendez-vous après une annulation.
+	RebookURL string
 }
 
 func practitionerView(practiceSlug string, p sqlcgen.Practitioner) PractitionerView {
@@ -573,6 +575,7 @@ func (h *publicHandlers) confirmed(w http.ResponseWriter, r *http.Request) {
 		ICSURL:     manageURL(r.PathValue("token")) + "/ics",
 		Changeable: c.Changeable, ManageURL: manageURL(r.PathValue("token")), MinCancel: c.MinCancel,
 		AtHome: c.Type.AtHome, Address: c.Appointment.Address.String,
+		RebookURL: practitionerView(c.Practice.Slug, c.Practitioner).URL,
 	})
 }
 

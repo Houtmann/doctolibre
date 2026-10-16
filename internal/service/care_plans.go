@@ -42,9 +42,13 @@ type CarePlans struct {
 	Events EventSink // nil = NopSink ; appelé après commit
 	// BaseURL : adresse publique (messages aux patients) ; vide = messages sans lien.
 	BaseURL string
+	// ManageKey dérive les jetons de gestion des séances (obligatoire).
+	ManageKey ManageKey
 }
 
-func (s *CarePlans) notifier() notifier { return notifier{clock: s.Clock, baseURL: s.BaseURL} }
+func (s *CarePlans) notifier() notifier {
+	return notifier{clock: s.Clock, baseURL: s.BaseURL, key: s.ManageKey}
+}
 
 func (s *CarePlans) practice() *Practice { return &Practice{Pool: s.Pool, Clock: s.Clock} }
 
@@ -361,7 +365,7 @@ func validateLines(ctx context.Context, q *sqlcgen.Queries, sc slotContext, now 
 
 // insertSessions crée les RDV de la série dans la transaction de q ; le premier
 // chevauchement renvoie *LineConflict (l'appelant annule la transaction).
-func insertSessions(ctx context.Context, q *sqlcgen.Queries, a Actor, sc slotContext, patientID, planID uuid.UUID, address string, lines []sessionLine) ([]uuid.UUID, error) {
+func insertSessions(ctx context.Context, q *sqlcgen.Queries, key ManageKey, a Actor, sc slotContext, patientID, planID uuid.UUID, address string, lines []sessionLine) ([]uuid.UUID, error) {
 	bb, ba := sc.buffers()
 	dur := intervalDuration(sc.typ.Duration)
 	if !sc.typ.AtHome {
@@ -369,8 +373,12 @@ func insertSessions(ctx context.Context, q *sqlcgen.Queries, a Actor, sc slotCon
 	}
 	var ids []uuid.UUID
 	for _, l := range lines {
+		id, _, hash, err := key.mint() // le lien de la séance est recalculable (rappels)
+		if err != nil {
+			return nil, err
+		}
 		ap, err := store.CreateAppointment(ctx, q, store.NewAppointment{
-			PracticeID: a.PracticeID, PractitionerID: sc.pr.ID, PatientID: patientID, AppointmentTypeID: sc.typ.ID,
+			ID: id, ManageTokenHash: hash, PracticeID: a.PracticeID, PractitionerID: sc.pr.ID, PatientID: patientID, AppointmentTypeID: sc.typ.ID,
 			Start: l.start, End: l.start.Add(dur), BufferBefore: bb, BufferAfter: ba, Address: address, Source: "staff",
 		})
 		if errors.Is(err, domain.ErrSlotTaken) {
@@ -462,7 +470,7 @@ func (s *CarePlans) Create(ctx context.Context, a Actor, in CreateInput) (sqlcge
 		if plan, err = q.CreateCarePlan(ctx, cp); err != nil {
 			return fmt.Errorf("création de la série: %w", err)
 		}
-		if ids, err = insertSessions(ctx, q, a, sc, p.patientID, plan.ID, p.address, lines); err != nil {
+		if ids, err = insertSessions(ctx, q, s.ManageKey, a, sc, p.patientID, plan.ID, p.address, lines); err != nil {
 			return err
 		}
 		if err := auditPlan(ctx, q, a, "care_plan.created", plan.ID, map[string]string{"sessions": fmt.Sprint(len(ids)), "prescribed": fmt.Sprint(p.prescribed)}); err != nil {
@@ -753,7 +761,7 @@ func (s *CarePlans) AddSession(ctx context.Context, a Actor, planID uuid.UUID, d
 		if sc.typ.AtHome && address == "" {
 			return domain.ErrValidation{Field: "address", Msg: "L'adresse de la visite à domicile est introuvable : planifiez la séance depuis l'agenda."}
 		}
-		ids, err := insertSessions(ctx, q, a, sc, cp.PatientID, planID, address, lines)
+		ids, err := insertSessions(ctx, q, s.ManageKey, a, sc, cp.PatientID, planID, address, lines)
 		if err != nil {
 			return err
 		}

@@ -29,7 +29,7 @@ func startWorker(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, d o
 	var wg sync.WaitGroup
 	wg.Add(5)
 	// Expiration des inscriptions en liste d'attente dont la fenêtre est passée.
-	wl := &service.Waitlist{Pool: pool, Clock: domain.SystemClock{}, Logger: logger}
+	wl := &service.Waitlist{Pool: pool, Clock: domain.SystemClock{}, Logger: logger, ManageKey: service.NewManageKey(cfg.SecretKey)}
 	go func() {
 		defer wg.Done()
 		if err := wl.Run(ctx); err != nil {
@@ -37,7 +37,7 @@ func startWorker(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, d o
 		}
 	}()
 	// Rappels de rendez-vous : enfilés peu avant l'envoi (opt-out relu à ce moment).
-	rem := &service.Reminders{Pool: pool, Clock: domain.SystemClock{}, Logger: logger}
+	rem := &service.Reminders{Pool: pool, Clock: domain.SystemClock{}, Logger: logger, BaseURL: cfg.BaseURL, ManageKey: service.NewManageKey(cfg.SecretKey)}
 	go func() {
 		defer wg.Done()
 		if err := rem.Run(ctx); err != nil {

@@ -17,11 +17,11 @@
 
 ## En cours
 
-_Aucune tâche en cours ni en review._ Prochaine tâche : T050 (débloque T051 et T055).
+T050 (jeton de gestion dérivé) en `review`.
 
 ## Prochaine action
 
-1. `/run-task T050` ; en parallèle possible : T052, T053, T054, T056, T057, T058.
+1. Relire T050 et la passer en `done` (débloque T051 et T055) ; en parallèle possible : T052, T053, T054, T056, T057, T058.
 2. Passage navigateur : rendu 360 px de toutes les pages, agenda au clavier, vue jour à 4 praticiens à 1280 px (critère T033 non coché).
 3. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
 
@@ -42,7 +42,8 @@ _Aucune tâche en cours ni en review._ Prochaine tâche : T050 (débloque T051 e
   - `.env.example` : comportement au démarrage avec le SMTP d'exemple, et du service `backup` avec `DOCTOLIBRE_BACKUP_AGE_RECIPIENT` vide (T044).
 - Postgres.app doit être démarré, et les tests utilisent `127.0.0.1` (pas `localhost`) : `DOCTOLIBRE_TEST_DATABASE_URL=postgres://hadrien@127.0.0.1:5432/doctolibre_test?sslmode=disable`.
 - `TestCalendarWeekWith150AppointmentsIsFast` (seuil 100 ms) peut échouer sous forte charge machine ; passe seul.
-- Petits manques : pas de lien vers `/admin/status` ni vers la page de réservation publique dans le tableau de bord ; les RDV créés par une série ne comptent pas dans la métrique `AppointmentsCreated`.
+- `DOCTOLIBRE_SECRET_KEY` désormais obligatoire en dev aussi : l'ajouter à son `.env` local (exemple dans `.env.example`).
+- Petits manques : le déplacement d'un RDV par le cabinet envoie un message sans lien de gestion ; pas de lien vers `/admin/status` ni vers la page de réservation publique dans le tableau de bord ; les RDV créés par une série ne comptent pas dans la métrique `AppointmentsCreated`.
 
 ## Avancement par phase
 
@@ -53,4 +54,4 @@ _Aucune tâche en cours ni en review._ Prochaine tâche : T050 (débloque T051 e
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 12 | 0 | 0 |
+| 5 — Retours terrain | 12 | 0 | 1 |

@@ -1,7 +1,10 @@
 Bonjour {{.first_name}},
 
 Votre rendez-vous ({{.type_name}}) du {{.date}} à {{.time}} avec {{.practitioner}} a été annulé par le cabinet.
-{{if .practice_phone}}
+{{if .manage_url}}
+Consulter ce rendez-vous et en reprendre un autre :
+{{.manage_url}}
+{{end}}{{if .practice_phone}}
 Pour en prendre un nouveau, appelez le {{.practice_phone}}.
 {{end}}
 {{.signature}}

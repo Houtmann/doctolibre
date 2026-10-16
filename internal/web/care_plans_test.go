@@ -45,8 +45,8 @@ func newPlanEnv(t *testing.T, role string) planEnv {
 	h := web.Routes(web.Deps{
 		Config: config.Config{Env: config.EnvDev}, Logger: logger, DB: db,
 		Auth:     &auth.Service{Pool: db, Clock: clock, Logger: logger},
-		Practice: practice, Calendar: &service.Calendar{Pool: db, Clock: clock, Events: service.NopSink{}},
-		Patients: &service.Patients{Pool: db, Clock: clock}, CarePlans: &service.CarePlans{Pool: db, Clock: clock, Events: service.NopSink{}},
+		Practice: practice, Calendar: &service.Calendar{Pool: db, Clock: clock, Events: service.NopSink{}, ManageKey: service.NewManageKey(testutil.ManageSecret)},
+		Patients: &service.Patients{Pool: db, Clock: clock}, CarePlans: &service.CarePlans{Pool: db, Clock: clock, Events: service.NopSink{}, ManageKey: service.NewManageKey(testutil.ManageSecret)},
 	})
 	c := newClient(t, h, "192.0.2.40")
 	if rec := c.login(userEmail, pw, "/admin"); rec.Code != 303 {
@@ -185,7 +185,7 @@ func TestCarePlanConflictRendersAllOrNothing(t *testing.T) {
 	e := newPlanEnv(t, domain.RoleAdmin)
 	base := "/admin/patients/" + e.patient.ID.String()
 	// Un RDV existant occupe lundi 26/10 à 08:00.
-	if _, err := (&service.Calendar{Pool: e.db, Clock: testutil.NewFixedClock(time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC))}).Create(context.Background(), e.actor, service.NewAppointmentInput{
+	if _, err := (&service.Calendar{Pool: e.db, Clock: testutil.NewFixedClock(time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC)), ManageKey: service.NewManageKey(testutil.ManageSecret)}).Create(context.Background(), e.actor, service.NewAppointmentInput{
 		PatientID: e.patient.ID.String(), TypeID: e.typeID, Date: "2026-10-26", Time: "08:00",
 	}); err != nil {
 		t.Fatal(err)

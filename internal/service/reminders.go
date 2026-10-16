@@ -44,6 +44,10 @@ type Reminders struct {
 	Pool   *pgxpool.Pool
 	Clock  domain.Clock
 	Logger *slog.Logger
+	// BaseURL : adresse publique pour le lien de gestion des rappels (vide = sans lien).
+	BaseURL string
+	// ManageKey recalcule les jetons des liens de gestion (obligatoire).
+	ManageKey ManageKey
 	// Every : période de Run (défaut DefaultReminderEvery).
 	Every time.Duration
 }
@@ -136,7 +140,7 @@ func (r *Reminders) runPractice(ctx context.Context, q *sqlcgen.Queries, pc sqlc
 		r.log().Error("rappels: fuseau invalide", "practice_id", pc.ID)
 		return 0, nil // un cabinet mal configuré ne bloque pas les autres
 	}
-	n := notifier{clock: r.Clock}
+	n := notifier{clock: r.Clock, baseURL: r.BaseURL, key: r.ManageKey}
 	total := 0
 	afterStart, afterID := now.Add(-time.Second), uuid.Nil
 	for {
@@ -215,7 +219,8 @@ func (r *Reminders) enqueueOne(ctx context.Context, n notifier, c sqlcgen.ListRe
 		if err != nil {
 			return err
 		}
-		data := n.data(v, "") // le jeton de gestion n'est pas stocké en clair : pas de lien dans les rappels
+		// Lien recalculé ; absent pour un ancien RDV dont le haché ne correspond pas.
+		data := n.data(v, n.key.forAppointment(appt))
 		queued, err = n.enqueue(ctx, tx, v, v.practice.NotifyReminderChannel, TemplateReminder, data, kind.sendAt,
 			kind.dedup, fmt.Sprint(c.StartsAt.Unix()))
 		return err

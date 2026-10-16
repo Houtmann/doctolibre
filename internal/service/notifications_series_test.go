@@ -32,7 +32,7 @@ func TestCarePlanSendsOneConfirmationAndRemindersPerSession(t *testing.T) {
 	// Les rappels restent par séance (séances : lun 19, jeu 22, lun 26 octobre… à 8 h).
 	clock := f.cal.Clock.(*testutil.FixedClock)
 	mustExec(t, f.db, "UPDATE appointment SET updated_at = $1", clock.Now())
-	rem := &service.Reminders{Pool: f.db, Clock: clock}
+	rem := &service.Reminders{Pool: f.db, Clock: clock, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 	clock.Advance(time.Date(2026, 10, 18, 18, 5, 0, 0, paris).Sub(clock.Now()))
 	if n, err := rem.RunOnce(ctx); err != nil || n != 1 {
 		t.Fatalf("séance 1 : n=%d err=%v", n, err)

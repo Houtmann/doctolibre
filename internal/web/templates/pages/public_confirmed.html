@@ -9,7 +9,9 @@
   {{if and .Data.AtHome .Data.Address}}<p><strong>Visite à domicile</strong><br>{{.Data.Address}}</p>{{end}}
   <p>{{.Data.Practice.Name}}{{if .Data.Practice.Address}}<br>{{.Data.Practice.Address}}{{end}}{{if .Data.Practice.Phone}}<br>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}</p>
 </article>
-{{if not .Data.Cancelled}}
+{{if .Data.Cancelled}}
+<p><a href="{{.Data.RebookURL}}" role="button">Reprendre rendez-vous</a></p>
+{{else}}
 <p><a href="{{.Data.ICSURL}}" role="button">Ajouter à mon agenda</a></p>
 {{if .Data.Changeable}}
 <p class="actions">

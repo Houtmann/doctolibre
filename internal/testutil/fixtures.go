@@ -86,3 +86,7 @@ func NewAppointmentType(t *testing.T, db *pgxpool.Pool, practiceID uuid.UUID) sq
 	}
 	return at
 }
+
+// ManageSecret est un DOCTOLIBRE_SECRET_KEY de test (32 octets) : les services
+// qui créent des rendez-vous en dérivent ManageKey (service.NewManageKey).
+const ManageSecret = "test-secret-key-0123456789abcdef"

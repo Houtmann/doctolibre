@@ -12,13 +12,14 @@ import (
 
 	"doctolibre/internal/domain"
 	"doctolibre/internal/service"
+	"doctolibre/internal/testutil"
 )
 
 const waitlistBase = "https://rdv.test"
 
 func (e *bookingEnv) waitlist() *service.Waitlist {
 	e.svc.BaseURL = waitlistBase
-	return &service.Waitlist{Pool: e.db, Clock: e.clock, OTP: e.otp, BaseURL: waitlistBase}
+	return &service.Waitlist{Pool: e.db, Clock: e.clock, OTP: e.otp, BaseURL: waitlistBase, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 }
 
 func (e *bookingEnv) actor(t *testing.T) service.Actor {
@@ -505,7 +506,7 @@ func TestWaitlistOfferedOnStaffCancellation(t *testing.T) {
 	if _, err := wl.AddByStaff(ctx, e.actor(t), service.StaffAddInput{Patient: emailPatient("Bob", "bob@example.test"), Window: e.window()}); err != nil {
 		t.Fatal(err)
 	}
-	cal := &service.Calendar{Pool: e.db, Clock: e.clock, BaseURL: waitlistBase}
+	cal := &service.Calendar{Pool: e.db, Clock: e.clock, BaseURL: waitlistBase, ManageKey: service.NewManageKey(testutil.ManageSecret)}
 	if err := cal.Cancel(ctx, e.actor(t), res.Appointment.ID, ""); err != nil {
 		t.Fatalf("Cancel: %v", err)
 	}

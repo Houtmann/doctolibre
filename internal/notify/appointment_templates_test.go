@@ -83,7 +83,7 @@ func TestAppointmentTemplatesGolden(t *testing.T) {
 				if !strings.Contains(e.Text, "Léa") || !strings.Contains(e.HTML, "15 octobre") {
 					t.Errorf("email %s : prénom ou date absents", name)
 				}
-				wantLink := manage && name != "cancellation" && name != "series" && name != "waitlist"
+				wantLink := manage && name != "series" && name != "waitlist"
 				if wantLink != strings.Contains(e.Text, "/r/") {
 					t.Errorf("email %s : lien de gestion présent=%v, attendu %v", name, !wantLink, wantLink)
 				}

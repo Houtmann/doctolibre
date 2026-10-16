@@ -58,7 +58,7 @@ cp .env.example .env
 | `DOMAIN` | `rdv.cabinet-dupont.fr` (sans `https://`) |
 | `CADDY_TLS` | **Obligatoire.** Votre adresse email (sert à Let's Encrypt pour le certificat HTTPS). `internal` uniquement pour un test local avec `DOMAIN=localhost` |
 | `POSTGRES_PASSWORD` | un mot de passe généré : `openssl rand -hex 24` |
-| `DOCTOLIBRE_SECRET_KEY` | un secret de 32 octets minimum : `openssl rand -hex 32`. **Ne le perdez pas et ne le changez pas à la légère.** |
+| `DOCTOLIBRE_SECRET_KEY` | un secret de 32 octets minimum : `openssl rand -hex 32`. **Ne le perdez pas et ne le changez pas à la légère** : les liens « gérer mon rendez-vous » envoyés aux patients (confirmations, rappels, annulations) en sont dérivés ; changer la clé les invalide tous. |
 | `DOCTOLIBRE_SMTP_HOST`, `_SMTP_FROM`, ... | voir §5 |
 | `DOCTOLIBRE_BACKUP_AGE_RECIPIENT` | clé publique de sauvegarde, voir §6 |
 

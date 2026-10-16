@@ -32,11 +32,15 @@ type Booking struct {
 	// BaseURL : adresse publique (DOCTOLIBRE_BASE_URL) pour les liens /r/{jeton} des
 	// messages ; vide = messages sans lien.
 	BaseURL string
+	// ManageKey dérive les jetons des liens /r/{jeton} (obligatoire).
+	ManageKey ManageKey
 	// OnCreated est appelé (source "online") après le commit d'un rendez-vous ; nil = rien.
 	OnCreated func(source string)
 }
 
-func (b *Booking) notifier() notifier { return notifier{clock: b.Clock, baseURL: b.BaseURL} }
+func (b *Booking) notifier() notifier {
+	return notifier{clock: b.Clock, baseURL: b.BaseURL, key: b.ManageKey}
+}
 
 // PublicPractice est la page d'accueil publique d'un cabinet.
 type PublicPractice struct {
@@ -440,7 +444,7 @@ func (b *Booking) Book(ctx context.Context, in BookInput) (BookResult, error) {
 		return BookResult{}, ErrOTPWrong
 	}
 
-	token, err := newManageToken()
+	apptID, token, tokenHash, err := b.ManageKey.mint()
 	if err != nil {
 		return BookResult{}, err
 	}
@@ -478,13 +482,13 @@ func (b *Booking) Book(ctx context.Context, in BookInput) (BookResult, error) {
 		}
 		bb, ba := sc.buffers()
 		appt, err = store.CreateAppointment(ctx, q, store.NewAppointment{
-			PracticeID: sc.pc.ID, PractitionerID: sc.pr.ID, PatientID: patient.ID, AppointmentTypeID: sc.typ.ID,
+			ID: apptID, PracticeID: sc.pc.ID, PractitionerID: sc.pr.ID, PatientID: patient.ID, AppointmentTypeID: sc.typ.ID,
 			Start: slot.Start, End: slot.End,
 			BufferBefore:    bb,
 			BufferAfter:     ba,
 			Address:         d.address,
 			Source:          "online",
-			ManageTokenHash: ManageTokenHash(token),
+			ManageTokenHash: tokenHash,
 			// Seul le contact du canal du code est vérifié : les messages n'iront que là.
 			VerifiedChannel: in.Channel,
 		})
@@ -509,6 +513,8 @@ func ManageTokenHash(token string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+// newManageToken tire un jeton aléatoire (liens de proposition de la liste d'attente) ;
+// les liens de gestion des rendez-vous, eux, sont dérivés (ManageKey).
 func newManageToken() (string, error) {
 	var buf [32]byte
 	if _, err := rand.Read(buf[:]); err != nil {
