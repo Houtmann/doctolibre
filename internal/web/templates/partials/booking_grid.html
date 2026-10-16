@@ -1,7 +1,7 @@
 <div id="slot-grid" class="slot-grid">
   <nav class="week-nav" aria-label="Navigation par semaine">
-    {{if .PrevURL}}<a href="{{.PrevURL}}" role="button" class="outline secondary" hx-get="{{.PrevURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">&larr; Semaine précédente</a>{{else}}<span></span>{{end}}
-    {{if .NextURL}}<a href="{{.NextURL}}" role="button" class="outline secondary" hx-get="{{.NextURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">Semaine suivante &rarr;</a>{{end}}
+    {{if .PrevURL}}<a class="dl-btn dl-btn--outline" href="{{.PrevURL}}" hx-get="{{.PrevURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">&larr; Semaine précédente</a>{{else}}<span></span>{{end}}
+    {{if .NextURL}}<a class="dl-btn dl-btn--outline" href="{{.NextURL}}" hx-get="{{.NextURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">Semaine suivante &rarr;</a>{{end}}
   </nav>
   <h2 class="week-label">Semaine {{.WeekLabel}}</h2>
   {{if .Days}}
@@ -9,12 +9,12 @@
   <section class="slot-day" aria-label="{{.Label}}">
     <h3>{{.Label}}</h3>
     <ul class="slot-list">
-      {{range .Slots}}<li><a href="{{.URL}}" role="button" class="outline"><time datetime="{{.Datetime}}">{{localTime .Time}}</time></a></li>{{end}}
+      {{range .Slots}}<li><a class="dl-btn dl-btn--outline" href="{{.URL}}"><time datetime="{{.Datetime}}">{{localTime .Time}}</time></a></li>{{end}}
     </ul>
   </section>
   {{end}}
   {{else}}
-  <p class="muted">Aucun créneau disponible cette semaine.{{if .NextURL}} Essayez la semaine suivante.{{end}}</p>
+  <p class="dl-muted">Aucun créneau disponible cette semaine.{{if .NextURL}} Essayez la semaine suivante.{{end}}</p>
   {{end}}
-  {{if .WaitlistURL}}<p class="waitlist-cta"><a href="{{.WaitlistURL}}" role="button" class="outline secondary">Aucun créneau ne me convient</a></p>{{end}}
+  {{if .WaitlistURL}}<p class="waitlist-cta"><a class="dl-btn dl-btn--outline" href="{{.WaitlistURL}}">Aucun créneau ne me convient</a></p>{{end}}
 </div>

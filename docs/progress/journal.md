@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T064 habillage v2 (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T063 (review → done, validée par l'humain), T064 (todo → review).
+- **Fait** : layouts, en-tête et nav v2 avec `aria-current`, messages `.dl-alert`, tous les boutons en `.dl-btn` (~40 templates), bloc `[data-theme="light"]` dans les jetons, focus pétrole ; classes v1 mortes retirées d'`app.css`.
+- **Revue** : 2 corrections (variable globale `navLinks`, couleur du focus).
+- **Vérification** : `make check` ✅ ; navigateur à 375 et 1280 px, clair et sombre, sur la démo.
+- **Reste / reprise** : valider T064, puis T065, T066, T067 en parallèle (worktrees, templates disjoints ; attention aux deux copies `components.css` si deux agents y ajoutent un composant), puis T068.
+- **Décisions** : liens-boutons sans `role="button"`, `navCurrent` (`decisions.md`, 2026-10-16).
+
 ## 2026-10-16 — Design system v2 et T063 (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : design v2 « Pétrole & papier » dans `design/` (jetons, composants `.dl-*`, aperçus, `MIGRATION.md`) ; migration découpée en T063–T068 ; T063 (todo → review).

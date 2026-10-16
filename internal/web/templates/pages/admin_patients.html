@@ -5,9 +5,9 @@
 <form method="get" action="/admin/patients" role="search">
   <label for="patient-q">Rechercher (nom, prénom, téléphone ou email)</label>
   <input id="patient-q" type="search" name="q" value="{{.Data.Query}}" autocomplete="off">
-  <button type="submit">Rechercher</button>
+  <button class="dl-btn" type="submit">Rechercher</button>
 </form>
-<p><a href="{{.Data.NewURL}}" role="button" class="secondary outline">Nouveau patient</a></p>
+<p><a class="dl-btn dl-btn--outline" href="{{.Data.NewURL}}">Nouveau patient</a></p>
 {{if .Data.Rows}}
 <table>
   <thead><tr><th scope="col">Nom</th><th scope="col">Téléphone</th><th scope="col">Email</th></tr></thead>

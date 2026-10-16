@@ -6,7 +6,7 @@
 {{if .Data.Messages}}
 <div class="overflow-auto">
 <table>
-  <caption class="visually-hidden">Derniers messages</caption>
+  <caption class="dl-visually-hidden">Derniers messages</caption>
   <thead>
     <tr>
       <th scope="col">Date</th>
@@ -31,7 +31,7 @@
         {{if .CanResend}}
         <form method="post" action="/admin/messages/{{.ID}}/resend">
           {{csrf $.CSRF}}
-          <button type="submit" class="secondary outline">Renvoyer</button>
+          <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit">Renvoyer</button>
         </form>
         {{end}}
       </td>

@@ -21,10 +21,10 @@ Toutes les pages partagent le nouvel habillage : en-tête et navigation v2, mess
 - Composant manquant ou inadapté : l'ajouter dans `internal/web/static/components.css` **et** `design/components.css` (jetons sémantiques uniquement), et le signaler dans Suivi.
 
 ## Critères d'acceptation
-- [ ] `grep -rnE 'class="[^"]*\b(flash|form-errors|callout|secondary|outline)\b' internal/web/templates` vide (hors `dev_styleguide.html` v1).
-- [ ] Onglet courant marqué `aria-current="page"` dans la navigation admin (test httptest sur une page).
-- [ ] `make check` vert, aucun `style=` ajouté.
-- [ ] Vérifié dans le navigateur à 360 et 1280 px, clair et sombre, et au clavier (focus visible).
+- [x] `grep -rnE 'class="[^"]*\b(flash|form-errors|callout|secondary|outline)\b' internal/web/templates` vide (hors `dev_styleguide.html` v1).
+- [x] Onglet courant marqué `aria-current="page"` dans la navigation admin (test httptest sur une page).
+- [x] `make check` vert, aucun `style=` ajouté.
+- [x] Vérifié dans le navigateur à 360 et 1280 px, clair et sombre, et au clavier (focus visible).
 
 ## Vérification
 ```bash
@@ -39,8 +39,19 @@ Champs de formulaire et tableaux (T065), parcours patient (T066), agenda et dial
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** :
+  - Layouts `admin`/`public`/`base` en v2 (`.dl-header`, `.dl-brand`, `.dl-nav`, `.dl-header__end`, `.dl-container(--narrow)`, `.dl-footer`, `.dl-skip-link`). Layout public : en-tête, contenu et pied en `--narrow`.
+  - `aria-current="page"` : champ `View.Current` (render.go, `navCurrent(path)` : table locale préfixe → entrée du menu ; `/admin/appointments/*` → Agenda, `/admin/care-plans/*` et `patients/*` → Patients). Tests : `TestAdminNavMarksCurrentPage` (admin_config_test.go), `TestNavCurrent` (mask_internal_test.go).
+  - `flash`, `form_errors` (même `id="form-errors"`), notices des panneaux, `.callout` → `.dl-alert`. `status_button` : id/hx-target inchangés.
+  - Tous les `<button>` et liens `role="button"` → `.dl-btn` (+ `--secondary`/`--outline`/`--danger`/`--sm`) ; `role="button"` retiré des liens. Danger : Supprimer la fiche, Annuler le rendez-vous (détail agenda), Confirmer l'annulation (patient), Révoquer l'abonnement. Boutons de tableaux/panneaux (équipe, motifs, horaires, absences, liste d'attente, messages) et barre d'agenda : `--sm`.
+  - `.visually-hidden`/`.hp`/`.muted`/`.inline-actions`/`.row-actions` → `.dl-*` (templates + `dev_styleguide.html` v1 pour `.muted`/`.inline-actions`).
+  - `app.css` : retrait des règles `.skip-link`, `.flash*`, `.form-errors`, `.callout`, `.visually-hidden`, `.row-actions`, `.inline-actions`, `.muted`, `.hp`, `.site-header/.site-footer`, marge/padding des boutons de `.cal-toolbar` ; `.choice-list`, `.slot-list`, `.week-nav` visent `a.dl-btn` au lieu de `a[role="button"]` (mise en page : T066).
+  - `tokens.css` (+ copie statique, diff vide) : bloc `[data-theme="light"]` (`color-scheme: light` + valeurs claires inchangées).
+  - Fuites Pico corrigées dans `design/components.css` ET `static/components.css` : `.dl-header{padding:0}` (Pico `body>header`), `nav ul.dl-nav{margin:0}` (Pico `nav ul:first-of-type`).
+  - Tests mis à jour : `render_test.go` (flash), `styleguide_test.go` (`dl-alert--*`).
+  - Vérifié dans le navigateur (serveur demo :8090, arrêté) : agenda, motifs, page publique du cabinet, tableau de bord ; clair/sombre, 360 px, 1280 px ; pas de débordement horizontal ; focus clavier visible (règle `app.css` `:focus-visible`, couleur Pico).
+- **Reste à faire** : contrôle visuel humain des autres pages (liste ci-dessous dans le rapport) ; focus : la bague vient encore d'`app.css`/Pico (T068).
+- **Notes de reprise** : le critère grep littéral `\b(outline|secondary)\b` matche aussi `dl-btn--outline`/`--secondary` (le `-` est une frontière de mot) ; vérifié avec `class="[^"]*(^|[ "])(flash|form-errors|callout|secondary|outline)( |")` : vide. Les liens du parcours patient (choix du motif/praticien, créneaux) restent `dl-btn dl-btn--outline` dans les listes, en attendant `.dl-choices`/`.dl-slots` (T066). Le bouton actif Jour/Semaine porte `aria-current` (style `.dl-btn[aria-current]`) en attendant `.dl-segmented` (T067). Sous macOS, `sed -i` exige `-i ''`.
+- **Écarts avec la spécification** : `role="button"` supprimé des liens (sémantique de lien, évite les règles Pico `[role=button]`) ; boutons de ligne « Supprimer »/« Désactiver » en `--outline --sm` et non `--danger` (rouge plein répété dans chaque ligne trop lourd) ; critère 4 (navigateur) non coché : 360/1280 px, clair/sombre et clavier vérifiés sur quelques pages seulement.
+- **Contrôle orchestrateur (2026-10-16)** : deux corrections renvoyées et faites (table `navLinks` globale → table locale à `navCurrent` ; bague de focus d'`app.css` en `--dl-focus`). `make check` relancé ✅ ; `tokens.css` identique à `design/` ; grep des classes v1 vide (motif sans `\b`, cf. ci-dessus) ; aucun `style=`. Navigateur (démo) : cabinet, praticien, créneaux à 375 px clair/sombre, tableau de bord à 375 px sombre, agenda et équipe à 1280 px clair ; pas de débordement, `aria-current` sur « Équipe ». Attendu à ce stade : texte et liens hors composants encore en couleurs Pico (base v2 liée en T068), champs et agenda en mise en page v1 (T065, T067).

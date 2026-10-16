@@ -27,12 +27,13 @@
 .dl-cluster > form { margin: 0; }
 
 /* ── En-tête et navigation ──────────────────────────────────── */
-.dl-header { background: var(--dl-surface); border-bottom: var(--dl-border-width) solid var(--dl-border); }
+.dl-header { background: var(--dl-surface); border-bottom: var(--dl-border-width) solid var(--dl-border); padding: 0; }
 .dl-header__inner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dl-space-2) var(--dl-space-5); padding-block: var(--dl-space-3); }
 .dl-brand { display: inline-flex; align-items: center; gap: var(--dl-space-2); font-weight: var(--dl-weight-bold); font-size: var(--dl-text-lg); color: var(--dl-text); text-decoration: none; }
 .dl-brand__mark { width: 1.75rem; height: 1.75rem; border-radius: var(--dl-radius-md); background: var(--dl-primary); color: var(--dl-on-primary); display: inline-grid; place-items: center; font-size: var(--dl-text-sm); }
 .dl-nav li, .dl-steps li, .dl-choices > li, .dl-slots > li, .dl-cal-list li { margin: 0; padding: 0; list-style: none; }
 .dl-nav { display: flex; flex-wrap: wrap; gap: var(--dl-space-1); list-style: none; margin: 0; padding: 0; }
+nav ul.dl-nav { margin: 0; }  /* Pico : nav ul:first-of-type { margin-left: négatif } */
 .dl-nav a { display: block; padding: var(--dl-space-2) var(--dl-space-3); border-radius: var(--dl-radius-md); color: var(--dl-text-muted); text-decoration: none; font-weight: var(--dl-weight-medium); }
 .dl-nav a:hover { background: var(--dl-surface-2); color: var(--dl-text); }
 .dl-nav a[aria-current="page"] { background: var(--dl-primary-soft); color: var(--dl-primary-soft-fg); }

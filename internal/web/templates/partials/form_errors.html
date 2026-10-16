@@ -1,4 +1,4 @@
-{{if .}}<div class="form-errors" role="alert" id="form-errors">
-  <strong>Le formulaire contient des erreurs :</strong>
+{{if .}}<div class="dl-alert dl-alert--error" role="alert" id="form-errors"><div>
+  <span class="dl-alert__title">Le formulaire contient des erreurs :</span>
   <ul>{{range .}}<li>{{.}}</li>{{end}}</ul>
-</div>{{end}}
+</div></div>{{end}}

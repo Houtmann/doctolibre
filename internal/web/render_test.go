@@ -262,7 +262,7 @@ func TestFlashRoundTrip(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	body := rec.Body.String()
-	if !strings.Contains(body, `class="flash flash-success"`) || !strings.Contains(body, "Rendez-vous &lt;confirmé&gt;") {
+	if !strings.Contains(body, `class="dl-alert dl-alert--success"`) || !strings.Contains(body, "Rendez-vous &lt;confirmé&gt;") {
 		t.Errorf("flash non rendu/échappé: %q", body)
 	}
 	cleared := false

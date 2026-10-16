@@ -17,10 +17,10 @@
   {{template "patient_fields.html" .Data.Form}}
   {{if .Data.Duplicates}}
   <input type="hidden" name="force" value="1">
-  <button type="submit">Créer quand même</button>
+  <button class="dl-btn" type="submit">Créer quand même</button>
   {{else}}
-  <button type="submit">Créer la fiche</button>
+  <button class="dl-btn" type="submit">Créer la fiche</button>
   {{end}}
-  <a href="/admin/patients" role="button" class="secondary outline">Annuler</a>
+  <a class="dl-btn dl-btn--outline" href="/admin/patients">Annuler</a>
 </form>
 {{end}}

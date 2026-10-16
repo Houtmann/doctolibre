@@ -21,3 +21,22 @@ func TestMaskRecipient(t *testing.T) {
 		}
 	}
 }
+
+func TestNavCurrent(t *testing.T) {
+	t.Parallel()
+	tests := []struct{ path, want string }{
+		{"/admin/calendar", "/admin/calendar"},
+		{"/admin/appointments/abc", "/admin/calendar"},
+		{"/admin/patients/abc", "/admin/patients"},
+		{"/admin/patients/abc/care-plans/new", "/admin/patients"},
+		{"/admin/appointment-types", "/admin/appointment-types"},
+		{"/admin/appointment-typesx", ""},
+		{"/admin", ""},
+		{"/p/cabinet", ""},
+	}
+	for _, tt := range tests {
+		if got := navCurrent(tt.path); got != tt.want {
+			t.Errorf("navCurrent(%q) = %q, attendu %q", tt.path, got, tt.want)
+		}
+	}
+}

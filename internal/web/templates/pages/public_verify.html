@@ -11,11 +11,11 @@
   <input type="hidden" name="challenge_id" value="{{.Data.ChallengeID}}">
   <label for="code">Code de vérification</label>
   <input id="code" name="code" type="text" inputmode="numeric" pattern="[0-9 ]{6,8}" maxlength="8" autocomplete="one-time-code" required autofocus>
-  <button type="submit">Confirmer le rendez-vous</button>
+  <button class="dl-btn" type="submit">Confirmer le rendez-vous</button>
 </form>
 <form method="post" action="{{.Data.ResendURL}}" class="resend">
   {{csrf .CSRF}}
   {{template "booking_hidden.html" .Data}}
-  <button type="submit" class="outline secondary">Recevoir un nouveau code</button>
+  <button class="dl-btn dl-btn--outline" type="submit">Recevoir un nouveau code</button>
 </form>
 {{end}}

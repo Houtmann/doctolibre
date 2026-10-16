@@ -1,8 +1,8 @@
 <div id="types-panel">
-  {{if .Notice}}<div class="flash flash-success" role="status">{{.Notice}}</div>{{end}}
+  {{if .Notice}}<div class="dl-alert dl-alert--success" role="status">{{.Notice}}</div>{{end}}
   {{template "form_errors.html" .Errors}}
   <table>
-    <caption class="visually-hidden">Motifs du cabinet</caption>
+    <caption class="dl-visually-hidden">Motifs du cabinet</caption>
     <thead>
       <tr><th scope="col">Motif</th><th scope="col">Durée</th><th scope="col">Marges</th><th scope="col">Options</th><th scope="col">Actions</th></tr>
     </thead>
@@ -13,23 +13,23 @@
         <td>{{.Duration}} min</td>
         <td>{{.Before}} / {{.After}} min</td>
         <td>{{if .Online}}Réservable en ligne{{else}}Cabinet uniquement{{end}}{{if .AtHome}}, à domicile{{end}}</td>
-        <td class="row-actions">
+        <td class="dl-cluster">
           <a href="/admin/appointment-types/{{.ID}}" hx-get="/admin/appointment-types/{{.ID}}" hx-target="#types-panel" hx-swap="outerHTML">Modifier</a>
           {{if not .First}}
           <form method="post" action="/admin/appointment-types/{{.ID}}/move" hx-post="/admin/appointment-types/{{.ID}}/move" hx-target="#types-panel" hx-swap="outerHTML">
             {{csrf $.CSRF}}<input type="hidden" name="dir" value="up">
-            <button type="submit" class="outline secondary" aria-label="Monter {{.Name}}">↑</button>
+            <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit" aria-label="Monter {{.Name}}">↑</button>
           </form>
           {{end}}
           {{if not .Last}}
           <form method="post" action="/admin/appointment-types/{{.ID}}/move" hx-post="/admin/appointment-types/{{.ID}}/move" hx-target="#types-panel" hx-swap="outerHTML">
             {{csrf $.CSRF}}<input type="hidden" name="dir" value="down">
-            <button type="submit" class="outline secondary" aria-label="Descendre {{.Name}}">↓</button>
+            <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit" aria-label="Descendre {{.Name}}">↓</button>
           </form>
           {{end}}
           <form method="post" action="/admin/appointment-types/{{.ID}}/active" hx-post="/admin/appointment-types/{{.ID}}/active" hx-target="#types-panel" hx-swap="outerHTML">
             {{csrf $.CSRF}}<input type="hidden" name="active" value="{{if .Active}}0{{else}}1{{end}}">
-            <button type="submit" class="outline secondary">{{if .Active}}Désactiver{{else}}Réactiver{{end}}</button>
+            <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit">{{if .Active}}Désactiver{{else}}Réactiver{{end}}</button>
           </form>
         </td>
       </tr>
@@ -67,7 +67,7 @@
     <label><input type="checkbox" name="online_bookable" value="1"{{if .OnlineBookable}} checked{{end}}> Réservable en ligne par les patients</label>
     <label><input type="checkbox" name="at_home" value="1"{{if .AtHome}} checked{{end}}> Séance à domicile</label>
     {{end}}
-    <button type="submit">{{if .EditID}}Enregistrer{{else}}Ajouter le motif{{end}}</button>
-    {{if .EditID}}<a href="/admin/appointment-types" role="button" class="secondary outline" hx-get="/admin/appointment-types" hx-target="#types-panel" hx-swap="outerHTML">Annuler</a>{{end}}
+    <button class="dl-btn dl-btn--sm" type="submit">{{if .EditID}}Enregistrer{{else}}Ajouter le motif{{end}}</button>
+    {{if .EditID}}<a class="dl-btn dl-btn--outline dl-btn--sm" href="/admin/appointment-types" hx-get="/admin/appointment-types" hx-target="#types-panel" hx-swap="outerHTML">Annuler</a>{{end}}
   </form>
 </div>

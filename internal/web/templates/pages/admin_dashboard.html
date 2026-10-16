@@ -7,7 +7,7 @@
 <section aria-labelledby="booking-page">
   <h2 id="booking-page">Votre page de réservation</h2>
   {{if or .NeedAvailability .NeedType}}
-  <aside class="callout" aria-label="Configuration à terminer">
+  <aside class="dl-alert dl-alert--info" aria-label="Configuration à terminer">
     <p><strong>Pour que les patients puissent réserver :</strong></p>
     <ul>
       {{if .NeedAvailability}}<li>{{if .CanConfigure}}<a href="/admin/availability">Définissez vos horaires d'ouverture</a>{{else}}Définir les horaires d'ouverture (praticien ou administrateur){{end}}</li>{{end}}

@@ -5,7 +5,7 @@
 {{template "booking_summary.html" .Data.Summary}}
 <form method="post" action="{{.Data.Action}}">
   {{csrf .CSRF}}
-  <button type="submit" class="secondary">Confirmer l'annulation</button>
+  <button class="dl-btn dl-btn--danger" type="submit">Confirmer l'annulation</button>
 </form>
 <p><a href="{{.Data.BackURL}}">Conserver mon rendez-vous</a></p>
 {{end}}

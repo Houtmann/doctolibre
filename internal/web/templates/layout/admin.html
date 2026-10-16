@@ -1,33 +1,33 @@
 {{define "chrome"}}
-<header class="container site-header">
-  <nav aria-label="Navigation du cabinet">
-    <ul><li><a class="brand" href="/admin">Doctolibre</a></li></ul>
-    <ul>
-      {{block "admin_nav" .}}
-      <li><a href="/admin/calendar">Agenda</a></li>
-      <li><a href="/admin/patients">Patients</a></li>
-      <li><a href="/admin/waitlist">Liste d'attente</a></li>
-      {{if ne .Role "secretary"}}
-      <li><a href="/admin/availability">Horaires</a></li>
-      <li><a href="/admin/absences">Absences</a></li>
-      <li><a href="/admin/appointment-types">Motifs</a></li>
-      <li><a href="/admin/settings">Paramètres</a></li>
-      {{end}}
-      {{if eq .Role "admin"}}
-      <li><a href="/admin/privacy">Confidentialité</a></li>
-      <li><a href="/admin/team">Équipe</a></li>
-      {{end}}
-      {{end}}
-      <li>
-        <form method="post" action="/admin/logout">
-          {{csrf .CSRF}}
-          <button type="submit" class="secondary outline">Se déconnecter</button>
-        </form>
-      </li>
-    </ul>
-  </nav>
+<header class="dl-header">
+  <div class="dl-container dl-header__inner">
+    <a class="dl-brand" href="/admin"><span class="dl-brand__mark" aria-hidden="true">D</span>Doctolibre</a>
+    <nav aria-label="Navigation du cabinet">
+      <ul class="dl-nav">
+        {{block "admin_nav" .}}
+        <li><a href="/admin/calendar"{{if eq .Current "/admin/calendar"}} aria-current="page"{{end}}>Agenda</a></li>
+        <li><a href="/admin/patients"{{if eq .Current "/admin/patients"}} aria-current="page"{{end}}>Patients</a></li>
+        <li><a href="/admin/waitlist"{{if eq .Current "/admin/waitlist"}} aria-current="page"{{end}}>Liste d'attente</a></li>
+        {{if ne .Role "secretary"}}
+        <li><a href="/admin/availability"{{if eq .Current "/admin/availability"}} aria-current="page"{{end}}>Horaires</a></li>
+        <li><a href="/admin/absences"{{if eq .Current "/admin/absences"}} aria-current="page"{{end}}>Absences</a></li>
+        <li><a href="/admin/appointment-types"{{if eq .Current "/admin/appointment-types"}} aria-current="page"{{end}}>Motifs</a></li>
+        <li><a href="/admin/settings"{{if eq .Current "/admin/settings"}} aria-current="page"{{end}}>Paramètres</a></li>
+        {{end}}
+        {{if eq .Role "admin"}}
+        <li><a href="/admin/privacy"{{if eq .Current "/admin/privacy"}} aria-current="page"{{end}}>Confidentialité</a></li>
+        <li><a href="/admin/team"{{if eq .Current "/admin/team"}} aria-current="page"{{end}}>Équipe</a></li>
+        {{end}}
+        {{end}}
+      </ul>
+    </nav>
+    <form class="dl-header__end" method="post" action="/admin/logout">
+      {{csrf .CSRF}}
+      <button type="submit" class="dl-btn dl-btn--outline dl-btn--sm">Se déconnecter</button>
+    </form>
+  </div>
 </header>
-<main id="main" class="container">
+<main id="main" class="dl-container">
   {{template "flash.html" .Flash}}
   {{block "content" .}}{{end}}
 </main>

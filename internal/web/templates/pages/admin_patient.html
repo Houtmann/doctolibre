@@ -8,7 +8,7 @@
 <form method="post" action="/admin/patients/{{.Data.ID}}">
   {{csrf .CSRF}}
   {{template "patient_fields.html" .Data.Form}}
-  <button type="submit">Enregistrer</button>
+  <button class="dl-btn" type="submit">Enregistrer</button>
 </form>
 
 <h2>Rendez-vous à venir</h2>
@@ -19,7 +19,7 @@
 {{else}}<p>Aucun rendez-vous à venir.</p>{{end}}
 
 <h2>Séries de séances</h2>
-<p><a role="button" class="secondary outline" href="/admin/patients/{{.Data.ID}}/care-plans/new">Nouvelle série</a></p>
+<p><a class="dl-btn dl-btn--outline" href="/admin/patients/{{.Data.ID}}/care-plans/new">Nouvelle série</a></p>
 {{range .Data.Plans}}{{$plan := .}}
 <article>
   <h3>{{if .Label}}{{.Label}}{{else}}Série de séances{{end}} <small>({{.StatusLabel}})</small></h3>
@@ -29,13 +29,13 @@
     {{range .Sessions}}<li><a href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a>{{if .Ordinal}} — séance {{.Ordinal}}/{{$plan.Prescribed}}{{end}} ({{.StatusLabel}})</li>{{end}}
   </ul>
   {{end}}
-  <form method="post" action="/admin/care-plans/{{.ID}}/status" class="inline-actions">
+  <form method="post" action="/admin/care-plans/{{.ID}}/status" class="dl-cluster">
     {{csrf $.CSRF}}
     {{if .Active}}
-    <button type="submit" name="status" value="completed" class="secondary outline">Terminer la série</button>
-    <button type="submit" name="status" value="cancelled" class="secondary outline">Abandonner la série</button>
+    <button class="dl-btn dl-btn--outline" type="submit" name="status" value="completed">Terminer la série</button>
+    <button class="dl-btn dl-btn--outline" type="submit" name="status" value="cancelled">Abandonner la série</button>
     {{else}}
-    <button type="submit" name="status" value="active" class="secondary outline">Rouvrir la série</button>
+    <button class="dl-btn dl-btn--outline" type="submit" name="status" value="active">Rouvrir la série</button>
     {{end}}
   </form>
   <small>Terminer ou abandonner ne modifie pas les rendez-vous déjà planifiés.</small>
@@ -57,7 +57,7 @@
   {{csrf .CSRF}}
   <p>Droit à l'effacement : le nom, les coordonnées, la note et l'adresse sont effacés. Les rendez-vous passés sont conservés sans identité pour les statistiques. Cette action est irréversible ; les rendez-vous à venir doivent d'abord être annulés.</p>
   <label><input type="checkbox" name="confirm" value="1" required> Je confirme la suppression de cette fiche</label>
-  <button type="submit" class="secondary">Supprimer la fiche</button>
+  <button class="dl-btn dl-btn--danger" type="submit">Supprimer la fiche</button>
 </form>
 {{end}}
 
@@ -66,7 +66,7 @@
 <form method="get" action="/admin/patients/{{.Data.ID}}" role="search">
   <label for="merge-q">Rechercher la fiche à conserver</label>
   <input id="merge-q" type="search" name="mq" value="{{.Data.MergeQuery}}" autocomplete="off">
-  <button type="submit" class="secondary outline">Rechercher</button>
+  <button class="dl-btn dl-btn--outline" type="submit">Rechercher</button>
 </form>
 {{if .Data.Candidates}}
 <form method="post" action="/admin/patients/{{.Data.ID}}/merge">
@@ -77,7 +77,7 @@
     <label><input type="radio" name="into" value="{{.ID}}" required> {{.Name}} <small>{{.Phone}} {{.Email}}</small></label>
     {{end}}
   </fieldset>
-  <button type="submit" class="secondary">Fusionner dans la fiche choisie</button>
+  <button class="dl-btn dl-btn--secondary" type="submit">Fusionner dans la fiche choisie</button>
 </form>
 {{else if .Data.MergeQuery}}<p><small>Aucune autre fiche trouvée.</small></p>{{end}}
 {{end}}

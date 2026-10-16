@@ -35,7 +35,7 @@ func TestStyleguideDev(t *testing.T) {
 	}
 	body := rec.Body.String()
 	for _, want := range []string{
-		"flash-success", "flash-warning", "st-no_show", "st-cancelled", "form-errors",
+		"dl-alert--success", "dl-alert--warning", "st-no_show", "st-cancelled", "form-errors",
 		"sw-st-done", "booking-summary", "patient-results",
 	} {
 		if !strings.Contains(body, want) {

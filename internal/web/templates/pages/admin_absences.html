@@ -3,12 +3,12 @@
 {{define "content"}}
 <h1>Absences</h1>
 {{with .Data.Switch}}
-<form method="get" action="{{.Action}}" class="inline-actions" role="search">
+<form method="get" action="{{.Action}}" class="dl-cluster" role="search">
   <label for="practitioner-select">Praticien</label>
   <select id="practitioner-select" name="practitioner">
     {{range .Options}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
   </select>
-  <button type="submit" class="secondary outline">Afficher</button>
+  <button class="dl-btn dl-btn--outline" type="submit">Afficher</button>
 </form>
 {{end}}
 {{template "absences_panel.html" .Data}}

@@ -37,13 +37,13 @@
     <label><input type="checkbox" name="email_opt_in" value="on"{{if .Data.Form.EmailOptIn}} checked{{end}}> Je souhaite recevoir des messages par email</label>
   </fieldset>
 
-  <div class="hp" aria-hidden="true">
+  <div class="dl-hp" aria-hidden="true">
     <label for="website">Ne pas remplir ce champ</label>
     <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
   </div>
 
   <label><input type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> J'accepte que mes coordonnées soient utilisées par le cabinet pour gérer ce rendez-vous.</label>
   <p><small>N'indiquez aucune information médicale. Ce service sert uniquement à fixer un rendez-vous.</small></p>
-  <button type="submit">Recevoir mon code</button>
+  <button class="dl-btn" type="submit">Recevoir mon code</button>
 </form>
 {{end}}

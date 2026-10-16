@@ -17,11 +17,11 @@
 
 ## En cours
 
-En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system), T063 (socle design v2 + `/dev/styleguide/v2`).
+En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system), T064 (habillage v2 : en-tête, messages, boutons). T063 `done`.
 
 ## Prochaine action
 
-1. Design v2 : après validation de T063, T064 (habillage général) puis T065/T066/T067 en parallèle, puis T068 (retrait de Pico). T057 et T061 à faire après T064.
+1. Design v2 : après validation de T064, T065/T066/T067 en parallèle, puis T068 (retrait de Pico). T057 et T061 à faire après T064.
 2. Relire et passer en `done` T050 (débloque T051, T055), T052, T058, T062 (débloque T057, T061). Prêtes en parallèle : T053, T054, T056, T059, T060 (attention aux numéros de migration : 00020 et suivants, un seul agent à la fois sur `sqlc`).
 3. Passage navigateur : rendu 360 px de toutes les pages, agenda au clavier, vue jour à 4 praticiens à 1280 px (critère T033 non coché) ; `/dev/styleguide` sert de page de contrôle.
 4. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
@@ -57,4 +57,4 @@ En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours 
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 19 | 0 | 5 |
+| 5 — Retours terrain | 19 | 1 | 5 |

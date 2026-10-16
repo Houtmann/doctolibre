@@ -14,13 +14,13 @@
     <tr{{if not .Active}} class="is-inactive"{{end}}>
       <td>{{.Email}}{{if .Name}}<br><small>{{.Name}}</small>{{end}}{{if .Self}} <small>(vous)</small>{{end}}{{if not .Active}}<br><small>Désactivé</small>{{end}}</td>
       <td>
-        <form method="post" action="/admin/team/{{.ID}}/role" class="inline-actions">
+        <form method="post" action="/admin/team/{{.ID}}/role" class="dl-cluster">
           {{csrf $.CSRF}}
-          <label class="visually-hidden" for="role-{{.ID}}">Rôle de {{.Email}}</label>
+          <label class="dl-visually-hidden" for="role-{{.ID}}">Rôle de {{.Email}}</label>
           <select id="role-{{.ID}}" name="role">
             {{range .Roles}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
           </select>
-          <button type="submit" class="secondary outline">Changer</button>
+          <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit">Changer</button>
         </form>
       </td>
       <td>{{if .LastLogin.IsZero}}Jamais{{else}}{{formatDate .LastLogin}}{{end}}</td>
@@ -30,14 +30,14 @@
           <form method="post" action="/admin/team/{{.ID}}/active">
             {{csrf $.CSRF}}
             <input type="hidden" name="active" value="0">
-            <button type="submit" class="outline secondary" aria-label="Désactiver {{.Email}}">Désactiver</button>
+            <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit" aria-label="Désactiver {{.Email}}">Désactiver</button>
           </form>
           {{end}}
         {{else}}
         <form method="post" action="/admin/team/{{.ID}}/active">
           {{csrf $.CSRF}}
           <input type="hidden" name="active" value="1">
-          <button type="submit" class="outline secondary" aria-label="Réactiver {{.Email}}">Réactiver</button>
+          <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit" aria-label="Réactiver {{.Email}}">Réactiver</button>
         </form>
         {{end}}
       </td>
@@ -54,7 +54,7 @@
     {{.Email}} ({{.RoleLabel}}) <small>expire le {{formatDate .ExpiresAt}} à {{formatTime .ExpiresAt}}</small>
     <form method="post" action="/admin/team/invitations/{{.ID}}/revoke">
       {{csrf $.CSRF}}
-      <button type="submit" class="outline secondary" aria-label="Annuler l'invitation de {{.Email}}">Annuler</button>
+      <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit" aria-label="Annuler l'invitation de {{.Email}}">Annuler</button>
     </form>
   </li>
   {{end}}
@@ -71,6 +71,6 @@
     {{range .Data.Roles}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
   </select>
   <small>Praticien : son agenda et ses horaires. Secrétariat : tous les agendas et les patients, pas les réglages. Administrateur : tout. Un email avec un lien d'activation valable 48 heures est envoyé.</small>
-  <button type="submit">Envoyer l'invitation</button>
+  <button class="dl-btn dl-btn--sm" type="submit">Envoyer l'invitation</button>
 </form>
 {{end}}

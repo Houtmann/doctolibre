@@ -33,13 +33,13 @@
     <input type="hidden" name="appointment_id" value="{{$.D.ID}}">
     <input type="hidden" name="date" value="{{.Date}}">
     <input type="hidden" name="time" value="{{.Time}}">
-    <button type="submit">Planifier cette séance</button>
+    <button class="dl-btn" type="submit">Planifier cette séance</button>
   </form>
   {{end}}{{end}}
 
   {{if ne .D.Status "cancelled"}}
   <h3>Statut</h3>
-  <div class="inline-actions">
+  <div class="dl-cluster">
     {{if ne .D.Status "done"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "done" "Label" "Marquer honoré")}}{{end}}
     {{if ne .D.Status "no_show"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "no_show" "Label" "Marquer absent")}}{{end}}
     {{if ne .D.Status "booked"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "booked" "Label" "Remettre à venir")}}{{end}}
@@ -65,7 +65,7 @@
       <input id="move-force" type="checkbox" name="force" value="1"{{if .Move.Force}} checked{{end}}>
       Hors horaires (autoriser en dehors des disponibilités)
     </label>
-    <button type="submit">Déplacer</button>
+    <button class="dl-btn" type="submit">Déplacer</button>
   </form>
   {{end}}
 
@@ -77,9 +77,9 @@
     <input type="hidden" name="view" value="{{.View}}">
     <label for="cancel-reason">Motif de l'annulation (facultatif, visible du cabinet uniquement)</label>
     <input id="cancel-reason" name="reason" value="{{.Reason}}" maxlength="200">
-    <button type="submit" class="secondary">Annuler le rendez-vous</button>
+    <button class="dl-btn dl-btn--danger" type="submit">Annuler le rendez-vous</button>
   </form>
   {{end}}
 
-  <p><a role="button" class="secondary outline" href="/admin/calendar">Fermer</a></p>
+  <p><a class="dl-btn dl-btn--outline" href="/admin/calendar">Fermer</a></p>
 </div>

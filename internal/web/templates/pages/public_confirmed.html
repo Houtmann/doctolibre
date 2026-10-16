@@ -10,13 +10,13 @@
   <p>{{.Data.Practice.Name}}{{if .Data.Practice.Address}}<br>{{.Data.Practice.Address}}{{end}}{{if .Data.Practice.Phone}}<br>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}</p>
 </article>
 {{if .Data.Cancelled}}
-<p><a href="{{.Data.RebookURL}}" role="button">Reprendre rendez-vous</a></p>
+<p><a class="dl-btn" href="{{.Data.RebookURL}}">Reprendre rendez-vous</a></p>
 {{else}}
-<p><a href="{{.Data.ICSURL}}" role="button">Ajouter à mon agenda</a></p>
+<p><a class="dl-btn" href="{{.Data.ICSURL}}">Ajouter à mon agenda</a></p>
 {{if .Data.Changeable}}
 <p class="actions">
-  <a href="{{.Data.ManageURL}}/reschedule" role="button" class="outline">Déplacer le rendez-vous</a>
-  <a href="{{.Data.ManageURL}}/cancel" role="button" class="outline secondary">Annuler le rendez-vous</a>
+  <a class="dl-btn dl-btn--outline" href="{{.Data.ManageURL}}/reschedule">Déplacer le rendez-vous</a>
+  <a class="dl-btn dl-btn--outline" href="{{.Data.ManageURL}}/cancel">Annuler le rendez-vous</a>
 </p>
 {{else}}
 <p><small>Ce rendez-vous ne peut plus être déplacé ni annulé en ligne (délai de {{formatDuration .Data.MinCancel}}){{if .Data.Practice.Phone}} : appelez le cabinet au <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}.</small></p>

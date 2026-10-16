@@ -63,21 +63,21 @@
       {{range .Data.Lines}}
       <tr>
         <th scope="row">{{.Row}}</th>
-        <td><label class="visually-hidden" for="cp-d{{.Row}}">Date de la séance {{.Row}}</label>
+        <td><label class="dl-visually-hidden" for="cp-d{{.Row}}">Date de la séance {{.Row}}</label>
           <input id="cp-d{{.Row}}" name="line_date" type="date" value="{{.Date}}"{{if eq .Row $conflict}} aria-invalid="true"{{end}}></td>
-        <td><label class="visually-hidden" for="cp-t{{.Row}}">Heure de la séance {{.Row}}</label>
+        <td><label class="dl-visually-hidden" for="cp-t{{.Row}}">Heure de la séance {{.Row}}</label>
           <input id="cp-t{{.Row}}" name="line_time" type="time" step="300" value="{{.Time}}"{{if eq .Row $conflict}} aria-invalid="true"{{end}}></td>
       </tr>
       {{end}}
     </tbody>
   </table>
   <small>Une ligne vide est ignorée. « Recalculer » remplace vos ajustements par une nouvelle proposition.</small>
-  <div class="inline-actions">
-    <button type="submit" class="secondary outline">Recalculer la proposition</button>
-    <button type="submit" formaction="/admin/patients/{{.Data.PatientID}}/care-plans">Valider la série</button>
+  <div class="dl-cluster">
+    <button class="dl-btn dl-btn--outline" type="submit">Recalculer la proposition</button>
+    <button class="dl-btn" type="submit" formaction="/admin/patients/{{.Data.PatientID}}/care-plans">Valider la série</button>
   </div>
   {{else}}
-  <button type="submit">Proposer les séances</button>
+  <button class="dl-btn" type="submit">Proposer les séances</button>
   {{end}}
 </form>
 {{end}}

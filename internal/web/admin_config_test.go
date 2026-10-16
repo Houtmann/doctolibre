@@ -262,3 +262,18 @@ func TestAbsencesPage(t *testing.T) {
 	rec = c.doHX("POST", "/admin/absences/"+id[1]+"/delete", url.Values{})
 	mustContain(t, rec, 200, `id="absences-panel"`, "Absence supprimée.", "Aucune absence à venir.")
 }
+
+func TestAdminNavMarksCurrentPage(t *testing.T) {
+	t.Parallel()
+	_, c := newConfigAdmin(t, domain.RoleAdmin)
+
+	rec := c.do("GET", "/admin/settings", nil)
+	mustContain(t, rec, 200, `<a href="/admin/settings" aria-current="page">Paramètres</a>`, `class="dl-nav"`, `class="dl-btn dl-btn--outline dl-btn--sm"`)
+	if n := strings.Count(rec.Body.String(), `aria-current="page"`); n != 1 {
+		t.Fatalf("aria-current=page: %d occurrences, attendu 1", n)
+	}
+	// Le tableau de bord n'a pas d'entrée courante.
+	if rec := c.do("GET", "/admin", nil); strings.Contains(rec.Body.String(), `aria-current="page"`) {
+		t.Fatal("aria-current inattendu sur le tableau de bord")
+	}
+}

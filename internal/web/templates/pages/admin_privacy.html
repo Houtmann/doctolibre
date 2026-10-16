@@ -25,7 +25,7 @@
     <small>Affiché sur la <a href="/p/{{$.Data.Slug}}/privacy">page d'information publique</a>. À défaut, le téléphone du cabinet est affiché.</small>
   </fieldset>
   {{end}}
-  <button type="submit">Enregistrer</button>
+  <button class="dl-btn" type="submit">Enregistrer</button>
 </form>
 
 <h2>Patients qui seraient anonymisés</h2>
@@ -34,7 +34,7 @@
 <p><strong>{{.Data.Preview.Total}}</strong> patient(s) concerné(s){{if gt .Data.Preview.Total 50}} (50 affichés){{end}}.</p>
 <div class="overflow-auto">
 <table>
-  <caption class="visually-hidden">Patients inactifs</caption>
+  <caption class="dl-visually-hidden">Patients inactifs</caption>
   <thead><tr><th scope="col">Patient</th><th scope="col">Dernière activité</th></tr></thead>
   <tbody>
     {{range .Data.Preview.Candidates}}

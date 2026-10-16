@@ -49,6 +49,32 @@ type View struct {
 	// Role est le rôle de l'utilisateur connecté ("" hors espace du cabinet) :
 	// le menu de l'administration n'affiche que ce qu'il peut utiliser.
 	Role string
+	// Current est le lien du menu d'administration correspondant à la page
+	// affichée ("" si aucun) : il porte aria-current="page".
+	Current string
+}
+
+// navCurrent retourne l'entrée du menu d'administration pour un chemin.
+func navCurrent(path string) string {
+	// L'ordre compte : le premier préfixe qui correspond gagne.
+	for _, n := range [...]struct{ prefix, link string }{
+		{"/admin/calendar", "/admin/calendar"},
+		{"/admin/appointments", "/admin/calendar"},
+		{"/admin/patients", "/admin/patients"},
+		{"/admin/care-plans", "/admin/patients"},
+		{"/admin/waitlist", "/admin/waitlist"},
+		{"/admin/availability", "/admin/availability"},
+		{"/admin/absences", "/admin/absences"},
+		{"/admin/appointment-types", "/admin/appointment-types"},
+		{"/admin/settings", "/admin/settings"},
+		{"/admin/privacy", "/admin/privacy"},
+		{"/admin/team", "/admin/team"},
+	} {
+		if path == n.prefix || strings.HasPrefix(path, n.prefix+"/") {
+			return n.link
+		}
+	}
+	return ""
 }
 
 // roleOf retourne le rôle de l'utilisateur connecté de la requête.
@@ -252,7 +278,7 @@ func (r *Renderer) PageStatus(w http.ResponseWriter, req *http.Request, status i
 		r.fail(w, req, "page inconnue", fmt.Errorf("page %q", name))
 		return
 	}
-	v := View{CSRF: httpx.CSRFToken(req.Context()), Flash: r.takeFlash(w, req), Data: data, Role: roleOf(req)}
+	v := View{CSRF: httpx.CSRFToken(req.Context()), Flash: r.takeFlash(w, req), Data: data, Role: roleOf(req), Current: navCurrent(req.URL.Path)}
 	r.write(w, req, status, t, "base.html", v)
 
 }

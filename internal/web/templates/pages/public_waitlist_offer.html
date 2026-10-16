@@ -11,7 +11,7 @@
 <p>Le premier à confirmer l'obtient. Cette proposition est valable jusqu'à {{localTime .Data.ExpiresAt}}.</p>
 <form method="post" action="{{.Data.Action}}">
   {{csrf .CSRF}}
-  <button type="submit">Réserver ce créneau</button>
+  <button class="dl-btn" type="submit">Réserver ce créneau</button>
 </form>
 {{else if eq .Data.Reason "taken"}}
 <p role="alert">Ce créneau vient d'être pris par une autre personne. Vous restez sur la liste d'attente : nous vous préviendrons si un autre créneau correspondant se libère.</p>

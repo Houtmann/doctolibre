@@ -1,5 +1,5 @@
 <div id="absences-panel">
-  {{if .Notice}}<div class="flash flash-success" role="status">{{.Notice}}</div>{{end}}
+  {{if .Notice}}<div class="dl-alert dl-alert--success" role="status">{{.Notice}}</div>{{end}}
   {{template "form_errors.html" .Errors}}
 
   <h2>Absences à venir</h2>
@@ -15,7 +15,7 @@
       {{if .Reason}}<small>({{.Reason}})</small>{{end}}
       <form method="post" action="/admin/absences/{{.ID}}/delete{{$.Q}}" hx-post="/admin/absences/{{.ID}}/delete{{$.Q}}" hx-target="#absences-panel" hx-swap="outerHTML">
         {{csrf $.CSRF}}
-        <button type="submit" class="outline secondary">Supprimer</button>
+        <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit">Supprimer</button>
       </form>
     </li>
     {{end}}
@@ -52,6 +52,6 @@
     <label for="abs-reason">Motif (facultatif, visible du cabinet uniquement)</label>
     <input id="abs-reason" name="reason" value="{{.Reason}}" maxlength="200">
     {{end}}
-    <button type="submit">Ajouter l'absence</button>
+    <button class="dl-btn dl-btn--sm" type="submit">Ajouter l'absence</button>
   </form>
 </div>

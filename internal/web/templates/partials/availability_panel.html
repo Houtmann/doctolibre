@@ -1,5 +1,5 @@
 <div id="availability-panel">
-  {{if .Notice}}<div class="flash flash-success" role="status">{{.Notice}}</div>{{end}}
+  {{if .Notice}}<div class="dl-alert dl-alert--success" role="status">{{.Notice}}</div>{{end}}
   {{template "form_errors.html" .Errors}}
 
   <div class="week-grid">
@@ -14,7 +14,7 @@
           {{if not .AllTypes}}<small>({{range $i, $n := .TypeNames}}{{if $i}}, {{end}}{{$n}}{{end}})</small>{{end}}
           <form method="post" action="/admin/availability/{{.ID}}/delete{{$.Q}}" hx-post="/admin/availability/{{.ID}}/delete{{$.Q}}" hx-target="#availability-panel" hx-swap="outerHTML">
             {{csrf $.CSRF}}
-            <button type="submit" class="outline secondary" aria-label="Supprimer la plage de {{.Start}} à {{.End}} du {{weekdayName .Weekday}}">Supprimer</button>
+            <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit" aria-label="Supprimer la plage de {{.Start}} à {{.End}} du {{weekdayName .Weekday}}">Supprimer</button>
           </form>
         </li>
         {{end}}
@@ -57,6 +57,6 @@
       <label><input type="checkbox" name="type" value="{{.ID}}"{{if .Checked}} checked{{end}}> {{.Name}}</label>
       {{end}}
     </fieldset>
-    <button type="submit">Ajouter</button>
+    <button class="dl-btn dl-btn--sm" type="submit">Ajouter</button>
   </form>
 </div>

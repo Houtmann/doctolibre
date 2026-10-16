@@ -8,7 +8,7 @@
 {{if .Data.Types}}
 <ul class="choice-list">
   {{range .Data.Types}}
-  <li><a href="{{.URL}}" role="button" class="outline">{{.Name}} <small>({{formatDuration .Duration}})</small></a></li>
+  <li><a class="dl-btn dl-btn--outline" href="{{.URL}}">{{.Name}} <small>({{formatDuration .Duration}})</small></a></li>
   {{end}}
 </ul>
 {{else}}

@@ -50,7 +50,7 @@
     <small id="slug-help">Lettres minuscules, chiffres et tirets.</small>
   </fieldset>
   {{end}}
-  <button type="submit">Enregistrer</button>
+  <button class="dl-btn" type="submit">Enregistrer</button>
 </form>
 {{with .Data.Feed}}
 <section aria-labelledby="feed-title">
@@ -64,17 +64,17 @@
     {{csrf $.CSRF}}
     <label for="feed-full-names"><input id="feed-full-names" type="checkbox" name="full_names" value="1"{{if .FullNames}} checked{{end}}> Afficher le nom complet des patients</label>
     <small>Par défaut, seuls les initiales et le motif sont publiés. Avec cette option, les noms transitent par le service d'agenda qui lit le flux (Google, Apple…).</small>
-    <button type="submit">{{if .Enabled}}Générer un nouveau lien (l'ancien cesse de fonctionner){{else}}Activer l'abonnement{{end}}</button>
+    <button class="dl-btn" type="submit">{{if .Enabled}}Générer un nouveau lien (l'ancien cesse de fonctionner){{else}}Activer l'abonnement{{end}}</button>
   </form>
   {{if .Enabled}}
   <form method="post" action="/admin/settings/feed/options">
     {{csrf $.CSRF}}
     <label for="feed-full-names-2"><input id="feed-full-names-2" type="checkbox" name="full_names" value="1"{{if .FullNames}} checked{{end}}> Afficher le nom complet des patients</label>
-    <button type="submit" class="secondary">Enregistrer l'option sans changer le lien</button>
+    <button class="dl-btn dl-btn--secondary" type="submit">Enregistrer l'option sans changer le lien</button>
   </form>
   <form method="post" action="/admin/settings/feed/revoke">
     {{csrf $.CSRF}}
-    <button type="submit" class="secondary">Révoquer l'abonnement</button>
+    <button class="dl-btn dl-btn--danger" type="submit">Révoquer l'abonnement</button>
   </form>
   {{end}}
 </section>

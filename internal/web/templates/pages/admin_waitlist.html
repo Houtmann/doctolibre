@@ -7,7 +7,7 @@
 {{if .Data.Rows}}
 <div class="overflow-auto">
 <table>
-  <caption class="visually-hidden">Inscriptions en liste d'attente</caption>
+  <caption class="dl-visually-hidden">Inscriptions en liste d'attente</caption>
   <thead>
     <tr>
       <th scope="col">Patient</th>
@@ -36,7 +36,7 @@
         {{if .CanCancel}}
         <form method="post" action="/admin/waitlist/{{.ID}}/cancel">
           {{csrf $.CSRF}}
-          <button type="submit" class="secondary outline">Retirer</button>
+          <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit">Retirer</button>
         </form>
         {{end}}
       </td>
@@ -118,6 +118,6 @@
       <input id="wl-to" name="time_to" type="time" value="{{.Data.Values.TimeTo}}">
     </div>
   </div>
-  <button type="submit">Inscrire</button>
+  <button class="dl-btn dl-btn--sm" type="submit">Inscrire</button>
 </form>
 {{end}}

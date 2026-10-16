@@ -97,52 +97,10 @@
 
 /* Focus toujours visible (accessibilité clavier). */
 :where(a, button, input, select, textarea, summary, [role="button"]):focus-visible {
-  outline: 3px solid var(--pico-primary);
+  outline: var(--dl-focus-width) solid var(--dl-focus);
   outline-offset: 2px;
 }
 
-/* Lien d'évitement. */
-.skip-link {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  z-index: 100;
-  padding: 0.5rem 1rem;
-  background: var(--pico-background-color);
-  color: var(--pico-color);
-}
-.skip-link:focus {
-  left: 0.5rem;
-  top: 0.5rem;
-}
-
-.site-header nav a.brand {
-  font-weight: 700;
-  text-decoration: none;
-}
-.site-footer {
-  color: var(--pico-muted-color);
-  font-size: 0.875rem;
-}
-
-/* Messages flash et erreurs de formulaire. */
-.flash {
-  padding: var(--app-space-3) var(--app-space-4);
-  border-radius: var(--pico-border-radius);
-  margin-bottom: var(--app-space-4);
-}
-.flash-success { background: var(--app-success-bg); color: var(--app-success-fg); }
-.flash-error   { background: var(--app-error-bg);   color: var(--app-error-fg); }
-.flash-info    { background: var(--app-info-bg);    color: var(--app-info-fg); }
-.flash-warning { background: var(--app-warning-bg); color: var(--app-warning-fg); }
-.form-errors {
-  background: var(--app-error-bg);
-  color: var(--app-error-fg);
-  padding: 0.75rem 1rem;
-  border-radius: var(--pico-border-radius);
-  margin-bottom: 1rem;
-}
-.form-errors ul { margin: 0.25rem 0 0; }
 
 /* Indicateur htmx (le style inline de htmx est désactivé pour la CSP). */
 .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
@@ -153,18 +111,7 @@
 .error-page .status { font-size: 4rem; font-weight: 700; margin: 0; }
 
 /* Administration du cabinet. */
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 .is-inactive { color: var(--pico-muted-color); }
-.row-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-.row-actions form { margin: 0; }
-.row-actions button { margin: 0; padding: 0.25rem 0.75rem; }
 .week-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
@@ -183,7 +130,6 @@
 .cal-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
 .cal-toolbar h1 { font-size: 1.25rem; margin: 0; }
 .cal-toolbar nav ul { display: flex; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
-.cal-toolbar nav a[role="button"], .cal-toolbar > a[role="button"] { margin: 0; padding: 0.35rem 0.8rem; }
 .cal-grid {
   display: grid;
   grid-auto-rows: 1.5rem;
@@ -239,8 +185,6 @@ dialog#appt-dialog article { margin: 0; }
 .detail-list dt { font-weight: 600; }
 .detail-list dd { margin: 0; }
 .patient-results { list-style: none; padding: 0; margin: 0 0 1rem; }
-.inline-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.inline-actions form { margin: 0; }
 .gr-1 { grid-row-start: 1; }
 .gr-2 { grid-row-start: 2; }
 .gr-3 { grid-row-start: 3; }
@@ -446,39 +390,18 @@ dialog#appt-dialog article { margin: 0; }
 /* Réservation en ligne (mobile-first : une colonne, cibles tactiles de 44 px minimum). */
 .choice-list { list-style: none; padding: 0; margin: 0 0 1.5rem; }
 .choice-list li { margin-bottom: 0.75rem; list-style: none; }
-.choice-list a[role="button"] { display: block; text-align: left; }
+.choice-list a.dl-btn { display: block; text-align: left; }
 .week-nav { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem; }
-.week-nav a[role="button"] { margin: 0; }
+.week-nav a.dl-btn { margin: 0; }
 .week-label { font-size: 1.1rem; }
 .slot-day h3 { font-size: 1rem; margin: 1rem 0 0.5rem; }
 .slot-list { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; margin: 0; }
 .slot-list li { margin: 0; padding: 0; list-style: none; }
-.slot-list a[role="button"] { min-width: 4.5rem; min-height: 2.75rem; margin: 0; padding: 0.5rem 0.75rem; text-align: center; }
+.slot-list a.dl-btn { min-width: 4.5rem; min-height: 2.75rem; margin: 0; padding: 0.5rem 0.75rem; text-align: center; }
 .booking-summary { padding: 0.75rem 1rem; }
 .booking-summary p { margin-bottom: 0.5rem; }
-.muted { color: var(--pico-muted-color); }
 .resend { margin-top: 1rem; }
-/* Piège à robots : hors écran, jamais display:none (certains robots l'ignorent alors). */
-.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-
 .home-badge { font-weight: 700; }
-
-/* Menu admin : les entrées passent à la ligne au lieu de déborder. */
-.site-header nav { flex-wrap: wrap; }
-.site-header nav ul { flex-wrap: wrap; row-gap: 0.25rem; }
-.site-header nav ul:last-of-type { margin-left: auto; }
-.site-header nav form { margin: 0; }
-
-.callout {
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  border-radius: var(--pico-border-radius);
-  background: var(--app-info-bg);
-  color: var(--app-info-fg);
-}
-.callout p { margin-bottom: 0.25rem; }
-.callout ul { margin-bottom: 0; }
-.callout a { color: inherit; }
 
 /* Page /dev/styleguide (dev seulement) : une classe par pastille, la CSP interdit style=. */
 .sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: var(--app-space-2); margin-bottom: var(--app-space-4); }

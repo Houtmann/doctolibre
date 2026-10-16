@@ -204,3 +204,51 @@
   --dl-now:    #ff7a6e;
   --dl-today-bg: #10302d;
 }
+
+/* Thème clair forcé sur un conteneur (même si le système est sombre). */
+[data-theme="light"] {
+  color-scheme: light;
+  --dl-bg:            var(--dl-p-stone-50);
+  --dl-surface:       var(--dl-p-stone-0);
+  --dl-surface-2:     var(--dl-p-stone-100);
+  --dl-border:        var(--dl-p-stone-200);
+  --dl-border-strong: var(--dl-p-stone-400);  /* ≥ 3:1 : bordures de champs */
+  --dl-text:          var(--dl-p-stone-900);
+  --dl-text-muted:    var(--dl-p-stone-600);
+  --dl-primary:       var(--dl-p-petrol-600);
+  --dl-primary-hover: var(--dl-p-petrol-700);
+  --dl-on-primary:    var(--dl-p-stone-0);
+  --dl-primary-soft:    var(--dl-p-petrol-100);
+  --dl-primary-soft-fg: var(--dl-p-petrol-700);
+  --dl-danger:        #b42318;
+  --dl-on-danger:     #ffffff;
+  --dl-focus:         var(--dl-p-petrol-600);
+  --dl-shadow-sm: 0 1px 2px rgb(28 27 24 / 0.06);
+  --dl-shadow-md: 0 8px 28px rgb(28 27 24 / 0.14);
+  --dl-backdrop:  rgb(28 27 24 / 0.45);
+
+  --dl-success-bg: #e3f2e6;  --dl-success-fg: #14532d;
+  --dl-error-bg:   #fbe9e7;  --dl-error-fg:   #8a1c12;
+  --dl-info-bg:    #e4eef8;  --dl-info-fg:    #133e6b;
+  --dl-warning-bg: #fdf1d6;  --dl-warning-fg: #5e4300;
+
+  /* États de RDV : fond / texte / liseré. « Réservé » porte la couleur de marque. */
+  --dl-st-booked-bg:    var(--dl-p-petrol-100);
+  --dl-st-booked-fg:    var(--dl-p-petrol-800);
+  --dl-st-booked-border: var(--dl-p-petrol-600);
+  --dl-st-done-bg:      #e3f2e6;
+  --dl-st-done-fg:      #14532d;
+  --dl-st-done-border:  #2f7a45;
+  --dl-st-no_show-bg:   #fde8d4;
+  --dl-st-no_show-fg:   #6e3100;
+  --dl-st-no_show-border: #b45309;
+  --dl-st-cancelled-bg: var(--dl-p-stone-150);
+  --dl-st-cancelled-fg: var(--dl-p-stone-700);
+  --dl-st-cancelled-border: var(--dl-p-stone-400);
+
+  /* Agenda. */
+  --dl-band-a: #ebe8e1;
+  --dl-band-b: #f4f2ed;
+  --dl-now:    #c2261b;
+  --dl-today-bg: var(--dl-p-petrol-50);
+}
