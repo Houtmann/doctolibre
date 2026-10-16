@@ -41,16 +41,16 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T023 | [Confirmations et rappels](T023-reminders.md) | 2 | T021, T022, T015 | review |
 | T024 | [Outbox : câblage du worker et page admin](T024-outbox-wiring.md) | 2 | T020, T011 | done |
 | T030 | [Séries de séances kiné](T030-care-plans.md) | 3 | T016, T017 | review |
-| T031 | [Liste d'attente](T031-waitlist.md) | 3 | T023 | todo |
+| T031 | [Liste d'attente](T031-waitlist.md) | 3 | T023 | review |
 | T032 | [Visites à domicile](T032-home-visits.md) | 3 | T014 | review |
-| T033 | [Multi-praticiens et rôles](T033-multi-practitioner.md) | 3 | T016, T021 | todo |
+| T033 | [Multi-praticiens et rôles](T033-multi-practitioner.md) | 3 | T016, T021 | review |
 | T040 | [Packaging Docker + Caddy](T040-packaging.md) | 4 | T004, T010 | done |
 | T041 | [Sauvegardes et restauration](T041-backups.md) | 4 | T040 | review |
 | T042 | [Flux ICS](T042-ics-feed.md) | 4 | T016 | review |
-| T043 | [RGPD : export, purge, audit](T043-gdpr.md) | 4 | T017 | todo |
-| T044 | [Documentation d'installation](T044-install-docs.md) | 4 | T040, T041 | todo |
+| T043 | [RGPD : export, purge, audit](T043-gdpr.md) | 4 | T017 | review |
+| T044 | [Documentation d'installation](T044-install-docs.md) | 4 | T040, T041 | review |
 | T045 | [Observabilité légère](T045-observability.md) | 4 | T003 | done |
-| T046 | [Observabilité : branchements et /admin/status](T046-observability-wiring.md) | 4 | T045, T014, T020, T041 | todo |
+| T046 | [Observabilité : branchements et /admin/status](T046-observability-wiring.md) | 4 | T045, T014, T020, T041 | review |
 
 ## Parallélisation possible
 

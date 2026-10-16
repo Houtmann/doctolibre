@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T031, T033, T043, T044, T046 (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T031, T033, T043, T044, T046 → review — toutes les tâches du plan sont implémentées.
+- **Fait** : liste d'attente (propositions à jeton, premier qui clique gagne) ; multi-praticiens (matrice de permissions, invitations, vue jour multi-colonnes, premier disponible) ; RGPD (export, suppression/anonymisation, purge quotidienne, audit, `docs/rgpd.md`) ; doc d'installation et de coûts ; observabilité (`/metrics` branché, `/admin/status`, alertes email aux admins).
+- **Revue** : T043 en revue renforcée. Trois bugs d'intégration entre tâches parallèles corrigés sur main avec tests : fausse alerte « messages en échec » après chaque purge (T043 × T046) ; suppression d'un patient inscrit en liste d'attente en échec FK + jeton `offer_url` en clair + fusion/export (T031 × T043) ; lien d'invitation en clair, invitations expirées jamais purgées, alertes envoyées aux admins désactivés (T033 × T043/T046). Lien « Confidentialité » réservé à l'admin dans la navigation.
+- **Vérification** : `make check` ✅ après chaque merge (`TestCalendarWeekWith150AppointmentsIsFast` a échoué une fois sous charge, passe seul). Non vérifié : rendu 360 px et vue jour 4 praticiens à 1280 px, installation réelle sur VM (T044).
+- **Reste / reprise** : relecture humaine des 14 tâches en review ; passage navigateur.
+- **Décisions** : 9 entrées dans `decisions.md` (2026-10-16).
+
 ## 2026-10-15 — T023 et T030 (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T023, T030 → review
