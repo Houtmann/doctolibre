@@ -1,0 +1,47 @@
+{{/* layout: admin */}}
+{{define "title"}}Confidentialité et RGPD{{end}}
+{{define "content"}}
+<h1>Confidentialité et RGPD</h1>
+<p>Vous êtes responsable du traitement des données de vos patients. Cette page règle les durées de conservation ; elle ne remplace pas un conseil juridique (voir <code>docs/rgpd.md</code>). <a href="/admin/audit">Journal d'accès</a></p>
+{{template "form_errors.html" .Data.Errors}}
+<form method="post" action="/admin/privacy">
+  {{csrf .CSRF}}
+  {{with .Data.Form}}
+  <fieldset>
+    <legend>Durées de conservation</legend>
+    <label for="retention_outbox_days">Contenu des emails et SMS envoyés (jours)</label>
+    <input id="retention_outbox_days" name="retention_outbox_days" type="number" inputmode="numeric" min="1" max="3650" value="{{.OutboxDays}}" required aria-describedby="outbox-help">
+    <small id="outbox-help">Passé ce délai, le texte et le destinataire des messages sont effacés (seule la trace « un message a été envoyé » reste).</small>
+    <label for="retention_audit_days">Journal d'accès (jours)</label>
+    <input id="retention_audit_days" name="retention_audit_days" type="number" inputmode="numeric" min="30" max="3650" value="{{.AuditDays}}" required>
+    <label for="retention_patient_years">Patients sans rendez-vous depuis (années)</label>
+    <input id="retention_patient_years" name="retention_patient_years" type="number" inputmode="numeric" min="1" max="30" value="{{.PatientYears}}" required>
+    <label><input type="checkbox" name="patient_purge_enabled" value="1"{{if .PurgeEnabled}} checked{{end}}> Anonymiser automatiquement ces patients (tous les jours)</label>
+  </fieldset>
+  <fieldset>
+    <legend>Mentions d'information des patients</legend>
+    <label for="privacy_contact">Contact pour exercer ses droits (email ou adresse postale)</label>
+    <input id="privacy_contact" name="privacy_contact" value="{{.Contact}}" maxlength="200" autocomplete="off">
+    <small>Affiché sur la <a href="/p/{{$.Data.Slug}}/privacy">page d'information publique</a>. À défaut, le téléphone du cabinet est affiché.</small>
+  </fieldset>
+  {{end}}
+  <button type="submit">Enregistrer</button>
+</form>
+
+<h2>Patients qui seraient anonymisés</h2>
+<p>Dernière activité (création, modification ou rendez-vous) avant le {{formatDate .Data.Preview.Cutoff}}. Vérifiez cette liste avant d'activer l'anonymisation automatique : elle est irréversible.</p>
+{{if .Data.Preview.Candidates}}
+<p><strong>{{.Data.Preview.Total}}</strong> patient(s) concerné(s){{if gt .Data.Preview.Total 50}} (50 affichés){{end}}.</p>
+<div class="overflow-auto">
+<table>
+  <caption class="visually-hidden">Patients inactifs</caption>
+  <thead><tr><th scope="col">Patient</th><th scope="col">Dernière activité</th></tr></thead>
+  <tbody>
+    {{range .Data.Preview.Candidates}}
+    <tr><td><a href="/admin/patients/{{.ID}}">{{.Name}}</a></td><td>{{formatDate .LastActivity}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{else}}<p>Aucun patient concerné.</p>{{end}}
+{{end}}

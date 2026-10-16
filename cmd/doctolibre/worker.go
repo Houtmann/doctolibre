@@ -27,7 +27,7 @@ func startWorker(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, d o
 	}
 	w := &outbox.Worker{Pool: pool, Dispatcher: d, Clock: domain.SystemClock{}, Logger: logger}
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 	// Rappels de rendez-vous : enfilés peu avant l'envoi (opt-out relu à ce moment).
 	rem := &service.Reminders{Pool: pool, Clock: domain.SystemClock{}, Logger: logger}
 	go func() {
@@ -42,6 +42,14 @@ func startWorker(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, d o
 		defer wg.Done()
 		if err := alerts.Run(ctx); err != nil {
 			logger.Error("alertes en échec", "error", err)
+		}
+	}()
+	// Purge RGPD quotidienne : contenu des messages, sessions et codes expirés, journal, patients inactifs.
+	purge := &service.Privacy{Pool: pool, Clock: domain.SystemClock{}, Logger: logger}
+	go func() {
+		defer wg.Done()
+		if err := purge.Run(ctx); err != nil {
+			logger.Error("purge RGPD en échec", "error", err)
 		}
 	}()
 	go func() {

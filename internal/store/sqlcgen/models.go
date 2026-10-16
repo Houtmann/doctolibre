@@ -64,14 +64,15 @@ type AppointmentType struct {
 }
 
 type AuditLog struct {
-	ID       int64
-	At       time.Time
-	UserID   pgtype.UUID
-	Actor    string
-	Action   string
-	Entity   string
-	EntityID pgtype.UUID
-	Meta     []byte
+	ID         int64
+	At         time.Time
+	UserID     pgtype.UUID
+	Actor      string
+	Action     string
+	Entity     string
+	EntityID   pgtype.UUID
+	Meta       []byte
+	PracticeID pgtype.UUID
 }
 
 type AvailabilityException struct {
@@ -151,6 +152,7 @@ type OutboxMessage struct {
 	ProviderRef   pgtype.Text
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+	ScrubbedAt    pgtype.Timestamptz
 }
 
 type PasswordReset struct {
@@ -162,21 +164,22 @@ type PasswordReset struct {
 }
 
 type Patient struct {
-	ID         uuid.UUID
-	PracticeID uuid.UUID
-	FirstName  string
-	LastName   string
-	BirthDate  pgtype.Date
-	Phone      pgtype.Text
-	Email      pgtype.Text
-	SmsOptIn   bool
-	EmailOptIn bool
-	NotesAdmin string
-	DeletedAt  pgtype.Timestamptz
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	MergedInto pgtype.UUID
-	Address    pgtype.Text
+	ID           uuid.UUID
+	PracticeID   uuid.UUID
+	FirstName    string
+	LastName     string
+	BirthDate    pgtype.Date
+	Phone        pgtype.Text
+	Email        pgtype.Text
+	SmsOptIn     bool
+	EmailOptIn   bool
+	NotesAdmin   string
+	DeletedAt    pgtype.Timestamptz
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	MergedInto   pgtype.UUID
+	Address      pgtype.Text
+	AnonymizedAt pgtype.Timestamptz
 }
 
 type Practice struct {
@@ -201,6 +204,11 @@ type Practice struct {
 	ReminderTwoHours          bool
 	ReminderSeries            bool
 	NotifySignature           string
+	RetentionOutboxDays       int32
+	RetentionPatientYears     int32
+	RetentionAuditDays        int32
+	PatientPurgeEnabled       bool
+	PrivacyContact            string
 }
 
 type Practitioner struct {

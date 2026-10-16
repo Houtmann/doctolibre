@@ -26,8 +26,10 @@ WHERE m.id = due.id
 RETURNING m.*;
 
 -- name: MarkOutboxSent :execrows
+-- Une fois envoyé, les secrets du message (lien de gestion, lien de réinitialisation,
+-- code, texte du SMS qui les reprend) sont retirés tout de suite du payload.
 UPDATE outbox_message
-SET status = 'sent', sent_at = @now::timestamptz, provider_ref = @provider_ref, last_error = NULL, updated_at = @now
+SET payload = payload - 'manage_url' - 'reset_url' - 'code' - 'body', status = 'sent', sent_at = @now::timestamptz, provider_ref = @provider_ref, last_error = NULL, updated_at = @now
 WHERE id = @id AND status = 'sending' AND attempts = @attempts;
 
 -- name: MarkOutboxRetry :execrows
@@ -56,7 +58,7 @@ WHERE status = 'sending' AND updated_at < @cutoff;
 -- Renvoi manuel d'un message failed/cancelled (bouton « renvoyer »).
 UPDATE outbox_message
 SET status = 'pending', attempts = 0, run_at = @now, last_error = NULL, updated_at = @now
-WHERE id = @id AND practice_id = @practice_id AND status IN ('failed', 'cancelled');
+WHERE id = @id AND practice_id = @practice_id AND status IN ('failed', 'cancelled') AND scrubbed_at IS NULL;
 
 -- name: ListRecentOutboxMessages :many
 SELECT * FROM outbox_message

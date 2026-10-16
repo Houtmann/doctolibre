@@ -1,0 +1,32 @@
+{{define "title"}}Protection de vos données — {{.Data.Practice.Name}}{{end}}
+{{define "content"}}
+<h1>Protection de vos données personnelles</h1>
+<p><small>Modèle d'information à relire et compléter par le praticien responsable du traitement.</small></p>
+
+<h2>Responsable du traitement</h2>
+<p>{{.Data.Practice.Name}}{{if .Data.Practice.Address}}, {{.Data.Practice.Address}}{{end}}</p>
+{{if .Data.Contact}}<p>Pour exercer vos droits : {{.Data.Contact}}</p>{{end}}
+
+<h2>Pourquoi vos données sont utilisées</h2>
+<ul>
+  <li>Prendre, modifier et annuler vos rendez-vous.</li>
+  <li>Vous envoyer des confirmations et des rappels de rendez-vous par email ou SMS.</li>
+  <li>Vérifier votre identité lors d'une réservation en ligne (code à usage unique).</li>
+</ul>
+<p>Base légale : l'exécution de la prise de rendez-vous que vous demandez (article 6.1.b du RGPD).</p>
+
+<h2>Quelles données</h2>
+<p>Nom, prénom, téléphone et/ou email, date de naissance et adresse (visites à domicile) si vous les fournissez, historique de vos rendez-vous. Aucune information médicale n'est demandée en ligne.</p>
+
+<h2>Combien de temps</h2>
+<ul>
+  <li>Le contenu des messages envoyés est effacé après {{.Data.OutboxDays}} jours.</li>
+  <li>Votre fiche est anonymisée après {{.Data.PatientYears}} ans sans rendez-vous.</li>
+</ul>
+
+<h2>Qui y a accès</h2>
+<p>Le cabinet et ses secrétaires. Les prestataires techniques d'envoi d'emails et de SMS reçoivent uniquement votre contact et le texte du message.</p>
+
+<h2>Vos droits</h2>
+<p>Vous pouvez demander l'accès à vos données, leur rectification, leur effacement, la limitation ou l'opposition à leur traitement, et la portabilité. Adressez votre demande au contact ci-dessus. En cas de difficulté, vous pouvez saisir la CNIL (cnil.fr).</p>
+{{end}}

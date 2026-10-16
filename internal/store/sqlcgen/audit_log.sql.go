@@ -12,22 +12,29 @@ import (
 )
 
 const createAuditLog = `-- name: CreateAuditLog :exec
-INSERT INTO audit_log (user_id, actor, action, entity, entity_id, meta)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO audit_log (user_id, practice_id, actor, action, entity, entity_id, meta)
+VALUES (
+    $1,
+    COALESCE($2::uuid, (SELECT practice_id FROM app_user WHERE id = $1::uuid)),
+    $3, $4, $5, $6, $7
+)
 `
 
 type CreateAuditLogParams struct {
-	UserID   pgtype.UUID
-	Actor    string
-	Action   string
-	Entity   string
-	EntityID pgtype.UUID
-	Meta     []byte
+	UserID     pgtype.UUID
+	PracticeID pgtype.UUID
+	Actor      string
+	Action     string
+	Entity     string
+	EntityID   pgtype.UUID
+	Meta       []byte
 }
 
+// practice_id : si absent, celui de l'utilisateur.
 func (q *Queries) CreateAuditLog(ctx context.Context, arg CreateAuditLogParams) error {
 	_, err := q.db.Exec(ctx, createAuditLog,
 		arg.UserID,
+		arg.PracticeID,
 		arg.Actor,
 		arg.Action,
 		arg.Entity,

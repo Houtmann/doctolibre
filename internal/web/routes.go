@@ -43,6 +43,10 @@ type Deps struct {
 	CarePlans *service.CarePlans
 	// Booking (réservation en ligne des patients) est optionnel : nil = pas de pages /p/… ni /r/….
 	Booking *service.Booking
+	// Privacy (réglages de conservation, page d'information) est optionnel : nil = pas de /admin/privacy ni de /p/{slug}/privacy.
+	Privacy *service.Privacy
+	// Audit (journal d'accès) est optionnel : nil = pas de /admin/audit.
+	Audit *service.Audit
 	// Feed (flux ICS du praticien) est optionnel : nil = pas de /ics/… ni de réglage d'abonnement.
 	Feed *service.CalendarFeed
 	// Status (état de l'instance) est optionnel : nil = pas de page /admin/status.
@@ -75,6 +79,9 @@ func Routes(d Deps) http.Handler {
 	}
 	if d.Booking != nil && rd != nil {
 		d.publicRoutes(mux, rd, logger)
+	}
+	if d.Privacy != nil && rd != nil {
+		d.privacyPublicRoutes(mux, rd, logger)
 	}
 	if d.Feed != nil && rd != nil {
 		d.feedRoutes(mux, rd, logger)

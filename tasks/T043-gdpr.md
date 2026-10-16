@@ -23,8 +23,8 @@ Fournir au praticien (responsable de traitement) les outils pour respecter le RG
 - `docs/rgpd.md` : registre de traitement prérempli, point HDS (hébergement par un tiers = HDS requis ; auto-hébergement = responsabilité du praticien), recommandations (chiffrement disque, sauvegardes chiffrées, mises à jour).
 
 ## Critères d'acceptation
-- [ ] Après suppression, aucune donnée identifiante du patient en base (test qui grep la base dumpée).
-- [ ] Purge testée avec une horloge fixe.
+- [x] Après suppression, aucune donnée identifiante du patient en base (test qui grep la base dumpée).
+- [x] Purge testée avec une horloge fixe.
 
 ## Vérification
 ```bash
@@ -38,8 +38,8 @@ Conseil juridique : la doc le dit explicitement.
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet).
+- **Fait** : migration 00016 (réglages de conservation par cabinet, `patient.anonymized_at` + CHECK contact assoupli, `outbox_message.scrubbed_at` + index, `audit_log.practice_id` + index) ; `MarkOutboxSent` retire tout de suite `manage_url`/`reset_url`/`code`/`body` du payload ; service `Privacy` (réglages, prévisualisation, purge quotidienne `RunOnce`/`Run` branchée dans `startWorker`, page d'information publique) ; `Patients.Erase` (suppression dure sans RDV, sinon anonymisation, cascade sur les doublons fusionnés, messages effacés, refus s'il reste des RDV à venir) ; `Patients.Export` (JSON + CSV anti-formules) ; `patient_view` à chaque consultation ; service `Audit` + `/admin/audit` (admin) ; `/admin/privacy` (admin) ; `/p/{slug}/privacy` ; `docs/rgpd.md`. Tests : `internal/service/privacy_test.go`, `internal/web/privacy_test.go` (dump de toutes les tables sans marqueur après suppression ; purge avec horloge fixe).
+- **Reste à faire** : rien d'obligatoire. Rendu visuel des pages non vérifié ; EXPLAIN sur gros volume non fait (index prévus : `outbox_message_scrub_idx`, `audit_log_practice_id_idx`, `audit_log_practice_at_idx` ; `ListInactivePatients` parcourt les patients du cabinet avec `appointment_patient_idx`).
+- **Notes de reprise** : la purge des patients est désactivée par défaut (`practice.patient_purge_enabled`). `ScrubOutboxForPatients` retrouve aussi les messages sans RDV (codes) par destinataire. `TestMigrateUpDownUp` : boucle de descente portée de 10 à 40 (16 migrations).
+- **Écarts avec la spécification** : durées stockées dans `practice` (réglables dans `/admin/privacy`) et non en variables d'environnement ; prévisualisation + activation sur `/admin/privacy` ; l'IP des connexions du personnel reste dans `audit_log.meta` (comportement existant, documenté dans `docs/rgpd.md`) ; export/suppression réservés aux rôles admin et praticien ; l'export contient les messages (type, statut, destinataire) mais pas leur texte.

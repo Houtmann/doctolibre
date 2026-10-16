@@ -1,0 +1,39 @@
+{{/* layout: admin */}}
+{{define "title"}}Journal d'accès{{end}}
+{{define "content"}}
+<h1>Journal d'accès</h1>
+<p>Consultations de fiches patients, exports, suppressions, connexions et modifications. Le journal ne contient que des identifiants, jamais de coordonnées de patients.</p>
+<form method="get" action="/admin/audit" role="search">
+  <label for="action">Filtrer par action (exemples : patient_view, patient.exported, login_success)</label>
+  <input id="action" type="search" name="action" value="{{.Data.Action}}" maxlength="64" autocomplete="off">
+  <button type="submit" class="secondary outline">Filtrer</button>
+</form>
+{{if .Data.Rows}}
+<div class="overflow-auto">
+<table>
+  <caption class="visually-hidden">Journal d'accès</caption>
+  <thead>
+    <tr>
+      <th scope="col">Date</th>
+      <th scope="col">Utilisateur</th>
+      <th scope="col">Action</th>
+      <th scope="col">Objet</th>
+      <th scope="col">Détails</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Data.Rows}}
+    <tr>
+      <td>{{formatDate .At}} {{formatTime .At}}</td>
+      <td>{{.User}}</td>
+      <td>{{.Action}}</td>
+      <td>{{if .EntityURL}}<a href="{{.EntityURL}}">{{.Entity}}</a>{{else}}{{.Entity}}{{end}}{{if .EntityID}} <small>{{.EntityID}}</small>{{end}}</td>
+      <td><small>{{.Meta}}</small></td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{if .Data.NextURL}}<p><a href="{{.Data.NextURL}}" role="button" class="secondary outline">Entrées plus anciennes</a></p>{{end}}
+{{else}}<p>Aucune entrée.</p>{{end}}
+{{end}}
