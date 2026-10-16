@@ -54,6 +54,9 @@ func TestCalendarFeedFlow(t *testing.T) {
 	if strings.Contains(body, "Durand") || strings.Contains(body, "0612") {
 		t.Error("donnée patient dans le flux")
 	}
+	if strings.Contains(body, "VALARM") {
+		t.Error("le flux praticien ne doit contenir aucune alarme")
+	}
 	etag := rec.Header().Get("ETag")
 
 	// Requête conditionnelle.

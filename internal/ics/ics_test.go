@@ -119,6 +119,7 @@ func TestCalendarGolden(t *testing.T) {
 		Summary:     "Séance de kinésithérapie - Cabinet des Lilas, Paris",
 		Location:    "12 rue des Lilas, 75020 Paris",
 		Description: "Cabinet : 01 23 45 67 89",
+		Alarms:      []time.Duration{24 * time.Hour, 2 * time.Hour},
 	}
 	got := e.Calendar()
 	const path = "testdata/appointment.ics"
@@ -133,5 +134,39 @@ func TestCalendarGolden(t *testing.T) {
 	}
 	if string(got) != string(want) {
 		t.Errorf("ICS différent du golden file (-update pour régénérer)\n--- got\n%s\n--- want\n%s", got, want)
+	}
+}
+
+func TestAlarms(t *testing.T) {
+	t.Parallel()
+	e := ics.Event{
+		UID: "x", Start: time.Unix(7200, 0), End: time.Unix(9000, 0), Stamp: time.Unix(0, 0),
+		Summary: "Séance, kiné; " + strings.Repeat("é", 60) + `\`,
+		Alarms:  []time.Duration{24 * time.Hour, 2 * time.Hour, 30 * time.Minute, 0, -time.Hour, 26*time.Hour + 30*time.Minute},
+	}
+	got := string(e.Calendar())
+	if n := strings.Count(got, "BEGIN:VALARM\r\n"); n != 4 || strings.Count(got, "END:VALARM\r\n") != 4 {
+		t.Fatalf("alarmes = %d, attendu 4 (0 et négatif ignorés)", n)
+	}
+	for _, want := range []string{"TRIGGER:-P1D\r\n", "TRIGGER:-PT2H\r\n", "TRIGGER:-PT30M\r\n", "TRIGGER:-P1DT2H30M\r\n", "ACTION:DISPLAY\r\n"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("fragment manquant %q", want)
+		}
+	}
+	// L'alarme est dans le VEVENT, et la DESCRIPTION est échappée puis pliée.
+	if i, j, k := strings.Index(got, "BEGIN:VALARM"), strings.Index(got, "END:VALARM"), strings.Index(got, "END:VEVENT"); i >= j || j >= k {
+		t.Error("VALARM hors du VEVENT")
+	}
+	unfolded := strings.ReplaceAll(got, "\r\n ", "")
+	if !strings.Contains(unfolded, `DESCRIPTION:Séance\, kiné\; `+strings.Repeat("é", 60)+`\\`+"\r\n") {
+		t.Errorf("DESCRIPTION d'alarme mal échappée :\n%s", unfolded)
+	}
+	for _, l := range strings.Split(strings.TrimSuffix(got, "\r\n"), "\r\n") {
+		if len(l) > 75 {
+			t.Errorf("ligne de %d octets : %q", len(l), l)
+		}
+	}
+	if strings.Contains(string(ics.Event{UID: "y", Start: time.Unix(0, 0), End: time.Unix(1, 0), Stamp: time.Unix(0, 0)}.Calendar()), "VALARM") {
+		t.Error("VALARM émise sans Alarms")
 	}
 }

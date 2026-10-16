@@ -596,6 +596,8 @@ func (h *publicHandlers) calendarFile(w http.ResponseWriter, r *http.Request) {
 	ev := ics.Event{
 		UID: c.Appointment.ID.String() + "@doctolibre", Start: c.Start, End: c.End, Stamp: h.svc.Now(),
 		Summary: c.Type.Name + " - " + c.Practice.Name, Location: location, Description: desc,
+		// Rappels natifs de l'agenda du patient (le flux praticien n'en a pas).
+		Alarms: []time.Duration{24 * time.Hour, 2 * time.Hour},
 	}
 	w.Header().Set("Content-Type", "text/calendar; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="rendez-vous.ics"`)

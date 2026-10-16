@@ -11,5 +11,15 @@ DTEND:20261020T073000Z
 SUMMARY:Séance de kinésithérapie - Cabinet des Lilas\, Paris
 LOCATION:12 rue des Lilas\, 75020 Paris
 DESCRIPTION:Cabinet : 01 23 45 67 89
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Séance de kinésithérapie - Cabinet des Lilas\, Paris
+TRIGGER:-P1D
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Séance de kinésithérapie - Cabinet des Lilas\, Paris
+TRIGGER:-PT2H
+END:VALARM
 END:VEVENT
 END:VCALENDAR

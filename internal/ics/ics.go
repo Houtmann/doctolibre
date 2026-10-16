@@ -22,6 +22,9 @@ type Event struct {
 	Status string
 	// Sequence : numéro de révision (SEQUENCE) ; 0 = non émis.
 	Sequence int
+	// Alarms : rappels (VALARM) déclenchés avant le début, par ex. 24*time.Hour.
+	// Les durées nulles ou négatives sont ignorées ; vide = aucune alarme.
+	Alarms []time.Duration
 }
 
 const (
@@ -66,10 +69,50 @@ func Feed(name string, events []Event) []byte {
 		if e.Description != "" {
 			line("DESCRIPTION:" + escape(e.Description))
 		}
+		for _, a := range e.Alarms {
+			if a <= 0 {
+				continue
+			}
+			desc := e.Summary
+			if desc == "" {
+				desc = "Rendez-vous"
+			}
+			line("BEGIN:VALARM")
+			line("ACTION:DISPLAY")
+			line("DESCRIPTION:" + escape(desc))
+			line("TRIGGER:" + triggerBefore(a))
+			line("END:VALARM")
+		}
 		line("END:VEVENT")
 	}
 	line("END:VCALENDAR")
 	return []byte(b.String())
+}
+
+// triggerBefore formate une durée RFC 5545 négative (déclenchement avant le
+// début) : -P1D, -PT2H, -PT30M, -P1DT2H30M. Précision : la seconde.
+func triggerBefore(d time.Duration) string {
+	secs := int64(d / time.Second)
+	days, secs := secs/86400, secs%86400
+	h, secs := secs/3600, secs%3600
+	m, sec := secs/60, secs%60
+	out := "-P"
+	if days > 0 {
+		out += strconv.FormatInt(days, 10) + "D"
+	}
+	if h > 0 || m > 0 || sec > 0 || days == 0 {
+		out += "T"
+		if h > 0 {
+			out += strconv.FormatInt(h, 10) + "H"
+		}
+		if m > 0 {
+			out += strconv.FormatInt(m, 10) + "M"
+		}
+		if sec > 0 || (h == 0 && m == 0) {
+			out += strconv.FormatInt(sec, 10) + "S"
+		}
+	}
+	return out
 }
 
 // escape applique l'échappement TEXT de la RFC 5545 (§3.3.11).

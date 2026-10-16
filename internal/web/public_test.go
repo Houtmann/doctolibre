@@ -202,6 +202,9 @@ func TestPublicBookingFullJourney(t *testing.T) {
 	if strings.Contains(rec.Body.String(), "Durand") || strings.Contains(rec.Body.String(), "Alice") {
 		t.Error("le fichier .ics ne doit contenir aucun nom de patient")
 	}
+	if b := rec.Body.String(); strings.Count(b, "BEGIN:VALARM\r\n") != 2 || !strings.Contains(b, "TRIGGER:-P1D\r\n") || !strings.Contains(b, "TRIGGER:-PT2H\r\n") {
+		t.Errorf("le .ics patient doit avoir les alarmes -P1D et -PT2H :\n%s", b)
+	}
 
 	// 8. Le créneau n'est plus proposé ; y accéder ramène à la grille avec un message.
 	rec = c.do("GET", gridURL, nil)

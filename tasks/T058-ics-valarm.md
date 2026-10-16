@@ -18,9 +18,9 @@ Le fichier `.ics` téléchargé par le patient déclenche deux rappels natifs de
 - Dans Suivi : noter que Google Agenda ignore souvent les alarmes importées alors qu'Apple Calendar les respecte ; cela ne remplace pas le SMS de rappel.
 
 ## Critères d'acceptation
-- [ ] Le `.ics` patient contient deux `VALARM` valides (lignes pliées à 75 octets, CRLF) ; le flux praticien n'en contient aucun.
-- [ ] Tests unitaires `internal/ics` et golden à jour ; test web sur `/r/{token}/ics`.
-- [ ] Note Google/Apple dans Suivi.
+- [x] Le `.ics` patient contient deux `VALARM` valides (lignes pliées à 75 octets, CRLF) ; le flux praticien n'en contient aucun.
+- [x] Tests unitaires `internal/ics` et golden à jour ; test web sur `/r/{token}/ics`.
+- [x] Note Google/Apple dans Suivi.
 
 ## Vérification
 ```bash
@@ -34,8 +34,8 @@ Web Push, manifest PWA, Wallet (`.pkpass`) — écartés.
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** : `ics.Event.Alarms []time.Duration` ; `Feed` écrit un `VALARM` (ACTION:DISPLAY, DESCRIPTION = résumé échappé, TRIGGER) par durée > 0 dans le VEVENT ; `triggerBefore` formate `-P1D`, `-PT2H`, `-PT30M`, `-P1DT2H30M`. `/r/{token}/ics` passe `24h` et `2h`. Flux praticien inchangé (golden `feed.ics` identique). Tests : `TestAlarms` (formats, durées <= 0 ignorées, échappement, pliage 75 octets, position dans le VEVENT), golden `appointment.ics` régénéré (diff relu : 2 VALARM ajoutés), test web `/r/{token}/ics` (2 alarmes) et test du flux praticien (aucune alarme). `make check` vert.
+- **Reste à faire** : T055 (ICS de série) devra aussi passer `Alarms` si elle est faite après.
+- **Notes de reprise** : Google Agenda ignore souvent les alarmes importées d'un .ics (il applique ses notifications par défaut), alors qu'Apple Calendar les respecte ; cela ne remplace donc pas le SMS de rappel.
+- **Écarts avec la spécification** : aucun.
