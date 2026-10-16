@@ -1,8 +1,12 @@
 <div id="appt-detail">
-  <h2 id="appt-dialog-title">Rendez-vous</h2>
+  <div class="dl-dialog__header">
+    <h2 id="appt-dialog-title">Rendez-vous</h2>
+    {{with .D}}<span class="dl-badge dl-badge--st-{{.Status}}">{{.StatusLabel}}</span>{{end}}
+  </div>
+  <div class="dl-dialog__body">
   {{template "form_errors.html" .Errors}}
   {{with .D}}
-  <dl class="detail-list">
+  <dl class="dl-details">
     <dt>Patient</dt><dd>{{.Patient}}</dd>
     {{if .Phone}}<dt>Téléphone</dt><dd>{{.Phone}}</dd>{{end}}
     {{if .Email}}<dt>Email</dt><dd>{{.Email}}</dd>{{end}}
@@ -11,7 +15,6 @@
       <br><a href="{{geoURL .Address}}">Ouvrir dans l'application de cartes</a>
       · <a href="{{osmURL .Address}}" rel="noopener noreferrer" target="_blank">OpenStreetMap</a>{{end}}</dd>{{end}}
     <dt>Date</dt><dd>{{localDate .Start}}, de {{localTime .Start}} à {{localTime .End}}</dd>
-    <dt>Statut</dt><dd>{{.StatusLabel}}</dd>
     {{with $.Plan}}<dt>Série</dt><dd>{{if .Ordinal}}<strong>Séance {{.Ordinal}}/{{.Prescribed}}</strong>{{else}}{{.Count}}/{{.Prescribed}} séances faites ou planifiées{{end}}{{if .Label}} — {{.Label}}{{end}}
       · <a href="/admin/patients/{{.PatientID}}">Fiche patient</a></dd>{{end}}
     <dt>Origine</dt><dd>{{.SourceLabel}}, le {{localDate .CreatedAt}} à {{localTime .CreatedAt}}</dd>
@@ -33,39 +36,30 @@
     <input type="hidden" name="appointment_id" value="{{$.D.ID}}">
     <input type="hidden" name="date" value="{{.Date}}">
     <input type="hidden" name="time" value="{{.Time}}">
-    <button class="dl-btn" type="submit">Planifier cette séance</button>
+    <button class="dl-btn dl-btn--sm" type="submit">Planifier cette séance</button>
   </form>
   {{end}}{{end}}
-
-  {{if ne .D.Status "cancelled"}}
-  <h3>Statut</h3>
-  <div class="dl-cluster">
-    {{if ne .D.Status "done"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "done" "Label" "Marquer honoré")}}{{end}}
-    {{if ne .D.Status "no_show"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "no_show" "Label" "Marquer absent")}}{{end}}
-    {{if ne .D.Status "booked"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "booked" "Label" "Remettre à venir")}}{{end}}
-  </div>
-  {{end}}
 
   {{if .D.CanMove}}
   <h3>Déplacer</h3>
   <form method="post" action="/admin/appointments/{{.D.ID}}/move" hx-post="/admin/appointments/{{.D.ID}}/move" hx-target="#appt-detail" hx-swap="outerHTML">
     {{csrf .CSRF}}
     <input type="hidden" name="view" value="{{.View}}">
-    <div class="grid">
-      <div>
-        <label for="move-date">Nouvelle date</label>
-        <input id="move-date" name="date" type="date" value="{{.Move.Date}}" required>
+    <div class="dl-cluster">
+      <div class="dl-field">
+        <label class="dl-label" for="move-date">Nouvelle date</label>
+        <input class="dl-input" id="move-date" name="date" type="date" value="{{.Move.Date}}" required>
       </div>
-      <div>
-        <label for="move-time">Nouvelle heure</label>
-        <input id="move-time" name="time" type="time" step="300" value="{{.Move.Time}}" required>
+      <div class="dl-field">
+        <label class="dl-label" for="move-time">Nouvelle heure</label>
+        <input class="dl-input" id="move-time" name="time" type="time" step="300" value="{{.Move.Time}}" required>
       </div>
     </div>
-    <label for="move-force">
+    <label class="dl-check" for="move-force">
       <input id="move-force" type="checkbox" name="force" value="1"{{if .Move.Force}} checked{{end}}>
       Hors horaires (autoriser en dehors des disponibilités)
     </label>
-    <button class="dl-btn" type="submit">Déplacer</button>
+    <button class="dl-btn dl-btn--sm" type="submit">Déplacer</button>
   </form>
   {{end}}
 
@@ -75,11 +69,21 @@
     {{csrf .CSRF}}
     <input type="hidden" name="date" value="{{.D.MoveDate}}">
     <input type="hidden" name="view" value="{{.View}}">
-    <label for="cancel-reason">Motif de l'annulation (facultatif, visible du cabinet uniquement)</label>
-    <input id="cancel-reason" name="reason" value="{{.Reason}}" maxlength="200">
-    <button class="dl-btn dl-btn--danger" type="submit">Annuler le rendez-vous</button>
+    <div class="dl-field">
+      <label class="dl-label" for="cancel-reason">Motif de l'annulation <span class="dl-optional">(facultatif, visible du cabinet uniquement)</span></label>
+      <input class="dl-input" id="cancel-reason" name="reason" value="{{.Reason}}" maxlength="200">
+    </div>
+    <button class="dl-btn dl-btn--danger dl-btn--sm" type="submit">Annuler le rendez-vous</button>
   </form>
   {{end}}
 
-  <p><a class="dl-btn dl-btn--outline" href="/admin/calendar">Fermer</a></p>
+  </div>
+  <div class="dl-dialog__footer">
+    {{if ne .D.Status "cancelled"}}
+    {{if ne .D.Status "done"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "done" "Label" "Marquer honoré")}}{{end}}
+    {{if ne .D.Status "no_show"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "no_show" "Label" "Marquer absent")}}{{end}}
+    {{if ne .D.Status "booked"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "booked" "Label" "Remettre à venir")}}{{end}}
+    {{end}}
+    <a class="dl-btn dl-btn--outline dl-btn--sm" href="/admin/calendar">Fermer</a>
+  </div>
 </div>

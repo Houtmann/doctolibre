@@ -2,7 +2,7 @@
 {{define "title"}}Agenda{{end}}
 {{define "content"}}
 {{template "calendar_grid.html" .Data}}
-<dialog id="appt-dialog" aria-labelledby="appt-dialog-title">
-  <article id="appt-dialog-body"></article>
+<dialog id="appt-dialog" class="dl-dialog" aria-labelledby="appt-dialog-title">
+  <div id="appt-dialog-body"></div>
 </dialog>
 {{end}}

@@ -294,3 +294,28 @@ input.dl-input[aria-invalid], select.dl-select[aria-invalid], textarea.dl-textar
 .htmx-request .dl-htmx-indicator, .htmx-request.dl-htmx-indicator { opacity: 1; }
 .dl-error-page { text-align: center; padding-block: var(--dl-space-8); }
 .dl-error-page__status { font-size: 4rem; font-weight: var(--dl-weight-bold); color: var(--dl-primary); margin: 0; line-height: 1; }
+
+/* ── T067 ── Agenda et dialogue (neutralisation Pico, compléments) ── */
+dialog.dl-dialog {
+  position: fixed; inset: 0; margin: auto; display: block; height: fit-content; min-width: 0; min-height: 0;
+  max-height: calc(100dvh - 2rem); overflow: auto; backdrop-filter: none;
+}
+dialog.dl-dialog:not([open]) { display: none; }
+.dl-dialog--page { margin: 0 auto; }
+.dl-dialog__header .dl-badge { margin-left: auto; }
+.dl-dialog__body p { margin: 0 0 var(--dl-space-3); }
+.dl-dialog__body h3 { font-size: var(--dl-text-md); margin: var(--dl-space-5) 0 var(--dl-space-2); }
+.dl-dialog__body form { margin: 0; }
+.dl-dialog__body ul { padding-left: var(--dl-space-5); margin: 0; }
+.dl-dialog__footer form { margin: 0; }
+.dl-dialog__footer .dl-btn, .dl-dialog__body .dl-btn { width: auto; margin: 0; }
+.dl-cal-toolbar nav { margin: 0; }
+.dl-cal-picker { margin-bottom: var(--dl-space-4); }
+.dl-cal-picker .dl-fieldset { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dl-space-1) var(--dl-space-4); margin: 0; }
+.dl-cal-picker .dl-btn { width: auto; margin: 0; }
+.dl-cal-picker .dl-check { min-height: 0; padding-block: var(--dl-space-1); }
+.dl-cal__head { padding-block: var(--dl-space-1); }
+.dl-cal__holiday { display: block; }
+.dl-cal__slot:focus-visible { outline: 2px solid var(--dl-focus); outline-offset: -2px; }
+.dl-appt:focus-visible, .dl-cal-list a:focus-visible { outline: 2px solid var(--dl-focus); outline-offset: 1px; }
+.dl-appt .dl-home { margin-left: var(--dl-space-1); }

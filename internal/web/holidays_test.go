@@ -49,8 +49,8 @@ func TestCalendarShowsHoliday(t *testing.T) {
 		t.Fatal(err)
 	}
 	rec = e.c.do("GET", "/admin/calendar?view=week&date=2026-10-28", nil)
-	mustContain(t, rec, 200, `<small class="cal-holiday">Férié</small>`)
-	if n := strings.Count(rec.Body.String(), "cal-holiday"); n != 1 {
+	mustContain(t, rec, 200, `<small class="dl-cal__holiday">Férié</small>`)
+	if n := strings.Count(rec.Body.String(), "dl-cal__holiday"); n != 1 {
 		t.Errorf("« Férié » affiché %d fois, attendu 1", n)
 	}
 	// Ouverture exceptionnelle partielle le jour férié : il reste marqué « Férié ».
@@ -59,5 +59,5 @@ func TestCalendarShowsHoliday(t *testing.T) {
 		t.Fatal(err)
 	}
 	rec = e.c.do("GET", "/admin/calendar?view=week&date=2026-10-28", nil)
-	mustContain(t, rec, 200, `<small class="cal-holiday">Férié</small>`)
+	mustContain(t, rec, 200, `<small class="dl-cal__holiday">Férié</small>`)
 }

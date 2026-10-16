@@ -127,63 +127,7 @@
 /* Agenda (T016). La CSP interdit les styles inline : la position d'un RDV est
    portée par des classes générées .gr-N (ligne de départ), .gs-N (nombre de
    lignes de 15 min) et .gc-N (colonne). Ligne 1 = en-tête des jours. */
-.cal-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-.cal-toolbar h1 { font-size: 1.25rem; margin: 0; }
-.cal-toolbar nav ul { display: flex; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
-.cal-grid {
-  display: grid;
-  grid-auto-rows: 1.5rem;
-  border: 1px solid var(--pico-muted-border-color);
-  position: relative;
-}
-.cal-grid.cal-cols-1 { grid-template-columns: 3.5rem 1fr; }
-.cal-grid.cal-cols-2 { grid-template-columns: 3.5rem repeat(2, minmax(0, 1fr)); }
-.cal-grid.cal-cols-3 { grid-template-columns: 3.5rem repeat(3, minmax(0, 1fr)); }
-.cal-grid.cal-cols-4 { grid-template-columns: 3.5rem repeat(4, minmax(0, 1fr)); }
-.cal-grid.cal-cols-5 { grid-template-columns: 3.5rem repeat(5, minmax(0, 1fr)); }
-.cal-grid.cal-cols-6 { grid-template-columns: 3.5rem repeat(6, minmax(0, 1fr)); }
-.cal-grid.cal-cols-7 { grid-template-columns: 3.5rem repeat(7, minmax(0, 1fr)); }
-.cal-picker { margin-bottom: 1rem; }
-.cal-picker fieldset { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; align-items: center; border: 0; padding: 0; margin: 0 0 0.5rem; }
-.cal-picker legend { font-weight: 600; font-size: 0.9rem; }
-.cal-picker label { margin: 0; }
-.cal-picker button { margin: 0; padding: 0.35rem 0.8rem; }
 .gc-all { grid-column: 1 / -1; }
-.cal-head { text-align: center; font-weight: 600; font-size: 0.85rem; border-left: 1px solid var(--pico-muted-border-color); }
-.cal-head.is-today { background: var(--app-info-bg); color: var(--app-info-fg); }
-.cal-hour { border-top: 1px solid var(--pico-muted-border-color); z-index: 0; pointer-events: none; }
-.cal-hour-label { font-size: 0.75rem; color: var(--pico-muted-color); text-align: right; padding-right: 0.4rem; z-index: 1; }
-.cal-band { background: repeating-linear-gradient(45deg, var(--app-band-a), var(--app-band-a) 6px, var(--app-band-b) 6px, var(--app-band-b) 12px); z-index: 1; pointer-events: none; border-left: 1px solid var(--pico-muted-border-color); }
-.cal-slot { z-index: 2; display: block; border-left: 1px solid var(--pico-muted-border-color); text-decoration: none; }
-.cal-slot:hover, .cal-slot:focus-visible { background: var(--app-info-bg); }
-.cal-appt {
-  z-index: 3; display: block; overflow: hidden; margin: 0 2px; padding: 1px 4px;
-  font-size: 0.78rem; line-height: 1.2; text-decoration: none;
-  border-left: 4px solid var(--app-st-booked-border); background: var(--app-st-booked-bg); color: var(--app-st-booked-fg); border-radius: var(--app-radius-sm);
-}
-.cal-appt.st-done { background: var(--app-st-done-bg); color: var(--app-st-done-fg); border-left-color: var(--app-st-done-border); }
-.cal-appt.st-no_show { background: var(--app-st-no_show-bg); color: var(--app-st-no_show-fg); border-left-color: var(--app-st-no_show-border); }
-.cal-appt.st-cancelled { background: var(--app-st-cancelled-bg); color: var(--app-st-cancelled-fg); border-left-color: var(--app-st-cancelled-border); }
-.cal-appt.is-past { opacity: 0.85; }
-.cal-appt:hover, .cal-appt:focus-visible { filter: brightness(0.96); }
-.cal-now { z-index: 4; border-top: 2px solid var(--app-now); pointer-events: none; }
-.cal-list { display: none; }
-.cal-list ol { list-style: none; padding: 0; margin: 0 0 1rem; }
-.cal-list li { margin-bottom: 0.5rem; }
-.cal-list h2 { font-size: 1.05rem; margin: 1rem 0 0.5rem; }
-.cal-list a { display: block; padding: 0.5rem 0.75rem; border-left: 4px solid var(--app-st-booked-border); background: var(--app-st-booked-bg); color: var(--app-st-booked-fg); border-radius: var(--app-radius-sm); text-decoration: none; }
-.cal-list a.st-done { background: var(--app-st-done-bg); color: var(--app-st-done-fg); border-left-color: var(--app-st-done-border); }
-.cal-list a.st-no_show { background: var(--app-st-no_show-bg); color: var(--app-st-no_show-fg); border-left-color: var(--app-st-no_show-border); }
-.cal-list a.st-cancelled { background: var(--app-st-cancelled-bg); color: var(--app-st-cancelled-fg); border-left-color: var(--app-st-cancelled-border); }
-@media (max-width: 640px) {
-  .cal-grid { display: none; }
-  .cal-list { display: block; }
-}
-dialog#appt-dialog { max-width: 40rem; width: calc(100% - 2rem); padding: 0; border: 0; border-radius: var(--pico-border-radius); }
-dialog#appt-dialog article { margin: 0; }
-.detail-list { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
-.detail-list dt { font-weight: 600; }
-.detail-list dd { margin: 0; }
 .patient-results { list-style: none; padding: 0; margin: 0 0 1rem; }
 .gr-1 { grid-row-start: 1; }
 .gr-2 { grid-row-start: 2; }
@@ -401,7 +345,6 @@ dialog#appt-dialog article { margin: 0; }
 .booking-summary { padding: 0.75rem 1rem; }
 .booking-summary p { margin-bottom: 0.5rem; }
 .resend { margin-top: 1rem; }
-.home-badge { font-weight: 700; }
 
 /* Page /dev/styleguide (dev seulement) : une classe par pastille, la CSP interdit style=. */
 .sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: var(--app-space-2); margin-bottom: var(--app-space-4); }
@@ -417,4 +360,3 @@ dialog#appt-dialog article { margin: 0; }
 .sw-st-cancelled { background: var(--app-st-cancelled-bg); color: var(--app-st-cancelled-fg); border-left: 4px solid var(--app-st-cancelled-border); }
 .sw-band { background: repeating-linear-gradient(45deg, var(--app-band-a), var(--app-band-a) 6px, var(--app-band-b) 6px, var(--app-band-b) 12px); }
 .sw-now { border-top: 2px solid var(--app-now); }
-.cal-holiday { display: block; font-weight: 400; }

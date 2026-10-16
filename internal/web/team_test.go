@@ -227,7 +227,7 @@ func TestDayViewWithFourPractitioners(t *testing.T) {
 		if rec.Code != 200 {
 			t.Fatalf("%s: %d", tc.name, rec.Code)
 		}
-		if !strings.Contains(body, "cal-cols-4") {
+		if !strings.Contains(body, "dl-cal cols-4") {
 			t.Errorf("%s: pas de grille à 4 colonnes", tc.name)
 		}
 		for i := 1; i <= 4; i++ {
@@ -245,7 +245,7 @@ func TestDayViewWithFourPractitioners(t *testing.T) {
 	}
 	// Un praticien ne voit que son agenda, même en demandant « tous ».
 	rec := e.prac[0].do("GET", "/admin/calendar?view=day&date=2026-10-15&practitioner=all", nil)
-	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "cal-cols-1") || strings.Contains(rec.Body.String(), "Patient2") {
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "dl-cal cols-1") || strings.Contains(rec.Body.String(), "Patient2") {
 		t.Errorf("praticien, tous: %d", rec.Code)
 	}
 	// Et se voit refuser l'agenda d'un autre.
@@ -254,7 +254,7 @@ func TestDayViewWithFourPractitioners(t *testing.T) {
 	}
 	// En vue semaine, une seule colonne praticien (7 jours).
 	rec = e.admin.do("GET", "/admin/calendar?view=week&date=2026-10-15&practitioner=all", nil)
-	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "cal-cols-7") {
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "dl-cal cols-7") {
 		t.Errorf("vue semaine multi: %d", rec.Code)
 	}
 }
