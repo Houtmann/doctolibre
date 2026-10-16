@@ -23,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"doctolibre/internal/auth"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/service"
 )
@@ -45,6 +46,15 @@ type View struct {
 	CSRF  string
 	Flash *Flash
 	Data  any
+	// Role est le rôle de l'utilisateur connecté ("" hors espace du cabinet) :
+	// le menu de l'administration n'affiche que ce qu'il peut utiliser.
+	Role string
+}
+
+// roleOf retourne le rôle de l'utilisateur connecté de la requête.
+func roleOf(req *http.Request) string {
+	u, _ := auth.UserFrom(req.Context())
+	return u.Role
 }
 
 // HXHeaders retourne la valeur de hx-headers (JSON) qui fait envoyer le jeton
@@ -242,7 +252,7 @@ func (r *Renderer) PageStatus(w http.ResponseWriter, req *http.Request, status i
 		r.fail(w, req, "page inconnue", fmt.Errorf("page %q", name))
 		return
 	}
-	v := View{CSRF: httpx.CSRFToken(req.Context()), Flash: r.takeFlash(w, req), Data: data}
+	v := View{CSRF: httpx.CSRFToken(req.Context()), Flash: r.takeFlash(w, req), Data: data, Role: roleOf(req)}
 	r.write(w, req, status, t, "base.html", v)
 
 }
@@ -316,7 +326,7 @@ func (r *Renderer) Error(w http.ResponseWriter, req *http.Request, status int, m
 		httpx.Error(w, req, status, msg)
 		return
 	}
-	v := View{CSRF: httpx.CSRFToken(req.Context()), Data: d}
+	v := View{CSRF: httpx.CSRFToken(req.Context()), Data: d, Role: roleOf(req)}
 	var buf bytes.Buffer
 	if err := sets.pages["error"].ExecuteTemplate(&buf, "base.html", v); err != nil {
 		httpx.Error(w, req, status, msg)

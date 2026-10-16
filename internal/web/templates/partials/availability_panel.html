@@ -12,7 +12,7 @@
         <li>
           <strong>{{.Start}} – {{.End}}</strong>
           {{if not .AllTypes}}<small>({{range $i, $n := .TypeNames}}{{if $i}}, {{end}}{{$n}}{{end}})</small>{{end}}
-          <form method="post" action="/admin/availability/{{.ID}}/delete" hx-post="/admin/availability/{{.ID}}/delete" hx-target="#availability-panel" hx-swap="outerHTML">
+          <form method="post" action="/admin/availability/{{.ID}}/delete{{$.Q}}" hx-post="/admin/availability/{{.ID}}/delete{{$.Q}}" hx-target="#availability-panel" hx-swap="outerHTML">
             {{csrf $.CSRF}}
             <button type="submit" class="outline secondary" aria-label="Supprimer la plage de {{.Start}} à {{.End}} du {{weekdayName .Weekday}}">Supprimer</button>
           </form>
@@ -27,7 +27,7 @@
   </div>
 
   <h2>Ajouter une plage horaire</h2>
-  <form method="post" action="/admin/availability" hx-post="/admin/availability" hx-target="#availability-panel" hx-swap="outerHTML">
+  <form method="post" action="/admin/availability{{.Q}}" hx-post="/admin/availability{{.Q}}" hx-target="#availability-panel" hx-swap="outerHTML">
     {{csrf .CSRF}}
     {{with .Form}}
     <fieldset>

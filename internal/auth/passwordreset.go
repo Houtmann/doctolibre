@@ -59,6 +59,9 @@ func (s *Service) RequestPasswordReset(ctx context.Context, baseURL, email, ip s
 	if err != nil {
 		return fmt.Errorf("lecture utilisateur: %w", err)
 	}
+	if !row.Active {
+		return nil
+	}
 	token, err := newToken()
 	if err != nil {
 		return err

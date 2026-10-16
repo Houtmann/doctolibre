@@ -7,11 +7,16 @@
       <li><a href="/admin/calendar">Agenda</a></li>
       <li><a href="/admin/patients">Patients</a></li>
       <li><a href="/admin/waitlist">Liste d'attente</a></li>
+      {{if ne .Role "secretary"}}
       <li><a href="/admin/availability">Horaires</a></li>
       <li><a href="/admin/absences">Absences</a></li>
       <li><a href="/admin/appointment-types">Motifs</a></li>
       <li><a href="/admin/settings">Paramètres</a></li>
+      {{end}}
+      {{if eq .Role "admin"}}
       <li><a href="/admin/privacy">Confidentialité</a></li>
+      <li><a href="/admin/team">Équipe</a></li>
+      {{end}}
       {{end}}
       <li>
         <form method="post" action="/admin/logout">

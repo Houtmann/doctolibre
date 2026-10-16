@@ -37,6 +37,21 @@ type Practice struct {
 type Actor struct {
 	UserID     uuid.UUID
 	PracticeID uuid.UUID
+	// Role (domain.Role*) et PractitionerID (praticien lié à l'utilisateur, uuid.Nil
+	// si aucun) bornent l'accès aux agendas des autres (domain.MayAccessPractitioner).
+	// Role vide = appel interne sans restriction par praticien ; la couche web le renseigne toujours.
+	Role           string
+	PractitionerID uuid.UUID
+	// Target désigne le praticien visé quand ce n'est pas le sien (uuid.Nil = le sien).
+	Target uuid.UUID
+}
+
+// mayAccessPractitioner indique si l'acteur peut agir sur l'agenda de id.
+func (a Actor) mayAccessPractitioner(id uuid.UUID) bool {
+	if a.Role == "" {
+		return true
+	}
+	return domain.MayAccessPractitioner(a.Role, a.PractitionerID, id)
 }
 
 // Settings est la vue des paramètres du cabinet et du profil du praticien.
@@ -62,11 +77,17 @@ type SettingsInput struct {
 	HomeVisitZones  string // codes postaux ou communes, séparés par des virgules ou des retours à la ligne
 }
 
+// ReservedFirstSlug est le segment d'URL « premier créneau disponible » : interdit comme identifiant de praticien.
+const ReservedFirstSlug = "premier-disponible"
+
 var slugRe = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 
 // Practitioner retourne le praticien lié à l'utilisateur, en le créant au premier
 // accès (create-user ne crée qu'un compte). Un secrétaire n'a pas de praticien.
 func (s *Practice) Practitioner(ctx context.Context, a Actor) (sqlcgen.Practitioner, error) {
+	if a.Target != uuid.Nil {
+		return s.targetPractitioner(ctx, a)
+	}
 	var out sqlcgen.Practitioner
 	err := store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
 		var err error
@@ -74,6 +95,47 @@ func (s *Practice) Practitioner(ctx context.Context, a Actor) (sqlcgen.Practitio
 		return err
 	})
 	return out, err
+}
+
+// TeamPractitioners retourne les praticiens actifs du cabinet dont l'agenda est
+// accessible à l'acteur (tous pour l'administrateur et le secrétariat, le sien pour un praticien).
+func (s *Practice) TeamPractitioners(ctx context.Context, a Actor) ([]sqlcgen.Practitioner, error) {
+	prs, err := sqlcgen.New(s.Pool).ListPractitioners(ctx, sqlcgen.ListPractitionersParams{PracticeID: a.PracticeID, PageSize: pageSize})
+	if err != nil {
+		return nil, fmt.Errorf("liste des praticiens: %w", err)
+	}
+	out := prs[:0:0]
+	for _, p := range prs {
+		if a.mayAccessPractitioner(p.ID) {
+			out = append(out, p)
+		}
+	}
+	return out, nil
+}
+
+// targetPractitioner retourne le praticien visé par a.Target : du cabinet de
+// l'acteur (ErrNotFound sinon) et accessible à son rôle (ErrForbidden sinon).
+func (s *Practice) targetPractitioner(ctx context.Context, a Actor) (sqlcgen.Practitioner, error) {
+	if a.Role == "" || !a.mayAccessPractitioner(a.Target) {
+		return sqlcgen.Practitioner{}, domain.ErrForbidden
+	}
+	p, err := sqlcgen.New(s.Pool).GetPractitioner(ctx, sqlcgen.GetPractitionerParams{ID: a.Target, PracticeID: a.PracticeID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return sqlcgen.Practitioner{}, domain.ErrNotFound
+	}
+	if err != nil {
+		return sqlcgen.Practitioner{}, fmt.Errorf("lecture praticien: %w", err)
+	}
+	return p, nil
+}
+
+// configPractitioner est le praticien dont l'acteur règle les horaires et absences :
+// le sien, ou un autre pour l'administrateur seulement (le secrétariat ne règle rien).
+func (s *Practice) configPractitioner(ctx context.Context, a Actor) (sqlcgen.Practitioner, error) {
+	if a.Target != uuid.Nil && a.Role == domain.RoleSecretary {
+		return sqlcgen.Practitioner{}, domain.ErrForbidden
+	}
+	return s.Practitioner(ctx, a)
 }
 
 func ensurePractitioner(ctx context.Context, q *sqlcgen.Queries, a Actor) (sqlcgen.Practitioner, error) {
@@ -194,7 +256,7 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 	if tooLong(in.Bio, 2000) {
 		add("bio", "La présentation est trop longue (2000 caractères maximum).")
 	}
-	if len(in.Slug) > 60 || !slugRe.MatchString(in.Slug) {
+	if len(in.Slug) > 60 || !slugRe.MatchString(in.Slug) || in.Slug == ReservedFirstSlug {
 		add("slug", "L'identifiant d'URL ne peut contenir que des lettres minuscules, chiffres et tirets (60 caractères maximum).")
 	}
 	zones, zerr := parseZones(in.HomeVisitZones)

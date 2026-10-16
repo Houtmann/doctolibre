@@ -122,8 +122,12 @@ func TestCalendarAccess(t *testing.T) {
 		t.Errorf("RDV inconnu: %d", rec.Code)
 	}
 	sec := newCalendarEnv(t, domain.RoleSecretary)
-	if rec := sec.c.do("GET", "/admin/calendar", nil); rec.Code != 403 {
-		t.Errorf("secrétaire: %d", rec.Code)
+	// Le secrétariat voit les agendas (T033) mais pas les réglages.
+	if rec := sec.c.do("GET", "/admin/calendar", nil); rec.Code != 200 {
+		t.Errorf("secrétaire, agenda: %d", rec.Code)
+	}
+	if rec := sec.c.do("GET", "/admin/settings", nil); rec.Code != 403 {
+		t.Errorf("secrétaire, réglages: %d", rec.Code)
 	}
 }
 

@@ -17,6 +17,19 @@
     <a role="button" href="{{.NewURL}}" hx-get="{{.NewURL}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false">Nouveau rendez-vous</a>
   </div>
 
+  {{with .Picker}}
+  <form class="cal-picker" method="get" action="/admin/calendar" aria-label="Praticiens affichés">
+    <input type="hidden" name="view" value="{{.Mode}}">
+    <input type="hidden" name="date" value="{{.Date}}">
+    <fieldset>
+      <legend>Praticiens affichés</legend>
+      {{range .Options}}<label><input type="checkbox" name="practitioner" value="{{.ID}}"{{if .Selected}} checked{{end}}> {{.Name}}</label>{{end}}
+      <label><input type="checkbox" name="practitioner" value="all"{{if .AllChecked}} checked{{end}}> Tous</label>
+    </fieldset>
+    <button type="submit" class="secondary outline">Afficher</button>
+  </form>
+  {{end}}
+
   <div class="cal-grid cal-cols-{{len .V.Days}}" role="group" aria-label="Agenda, {{.V.Title}}">
     <div class="cal-head gr-1 gc-1"></div>
     {{range .V.Days}}<div class="cal-head gr-1 gc-{{.Col}}{{if .Today}} is-today{{end}}"><span aria-hidden="true">{{.Label}}</span><span class="visually-hidden">{{.LongLabel}}</span></div>{{end}}
@@ -26,7 +39,7 @@
     {{end}}
     {{range $d := .V.Days}}
       {{range .Bands}}<div class="cal-band gr-{{.Row}} gs-{{.Span}} gc-{{$d.Col}}" aria-hidden="true"></div>{{end}}
-      {{range .Slots}}<a class="cal-slot gr-{{.Row}} gs-2 gc-{{$d.Col}}" tabindex="-1" aria-label="Nouveau rendez-vous le {{$d.LongLabel}} à {{.Label}}" href="/admin/appointments/new?start={{.Start}}" hx-get="/admin/appointments/new?start={{.Start}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false"></a>{{end}}
+      {{range .Slots}}<a class="cal-slot gr-{{.Row}} gs-2 gc-{{$d.Col}}" tabindex="-1" aria-label="Nouveau rendez-vous le {{$d.LongLabel}} à {{.Label}}" href="/admin/appointments/new?start={{.Start}}&practitioner={{$d.PractitionerID}}" hx-get="/admin/appointments/new?start={{.Start}}&practitioner={{$d.PractitionerID}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false"></a>{{end}}
       {{range .Appts}}<a class="cal-appt gr-{{.Row}} gs-{{.Span}} gc-{{$d.Col}} st-{{.Status}}{{if .Past}} is-past{{end}}" href="/admin/appointments/{{.ID}}" hx-get="/admin/appointments/{{.ID}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false" title="{{localTime .Start}}–{{localTime .End}} · {{.Patient}} · {{.TypeName}} · {{.StatusName}}"><strong>{{localTime .Start}}</strong> {{.Patient}}<br>{{.TypeName}}{{if .AtHome}} <span class="home-badge" aria-hidden="true">&#8962;</span><span class="visually-hidden"> (à domicile)</span>{{end}}<span class="visually-hidden"> ({{.StatusName}})</span></a>{{end}}
       {{if .NowRow}}<div class="cal-now gr-{{.NowRow}} gc-{{$d.Col}}" aria-hidden="true"></div>{{end}}
     {{end}}

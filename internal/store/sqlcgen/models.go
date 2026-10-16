@@ -21,6 +21,7 @@ type AppUser struct {
 	LastLoginAt    pgtype.Timestamptz
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	Active         bool
 }
 
 type Appointment struct {
@@ -237,6 +238,17 @@ type Session struct {
 	CreatedAt time.Time
 	UserAgent string
 	Ip        string
+}
+
+type UserInvitation struct {
+	TokenHash  string
+	PracticeID uuid.UUID
+	InvitedBy  pgtype.UUID
+	Email      string
+	Role       string
+	ExpiresAt  time.Time
+	UsedAt     pgtype.Timestamptz
+	CreatedAt  time.Time
 }
 
 type WaitlistEntry struct {

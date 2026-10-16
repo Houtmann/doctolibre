@@ -25,7 +25,7 @@ func (q *Queries) CountAppointmentTypes(ctx context.Context, practiceID uuid.UUI
 }
 
 const getUserForUpdate = `-- name: GetUserForUpdate :one
-SELECT id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at FROM app_user WHERE id = $1 AND practice_id = $2 FOR UPDATE
+SELECT id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at, active FROM app_user WHERE id = $1 AND practice_id = $2 FOR UPDATE
 `
 
 type GetUserForUpdateParams struct {
@@ -46,6 +46,7 @@ func (q *Queries) GetUserForUpdate(ctx context.Context, arg GetUserForUpdatePara
 		&i.LastLoginAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Active,
 	)
 	return i, err
 }

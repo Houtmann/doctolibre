@@ -59,7 +59,7 @@ type AvailabilityView struct {
 
 // Availability retourne la grille lundi→dimanche du praticien connecté.
 func (s *Practice) Availability(ctx context.Context, a Actor) (AvailabilityView, error) {
-	pr, err := s.Practitioner(ctx, a)
+	pr, err := s.configPractitioner(ctx, a)
 	if err != nil {
 		return AvailabilityView{}, err
 	}
@@ -145,7 +145,7 @@ func (s *Practice) AddRules(ctx context.Context, a Actor, in RuleInput) error {
 		return errs
 	}
 
-	pr, err := s.Practitioner(ctx, a)
+	pr, err := s.configPractitioner(ctx, a)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func overlapError(weekday int, start, end string, existing sqlcgen.AvailabilityR
 
 // DeleteRule supprime une plage du praticien connecté (sans effet si elle n'existe pas).
 func (s *Practice) DeleteRule(ctx context.Context, a Actor, id uuid.UUID) error {
-	pr, err := s.Practitioner(ctx, a)
+	pr, err := s.configPractitioner(ctx, a)
 	if err != nil {
 		return err
 	}
@@ -254,7 +254,7 @@ type ClosureView struct {
 
 // Closures liste les absences à venir (non terminées) du praticien connecté.
 func (s *Practice) Closures(ctx context.Context, a Actor) ([]ClosureView, error) {
-	pr, err := s.Practitioner(ctx, a)
+	pr, err := s.configPractitioner(ctx, a)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +335,7 @@ func (s *Practice) AddClosure(ctx context.Context, a Actor, in ClosureInput) err
 	case !to.After(s.Clock.Now()):
 		return domain.ErrValidation{Field: "start_date", Msg: "L'absence doit se terminer dans le futur."}
 	}
-	pr, err := s.Practitioner(ctx, a)
+	pr, err := s.configPractitioner(ctx, a)
 	if err != nil {
 		return err
 	}
@@ -349,7 +349,7 @@ func (s *Practice) AddClosure(ctx context.Context, a Actor, in ClosureInput) err
 
 // DeleteClosure supprime une absence du praticien connecté.
 func (s *Practice) DeleteClosure(ctx context.Context, a Actor, id uuid.UUID) error {
-	pr, err := s.Practitioner(ctx, a)
+	pr, err := s.configPractitioner(ctx, a)
 	if err != nil {
 		return err
 	}
