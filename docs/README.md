@@ -25,6 +25,7 @@ Chaque document a **un seul rôle** : ne pas dupliquer une information, mettre u
 | [`../.claude/agents/task-implementer.md`](../.claude/agents/task-implementer.md) | Consignes du sous-agent exécutant (Sonnet) | Humain / orchestrateur | Quand le workflow change |
 | [`../.claude/commands/run-task.md`](../.claude/commands/run-task.md) | Procédure d'orchestration (Opus) : choisir, déléguer, contrôler, clore | Humain / orchestrateur | Quand le workflow change |
 | [`decisions.md`](decisions.md) | Décisions d'architecture/produit, avec l'alternative écartée | Orchestrateur / humain | Dès qu'une décision est prise |
+| [`design-system.md`](design-system.md) | Jetons CSS, contrastes AA, catalogue des partials, page `/dev/styleguide` | Agent (T062) | Quand un jeton ou un partial réutilisable change |
 | [`sms.md`](sms.md) | Fournisseurs SMS, coûts, réglages par défaut | Agent (T022) | Quand les prix ou drivers changent |
 | [`backup.md`](backup.md) | Sauvegardes chiffrées (age), restauration, envoi S3 | Agent (T041) | Quand le dispositif change |
 | [`rgpd.md`](rgpd.md) | Registre de traitement, durées de conservation, HDS, recommandations | Agent (T043) | Quand le traitement des données change |

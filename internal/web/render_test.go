@@ -119,6 +119,8 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = WaitlistVerifyData{}
 			case "public_waitlist_offer":
 				data = OfferData{}
+			case "dev_styleguide":
+				data = styleguideView()
 			}
 			rd.Page(rec, httptest.NewRequest("GET", "/", nil), n, data)
 			if rec.Code != 200 || !strings.Contains(rec.Body.String(), `<html lang="fr">`) {

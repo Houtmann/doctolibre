@@ -76,6 +76,9 @@ func Routes(d Deps) http.Handler {
 	if rd != nil {
 		mux.Handle("GET /static/", rd.StaticHandler())
 	}
+	if d.Config.Env == config.EnvDev && rd != nil {
+		mux.HandleFunc("GET /dev/styleguide", rd.styleguide) // page de contrôle du design system, jamais en prod
+	}
 	if d.Auth != nil && rd != nil {
 		d.adminRoutes(mux, rd, logger)
 	}

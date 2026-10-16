@@ -1,0 +1,54 @@
+{{define "title"}}Styleguide{{end}}
+{{define "content"}}
+<h1>Styleguide</h1>
+<p class="muted">Page de contrôle visuel, disponible uniquement en dev. Voir <code>docs/design-system.md</code>.</p>
+
+<h2>Jetons</h2>
+<div class="sw-grid">
+  {{range .Data.Swatches}}<div class="sw {{.Class}}"><code>--app-{{.Name}}</code></div>{{end}}
+</div>
+
+<h2>Boutons</h2>
+<p class="inline-actions">
+  <button type="button">Primaire</button>
+  <button type="button" class="secondary">Secondaire</button>
+  <button type="button" class="outline">Contour</button>
+  <button type="button" disabled>Désactivé</button>
+</p>
+
+<h2>Messages (flash)</h2>
+{{range .Data.Flashes}}{{template "flash.html" .}}{{end}}
+
+<h2>Formulaire et erreurs</h2>
+{{template "form_errors.html" .Data.Errors}}
+<form method="post" action="/dev/styleguide">
+  {{csrf .CSRF}}
+  {{template "patient_fields.html" .Data.Form}}
+  <button type="submit">Enregistrer</button>
+</form>
+
+<h2>Agenda : un RDV par état</h2>
+<div class="cal-grid cal-cols-4" role="group" aria-label="Extrait d'agenda">
+  <div class="cal-head gr-1 gc-1"></div>
+  {{range .Data.Appts}}<div class="cal-head gr-1 gc-{{.Col}}">{{.Head}}</div>{{end}}
+  <div class="cal-hour gr-2 gs-4 gc-all" aria-hidden="true"></div>
+  <div class="cal-hour-label gr-2 gc-1" aria-hidden="true">09h00</div>
+  {{range .Data.Appts}}<a class="cal-appt gr-3 gs-{{.Span}} gc-{{.Col}} st-{{.Status}}" href="#"><strong>{{.Time}}</strong> {{.Patient}}<br>{{.StatusName}}</a>{{end}}
+  <div class="cal-band gr-5 gs-2 gc-2" aria-hidden="true"></div>
+  <div class="cal-now gr-6 gc-3" aria-hidden="true"></div>
+</div>
+<div class="cal-list">
+  <h2>Liste (mobile)</h2>
+  <ol>
+    {{range .Data.Appts}}<li><a class="st-{{.Status}}" href="#"><strong>{{.Time}}</strong> · {{.Patient}} <small>({{.StatusName}})</small></a></li>{{end}}
+  </ol>
+</div>
+
+<h2>Partials réutilisables</h2>
+<h3>status_button</h3>
+{{template "status_button.html" .Data.StatusBtn}}
+<h3>patient_results</h3>
+{{template "patient_results.html" .Data.Results}}
+<h3>booking_summary</h3>
+{{template "booking_summary.html" .Data.Summary}}
+{{end}}

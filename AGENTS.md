@@ -100,6 +100,7 @@ cmd/doctolibre → web → service → store, booking, notify, outbox, auth
 
 - `html/template` + htmx (vendored dans `internal/web/static`). Pas de Node, pas de bundler, pas de framework JS.
 - Chaque formulaire **fonctionne sans JS** (POST classique + redirect) ; htmx est une amélioration (`hx-post`, `hx-target`, `hx-swap`). Le handler détecte `HX-Request` pour renvoyer un partial au lieu de la page.
+- Réutiliser les jetons CSS (`--app-*`, aucune couleur hex hors `:root`) et les partials de [`docs/design-system.md`](docs/design-system.md) ; page de contrôle `/dev/styleguide` en dev.
 - Pas de script ni de style inline (CSP). Pas de ressource externe (CDN, polices Google…) : tout est embarqué.
 - Templates : `pages/` (une par route), `partials/` (fragments réutilisables et réponses htmx), `layout/`. Noms de fichiers en snake_case.
 - Mobile-first, accessible : `<label>` sur chaque champ, `<button>` pour les actions, contrastes AA, `lang="fr"`.

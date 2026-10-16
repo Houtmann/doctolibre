@@ -401,7 +401,7 @@ func (r *Renderer) parseFlash(val string) (*Flash, error) {
 		return nil, errBadFlash
 	}
 	switch f.Kind {
-	case "success", "error", "info":
+	case "success", "error", "info", "warning":
 	default:
 		f.Kind = "info"
 	}

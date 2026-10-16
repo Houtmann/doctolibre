@@ -1,12 +1,98 @@
-/* Surcharges de Pico CSS. Aucune ressource externe (CSP : default-src 'self'). */
+/* Surcharges de Pico CSS. Aucune ressource externe (CSP : default-src 'self').
+   Jetons de design : voir docs/design-system.md. Aucune couleur hex hors des blocs :root. */
 :root {
   --pico-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Couleurs sémantiques : fond / texte. */
   --app-success-bg: #e6f4ea;
   --app-success-fg: #0b4a1d;
   --app-error-bg: #fdecea;
   --app-error-fg: #7a1010;
   --app-info-bg: #e8f0fe;
   --app-info-fg: #0b2f6b;
+  --app-warning-bg: #fff4d6;
+  --app-warning-fg: #5c4400;
+  /* États de RDV : fond / texte / liseré gauche. */
+  --app-st-booked-bg: #dbe8ff;
+  --app-st-booked-fg: #0b2f6b;
+  --app-st-booked-border: #0b2f6b;
+  --app-st-done-bg: #d9f0df;
+  --app-st-done-fg: #0b4a1d;
+  --app-st-done-border: #0b4a1d;
+  --app-st-no_show-bg: #ffe6cc;
+  --app-st-no_show-fg: #6b3200;
+  --app-st-no_show-border: #6b3200;
+  --app-st-cancelled-bg: #ececec;
+  --app-st-cancelled-fg: #3d3d3d;
+  --app-st-cancelled-border: #6b6b6b;
+  /* Agenda : bande hachurée (indisponible) et ligne « maintenant ». */
+  --app-band-a: #ececec;
+  --app-band-b: #f5f5f5;
+  --app-now: #c0171d;
+  /* Espacements et rayon. */
+  --app-space-1: 0.25rem;
+  --app-space-2: 0.5rem;
+  --app-space-3: 0.75rem;
+  --app-space-4: 1rem;
+  --app-radius-sm: 3px;
+}
+/* Mode sombre : même garde que Pico (suit le système sauf si data-theme="light"). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Couleurs sémantiques : fond / texte. */
+    --app-success-bg: #12301c;
+    --app-success-fg: #b7e4c4;
+    --app-error-bg: #3d1414;
+    --app-error-fg: #f5c2c0;
+    --app-info-bg: #14274d;
+    --app-info-fg: #c4d8fb;
+    --app-warning-bg: #3d3000;
+    --app-warning-fg: #f5deb0;
+    /* États de RDV : fond / texte / liseré gauche. */
+    --app-st-booked-bg: #14274d;
+    --app-st-booked-fg: #c4d8fb;
+    --app-st-booked-border: #7ba7f5;
+    --app-st-done-bg: #12301c;
+    --app-st-done-fg: #b7e4c4;
+    --app-st-done-border: #5cb877;
+    --app-st-no_show-bg: #3d2300;
+    --app-st-no_show-fg: #ffd9b0;
+    --app-st-no_show-border: #e0954a;
+    --app-st-cancelled-bg: #2a2a2a;
+    --app-st-cancelled-fg: #cfcfcf;
+    --app-st-cancelled-border: #8a8a8a;
+    /* Agenda : bande hachurée (indisponible) et ligne « maintenant ». */
+    --app-band-a: #2a2f3a;
+    --app-band-b: #232832;
+    --app-now: #ff6b70;
+  }
+}
+:root[data-theme="dark"] {
+  /* Couleurs sémantiques : fond / texte. */
+  --app-success-bg: #12301c;
+  --app-success-fg: #b7e4c4;
+  --app-error-bg: #3d1414;
+  --app-error-fg: #f5c2c0;
+  --app-info-bg: #14274d;
+  --app-info-fg: #c4d8fb;
+  --app-warning-bg: #3d3000;
+  --app-warning-fg: #f5deb0;
+  /* États de RDV : fond / texte / liseré gauche. */
+  --app-st-booked-bg: #14274d;
+  --app-st-booked-fg: #c4d8fb;
+  --app-st-booked-border: #7ba7f5;
+  --app-st-done-bg: #12301c;
+  --app-st-done-fg: #b7e4c4;
+  --app-st-done-border: #5cb877;
+  --app-st-no_show-bg: #3d2300;
+  --app-st-no_show-fg: #ffd9b0;
+  --app-st-no_show-border: #e0954a;
+  --app-st-cancelled-bg: #2a2a2a;
+  --app-st-cancelled-fg: #cfcfcf;
+  --app-st-cancelled-border: #8a8a8a;
+  /* Agenda : bande hachurée (indisponible) et ligne « maintenant ». */
+  --app-band-a: #2a2f3a;
+  --app-band-b: #232832;
+  --app-now: #ff6b70;
 }
 
 /* Focus toujours visible (accessibilité clavier). */
@@ -41,13 +127,14 @@
 
 /* Messages flash et erreurs de formulaire. */
 .flash {
-  padding: 0.75rem 1rem;
+  padding: var(--app-space-3) var(--app-space-4);
   border-radius: var(--pico-border-radius);
-  margin-bottom: 1rem;
+  margin-bottom: var(--app-space-4);
 }
 .flash-success { background: var(--app-success-bg); color: var(--app-success-fg); }
 .flash-error   { background: var(--app-error-bg);   color: var(--app-error-fg); }
 .flash-info    { background: var(--app-info-bg);    color: var(--app-info-fg); }
+.flash-warning { background: var(--app-warning-bg); color: var(--app-warning-fg); }
 .form-errors {
   background: var(--app-error-bg);
   color: var(--app-error-fg);
@@ -120,26 +207,28 @@
 .cal-head.is-today { background: var(--app-info-bg); color: var(--app-info-fg); }
 .cal-hour { border-top: 1px solid var(--pico-muted-border-color); z-index: 0; pointer-events: none; }
 .cal-hour-label { font-size: 0.75rem; color: var(--pico-muted-color); text-align: right; padding-right: 0.4rem; z-index: 1; }
-.cal-band { background: repeating-linear-gradient(45deg, #ececec, #ececec 6px, #f5f5f5 6px, #f5f5f5 12px); z-index: 1; pointer-events: none; border-left: 1px solid var(--pico-muted-border-color); }
+.cal-band { background: repeating-linear-gradient(45deg, var(--app-band-a), var(--app-band-a) 6px, var(--app-band-b) 6px, var(--app-band-b) 12px); z-index: 1; pointer-events: none; border-left: 1px solid var(--pico-muted-border-color); }
 .cal-slot { z-index: 2; display: block; border-left: 1px solid var(--pico-muted-border-color); text-decoration: none; }
 .cal-slot:hover, .cal-slot:focus-visible { background: var(--app-info-bg); }
 .cal-appt {
   z-index: 3; display: block; overflow: hidden; margin: 0 2px; padding: 1px 4px;
   font-size: 0.78rem; line-height: 1.2; text-decoration: none;
-  border-left: 4px solid var(--app-info-fg); background: #dbe8ff; color: #0b2f6b; border-radius: 3px;
+  border-left: 4px solid var(--app-st-booked-border); background: var(--app-st-booked-bg); color: var(--app-st-booked-fg); border-radius: var(--app-radius-sm);
 }
-.cal-appt.st-done { background: #d9f0df; color: #0b4a1d; border-left-color: #0b4a1d; }
-.cal-appt.st-no_show { background: #ffe6cc; color: #6b3200; border-left-color: #6b3200; }
+.cal-appt.st-done { background: var(--app-st-done-bg); color: var(--app-st-done-fg); border-left-color: var(--app-st-done-border); }
+.cal-appt.st-no_show { background: var(--app-st-no_show-bg); color: var(--app-st-no_show-fg); border-left-color: var(--app-st-no_show-border); }
+.cal-appt.st-cancelled { background: var(--app-st-cancelled-bg); color: var(--app-st-cancelled-fg); border-left-color: var(--app-st-cancelled-border); }
 .cal-appt.is-past { opacity: 0.85; }
 .cal-appt:hover, .cal-appt:focus-visible { filter: brightness(0.96); }
-.cal-now { z-index: 4; border-top: 2px solid #c0171d; pointer-events: none; }
+.cal-now { z-index: 4; border-top: 2px solid var(--app-now); pointer-events: none; }
 .cal-list { display: none; }
 .cal-list ol { list-style: none; padding: 0; margin: 0 0 1rem; }
 .cal-list li { margin-bottom: 0.5rem; }
 .cal-list h2 { font-size: 1.05rem; margin: 1rem 0 0.5rem; }
-.cal-list a { display: block; padding: 0.5rem 0.75rem; border-left: 4px solid var(--app-info-fg); background: #dbe8ff; color: #0b2f6b; border-radius: 3px; text-decoration: none; }
-.cal-list a.st-done { background: #d9f0df; color: #0b4a1d; border-left-color: #0b4a1d; }
-.cal-list a.st-no_show { background: #ffe6cc; color: #6b3200; border-left-color: #6b3200; }
+.cal-list a { display: block; padding: 0.5rem 0.75rem; border-left: 4px solid var(--app-st-booked-border); background: var(--app-st-booked-bg); color: var(--app-st-booked-fg); border-radius: var(--app-radius-sm); text-decoration: none; }
+.cal-list a.st-done { background: var(--app-st-done-bg); color: var(--app-st-done-fg); border-left-color: var(--app-st-done-border); }
+.cal-list a.st-no_show { background: var(--app-st-no_show-bg); color: var(--app-st-no_show-fg); border-left-color: var(--app-st-no_show-border); }
+.cal-list a.st-cancelled { background: var(--app-st-cancelled-bg); color: var(--app-st-cancelled-fg); border-left-color: var(--app-st-cancelled-border); }
 @media (max-width: 640px) {
   .cal-grid { display: none; }
   .cal-list { display: block; }
@@ -390,4 +479,19 @@ dialog#appt-dialog article { margin: 0; }
 .callout p { margin-bottom: 0.25rem; }
 .callout ul { margin-bottom: 0; }
 .callout a { color: inherit; }
+
+/* Page /dev/styleguide (dev seulement) : une classe par pastille, la CSP interdit style=. */
+.sw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: var(--app-space-2); margin-bottom: var(--app-space-4); }
+.sw { padding: var(--app-space-2) var(--app-space-3); border-radius: var(--app-radius-sm); border: 1px solid var(--pico-muted-border-color); font-size: 0.85rem; }
+.sw code { background: transparent; color: inherit; padding: 0; }
+.sw-success { background: var(--app-success-bg); color: var(--app-success-fg); }
+.sw-error { background: var(--app-error-bg); color: var(--app-error-fg); }
+.sw-info { background: var(--app-info-bg); color: var(--app-info-fg); }
+.sw-warning { background: var(--app-warning-bg); color: var(--app-warning-fg); }
+.sw-st-booked { background: var(--app-st-booked-bg); color: var(--app-st-booked-fg); border-left: 4px solid var(--app-st-booked-border); }
+.sw-st-done { background: var(--app-st-done-bg); color: var(--app-st-done-fg); border-left: 4px solid var(--app-st-done-border); }
+.sw-st-no_show { background: var(--app-st-no_show-bg); color: var(--app-st-no_show-fg); border-left: 4px solid var(--app-st-no_show-border); }
+.sw-st-cancelled { background: var(--app-st-cancelled-bg); color: var(--app-st-cancelled-fg); border-left: 4px solid var(--app-st-cancelled-border); }
+.sw-band { background: repeating-linear-gradient(45deg, var(--app-band-a), var(--app-band-a) 6px, var(--app-band-b) 6px, var(--app-band-b) 12px); }
+.sw-now { border-top: 2px solid var(--app-now); }
 .cal-holiday { display: block; font-weight: 400; }
