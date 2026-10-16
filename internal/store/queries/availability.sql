@@ -24,3 +24,8 @@ ORDER BY lower(during), id;
 
 -- name: DeleteAvailabilityException :exec
 DELETE FROM availability_exception WHERE id = @id AND practitioner_id = @practitioner_id;
+
+-- name: CountPracticeAvailabilityRules :one
+SELECT count(*) FROM availability_rule
+JOIN practitioner ON practitioner.id = availability_rule.practitioner_id
+WHERE practitioner.practice_id = @practice_id AND practitioner.active;

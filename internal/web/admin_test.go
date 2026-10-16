@@ -14,6 +14,7 @@ import (
 	"doctolibre/internal/auth"
 	"doctolibre/internal/config"
 	"doctolibre/internal/domain"
+	"doctolibre/internal/service"
 	"doctolibre/internal/testutil"
 	"doctolibre/internal/web"
 )
@@ -260,5 +261,37 @@ func TestLoginRequiresCSRF(t *testing.T) {
 	h.ServeHTTP(rec, req)
 	if rec.Code != 403 {
 		t.Errorf("POST sans CSRF: %d", rec.Code)
+	}
+}
+
+func TestDashboardShowsBookingURL(t *testing.T) {
+	t.Parallel()
+	db := testutil.DB(t)
+	if _, err := auth.CreateUser(context.Background(), db, auth.CreateUserParams{
+		Email: userEmail, Role: domain.RoleAdmin, PracticeName: "Cabinet test", Password: pw,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	clock := testutil.NewFixedClock(time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC))
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	h := web.Routes(web.Deps{
+		Config: config.Config{Env: config.EnvDev, BaseURL: "https://rdv.example.test"},
+		Logger: logger, DB: db,
+		Auth:     &auth.Service{Pool: db, Clock: clock, Logger: logger},
+		Practice: &service.Practice{Pool: db, Clock: clock},
+	})
+	c := newClient(t, h, "192.0.2.30")
+	if rec := c.login(userEmail, pw, "/admin"); rec.Code != 303 {
+		t.Fatalf("login: %d", rec.Code)
+	}
+	rec := c.do("GET", "/admin", nil)
+	body := rec.Body.String()
+	if rec.Code != 200 || !strings.Contains(body, `value="https://rdv.example.test/p/`) {
+		t.Fatalf("URL de réservation absente: %d\n%s", rec.Code, body)
+	}
+	for _, want := range []string{"Pour que les patients puissent réserver", "/admin/availability", "/admin/appointment-types"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("manque %q", want)
+		}
 	}
 }

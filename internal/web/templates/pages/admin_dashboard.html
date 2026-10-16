@@ -3,5 +3,29 @@
 {{define "content"}}
 <h1>Tableau de bord</h1>
 <p>Bienvenue dans l'espace du cabinet.</p>
+{{with .Data}}{{with .Booking}}
+<section aria-labelledby="booking-page">
+  <h2 id="booking-page">Votre page de réservation</h2>
+  {{if or .NeedAvailability .NeedType}}
+  <aside class="callout" aria-label="Configuration à terminer">
+    <p><strong>Pour que les patients puissent réserver :</strong></p>
+    <ul>
+      {{if .NeedAvailability}}<li>{{if .CanConfigure}}<a href="/admin/availability">Définissez vos horaires d'ouverture</a>{{else}}Définir les horaires d'ouverture (praticien ou administrateur){{end}}</li>{{end}}
+      {{if .NeedType}}<li>{{if .CanConfigure}}<a href="/admin/appointment-types">Rendez au moins un motif réservable en ligne</a>{{else}}Rendre au moins un motif réservable en ligne (praticien ou administrateur){{end}}</li>{{end}}
+    </ul>
+  </aside>
+  {{end}}
+  <p>Donnez cette adresse à vos patients :</p>
+  <p><a href="{{.PracticeURL}}">{{.PracticeURL}}</a></p>
+  <label for="booking-url">Adresse à copier</label>
+  <input id="booking-url" type="text" readonly value="{{.PracticeURL}}">
+  {{if .Practitioners}}
+  <h3>Par praticien</h3>
+  <ul>
+    {{range .Practitioners}}<li>{{.Name}} : <a href="{{.URL}}">{{.URL}}</a></li>{{end}}
+  </ul>
+  {{end}}
+</section>
+{{end}}{{end}}
 <p><a href="/admin/messages">Messages envoyés</a></p>
 {{end}}

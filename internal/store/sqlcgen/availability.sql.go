@@ -13,6 +13,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countPracticeAvailabilityRules = `-- name: CountPracticeAvailabilityRules :one
+SELECT count(*) FROM availability_rule
+JOIN practitioner ON practitioner.id = availability_rule.practitioner_id
+WHERE practitioner.practice_id = $1 AND practitioner.active
+`
+
+func (q *Queries) CountPracticeAvailabilityRules(ctx context.Context, practiceID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPracticeAvailabilityRules, practiceID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createAvailabilityException = `-- name: CreateAvailabilityException :one
 INSERT INTO availability_exception (practitioner_id, during, kind, reason)
 VALUES ($1, tstzrange($2::timestamptz, $3::timestamptz, '[)'), $4, $5)
