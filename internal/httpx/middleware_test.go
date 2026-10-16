@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"log/slog"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -199,5 +200,51 @@ func TestRespond(t *testing.T) {
 	Redirect(rec, httptest.NewRequest(http.MethodPost, "/", nil), "/ailleurs")
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/ailleurs" {
 		t.Errorf("redirect: %d %v", rec.Code, rec.Header())
+	}
+}
+
+func TestCSRFBodyLimits(t *testing.T) {
+	t.Parallel()
+	h := CSRF(false)(http.HandlerFunc(ok))
+	const token = "0123456789abcdef0123456789abcdef0123456789"
+
+	multipart := func(fileSize int) *http.Request {
+		var buf bytes.Buffer
+		mw := multipart.NewWriter(&buf)
+		fw, _ := mw.CreateFormFile("file", "patients.csv")
+		_, _ = fw.Write(bytes.Repeat([]byte("a"), fileSize))
+		_ = mw.WriteField(CSRFFormField, token) // après le fichier : il faut tout lire
+		_ = mw.Close()
+		req := httptest.NewRequest(http.MethodPost, "/", &buf)
+		req.Header.Set("Content-Type", mw.FormDataContentType())
+		return req
+	}
+	urlencoded := func(padding int) *http.Request {
+		body := "pad=" + strings.Repeat("a", padding) + "&" + CSRFFormField + "=" + token
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		return req
+	}
+	tests := []struct {
+		name string
+		req  *http.Request
+		want int
+	}{
+		{"multipart de 1,5 Mio accepté", multipart(3 << 19), http.StatusOK},
+		{"multipart de 3 Mio accepté", multipart(3 << 20), http.StatusOK},
+		{"multipart au-delà de la limite refusé", multipart(MaxMultipartLen), http.StatusForbidden},
+		{"urlencoded de 1,5 Mio toujours refusé", urlencoded(3 << 19), http.StatusForbidden},
+		{"urlencoded court accepté", urlencoded(10), http.StatusOK},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			tt.req.AddCookie(&http.Cookie{Name: CSRFCookie, Value: token}) //nolint:gosec // test
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, tt.req)
+			if rec.Code != tt.want {
+				t.Errorf("statut %d, attendu %d", rec.Code, tt.want)
+			}
+		})
 	}
 }

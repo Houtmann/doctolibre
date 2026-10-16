@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"log/slog"
+	"mime"
 	"net"
 	"net/http"
 	"net/netip"
@@ -192,6 +193,9 @@ const (
 	CSRFHeader     = "X-CSRF-Token"
 	CSRFFormField  = "csrf_token"
 	maxCSRFFormLen = 1 << 20
+	// MaxMultipartLen borne le corps d'un formulaire multipart/form-data (import CSV :
+	// fichier de 2 Mio, renvoyé en base64 à la confirmation, plus la marge).
+	MaxMultipartLen = 4 << 20
 )
 
 // CSRFToken retourne le jeton CSRF de la requête, à inclure dans les formulaires
@@ -226,7 +230,11 @@ func CSRF(secure bool) Middleware {
 				}
 				got := r.Header.Get(CSRFHeader)
 				if got == "" {
-					r.Body = http.MaxBytesReader(w, r.Body, maxCSRFFormLen)
+					limit := int64(maxCSRFFormLen)
+					if mt, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err == nil && mt == "multipart/form-data" {
+						limit = MaxMultipartLen
+					}
+					r.Body = http.MaxBytesReader(w, r.Body, limit)
 					got = r.PostFormValue(CSRFFormField)
 				}
 				if subtle.ConstantTimeCompare([]byte(got), []byte(token)) != 1 {

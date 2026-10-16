@@ -83,6 +83,8 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = PatientsPage{}
 			case "admin_patient_new":
 				data = PatientNewPage{}
+			case "admin_patient_import":
+				data = PatientImportPage{}
 			case "admin_patient":
 				data = PatientPage{}
 			case "admin_care_plan_new":

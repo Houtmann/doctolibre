@@ -84,6 +84,71 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 	return i, err
 }
 
+const createPatientsBulk = `-- name: CreatePatientsBulk :execrows
+INSERT INTO patient (practice_id, first_name, last_name, birth_date, phone, email, address, sms_opt_in, email_opt_in)
+SELECT $1::uuid, r.j->>'first', r.j->>'last', nullif(r.j->>'birth', '')::date,
+       nullif(r.j->>'phone', ''), nullif(r.j->>'email', '')::citext, nullif(r.j->>'address', ''),
+       ($2::boolean AND r.j->>'phone' <> ''), ($2::boolean AND r.j->>'email' <> '')
+FROM jsonb_array_elements($3::jsonb) AS r(j)
+`
+
+type CreatePatientsBulkParams struct {
+	PracticeID uuid.UUID
+	OptIn      bool
+	Rows       []byte
+}
+
+// Import CSV : insertion en lot depuis un tableau JSON d'objets
+// {first,last,birth,phone,email,address} ; ” devient NULL ; les consentements
+// ne sont à vrai que si la case est cochée ET que la coordonnée existe.
+func (q *Queries) CreatePatientsBulk(ctx context.Context, arg CreatePatientsBulkParams) (int64, error) {
+	result, err := q.db.Exec(ctx, createPatientsBulk, arg.PracticeID, arg.OptIn, arg.Rows)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const findImportDuplicates = `-- name: FindImportDuplicates :many
+SELECT coalesce(phone, '')::text AS phone, coalesce(email::text, '')::text AS email FROM patient
+WHERE practice_id = $1 AND deleted_at IS NULL
+  AND (phone = ANY($2::text[]) OR email = ANY($3::citext[]))
+`
+
+type FindImportDuplicatesParams struct {
+	PracticeID uuid.UUID
+	Phones     []string
+	Emails     []string
+}
+
+type FindImportDuplicatesRow struct {
+	Phone string
+	Email string
+}
+
+// Import CSV : coordonnées déjà présentes parmi les fiches actives du cabinet,
+// en une requête pour tout le fichier. Index patient_practice_phone_idx et
+// patient_practice_email_idx (BitmapOr), email comparé en citext.
+func (q *Queries) FindImportDuplicates(ctx context.Context, arg FindImportDuplicatesParams) ([]FindImportDuplicatesRow, error) {
+	rows, err := q.db.Query(ctx, findImportDuplicates, arg.PracticeID, arg.Phones, arg.Emails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindImportDuplicatesRow
+	for rows.Next() {
+		var i FindImportDuplicatesRow
+		if err := rows.Scan(&i.Phone, &i.Email); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findPatientDuplicates = `-- name: FindPatientDuplicates :many
 SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL

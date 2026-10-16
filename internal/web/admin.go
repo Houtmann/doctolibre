@@ -73,6 +73,9 @@ func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger)
 	}
 	if d.Patients != nil {
 		d.patientRoutes(mux, rd, logger)
+		if d.PatientImport != nil {
+			d.patientImportRoutes(mux, rd, logger)
+		}
 		if d.CarePlans != nil {
 			d.carePlanRoutes(mux, rd, logger)
 		}

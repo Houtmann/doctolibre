@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T053 import CSV des patients (sonnet ; contrôle : opus)
+
+- **Tâches** : T053 todo → review (spec précisée par l'orchestrateur : limite multipart du CSRF)
+- **Fait** : `GET/POST /admin/patients/import` (3 rôles) en deux étapes aperçu → confirmation ; parseur pur (BOM, UTF-8/cp1252, `;`/`,`, en-têtes sans accents, ≤ 2 Mo / 5 000 lignes) ; doublons base (une requête, index phone/email) et intra-fichier ; insertion atomique en lot ; opt-in à faux par défaut ; audit à compteurs
+- **Vérification** : `make check` ✅ (relancé par l'orchestrateur) ; diff CSRF, SQL, service et handler relus. EXPLAIN de `FindImportDuplicates` sur 200 000 patients : BitmapOr sur les deux index, ~65 ms (mesuré par l'agent). Navigateur **non vu**.
+- **Reste** : passage navigateur (upload, aperçu, confirmation, 375 px) ; un fichier > 4 Mio reçoit le 403 générique du CSRF au lieu du message « dépasse 2 Mo »
+- **Décisions** : import CSV (voir decisions.md)
+
 ## 2026-10-16 — T085 choix de la couleur du praticien (sonnet ; contrôle : opus)
 
 - **Tâches** : T085 créée (écart signalé en T057) puis todo → review ; lancée avant que T057 soit `done`, à la demande de l'humain

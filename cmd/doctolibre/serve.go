@@ -52,6 +52,7 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		deps.Feed = &service.CalendarFeed{Pool: pool, Clock: domain.SystemClock{}}
 		deps.Calendar = &service.Calendar{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
 		deps.Patients = &service.Patients{Pool: pool, Clock: domain.SystemClock{}}
+		deps.PatientImport = &service.PatientImport{Pool: pool, Clock: domain.SystemClock{}}
 		deps.CarePlans = &service.CarePlans{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
 		deps.Booking = &service.Booking{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
 		deps.Status = &service.Status{Pool: pool, Clock: domain.SystemClock{}, Version: version, StartedAt: domain.SystemClock{}.Now(), BackupDir: cfg.BackupDir}

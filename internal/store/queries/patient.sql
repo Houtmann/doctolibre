@@ -79,3 +79,21 @@ UPDATE patient SET
     email = coalesce(email, nullif(@email::text, '')::citext),
     updated_at = now()
 WHERE id = @id AND practice_id = @practice_id;
+
+-- name: FindImportDuplicates :many
+-- Import CSV : coordonnées déjà présentes parmi les fiches actives du cabinet,
+-- en une requête pour tout le fichier. Index patient_practice_phone_idx et
+-- patient_practice_email_idx (BitmapOr), email comparé en citext.
+SELECT coalesce(phone, '')::text AS phone, coalesce(email::text, '')::text AS email FROM patient
+WHERE practice_id = @practice_id AND deleted_at IS NULL
+  AND (phone = ANY(@phones::text[]) OR email = ANY(@emails::citext[]));
+
+-- name: CreatePatientsBulk :execrows
+-- Import CSV : insertion en lot depuis un tableau JSON d'objets
+-- {first,last,birth,phone,email,address} ; '' devient NULL ; les consentements
+-- ne sont à vrai que si la case est cochée ET que la coordonnée existe.
+INSERT INTO patient (practice_id, first_name, last_name, birth_date, phone, email, address, sms_opt_in, email_opt_in)
+SELECT @practice_id::uuid, r.j->>'first', r.j->>'last', nullif(r.j->>'birth', '')::date,
+       nullif(r.j->>'phone', ''), nullif(r.j->>'email', '')::citext, nullif(r.j->>'address', ''),
+       (@opt_in::boolean AND r.j->>'phone' <> ''), (@opt_in::boolean AND r.j->>'email' <> '')
+FROM jsonb_array_elements(@rows::jsonb) AS r(j);

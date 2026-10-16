@@ -54,7 +54,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T050 | [Jeton de gestion dérivé (HMAC)](T050-derived-manage-token.md) | 5 | T023, T030 | review |
 | T051 | [Absence imprévue : annulation groupée](T051-sick-day-bulk-cancel.md) | 5 | T050 | todo |
 | T052 | [Jours fériés français automatiques](T052-public-holidays.md) | 5 | T013 | review |
-| T053 | [Import CSV des patients](T053-patient-csv-import.md) | 5 | T017 | todo |
+| T053 | [Import CSV des patients](T053-patient-csv-import.md) | 5 | T017 | review |
 | T054 | [Garde-fou absences répétées](T054-no-show-guard.md) | 5 | T014, T017 | todo |
 | T055 | [Lien de série pour le patient](T055-care-plan-patient-link.md) | 5 | T050 | todo |
 | T056 | [Réglages : profil vs cabinet, séries au secrétariat](T056-settings-split-and-secretary-plans.md) | 5 | T033, T030 | todo |

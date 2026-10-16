@@ -1,0 +1,80 @@
+{{/* layout: admin */}}
+{{define "title"}}Importer des patients{{end}}
+{{define "content"}}
+<h1 class="text-2xl font-semibold">Importer des patients</h1>
+{{template "form_errors.html" .Data.Errors}}
+{{if .Data.Preview}}
+{{with .Data.Preview}}
+<div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100">
+  <div class="stat"><div class="stat-title">Lignes lues</div><div class="stat-value text-2xl">{{.Total}}</div></div>
+  <div class="stat"><div class="stat-title">À importer</div><div class="stat-value text-2xl text-success">{{.Valid}}</div></div>
+  <div class="stat"><div class="stat-title">Doublons</div><div class="stat-value text-2xl">{{.Duplicates}}</div></div>
+  <div class="stat"><div class="stat-title">Invalides</div><div class="stat-value text-2xl">{{.Invalid}}</div></div>
+</div>
+{{if .Problems}}
+<h2 class="text-lg font-semibold">Lignes ignorées</h2>
+<div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+<table class="table">
+  <thead><tr><th scope="col">Ligne</th><th scope="col">Patient</th><th scope="col">Raison</th></tr></thead>
+  <tbody>
+    {{range .Problems}}
+    <tr><td class="tabular-nums">{{.Line}}</td><td>{{.Name}}</td><td>{{if eq .Status "duplicate"}}<span class="badge badge-warning badge-soft">Doublon</span>{{else}}<span class="badge badge-error badge-soft">Invalide</span>{{end}} {{.Reason}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{if .MoreProblems}}<p class="text-sm text-base-content/70">… et {{.MoreProblems}} autre(s) ligne(s) ignorée(s).</p>{{end}}
+{{end}}
+{{if .Sample}}
+<h2 class="text-lg font-semibold">Aperçu des lignes à importer</h2>
+<div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+<table class="table">
+  <thead><tr><th scope="col">Ligne</th><th scope="col">Patient</th><th scope="col">Téléphone</th><th scope="col" class="hidden sm:table-cell">Email</th></tr></thead>
+  <tbody>
+    {{range .Sample}}
+    <tr><td class="tabular-nums">{{.Line}}</td><td>{{.Name}}</td><td class="tabular-nums">{{.Phone}}</td><td class="hidden sm:table-cell">{{.Email}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{if .MoreValid}}<p class="text-sm text-base-content/70">… et {{.MoreValid}} autre(s) ligne(s) à importer.</p>{{end}}
+{{end}}
+{{if .Valid}}
+<form class="space-y-4 max-w-2xl" method="post" action="/admin/patients/import" enctype="multipart/form-data">
+  {{csrf $.CSRF}}
+  <input type="hidden" name="confirm" value="1">
+  <input type="hidden" name="payload" value="{{$.Data.Payload}}">
+  <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+    <legend class="fieldset-legend">Notifications</legend>
+    <label class="flex items-start gap-2 text-sm" for="import-optin"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" id="import-optin" type="checkbox" name="notify_opt_in" value="1"> Ces patients ont accepté de recevoir des rappels (SMS et email)</label>
+    <p class="text-sm text-base-content/70">Sans cette case, aucun rappel ne leur sera envoyé. En la cochant, le cabinet atteste avoir recueilli leur accord : il en est responsable.</p>
+  </fieldset>
+  <div class="flex flex-wrap gap-2">
+    <button class="btn btn-primary" type="submit">Importer {{.Valid}} patient(s)</button>
+    <a class="btn btn-outline" href="/admin/patients/import">Annuler</a>
+  </div>
+</form>
+{{else}}
+<div class="alert alert-warning alert-soft" role="status">Aucune ligne à importer.</div>
+<p><a class="btn btn-outline" href="/admin/patients/import">Choisir un autre fichier</a></p>
+{{end}}
+{{end}}
+{{else}}
+<form class="space-y-4 max-w-2xl" method="post" action="/admin/patients/import" enctype="multipart/form-data">
+  {{csrf .CSRF}}
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="import-file">Fichier CSV</label>
+    <input class="file-input w-full" id="import-file" type="file" name="file" accept=".csv,text/csv" required aria-describedby="import-help">
+  </div>
+  <div class="text-sm text-base-content/70 space-y-1" id="import-help">
+    <p>{{.Data.MaxRows}} lignes et {{.Data.MaxMB}} Mo au maximum. Séparateur « ; » ou « , », encodage UTF-8 ou Windows-1252.</p>
+    <p>La première ligne doit contenir les noms de colonnes : <strong>Nom</strong> et <strong>Prénom</strong> (obligatoires), puis Téléphone (ou Portable, Mobile), Email (ou Courriel), Date de naissance (JJ/MM/AAAA ou AAAA-MM-JJ) et Adresse. Les autres colonnes sont ignorées. Chaque ligne doit avoir un téléphone ou un email.</p>
+    <p>Vous verrez un aperçu (doublons, lignes invalides) avant tout import. Le fichier n'est pas conservé sur le serveur.</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <button class="btn btn-primary" type="submit">Analyser le fichier</button>
+    <a class="btn btn-outline" href="/admin/patients">Annuler</a>
+  </div>
+</form>
+{{end}}
+{{end}}
