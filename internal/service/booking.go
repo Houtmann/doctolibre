@@ -32,6 +32,8 @@ type Booking struct {
 	// BaseURL : adresse publique (DOCTOLIBRE_BASE_URL) pour les liens /r/{jeton} des
 	// messages ; vide = messages sans lien.
 	BaseURL string
+	// OnCreated est appelé (source "online") après le commit d'un rendez-vous ; nil = rien.
+	OnCreated func(source string)
 }
 
 func (b *Booking) notifier() notifier { return notifier{clock: b.Clock, baseURL: b.BaseURL} }
@@ -493,6 +495,9 @@ func (b *Booking) Book(ctx context.Context, in BookInput) (BookResult, error) {
 	})
 	if err != nil {
 		return BookResult{}, err
+	}
+	if b.OnCreated != nil {
+		b.OnCreated("online")
 	}
 	b.emit(ctx, Event{Kind: EventAppointmentCreated, PracticeID: appt.PracticeID, AppointmentID: appt.ID})
 	return BookResult{Appointment: appt, Token: token}, nil

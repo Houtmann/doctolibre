@@ -1,0 +1,17 @@
+{{/* layout: admin */}}
+{{define "title"}}État de l'instance{{end}}
+{{define "content"}}
+<h1>État de l'instance</h1>
+<table>
+  <caption class="visually-hidden">État de l'instance</caption>
+  <tbody>
+    <tr><th scope="row">Version</th><td>{{.Data.Version}}</td></tr>
+    <tr><th scope="row">En fonctionnement depuis</th><td>{{.Data.Uptime}}</td></tr>
+    <tr><th scope="row">Version des migrations</th><td>{{.Data.MigrationVersion}}</td></tr>
+    <tr><th scope="row">Taille de la base</th><td>{{.Data.DBSize}}</td></tr>
+    <tr><th scope="row">Messages en échec</th><td>{{.Data.FailedMessages}}{{if .Data.FailedMessages}} — <a href="/admin/messages">voir les messages</a>{{end}}</td></tr>
+    <tr><th scope="row">Dernière sauvegarde</th><td>{{if not .Data.BackupMonitored}}Suivi non configuré (DOCTOLIBRE_BACKUP_DIR){{else if .Data.LastBackup.IsZero}}Aucune sauvegarde enregistrée{{else}}{{formatDate .Data.LastBackup}} à {{formatTime .Data.LastBackup}}{{end}}</td></tr>
+  </tbody>
+</table>
+<p>Un email est envoyé aux administrateurs en cas de messages en échec ou d'absence de sauvegarde depuis plus de 48 heures.</p>
+{{end}}

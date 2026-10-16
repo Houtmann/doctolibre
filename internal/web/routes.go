@@ -45,6 +45,8 @@ type Deps struct {
 	Booking *service.Booking
 	// Feed (flux ICS du praticien) est optionnel : nil = pas de /ics/… ni de réglage d'abonnement.
 	Feed *service.CalendarFeed
+	// Status (état de l'instance) est optionnel : nil = pas de page /admin/status.
+	Status StatusSource
 }
 
 const pingTimeout = 2 * time.Second

@@ -40,6 +40,8 @@ type Calendar struct {
 	Events EventSink // nil = NopSink ; appelé après commit
 	// BaseURL : adresse publique pour les liens de gestion des messages (vide = sans lien).
 	BaseURL string
+	// OnCreated est appelé (source "staff") après le commit d'un rendez-vous créé ; nil = rien.
+	OnCreated func(source string)
 }
 
 func (c *Calendar) notifier() notifier { return notifier{clock: c.Clock, baseURL: c.BaseURL} }
@@ -525,6 +527,9 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 	})
 	if err != nil {
 		return sqlcgen.Appointment{}, err
+	}
+	if c.OnCreated != nil {
+		c.OnCreated("staff")
 	}
 	c.emit(ctx, Event{Kind: EventAppointmentCreated, PracticeID: a.PracticeID, AppointmentID: out.ID})
 	return out, nil

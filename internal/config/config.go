@@ -34,6 +34,8 @@ type Config struct {
 	Timezone    string
 	// MetricsToken active /metrics (jeton Bearer) ; vide = endpoint désactivé.
 	MetricsToken string
+	// BackupDir : dossier des sauvegardes (volume en lecture seule) ; vide = suivi des sauvegardes désactivé.
+	BackupDir string
 	// TrustedProxies : CIDR des reverse proxies dont X-Forwarded-For est cru.
 	TrustedProxies []netip.Prefix
 	// AutoMigrate applique les migrations au démarrage de `serve` (défaut : true).
@@ -99,6 +101,7 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 		Timezone:       get("DOCTOLIBRE_TIMEZONE", "Europe/Paris"),
 
 		MetricsToken: get("DOCTOLIBRE_METRICS_TOKEN", ""),
+		BackupDir:    get("DOCTOLIBRE_BACKUP_DIR", ""),
 	}
 	switch strings.ToLower(get("DOCTOLIBRE_WORKER", "on")) {
 	case "on":

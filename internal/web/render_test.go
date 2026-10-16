@@ -52,6 +52,9 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 			if n == "admin_messages" {
 				data = MessagesData{}
 			}
+			if n == "admin_status" {
+				data = StatusPage{}
+			}
 			if n == "password_reset" {
 				data = PasswordResetData{Token: "t"}
 			}
