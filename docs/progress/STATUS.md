@@ -3,12 +3,12 @@
 > Tableau de bord **réécrit à la fin de chaque session** (pas d'historique ici : voir [`journal.md`](journal.md)).
 > Le statut détaillé de chaque tâche est dans [`tasks/README.md`](../../tasks/README.md), seule source de vérité.
 
-**Mis à jour le** : 2026-10-16 (T057 en review)
+**Mis à jour le** : 2026-10-16 (T085 en review)
 
 ## Où on en est
 
 - **Phases 0 à 4 terminées** : 29 `done`.
-- **Phase 5 — Retours terrain** ouverte : 28 tâches (dont T068 `superseded`) (T050–T068, dont T063–T067 = design system v2 de `design/`, finalement remplacé par la migration daisyUI T080–T084 (décision du 2026-10-16 : Tailwind v4 standalone + daisyUI 5 + EventCalendar, voir `docs/decisions.md`), et T070–T073 ajoutées le 2026-10-16 : consignes par motif, auto-planification de série par le patient, « Ma journée » + pointage, statistiques pour rétrocession) ; T050–T061 issues d'une liste de propositions challengée le 2026-10-16. Écartés : tournées par secteur (fusion de marges incompatible avec `during_blocked` stocké), Web Push / Wallet / manifest, re-confirmation J-2 avec libération auto, PDF, capacité N des ressources (v1 = capacité 1).
+- **Phase 5 — Retours terrain** ouverte : 29 tâches (dont T068 `superseded`) (T050–T068, dont T063–T067 = design system v2 de `design/`, finalement remplacé par la migration daisyUI T080–T084 (décision du 2026-10-16 : Tailwind v4 standalone + daisyUI 5 + EventCalendar, voir `docs/decisions.md`), et T070–T073 ajoutées le 2026-10-16 : consignes par motif, auto-planification de série par le patient, « Ma journée » + pointage, statistiques pour rétrocession) ; T050–T061 issues d'une liste de propositions challengée le 2026-10-16. Écartés : tournées par secteur (fusion de marges incompatible avec `during_blocked` stocké), Web Push / Wallet / manifest, re-confirmation J-2 avec libération auto, PDF, capacité N des ressources (v1 = capacité 1).
 - **Cœur RDV** : réservation (T014), gestion par le patient (T015), agenda (T016), fiches patients (T017) `done`.
 - **Notifications** : confirmations et rappels (T023) `done`.
 - **Kiné** : séries (T030), liste d'attente (T031), domicile (T032), multi-praticiens et rôles (T033) `done`.
@@ -17,11 +17,11 @@
 
 ## En cours
 
-En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system), **T080** (outillage Tailwind + daisyUI, layouts ; pages non migrées volontairement sommaires jusqu’à T082–T084), **T081** (parcours patient public en daisyUI, vérifié dans le navigateur à 360/1280 px, clair et sombre), **T082** (back-office en daisyUI : 14 pages admin et 5 partials ; vérifié à 375 px sombre sur toutes les pages, erreurs de champ et focus clavier ; états avec données non vus : liste d'attente remplie, absences, invitations, pagination). **T083** (agenda EventCalendar : semaine / jour / par praticien, dialogue htmx, endpoint JSON borné à 42 jours, repli sans JS ; vérifié 1280 px clair/sombre, 360 px sombre, clavier ; non vu : JS désactivé dans un navigateur, déplacer/annuler via dialogue). **T084** (pages restantes en daisyUI, Pico, CSS `dl-*`/`--app-*`, `design/` et `poc/` supprimés ; `ui.css` seule feuille ; non vu à l'écran : parcours public confirmé/annulation/déplacement/liste d'attente, états avec données, dialogue d'agenda à 360 px). **T057** (couleurs du motif et du praticien dans l'agenda, via le JSON et le CSSOM, CSP inchangée ; aucun écran ne permet encore de choisir la couleur d'un praticien). T063–T067 `done`. T068 `superseded` (absorbée par T084).
+En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system), **T080** (outillage Tailwind + daisyUI, layouts ; pages non migrées volontairement sommaires jusqu’à T082–T084), **T081** (parcours patient public en daisyUI, vérifié dans le navigateur à 360/1280 px, clair et sombre), **T082** (back-office en daisyUI : 14 pages admin et 5 partials ; vérifié à 375 px sombre sur toutes les pages, erreurs de champ et focus clavier ; états avec données non vus : liste d'attente remplie, absences, invitations, pagination). **T083** (agenda EventCalendar : semaine / jour / par praticien, dialogue htmx, endpoint JSON borné à 42 jours, repli sans JS ; vérifié 1280 px clair/sombre, 360 px sombre, clavier ; non vu : JS désactivé dans un navigateur, déplacer/annuler via dialogue). **T084** (pages restantes en daisyUI, Pico, CSS `dl-*`/`--app-*`, `design/` et `poc/` supprimés ; `ui.css` seule feuille ; non vu à l'écran : parcours public confirmé/annulation/déplacement/liste d'attente, états avec données, dialogue d'agenda à 360 px). **T057** (couleurs du motif et du praticien dans l'agenda, via le JSON et le CSSOM, CSP inchangée ; l'écran manquant est T085). **T085** (couleur du praticien au profil et dans l'équipe, validée, tests ; non vu au navigateur). T063–T067 `done`. T068 `superseded` (absorbée par T084).
 
 ## Prochaine action
 
-1. **Migration front (daisyUI) terminée** : relire **T080** à **T084** et **T057** (en review). Champ couleur du praticien (profil ou équipe) à ajouter : pas encore de tâche. T061 et T070–T073 (UI) en daisyUI.
+1. **Migration front (daisyUI) terminée** : relire **T080** à **T084** et **T057** (en review). Relire **T085** et vérifier au navigateur l'en-tête de colonne « Par praticien » après changement de couleur. T061 et T070–T073 (UI) en daisyUI.
 2. Relire et passer en `done` T050 (débloque T051, T055), T052, T058, T062. Prêtes en parallèle (hors UI) : T053, T054, T056, T059, T060 (attention aux numéros de migration : 00020 et suivants, un seul agent à la fois sur `sqlc`). T072 prête ; T070 dès que T058 est `done` ; T071 après T055 ; T073 après T072 + T059.
 3. Passage navigateur restant (non vu en T081–T084) : parcours public confirmé / annulation / déplacement / liste d'attente, états avec données (liste d'attente, absences, invitations, pagination), dialogue d'agenda à 360 px, déplacer/annuler via le dialogue, JS désactivé. Vue jour à 4 praticiens à 1280 px (critère T033) vue en T083/T084.
 4. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
@@ -58,4 +58,4 @@ En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours 
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 28 (dont 1 remplacée) | 5 | 10 |
+| 5 — Retours terrain | 29 (dont 1 remplacée) | 5 | 11 |

@@ -31,12 +31,13 @@ const TemplateInvitation = "user_invitation"
 
 // Actions d'audit de la gestion d'équipe.
 const (
-	ActionUserInvited     = "user_invited"
-	ActionInvitationUsed  = "invitation_accepted"
-	ActionInvitationRevok = "invitation_revoked"
-	ActionUserRoleChanged = "user_role_changed"
-	ActionUserDeactivated = "user_deactivated"
-	ActionUserReactivated = "user_reactivated"
+	ActionUserInvited       = "user_invited"
+	ActionInvitationUsed    = "invitation_accepted"
+	ActionInvitationRevok   = "invitation_revoked"
+	ActionUserRoleChanged   = "user_role_changed"
+	ActionUserDeactivated   = "user_deactivated"
+	ActionUserReactivated   = "user_reactivated"
+	ActionPractitionerColor = "practitioner_color_changed"
 )
 
 // ErrInvalidInvitation : lien inconnu, expiré ou déjà utilisé.
@@ -59,12 +60,15 @@ func RoleLabel(role string) string {
 
 // TeamMember est un compte du cabinet.
 type TeamMember struct {
-	ID          uuid.UUID
-	Email       string
-	Role        string
-	Active      bool
-	Name        string // nom du praticien lié, s'il existe
-	LastLoginAt time.Time
+	ID     uuid.UUID
+	Email  string
+	Role   string
+	Active bool
+	Name   string // nom du praticien lié, s'il existe
+	// PractitionerID et Color : praticien lié (uuid.Nil si aucun) et sa couleur d'agenda.
+	PractitionerID uuid.UUID
+	Color          string
+	LastLoginAt    time.Time
 }
 
 // PendingInvitation est une invitation envoyée et non encore utilisée.
@@ -116,6 +120,10 @@ func (s *Service) Team(ctx context.Context, actor User) (TeamView, error) {
 	var v TeamView
 	for _, r := range rows {
 		m := TeamMember{ID: r.ID, Email: r.Email, Role: r.Role, Active: r.Active, Name: strings.TrimSpace(r.FirstName + " " + r.LastName)}
+		if r.PractitionerID.Valid {
+			m.PractitionerID = r.PractitionerID.Bytes
+			m.Color = domain.ColorOrDefault(r.Color)
+		}
 		if r.LastLoginAt.Valid {
 			m.LastLoginAt = r.LastLoginAt.Time
 		}
@@ -358,5 +366,35 @@ func (s *Service) SetActive(ctx context.Context, actor User, id uuid.UUID, activ
 			action = ActionUserDeactivated
 		}
 		return auditTeam(ctx, q, actor, action, uuid.NullUUID{UUID: id, Valid: true}, nil)
+	})
+}
+
+// SetPractitionerColor change la couleur d'agenda d'un praticien du cabinet
+// (gestion d'équipe). Couleur invalide : ErrValidation (champ color), rien d'écrit ;
+// praticien d'un autre cabinet : ErrNotFound.
+func (s *Service) SetPractitionerColor(ctx context.Context, actor User, practitionerID uuid.UUID, color string) error {
+	if err := requireTeamAdmin(actor); err != nil {
+		return err
+	}
+	color = strings.TrimSpace(color)
+	if !domain.ValidColor(color) {
+		return domain.ErrValidation{Field: "color", Msg: "La couleur doit être au format #rrggbb."}
+	}
+	return store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+		n, err := q.SetPractitionerColor(ctx, sqlcgen.SetPractitionerColorParams{ID: practitionerID, PracticeID: actor.PracticeID, Color: color})
+		if err != nil {
+			return fmt.Errorf("couleur du praticien: %w", err)
+		}
+		if n == 0 {
+			return domain.ErrNotFound
+		}
+		b, err := json.Marshal(map[string]string{})
+		if err != nil {
+			return fmt.Errorf("meta audit: %w", err)
+		}
+		return q.CreateAuditLog(ctx, sqlcgen.CreateAuditLogParams{
+			UserID: pgtype.UUID{Bytes: actor.ID, Valid: true}, Actor: "user:" + actor.ID.String(), Action: ActionPractitionerColor,
+			Entity: "practitioner", EntityID: pgtype.UUID{Bytes: practitionerID, Valid: true}, Meta: b,
+		})
 	})
 }

@@ -173,6 +173,7 @@ func settingsInputOf(s service.Settings) service.SettingsInput {
 		HorizonDays:        strconv.Itoa(s.HorizonDays),
 		FirstName:          s.Practitioner.FirstName, LastName: s.Practitioner.LastName,
 		Title: s.Practitioner.Title, Bio: s.Practitioner.Bio, Slug: s.Practitioner.Slug,
+		Color:           domain.ColorOrDefault(s.Practitioner.Color),
 		HomeVisitOnline: s.Practice.HomeVisitOnline, HomeVisitZones: strings.Join(s.Practice.HomeVisitZones, "\n"),
 		CloseOnHolidays: s.Practice.CloseOnHolidays, HolidaysAlsaceMoselle: s.Practice.HolidaysAlsaceMoselle,
 	}
@@ -199,7 +200,7 @@ func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) 
 		CancelNoticeHours:  r.PostFormValue("cancel_notice_hours"),
 		HorizonDays:        r.PostFormValue("horizon_days"),
 		FirstName:          r.PostFormValue("first_name"), LastName: r.PostFormValue("last_name"),
-		Title: r.PostFormValue("title"), Bio: r.PostFormValue("bio"), Slug: r.PostFormValue("slug"),
+		Title: r.PostFormValue("title"), Bio: r.PostFormValue("bio"), Slug: r.PostFormValue("slug"), Color: r.PostFormValue("color"),
 		HomeVisitOnline: r.PostFormValue("home_visit_online") == "1", HomeVisitZones: r.PostFormValue("home_visit_zones"),
 		CloseOnHolidays: r.PostFormValue("close_on_holidays") == "1", HolidaysAlsaceMoselle: r.PostFormValue("holidays_alsace_moselle") == "1",
 	}

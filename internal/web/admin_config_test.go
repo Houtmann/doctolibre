@@ -134,12 +134,22 @@ func TestSettingsPage(t *testing.T) {
 	rec = c.do("POST", "/admin/settings", url.Values{
 		"name": {"Cabinet Étoile"}, "address": {"1 rue de la Paix"}, "phone": {"01 02 03 04 05"},
 		"booking_notice_hours": {"6"}, "cancel_notice_hours": {"48"}, "horizon_days": {"45"},
-		"first_name": {"Camille"}, "last_name": {"Martin"}, "title": {"Kiné"}, "bio": {"Bio"}, "slug": {"camille-martin"},
+		"first_name": {"Camille"}, "last_name": {"Martin"}, "title": {"Kiné"}, "bio": {"Bio"}, "slug": {"camille-martin"}, "color": {"#aa3366"},
 	})
 	if rec.Code != 303 || rec.Header().Get("Location") != "/admin/settings" {
 		t.Fatalf("POST valide: %d %q", rec.Code, rec.Header().Get("Location"))
 	}
-	mustContain(t, c.do("GET", "/admin/settings", nil), 200, "Paramètres enregistrés.", `value="Cabinet Étoile"`, `value="45"`, `value="camille-martin"`)
+	mustContain(t, c.do("GET", "/admin/settings", nil), 200, "Paramètres enregistrés.", `value="Cabinet Étoile"`, `value="45"`, `value="camille-martin"`, `name="color" type="color" value="#aa3366"`, `for="color"`)
+
+	// Couleur invalide (champ du profil) : 422 et rien n'est écrit, autres champs compris.
+	for _, bad := range []string{"rouge", "#12345", "url(x)", ""} {
+		rec = c.do("POST", "/admin/settings", url.Values{
+			"name": {"Autre nom"}, "booking_notice_hours": {"6"}, "cancel_notice_hours": {"48"}, "horizon_days": {"45"},
+			"first_name": {"Camille"}, "last_name": {"Martin"}, "slug": {"autre-slug"}, "color": {bad},
+		})
+		mustContain(t, rec, 422, "La couleur doit être au format #rrggbb.")
+	}
+	mustContain(t, c.do("GET", "/admin/settings", nil), 200, `value="Cabinet Étoile"`, `value="camille-martin"`, `value="#aa3366"`)
 }
 
 func TestAppointmentTypesPage(t *testing.T) {

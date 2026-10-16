@@ -252,7 +252,8 @@ func (q *Queries) ListPendingInvitations(ctx context.Context, arg ListPendingInv
 const listTeamUsers = `-- name: ListTeamUsers :many
 
 SELECT u.id, u.email, u.role, u.active, u.last_login_at, u.practitioner_id,
-       coalesce(p.first_name, '')::text AS first_name, coalesce(p.last_name, '')::text AS last_name
+       coalesce(p.first_name, '')::text AS first_name, coalesce(p.last_name, '')::text AS last_name,
+       coalesce(p.color, '')::text AS color
 FROM app_user u
 LEFT JOIN practitioner p ON p.id = u.practitioner_id AND p.practice_id = u.practice_id
 WHERE u.practice_id = $1
@@ -274,6 +275,7 @@ type ListTeamUsersRow struct {
 	PractitionerID pgtype.UUID
 	FirstName      string
 	LastName       string
+	Color          string
 }
 
 // Équipe du cabinet et invitations (T033).
@@ -295,6 +297,7 @@ func (q *Queries) ListTeamUsers(ctx context.Context, arg ListTeamUsersParams) ([
 			&i.PractitionerID,
 			&i.FirstName,
 			&i.LastName,
+			&i.Color,
 		); err != nil {
 			return nil, err
 		}
@@ -338,6 +341,25 @@ type SetPractitionerActiveParams struct {
 func (q *Queries) SetPractitionerActive(ctx context.Context, arg SetPractitionerActiveParams) error {
 	_, err := q.db.Exec(ctx, setPractitionerActive, arg.Active, arg.ID, arg.PracticeID)
 	return err
+}
+
+const setPractitionerColor = `-- name: SetPractitionerColor :execrows
+UPDATE practitioner SET color = $1, updated_at = now()
+WHERE id = $2 AND practice_id = $3
+`
+
+type SetPractitionerColorParams struct {
+	Color      string
+	ID         uuid.UUID
+	PracticeID uuid.UUID
+}
+
+func (q *Queries) SetPractitionerColor(ctx context.Context, arg SetPractitionerColorParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setPractitionerColor, arg.Color, arg.ID, arg.PracticeID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const setUserActive = `-- name: SetUserActive :exec

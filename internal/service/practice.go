@@ -72,6 +72,7 @@ type SettingsInput struct {
 	HorizonDays          string
 
 	FirstName, LastName, Title, Bio, Slug string
+	Color                                 string // couleur d'agenda du praticien (#rrggbb)
 
 	HomeVisitOnline bool   // réservation en ligne des visites à domicile
 	HomeVisitZones  string // codes postaux ou communes, séparés par des virgules ou des retours à la ligne
@@ -219,6 +220,7 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 	in.Name, in.Address, in.Phone = strings.TrimSpace(in.Name), strings.TrimSpace(in.Address), strings.TrimSpace(in.Phone)
 	in.FirstName, in.LastName = strings.TrimSpace(in.FirstName), strings.TrimSpace(in.LastName)
 	in.Title, in.Bio, in.Slug = strings.TrimSpace(in.Title), strings.TrimSpace(in.Bio), strings.TrimSpace(in.Slug)
+	in.Color = strings.TrimSpace(in.Color)
 
 	if in.Name == "" {
 		add("name", "Le nom du cabinet est requis.")
@@ -262,6 +264,9 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 	if len(in.Slug) > 60 || !slugRe.MatchString(in.Slug) || in.Slug == ReservedFirstSlug {
 		add("slug", "L'identifiant d'URL ne peut contenir que des lettres minuscules, chiffres et tirets (60 caractères maximum).")
 	}
+	if !domain.ValidColor(in.Color) {
+		add("color", "La couleur doit être au format #rrggbb.")
+	}
 	zones, zerr := parseZones(in.HomeVisitZones)
 	if zerr != "" {
 		add("home_visit_zones", zerr)
@@ -303,7 +308,7 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 		}
 		_, err = q.UpdatePractitioner(ctx, sqlcgen.UpdatePractitionerParams{
 			ID: pr.ID, PracticeID: a.PracticeID, FirstName: in.FirstName, LastName: in.LastName,
-			Slug: in.Slug, Title: in.Title, Bio: in.Bio, Color: pr.Color, Active: pr.Active,
+			Slug: in.Slug, Title: in.Title, Bio: in.Bio, Color: in.Color, Active: pr.Active,
 		})
 		if store.IsUniqueViolation(err) {
 			return domain.ValidationErrors{{Field: "slug", Msg: "Cet identifiant d'URL est déjà utilisé dans le cabinet."}}

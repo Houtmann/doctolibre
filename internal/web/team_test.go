@@ -604,3 +604,56 @@ func TestFirstAvailablePractitioner(t *testing.T) {
 		t.Errorf("slug réservé accepté: %v", err)
 	}
 }
+
+func TestTeamPractitionerColor(t *testing.T) {
+	t.Parallel()
+	e := newGroupEnv(t)
+	ctx := context.Background()
+	colorOf := func(id uuid.UUID) string {
+		t.Helper()
+		var c string
+		if err := e.db.QueryRow(ctx, `SELECT color FROM practitioner WHERE id = $1`, id).Scan(&c); err != nil {
+			t.Fatal(err)
+		}
+		return c
+	}
+	target := e.pracIDs[1]
+	path := "/admin/team/practitioners/" + target.String() + "/color"
+
+	rec := e.admin.do("GET", "/admin/team", nil)
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), `action="`+path+`"`) {
+		t.Fatalf("formulaire de couleur absent: %d", rec.Code)
+	}
+	// Sans JS : POST + redirection.
+	if rec := e.admin.do("POST", path, url.Values{"color": {"#10b981"}}); rec.Code != 303 || rec.Header().Get("Location") != "/admin/team" {
+		t.Fatalf("admin: %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+	if c := colorOf(target); c != "#10b981" {
+		t.Fatalf("couleur = %q", c)
+	}
+	// Couleur invalide : 422, rien d'écrit.
+	for _, bad := range []string{"rouge", "#12345", "url(x)", ""} {
+		if rec := e.admin.do("POST", path, url.Values{"color": {bad}}); rec.Code != 422 {
+			t.Errorf("couleur %q: %d", bad, rec.Code)
+		}
+	}
+	// Sans permission : 403.
+	for name, c := range map[string]*client{"secrétariat": e.sec, "praticien": e.prac[0]} {
+		if rec := c.do("POST", path, url.Values{"color": {"#000000"}}); rec.Code != 403 {
+			t.Errorf("%s: %d", name, rec.Code)
+		}
+	}
+	if c := colorOf(target); c != "#10b981" {
+		t.Errorf("couleur modifiée malgré les refus: %q", c)
+	}
+	// Autre cabinet : 404.
+	foreign := testutil.NewPractice(t, e.db)
+	fpr := testutil.NewPractitioner(t, e.db, foreign.ID)
+	before := colorOf(fpr.ID)
+	if rec := e.admin.do("POST", "/admin/team/practitioners/"+fpr.ID.String()+"/color", url.Values{"color": {"#000000"}}); rec.Code != 404 {
+		t.Errorf("autre cabinet: %d", rec.Code)
+	}
+	if c := colorOf(fpr.ID); c != before {
+		t.Errorf("praticien étranger modifié: %q", c)
+	}
+}

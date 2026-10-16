@@ -79,6 +79,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T082 | [Back-office : formulaires et tableaux en daisyUI](T082-daisyui-backoffice.md) | 5 | T080 | review |
 | T083 | [Agenda staff avec EventCalendar](T083-eventcalendar-agenda.md) | 5 | T080 | review |
 | T084 | [Pages restantes, retrait de Pico et de l'ancien CSS](T084-daisyui-cleanup.md) | 5 | T081, T082, T083 | review |
+| T085 | [Choix de la couleur du praticien](T085-practitioner-color.md) | 5 | T057 | review |
 
 ## Parallélisation possible
 

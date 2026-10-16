@@ -17,7 +17,7 @@ func TestSettingsHolidaysCheckboxes(t *testing.T) {
 
 	rec := c.do("POST", "/admin/settings", url.Values{
 		"name": {"Cabinet Étoile"}, "booking_notice_hours": {"6"}, "cancel_notice_hours": {"48"}, "horizon_days": {"45"},
-		"first_name": {"Camille"}, "last_name": {"Martin"}, "slug": {"camille-martin"},
+		"first_name": {"Camille"}, "last_name": {"Martin"}, "slug": {"camille-martin"}, "color": {"#2563eb"},
 		"close_on_holidays": {"1"}, "holidays_alsace_moselle": {"1"},
 	})
 	if rec.Code != 303 {
@@ -30,7 +30,7 @@ func TestSettingsHolidaysCheckboxes(t *testing.T) {
 	// Décochées : retour à false.
 	c.do("POST", "/admin/settings", url.Values{
 		"name": {"Cabinet Étoile"}, "booking_notice_hours": {"6"}, "cancel_notice_hours": {"48"}, "horizon_days": {"45"},
-		"first_name": {"Camille"}, "last_name": {"Martin"}, "slug": {"camille-martin"},
+		"first_name": {"Camille"}, "last_name": {"Martin"}, "slug": {"camille-martin"}, "color": {"#2563eb"},
 	})
 	if strings.Contains(c.do("GET", "/admin/settings", nil).Body.String(), `name="close_on_holidays" value="1" checked`) {
 		t.Errorf("case encore cochée")

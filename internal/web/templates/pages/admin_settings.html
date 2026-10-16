@@ -72,6 +72,10 @@
       <input class="input w-full" id="slug" name="slug" value="{{.Slug}}" maxlength="60" pattern="[a-z0-9]+(-[a-z0-9]+)*" required aria-describedby="slug-help">
       <p class="text-sm text-base-content/70" id="slug-help">Lettres minuscules, chiffres et tirets.</p>
     </div>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="color">Couleur dans l'agenda</label>
+      <input class="input w-24 p-1" id="color" name="color" type="color" value="{{.Color}}">
+    </div>
   </fieldset>
   {{end}}
   <button class="btn btn-primary" type="submit">Enregistrer</button>

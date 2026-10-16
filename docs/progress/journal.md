@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T085 choix de la couleur du praticien (sonnet ; contrôle : opus)
+
+- **Tâches** : T085 créée (écart signalé en T057) puis todo → review ; lancée avant que T057 soit `done`, à la demande de l'humain
+- **Fait** : champ couleur au profil (`UpdateSettings`, validé par `domain.ValidColor`, rien d'écrit si invalide) ; colonne « Couleur » dans l'équipe, `POST /admin/team/practitioners/{id}/color` → `auth.SetPractitionerColor` (permission de gestion d'équipe, filtre `practice_id`, audit `practitioner_color_changed`)
+- **Vérification** : `make css` + `make check` ✅ (relancés par l'orchestrateur) ; tests 303/422/403/404 et relecture en base après échec. Navigateur **non vu**.
+- **Reste** : vérifier au navigateur l'en-tête de colonne en vue « Par praticien » après changement (clair/sombre) ; un praticien sans compte utilisateur lié n'a pas de champ couleur dans l'équipe
+- **Décisions** : couleur du praticien par deux voies (voir decisions.md)
+
 ## 2026-10-16 — T057 couleurs dans l'agenda (sonnet ; contrôle : opus)
 
 - **Tâches** : T057 (todo → review), spécification réécrite par l'orchestrateur pour EventCalendar (plus de route `/admin/colors.css`)

@@ -2,7 +2,8 @@
 
 -- name: ListTeamUsers :many
 SELECT u.id, u.email, u.role, u.active, u.last_login_at, u.practitioner_id,
-       coalesce(p.first_name, '')::text AS first_name, coalesce(p.last_name, '')::text AS last_name
+       coalesce(p.first_name, '')::text AS first_name, coalesce(p.last_name, '')::text AS last_name,
+       coalesce(p.color, '')::text AS color
 FROM app_user u
 LEFT JOIN practitioner p ON p.id = u.practitioner_id AND p.practice_id = u.practice_id
 WHERE u.practice_id = @practice_id
@@ -25,6 +26,10 @@ WHERE id = @id AND practice_id = @practice_id;
 
 -- name: SetPractitionerActive :exec
 UPDATE practitioner SET active = @active, updated_at = now()
+WHERE id = @id AND practice_id = @practice_id;
+
+-- name: SetPractitionerColor :execrows
+UPDATE practitioner SET color = @color, updated_at = now()
 WHERE id = @id AND practice_id = @practice_id;
 
 -- name: CreateInvitation :exec

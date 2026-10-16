@@ -28,6 +28,7 @@ func (d Deps) teamRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) 
 	handle("POST "+pathTeam+"/invitations/{id}/revoke", h.revoke)
 	handle("POST "+pathTeam+"/{id}/role", h.role)
 	handle("POST "+pathTeam+"/{id}/active", h.active)
+	handle("POST "+pathTeam+"/practitioners/{id}/color", h.color)
 
 	perWindow := rate.Every(loginWindow / loginAttempts)
 	byIP := httpx.RateLimit(httpx.ClientIP, perWindow, loginAttempts)
@@ -69,6 +70,8 @@ type TeamRow struct {
 	Active, Self    bool
 	LastLogin       time.Time
 	Roles           []RoleOption
+	PractitionerID  string // vide = aucun praticien lié
+	Color           string
 }
 
 // InvitationRow est une invitation en attente.
@@ -108,6 +111,10 @@ func (h *teamHandlers) render(w http.ResponseWriter, r *http.Request, status int
 			ID: m.ID.String(), Email: m.Email, Name: m.Name, Role: m.Role, RoleLabel: auth.RoleLabel(m.Role),
 			Active: m.Active, Self: m.ID == u.ID, LastLogin: m.LastLoginAt, Roles: roleOptions(m.Role),
 		})
+		if m.PractitionerID != uuid.Nil {
+			last := &p.Members[len(p.Members)-1]
+			last.PractitionerID, last.Color = m.PractitionerID.String(), m.Color
+		}
 	}
 	for _, i := range t.Invitations {
 		p.Invitations = append(p.Invitations, InvitationRow{ID: i.ID, Email: i.Email, RoleLabel: auth.RoleLabel(i.Role), ExpiresAt: i.ExpiresAt})
@@ -169,6 +176,12 @@ func (h *teamHandlers) member(w http.ResponseWriter, r *http.Request, flash stri
 func (h *teamHandlers) role(w http.ResponseWriter, r *http.Request) {
 	h.member(w, r, "Rôle mis à jour.", func(u auth.User, id uuid.UUID) error {
 		return h.a.SetRole(r.Context(), u, id, r.PostFormValue("role"))
+	})
+}
+
+func (h *teamHandlers) color(w http.ResponseWriter, r *http.Request) {
+	h.member(w, r, "Couleur mise à jour.", func(u auth.User, id uuid.UUID) error {
+		return h.a.SetPractitionerColor(r.Context(), u, id, r.PostFormValue("color"))
 	})
 }
 

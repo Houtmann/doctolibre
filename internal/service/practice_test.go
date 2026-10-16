@@ -135,7 +135,7 @@ func validSettings() service.SettingsInput {
 	return service.SettingsInput{
 		Name: "Cabinet Étoile", Address: "1 rue de la Paix, Paris", Phone: "01 23 45 67 89",
 		BookingNoticeHours: "4", CancelNoticeHours: "48", HorizonDays: "90",
-		FirstName: "Camille", LastName: "Martin", Title: "Masseur-kinésithérapeute", Bio: "Bio", Slug: "camille-martin",
+		FirstName: "Camille", LastName: "Martin", Title: "Masseur-kinésithérapeute", Bio: "Bio", Slug: "camille-martin", Color: "#aa3366",
 	}
 }
 
@@ -494,5 +494,44 @@ func TestClosureSpringForward(t *testing.T) {
 	}
 	if got := cs[0].End.Sub(cs[0].Start); got != 23*time.Hour {
 		t.Errorf("durée: %v, attendu 23h", got)
+	}
+}
+
+func TestUpdateSettingsColor(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	read := func() (name, slug, color string) {
+		t.Helper()
+		pr, err := f.svc.Practitioner(ctx, f.act)
+		if err != nil {
+			t.Fatal(err)
+		}
+		pc, err := sqlcgen.New(f.db).GetPractice(ctx, f.act.PracticeID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return pc.Name, pr.Slug, pr.Color
+	}
+	in := validSettings()
+	in.Color = " #aa3366 "
+	if err := f.svc.UpdateSettings(ctx, f.act, in); err != nil {
+		t.Fatal(err)
+	}
+	name, slug, color := read()
+	if color != "#aa3366" {
+		t.Fatalf("couleur = %q", color)
+	}
+	for _, bad := range []string{"rouge", "#12345", "url(x)", ""} {
+		in := validSettings()
+		in.Name, in.Slug, in.Color = "Autre nom", "autre-slug", bad
+		err := f.svc.UpdateSettings(ctx, f.act, in)
+		fe := domain.FieldErrors(err)
+		if len(fe) != 1 || fe[0].Field != "color" {
+			t.Errorf("couleur %q: %v", bad, err)
+		}
+		if n, s, c := read(); n != name || s != slug || c != color {
+			t.Errorf("couleur %q: écriture partielle (%q, %q, %q)", bad, n, s, c)
+		}
 	}
 }
