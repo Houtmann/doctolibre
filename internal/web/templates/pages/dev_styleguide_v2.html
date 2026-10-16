@@ -1,0 +1,289 @@
+{{define "title"}}Styleguide v2{{end}}
+{{define "content"}}
+<h1>Styleguide v2 « Pétrole &amp; papier »</h1>
+<p>Page de contrôle visuel du design system v2, disponible uniquement en dev. Chaque bloc est rendu en clair puis en sombre (<code>data-theme="dark"</code>). Références : <code>design/previews/</code>, <code>docs/design-system.md</code>. Ancienne page : <a href="/dev/styleguide">/dev/styleguide</a>.</p>
+
+<section class="dl-sg-block" id="couleurs-primitives">
+  <h2>Couleurs : primitives</h2>
+  {{range .Data.Primitives}}
+  <h3>{{.Title}}</h3>
+  <div class="dl-sg-swatches">
+    {{range .Tokens}}<div class="dl-sg-chip"><i class="dl-sg-bg-{{.Name}}"></i><span>{{.Label}}<br><code>--dl-{{.Name}}</code></span></div>{{end}}
+  </div>
+  {{end}}
+</section>
+
+<section class="dl-sg-block" id="couleurs-semantiques">
+  <h2>Couleurs : sémantiques</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_semantic" .Data}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_semantic" .Data}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="etats-rdv">
+  <h2>Couleurs : états de RDV</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_states" .Data}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_states" .Data}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="typographie">
+  <h2>Typographie</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_typography"}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_typography"}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="espacements">
+  <h2>Espacements et rayons</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_spacing" .Data}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_spacing" .Data}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="boutons">
+  <h2>Boutons</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_buttons"}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_buttons"}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="formulaires">
+  <h2>Formulaires</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_forms" "light"}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_forms" "dark"}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="messages">
+  <h2>Messages</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_alerts"}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_alerts"}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="badges">
+  <h2>Badges</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_badges"}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_badges"}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="carte">
+  <h2>Carte récapitulatif</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_card"}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_card"}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="parcours">
+  <h2>Parcours de réservation</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_booking" .Data}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_booking" .Data}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="agenda-semaine">
+  <h2>Agenda : semaine</h2>
+  <div class="dl-sg-stack">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_calendar" .Data}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_calendar" .Data}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="agenda-liste">
+  <h2>Agenda : liste mobile</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_cal_list" .Data}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_cal_list" .Data}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="en-tete">
+  <h2>En-tête et navigation</h2>
+  <div class="dl-sg-stack">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_header" .Data}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_header" .Data}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="tableau">
+  <h2>Tableau</h2>
+  <div class="dl-sg-stack">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_table" .Data}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_table" .Data}}</div>
+  </div>
+</section>
+
+<section class="dl-sg-block" id="dialogue">
+  <h2>Dialogue</h2>
+  <div class="dl-sg-pair">
+    <div class="dl-sg-panel" data-theme="light"><p class="dl-sg-tag">Clair</p>{{template "sg_dialog" "light"}}</div>
+    <div class="dl-sg-panel" data-theme="dark"><p class="dl-sg-tag">Sombre</p>{{template "sg_dialog" "dark"}}</div>
+  </div>
+</section>
+{{end}}
+
+{{define "sg_semantic"}}
+<div class="dl-sg-swatches">
+  {{range .Semantic}}<div class="dl-sg-chip"><i class="dl-sg-bg-{{.Name}}"></i><span>{{.Label}}<br><code>--dl-{{.Name}}</code></span></div>{{end}}
+</div>
+<div class="dl-sg-swatches">
+  {{range .Boxes}}<div class="dl-sg-box dl-sg-box--{{.Kind}}"><strong>{{.Label}}</strong><br><code>--dl-{{.Kind}}-*</code></div>{{end}}
+</div>
+{{end}}
+
+{{define "sg_states"}}
+<div class="dl-sg-swatches">
+  {{range .States}}<div class="dl-sg-box dl-sg-state dl-sg-state--{{.Kind}}"><strong>{{.Label}}</strong><br><span class="dl-num">09:30</span> M. Durand</div>{{end}}
+</div>
+<p class="dl-help">L'état n'est jamais porté par la couleur seule : liseré plein / pointillé / barré + libellé masqué pour les lecteurs d'écran.</p>
+<div class="dl-cluster"><span class="dl-sg-band"></span><span class="dl-sg-now"></span></div>
+<p class="dl-help">Bande « indisponible » · ligne « maintenant »</p>
+{{end}}
+
+{{define "sg_typography"}}
+<p class="dl-sg-tag">Police système, aucune webfont (CSP)</p>
+<h1 class="dl-sg-h-3xl">Prenez rendez-vous</h1>
+<h1>Agenda, semaine 42</h1>
+<h2>Motifs de consultation</h2>
+<h3>Mardi 14 octobre</h3>
+<p>Corps de texte 16 px, interligne 1,55. Les créneaux sont calculés dans le fuseau du cabinet.</p>
+<p class="dl-small dl-muted">Méta 14 px — Séance de 30 min · Cabinet des Lilas</p>
+<p class="dl-sg-text-xs dl-muted">Libellé 12 px — 08:00 09:00 10:00</p>
+<p class="dl-num dl-sg-text-lg"><strong>09:15 – 09:45</strong> chiffres tabulaires</p>
+{{end}}
+
+{{define "sg_spacing"}}
+<h3>Espacements (base 4 px)</h3>
+{{range .Spaces}}<div class="dl-sg-space"><code>--dl-space-{{.N}}</code><i class="dl-sg-w-{{.N}}"></i>{{.Px}} px</div>{{end}}
+<h3>Rayons</h3>
+<div class="dl-sg-radii">{{range .Radii}}<i class="dl-sg-r-{{.}}">{{.}}</i>{{end}}</div>
+<p class="dl-help">Cible tactile minimale : <code>--dl-target-min</code> = 44 px.</p>
+{{end}}
+
+{{define "sg_buttons"}}
+<div class="dl-cluster dl-sg-row"><button type="button" class="dl-btn">Confirmer le rendez-vous</button><button type="button" class="dl-btn dl-btn--secondary">Marquer honoré</button></div>
+<div class="dl-cluster dl-sg-row"><button type="button" class="dl-btn dl-btn--outline">Précédent</button><button type="button" class="dl-btn dl-btn--ghost">Modifier</button><button type="button" class="dl-btn dl-btn--danger">Annuler le RDV</button></div>
+<div class="dl-cluster dl-sg-row"><button type="button" class="dl-btn dl-btn--sm">Petit</button><button type="button" class="dl-btn dl-btn--sm dl-btn--outline">Retirer</button><button type="button" class="dl-btn" disabled>Désactivé</button></div>
+<div class="dl-cluster dl-sg-row"><div class="dl-segmented" role="group" aria-label="Affichage"><a class="dl-btn" href="#">Jour</a><a class="dl-btn" href="#" aria-current="page">Semaine</a></div></div>
+<div class="dl-sg-row"><button type="button" class="dl-btn dl-btn--block">Bouton pleine largeur</button></div>
+{{end}}
+
+{{define "sg_forms"}}
+<div class="dl-field"><label class="dl-label" for="sg-n-{{.}}">Nom</label><input class="dl-input" id="sg-n-{{.}}" value="Durand"></div>
+<div class="dl-field is-invalid"><label class="dl-label" for="sg-p-{{.}}">Téléphone</label><input class="dl-input" id="sg-p-{{.}}" value="06 12" aria-invalid="true" aria-describedby="sg-ph-{{.}}"><p class="dl-help" id="sg-ph-{{.}}">Numéro incomplet.</p></div>
+<div class="dl-field"><label class="dl-label" for="sg-t-{{.}}">Motif</label><select class="dl-select" id="sg-t-{{.}}"><option>Séance de rééducation — 30 min</option></select></div>
+<div class="dl-field"><label class="dl-label" for="sg-note-{{.}}">Note administrative <span class="dl-optional">(facultatif)</span></label><textarea class="dl-textarea" id="sg-note-{{.}}"></textarea><p class="dl-note-warning">Aucune donnée médicale dans ce champ.</p></div>
+<label class="dl-check"><input type="checkbox" checked> Recevoir le rappel par SMS la veille</label>
+<fieldset class="dl-fieldset"><legend>Rappel</legend><label class="dl-check"><input type="radio" name="sg-r-{{.}}" checked> La veille</label><label class="dl-check"><input type="radio" name="sg-r-{{.}}"> Le jour même</label></fieldset>
+{{end}}
+
+{{define "sg_alerts"}}
+<div class="dl-alert dl-alert--success" role="status">Rendez-vous confirmé. Un email vous a été envoyé.</div>
+<div class="dl-alert dl-alert--info" role="status"><div><span class="dl-alert__title">Lien de gestion</span>Conservez cet email pour modifier ou annuler.</div></div>
+<div class="dl-alert dl-alert--warning" role="status">Annulation possible jusqu'à 24 h avant.</div>
+<div class="dl-alert dl-alert--error" role="alert"><div><span class="dl-alert__title">Le formulaire contient 2 erreurs</span><ul><li>Le téléphone est incomplet.</li><li>Choisissez un créneau.</li></ul></div></div>
+{{end}}
+
+{{define "sg_badges"}}
+<div class="dl-cluster dl-sg-row"><span class="dl-badge dl-badge--st-booked">Réservé</span><span class="dl-badge dl-badge--st-done">Honoré</span><span class="dl-badge dl-badge--st-no_show">Absent</span><span class="dl-badge dl-badge--st-cancelled">Annulé</span></div>
+<div class="dl-cluster dl-sg-row"><span class="dl-badge dl-badge--brand">En ligne</span><span class="dl-badge">Secrétariat</span><span class="dl-badge">&#8962; Domicile</span><span class="dl-badge dl-badge--brand">Série 4/10</span></div>
+{{end}}
+
+{{define "sg_card"}}
+<article class="dl-card">
+  <div class="dl-card__header"><h3>Votre rendez-vous</h3><span class="dl-badge dl-badge--st-booked">Réservé</span></div>
+  <dl class="dl-details">
+    <dt>Cabinet</dt><dd>Cabinet des Lilas</dd>
+    <dt>Praticienne</dt><dd>Camille Martin</dd>
+    <dt>Motif</dt><dd>Rééducation (30 min)</dd>
+    <dt>Date</dt><dd class="dl-num">Mardi 14 octobre, 09:30</dd>
+  </dl>
+  <div class="dl-card__footer"><a class="dl-btn dl-btn--outline dl-btn--sm" href="#">Ajouter à l'agenda</a><a class="dl-btn dl-btn--ghost dl-btn--sm" href="#">Déplacer</a></div>
+</article>
+{{end}}
+
+{{define "sg_booking"}}
+<div class="dl-sg-narrow">
+  <ol class="dl-steps"><li class="is-done">Motif</li><li aria-current="step">Créneau</li><li>Coordonnées</li></ol>
+  <ul class="dl-choices">
+    {{range .Choices}}<li><a class="dl-choice" href="#"><span><span class="dl-choice__title">{{.Title}}</span><br><span class="dl-choice__meta">{{.Meta}}</span></span></a></li>{{end}}
+  </ul>
+  <div class="dl-week-nav"><a class="dl-btn dl-btn--outline dl-btn--sm" href="#">‹ Préc.</a><span class="dl-week-nav__label">13 – 19 oct.</span><a class="dl-btn dl-btn--outline dl-btn--sm" href="#">Suiv. ›</a></div>
+  {{range .SlotDays}}
+  <div class="dl-slot-day{{if .Holiday}} is-holiday{{end}}"><h3>{{.Title}}</h3>
+    {{if .Slots}}<ul class="dl-slots">{{range .Slots}}<li><a class="dl-slot" href="#"{{if .Current}} aria-current="true"{{end}}>{{.Time}}</a></li>{{end}}</ul>
+    {{else}}<p class="dl-empty">Aucun créneau ce jour.</p>{{end}}
+  </div>
+  {{end}}
+</div>
+{{end}}
+
+{{define "sg_calendar"}}
+<div class="dl-cal-toolbar">
+  <div class="dl-cluster"><a class="dl-btn dl-btn--outline dl-btn--sm" href="#">‹</a><a class="dl-btn dl-btn--outline dl-btn--sm" href="#">Aujourd'hui</a><a class="dl-btn dl-btn--outline dl-btn--sm" href="#">›</a></div>
+  <h1>13 – 17 octobre</h1>
+  <div class="dl-cluster"><div class="dl-segmented"><a class="dl-btn" href="#">Jour</a><a class="dl-btn" href="#" aria-current="page">Semaine</a></div><a class="dl-btn dl-btn--sm" href="#">Nouveau rendez-vous</a></div>
+</div>
+<div class="dl-sg-scroll">
+<div class="dl-cal cols-5">
+  <div class="dl-cal__head gr-1 gc-1"></div>
+  {{range .CalHeads}}<div class="dl-cal__head gr-1 gc-{{.Col}}{{if .Today}} is-today{{end}}"><span>{{.Label}}</span>{{if .Note}}<small>{{.Note}}</small>{{end}}</div>{{end}}
+  {{range .CalHours}}<div class="dl-cal__hour gr-{{.Row}} gs-4 gc-all" aria-hidden="true"></div><div class="dl-cal__hour-label gr-{{.Row}} gc-1" aria-hidden="true">{{.Label}}</div>{{end}}
+  <div class="dl-cal__col gr-2 gs-32 gc-2"></div><div class="dl-cal__col gr-2 gs-32 gc-3"></div><div class="dl-cal__col gr-2 gs-32 gc-4"></div><div class="dl-cal__col gr-2 gs-32 gc-5"></div><div class="dl-cal__col gr-2 gs-32 gc-6"></div>
+  <div class="dl-cal__band gr-2 gs-32 gc-3" aria-hidden="true"></div>
+  <div class="dl-cal__band gr-18 gs-4 gc-2" aria-hidden="true"></div><div class="dl-cal__band gr-18 gs-4 gc-4" aria-hidden="true"></div><div class="dl-cal__band gr-18 gs-4 gc-5" aria-hidden="true"></div><div class="dl-cal__band gr-18 gs-4 gc-6" aria-hidden="true"></div>
+  {{range .CalAppts}}<a class="dl-appt st-{{.Status}} gr-{{.Row}} gs-{{.Span}} gc-{{.Col}}{{if .Past}} is-past{{end}}" href="#"><strong>{{.Time}}</strong> {{.Name}}<br>{{.Kind}}</a>{{end}}
+  <div class="dl-cal__now gr-15 gc-5" aria-hidden="true"></div>
+</div>
+</div>
+{{end}}
+
+{{define "sg_cal_list"}}
+<div class="dl-sg-narrow">
+  <div class="dl-cal-list">
+    <h2>Jeudi 16 octobre</h2>
+    <ol>
+      {{range .ListAppts}}<li><a{{if ne .Status "booked"}} class="st-{{.Status}}"{{end}} href="#"><strong class="dl-num">{{.Range}}</strong> · {{.Name}} · {{.Kind}}{{if .StatusName}} <small>({{.StatusName}})</small>{{end}}</a></li>{{end}}
+    </ol>
+  </div>
+</div>
+{{end}}
+
+{{define "sg_header"}}
+<header class="dl-header"><div class="dl-container dl-header__inner">
+  <a class="dl-brand" href="#"><span class="dl-brand__mark" aria-hidden="true">D</span>Doctolibre</a>
+  <ul class="dl-nav">{{range $i, $n := .NavItems}}<li><a href="#"{{if eq $i 0}} aria-current="page"{{end}}>{{$n}}</a></li>{{end}}</ul>
+  <form class="dl-header__end"><button class="dl-btn dl-btn--outline dl-btn--sm" type="button">Se déconnecter</button></form>
+</div></header>
+{{end}}
+
+{{define "sg_table"}}
+<div class="dl-table-wrap"><table class="dl-table">
+  <thead><tr><th>Patient</th><th>Contact</th><th>Prochain RDV</th><th></th></tr></thead>
+  <tbody>
+    {{range .Patients}}<tr{{if .Inactive}} class="is-inactive"{{end}}><td>{{if .Inactive}}{{.Name}}{{else}}<strong>{{.Name}}</strong>{{end}}</td><td>{{.Contact}}</td><td{{if ne .Next "—"}} class="dl-num"{{end}}>{{.Next}}{{if .StatusName}} <span class="dl-badge dl-badge--st-{{.Status}}">{{.StatusName}}</span>{{end}}</td><td>{{if not .Inactive}}<a class="dl-btn dl-btn--ghost dl-btn--sm" href="#">Ouvrir</a>{{end}}</td></tr>{{end}}
+  </tbody>
+</table></div>
+{{end}}
+
+{{define "sg_dialog"}}
+<dialog class="dl-dialog" open aria-labelledby="sg-dt-{{.}}">
+  <div class="dl-dialog__header"><h2 id="sg-dt-{{.}}">Rendez-vous</h2><button type="button" class="dl-btn dl-btn--ghost dl-btn--sm" aria-label="Fermer">✕</button></div>
+  <div class="dl-dialog__body">
+    <dl class="dl-details"><dt>Patient</dt><dd>Marc Durand</dd><dt>Horaire</dt><dd class="dl-num">Jeu. 16 oct., 09:30 – 10:15</dd><dt>Motif</dt><dd>Bilan initial</dd><dt>État</dt><dd><span class="dl-badge dl-badge--st-booked">Réservé</span></dd></dl>
+  </div>
+  <div class="dl-dialog__footer"><button type="button" class="dl-btn dl-btn--secondary dl-btn--sm">Marquer honoré</button><button type="button" class="dl-btn dl-btn--outline dl-btn--sm">Absent</button><button type="button" class="dl-btn dl-btn--danger dl-btn--sm">Annuler</button></div>
+</dialog>
+{{end}}

@@ -2,6 +2,7 @@
    N'utilise que les jetons sémantiques de tokens.css. Pas de style inline (CSP) : une classe par variante.
    Préfixe .dl- partout ; modificateurs en --, états en .is-* / attributs ARIA. */
 
+/* BASE-START — sélecteurs d'éléments : extraits dans base.css par T063 (non liés tant que Pico est chargé). */
 /* ── Base ───────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -18,18 +19,24 @@ h1 { font-size: var(--dl-text-2xl); }
 h2 { font-size: var(--dl-text-xl); }
 h3 { font-size: var(--dl-text-lg); }
 p, ul, ol, dl { margin: 0 0 var(--dl-space-4); }
-small, .dl-small { font-size: var(--dl-text-sm); }
+small { font-size: var(--dl-text-sm); }
 a { color: var(--dl-primary); text-underline-offset: 0.18em; }
 a:hover { color: var(--dl-primary-hover); }
 code, kbd { font-family: var(--dl-font-mono); font-size: 0.9em; background: var(--dl-surface-2); padding: 0.1em 0.35em; border-radius: var(--dl-radius-sm); }
 hr { border: 0; border-top: var(--dl-border-width) solid var(--dl-border); margin: var(--dl-space-5) 0; }
-.dl-num { font-variant-numeric: tabular-nums; }  /* heures, durées, compteurs */
-.dl-muted { color: var(--dl-text-muted); }
-
 :where(a, button, input, select, textarea, summary, [role="button"], [tabindex]):focus-visible {
   outline: var(--dl-focus-width) solid var(--dl-focus);
   outline-offset: 2px;
 }
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+/* BASE-END */
+
+.dl-small { font-size: var(--dl-text-sm); }
+.dl-num { font-variant-numeric: tabular-nums; }  /* heures, durées, compteurs */
+.dl-muted { color: var(--dl-text-muted); }
+
 .dl-visually-hidden {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip-path: inset(50%); white-space: nowrap;
@@ -55,6 +62,7 @@ hr { border: 0; border-top: var(--dl-border-width) solid var(--dl-border); margi
 .dl-header__inner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dl-space-2) var(--dl-space-5); padding-block: var(--dl-space-3); }
 .dl-brand { display: inline-flex; align-items: center; gap: var(--dl-space-2); font-weight: var(--dl-weight-bold); font-size: var(--dl-text-lg); color: var(--dl-text); text-decoration: none; }
 .dl-brand__mark { width: 1.75rem; height: 1.75rem; border-radius: var(--dl-radius-md); background: var(--dl-primary); color: var(--dl-on-primary); display: inline-grid; place-items: center; font-size: var(--dl-text-sm); }
+.dl-nav li, .dl-steps li, .dl-choices > li, .dl-slots > li, .dl-cal-list li { margin: 0; padding: 0; list-style: none; }
 .dl-nav { display: flex; flex-wrap: wrap; gap: var(--dl-space-1); list-style: none; margin: 0; padding: 0; }
 .dl-nav a { display: block; padding: var(--dl-space-2) var(--dl-space-3); border-radius: var(--dl-radius-md); color: var(--dl-text-muted); text-decoration: none; font-weight: var(--dl-weight-medium); }
 .dl-nav a:hover { background: var(--dl-surface-2); color: var(--dl-text); }
@@ -65,12 +73,13 @@ hr { border: 0; border-top: var(--dl-border-width) solid var(--dl-border); margi
 /* ── Boutons ────────────────────────────────────────────────── */
 .dl-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--dl-space-2);
-  min-height: var(--dl-target-min); padding: var(--dl-space-2) var(--dl-space-4);
+  min-height: var(--dl-target-min); padding: var(--dl-space-2) var(--dl-space-4); margin: 0; box-shadow: none;
   border: var(--dl-border-width) solid transparent; border-radius: var(--dl-radius-md);
   background: var(--dl-primary); color: var(--dl-on-primary);
   font: inherit; font-weight: var(--dl-weight-medium); line-height: 1.2; text-decoration: none;
   cursor: pointer; transition: background-color var(--dl-duration), border-color var(--dl-duration);
 }
+.dl-btn:focus, .dl-btn:active { box-shadow: none; }
 .dl-btn:hover { background: var(--dl-primary-hover); color: var(--dl-on-primary); }
 .dl-btn--secondary { background: var(--dl-primary-soft); color: var(--dl-primary-soft-fg); }
 .dl-btn--secondary:hover { background: var(--dl-primary-soft); color: var(--dl-primary-soft-fg); border-color: var(--dl-primary); }
@@ -84,29 +93,33 @@ hr { border: 0; border-top: var(--dl-border-width) solid var(--dl-border); margi
 .dl-btn--block { display: flex; width: 100%; }
 .dl-btn[aria-current], .dl-btn[aria-pressed="true"] { background: var(--dl-text); color: var(--dl-bg); border-color: var(--dl-text); }
 .dl-btn:disabled, .dl-btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
-.dl-segmented { display: inline-flex; border: var(--dl-border-width) solid var(--dl-border-strong); border-radius: var(--dl-radius-md); overflow: hidden; }
-.dl-segmented .dl-btn { border: 0; border-radius: 0; background: transparent; color: var(--dl-text); min-height: 2.25rem; }
+.dl-segmented { display: inline-flex; position: static; width: auto; margin: 0; box-shadow: none; border: var(--dl-border-width) solid var(--dl-border-strong); border-radius: var(--dl-radius-md); overflow: hidden; }
+.dl-segmented .dl-btn { position: static; margin: 0; border: 0; border-radius: 0; background: transparent; color: var(--dl-text); min-height: 2.25rem; }
 .dl-segmented .dl-btn + .dl-btn { border-left: var(--dl-border-width) solid var(--dl-border-strong); }
 .dl-segmented .dl-btn[aria-current] { background: var(--dl-primary); color: var(--dl-on-primary); }
 
 /* ── Formulaires ────────────────────────────────────────────── */
 .dl-field { display: grid; gap: var(--dl-space-1); margin-bottom: var(--dl-space-4); }
-.dl-label { font-weight: var(--dl-weight-medium); font-size: var(--dl-text-sm); }
+.dl-label { display: block; margin: 0; font-weight: var(--dl-weight-medium); font-size: var(--dl-text-sm); }
 .dl-label .dl-optional { color: var(--dl-text-muted); font-weight: var(--dl-weight-regular); }
-.dl-input, .dl-select, .dl-textarea {
-  width: 100%; min-height: var(--dl-target-min); padding: var(--dl-space-2) var(--dl-space-3);
+input.dl-input, select.dl-select, textarea.dl-textarea,
+.dl-field input.dl-input[aria-invalid], .dl-field select.dl-select[aria-invalid], .dl-field textarea.dl-textarea[aria-invalid] {
+  display: block; width: 100%; margin: 0; background-image: none; box-shadow: none; line-height: inherit; min-height: var(--dl-target-min); padding: var(--dl-space-2) var(--dl-space-3);
   font: inherit; color: var(--dl-text); background: var(--dl-surface);
   border: var(--dl-border-width) solid var(--dl-border-strong); border-radius: var(--dl-radius-md);
 }
+/* Pico impose padding-inline en !important sur [aria-invalid] (place de l'icône) : seule exception au « pas de !important ». */
+input.dl-input[aria-invalid], select.dl-select[aria-invalid], textarea.dl-textarea[aria-invalid] { padding-inline: var(--dl-space-3) !important; }
+.dl-select { appearance: auto; }
 .dl-textarea { min-height: 6rem; resize: vertical; }
 .dl-input::placeholder, .dl-textarea::placeholder { color: var(--dl-text-muted); }
 .dl-input:focus-visible, .dl-select:focus-visible, .dl-textarea:focus-visible { outline-offset: 0; border-color: var(--dl-focus); }
 .dl-help { font-size: var(--dl-text-sm); color: var(--dl-text-muted); margin: 0; }
-.dl-field.is-invalid .dl-input, .dl-field.is-invalid .dl-select, .dl-field.is-invalid .dl-textarea { border-color: var(--dl-danger); border-width: 2px; }
+.dl-field.is-invalid input.dl-input, .dl-field.is-invalid select.dl-select, .dl-field.is-invalid textarea.dl-textarea { border-color: var(--dl-danger); border-width: 2px; }
 .dl-field.is-invalid .dl-help { color: var(--dl-error-fg); }
-.dl-check { display: flex; gap: var(--dl-space-2); align-items: flex-start; min-height: var(--dl-target-min); padding-block: var(--dl-space-2); }
-.dl-check input { width: 1.15rem; height: 1.15rem; margin: 0.15rem 0 0; accent-color: var(--dl-primary); flex: none; }
-.dl-fieldset { border: var(--dl-border-width) solid var(--dl-border); border-radius: var(--dl-radius-md); padding: var(--dl-space-3) var(--dl-space-4); margin: 0 0 var(--dl-space-4); }
+.dl-check { display: flex; margin: 0; gap: var(--dl-space-2); align-items: flex-start; min-height: var(--dl-target-min); padding-block: var(--dl-space-2); }
+.dl-check input[type] { all: revert; width: 1.15rem; height: 1.15rem; margin: 0.15rem 0 0; accent-color: var(--dl-primary); flex: none; }
+.dl-fieldset { background: none; border: var(--dl-border-width) solid var(--dl-border); border-radius: var(--dl-radius-md); padding: var(--dl-space-3) var(--dl-space-4); margin: 0 0 var(--dl-space-4); }
 .dl-fieldset legend { font-weight: var(--dl-weight-medium); padding-inline: var(--dl-space-1); }
 .dl-note-warning { font-size: var(--dl-text-sm); color: var(--dl-warning-fg); background: var(--dl-warning-bg); padding: var(--dl-space-2) var(--dl-space-3); border-radius: var(--dl-radius-md); }
 
@@ -193,8 +206,9 @@ hr { border: 0; border-top: var(--dl-border-width) solid var(--dl-border); margi
 
 /* ── Tableaux (patients, journal, équipe) ───────────────────── */
 .dl-table-wrap { overflow-x: auto; border: var(--dl-border-width) solid var(--dl-border); border-radius: var(--dl-radius-lg); background: var(--dl-surface); }
-.dl-table { width: 100%; border-collapse: collapse; font-size: var(--dl-text-sm); }
+.dl-table { width: 100%; margin: 0; border-collapse: collapse; font-size: var(--dl-text-sm); }
 .dl-table th { text-align: left; font-weight: var(--dl-weight-medium); color: var(--dl-text-muted); background: var(--dl-surface-2); }
+.dl-table td { background: transparent; }
 .dl-table th, .dl-table td { padding: var(--dl-space-3) var(--dl-space-4); border-bottom: var(--dl-border-width) solid var(--dl-border); vertical-align: middle; }
 .dl-table tr:last-child td { border-bottom: 0; }
 .dl-table tbody tr:hover { background: var(--dl-surface-2); }
@@ -279,7 +293,3 @@ hr { border: 0; border-top: var(--dl-border-width) solid var(--dl-border); margi
 .htmx-request .dl-htmx-indicator, .htmx-request.dl-htmx-indicator { opacity: 1; }
 .dl-error-page { text-align: center; padding-block: var(--dl-space-8); }
 .dl-error-page__status { font-size: 4rem; font-weight: var(--dl-weight-bold); color: var(--dl-primary); margin: 0; line-height: 1; }
-
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
-}

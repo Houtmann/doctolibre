@@ -1,0 +1,32 @@
+/* Doctolibre — base (v2) : sélecteurs d'éléments (reset, titres, liens, focus).
+   NON LIÉ dans le layout pour l'instant : il remplacera Pico CSS en T068.
+   Généré à partir du bloc « Base » de design/components.css. */
+
+/* ── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--dl-bg);
+  color: var(--dl-text);
+  font-family: var(--dl-font-sans);
+  font-size: var(--dl-text-md);
+  line-height: var(--dl-leading-body);
+}
+h1, h2, h3, h4 { line-height: var(--dl-leading-tight); margin: 0 0 var(--dl-space-3); font-weight: var(--dl-weight-bold); letter-spacing: -0.01em; }
+h1 { font-size: var(--dl-text-2xl); }
+h2 { font-size: var(--dl-text-xl); }
+h3 { font-size: var(--dl-text-lg); }
+p, ul, ol, dl { margin: 0 0 var(--dl-space-4); }
+small { font-size: var(--dl-text-sm); }
+a { color: var(--dl-primary); text-underline-offset: 0.18em; }
+a:hover { color: var(--dl-primary-hover); }
+code, kbd { font-family: var(--dl-font-mono); font-size: 0.9em; background: var(--dl-surface-2); padding: 0.1em 0.35em; border-radius: var(--dl-radius-sm); }
+hr { border: 0; border-top: var(--dl-border-width) solid var(--dl-border); margin: var(--dl-space-5) 0; }
+:where(a, button, input, select, textarea, summary, [role="button"], [tabindex]):focus-visible {
+  outline: var(--dl-focus-width) solid var(--dl-focus);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

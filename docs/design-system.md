@@ -2,6 +2,7 @@
 
 Socle visuel unique : Pico CSS + les jetons `--app-*` de `internal/web/static/app.css` + les partials de `internal/web/templates/partials/`.
 Page de contrôle (dev uniquement) : `GET /dev/styleguide` (404 en prod).
+Design system v2 « Pétrole & papier » en cours de migration : voir la section en fin de document.
 
 ## Règles
 
@@ -60,3 +61,21 @@ Appel : `{{template "nom.html" donnée}}` (les partials sont dans le même ensem
 | `booking_hidden`, `waitlist_hidden` | données du parcours de réservation / d'attente | — (champs cachés répétés d'une étape à l'autre) | `{{template "booking_hidden.html" .Data}}` |
 
 Autres partials (`calendar_grid`, `appointment_detail`, `appointment_form`, `availability_panel`, `absences_panel`, `types_panel`, `booking_grid`) : fragments propres à une page, rendus aussi comme réponses htmx de cette page.
+
+## v2 en cours de migration
+
+Le design system v2 (`design/`) remplacera Pico et les jetons `--app-*` famille par famille (tâches T064–T068). Références : [`design/README.md`](../design/README.md) (jetons, composants, règles) et [`design/MIGRATION.md`](../design/MIGRATION.md) (correspondance ancien → nouveau).
+
+Fichiers statiques embarqués (`internal/web/static/`) :
+
+| Fichier | Contenu | Lié ? |
+|---|---|---|
+| `tokens.css` | copie exacte de `design/tokens.css` (jetons `--dl-*`) | oui |
+| `components.css` | `design/components.css` sans le bloc « Base » (sélecteurs d'éléments), plus les classes `.dl-sg-*` du styleguide v2 (jamais dans l'application) | oui |
+| `base.css` | le bloc « Base » retiré (reset, titres, liens, focus) | **non**, il remplacera Pico en T068 |
+
+Ordre de chargement dans `layout/base.html` : `pico.min.css` → `tokens.css` → `components.css` → `app.css` (`app.css` garde le dernier mot pendant la transition). Les classes de grille `.gr-N` / `.gs-N` / `.gc-N` restent dans `app.css`.
+
+Coexistence avec Pico : les composants `.dl-*` neutralisent explicitement les styles par élément de Pico (marges de `button` / `input`, `appearance` des champs, puces de liste, fond des `td`, groupe `role="group"`) ; ces corrections vivent dans `design/components.css`, copie source. Une seule exception à « pas de `!important` » : `padding-inline` des champs `[aria-invalid]`, que Pico impose en `!important`.
+
+Page de contrôle : `GET /dev/styleguide/v2` (dev uniquement), chaque bloc en clair puis en sombre (`data-theme="dark"`).

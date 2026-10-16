@@ -30,6 +30,22 @@
         "design"
       ],
       "port": 8092
+    },
+    {
+      "name": "app-dev",
+      "runtimeExecutable": "/usr/bin/env",
+      "runtimeArgs": [
+        "DOCTOLIBRE_ENV=dev",
+        "DOCTOLIBRE_HTTP_ADDR=:8099",
+        "DOCTOLIBRE_BASE_URL=http://localhost:8099",
+        "DOCTOLIBRE_SECRET_KEY=dev-only-secret-key-do-not-use-in-prod-0123456789",
+        "DOCTOLIBRE_DATABASE_URL=postgres://hadrien@127.0.0.1:5432/doctolibre_test?sslmode=disable",
+        "go",
+        "run",
+        "./cmd/doctolibre",
+        "serve"
+      ],
+      "port": 8099
     }
   ]
 }

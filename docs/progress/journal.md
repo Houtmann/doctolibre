@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — Design system v2 et T063 (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : design v2 « Pétrole & papier » dans `design/` (jetons, composants `.dl-*`, aperçus, `MIGRATION.md`) ; migration découpée en T063–T068 ; T063 (todo → review).
+- **Fait** : `tokens.css`, `components.css` servis à côté de Pico (`base.css` embarqué non lié) ; fuites Pico neutralisées ; page `/dev/styleguide/v2` (dev seulement), clair + sombre par bloc.
+- **Vérification** : `make check` ✅ ; styles calculés identiques avec/sans les feuilles v2 sur `/dev/styleguide` et `/` (clair et sombre).
+- **Reste / reprise** : valider T063 puis T064 (habillage général, + bloc `[data-theme="light"]` des jetons) ; ensuite T065, T066, T067 en parallèle, puis T068.
+- **Décisions** : copie `design/` → `static/` et bloc Base séparé (`decisions.md`, 2026-10-16).
+
 ## 2026-10-16 — T052, T058, T062 en parallèle (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T052, T058, T062 (todo → review), en trois worktrees ; T050 reste en review (relecture humaine en attente).

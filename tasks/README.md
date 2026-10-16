@@ -64,7 +64,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T060 | [Ressources partagées (box, appareils)](T060-shared-resources.md) | 5 | T013, T014, T016 | todo |
 | T061 | [Affiche imprimable avec QR code](T061-qr-poster.md) | 5 | T014 | blocked |
 | T062 | [Design system léger : tokens, catalogue, styleguide](T062-design-system.md) | 5 | T004, T016 | review |
-| T063 | [Design v2 : socle embarqué et styleguide v2](T063-design-v2-foundation.md) | 5 | T062 | in_progress |
+| T063 | [Design v2 : socle embarqué et styleguide v2](T063-design-v2-foundation.md) | 5 | T062 | review |
 | T064 | [Design v2 : layouts, navigation, messages, boutons](T064-design-v2-shell.md) | 5 | T063 | todo |
 | T065 | [Design v2 : formulaires et tableaux](T065-design-v2-forms.md) | 5 | T064 | todo |
 | T066 | [Design v2 : parcours patient](T066-design-v2-booking.md) | 5 | T064 | todo |
