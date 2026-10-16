@@ -1,33 +1,33 @@
 {{/* layout: admin */}}
 {{define "title"}}Tableau de bord{{end}}
 {{define "content"}}
-<h1>Tableau de bord</h1>
+<h1 class="text-2xl font-semibold">Tableau de bord</h1>
 <p>Bienvenue dans l'espace du cabinet.</p>
 {{with .Data}}{{with .Booking}}
-<section aria-labelledby="booking-page">
-  <h2 id="booking-page">Votre page de réservation</h2>
+<section class="space-y-3" aria-labelledby="booking-page">
+  <h2 class="text-xl font-semibold" id="booking-page">Votre page de réservation</h2>
   {{if or .NeedAvailability .NeedType}}
-  <aside class="dl-alert dl-alert--info" aria-label="Configuration à terminer">
+  <aside class="alert alert-info alert-soft items-start" aria-label="Configuration à terminer"><div>
     <p><strong>Pour que les patients puissent réserver :</strong></p>
-    <ul>
-      {{if .NeedAvailability}}<li>{{if .CanConfigure}}<a href="/admin/availability">Définissez vos horaires d'ouverture</a>{{else}}Définir les horaires d'ouverture (praticien ou administrateur){{end}}</li>{{end}}
-      {{if .NeedType}}<li>{{if .CanConfigure}}<a href="/admin/appointment-types">Rendez au moins un motif réservable en ligne</a>{{else}}Rendre au moins un motif réservable en ligne (praticien ou administrateur){{end}}</li>{{end}}
+    <ul class="list-disc pl-5">
+      {{if .NeedAvailability}}<li>{{if .CanConfigure}}<a class="link link-primary" href="/admin/availability">Définissez vos horaires d'ouverture</a>{{else}}Définir les horaires d'ouverture (praticien ou administrateur){{end}}</li>{{end}}
+      {{if .NeedType}}<li>{{if .CanConfigure}}<a class="link link-primary" href="/admin/appointment-types">Rendez au moins un motif réservable en ligne</a>{{else}}Rendre au moins un motif réservable en ligne (praticien ou administrateur){{end}}</li>{{end}}
     </ul>
-  </aside>
+  </div></aside>
   {{end}}
   <p>Donnez cette adresse à vos patients :</p>
-  <p><a href="{{.PracticeURL}}">{{.PracticeURL}}</a></p>
-  <div class="dl-field">
-    <label class="dl-label" for="booking-url">Adresse à copier</label>
-    <input class="dl-input" id="booking-url" type="text" readonly value="{{.PracticeURL}}">
+  <p><a class="link link-primary" href="{{.PracticeURL}}">{{.PracticeURL}}</a></p>
+  <div class="space-y-1 max-w-xl">
+    <label class="block text-sm font-medium" for="booking-url">Adresse à copier</label>
+    <input class="input w-full" id="booking-url" type="text" readonly value="{{.PracticeURL}}">
   </div>
   {{if .Practitioners}}
-  <h3>Par praticien</h3>
-  <ul>
-    {{range .Practitioners}}<li>{{.Name}} : <a href="{{.URL}}">{{.URL}}</a></li>{{end}}
+  <h3 class="font-semibold mt-4">Par praticien</h3>
+  <ul class="list-disc pl-5">
+    {{range .Practitioners}}<li>{{.Name}} : <a class="link link-primary" href="{{.URL}}">{{.URL}}</a></li>{{end}}
   </ul>
   {{end}}
 </section>
 {{end}}{{end}}
-<p><a href="/admin/messages">Messages envoyés</a></p>
+<p class="mt-4"><a class="link link-primary" href="/admin/messages">Messages envoyés</a></p>
 {{end}}

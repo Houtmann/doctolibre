@@ -45,43 +45,11 @@ func TestStyleguideDev(t *testing.T) {
 	if strings.Contains(body, " style=") || strings.Contains(body, "<script>") {
 		t.Error("style ou script inline interdit par la CSP")
 	}
-	for _, old := range []string{"pico.min.css", "tokens.css", "components.css", "app.css"} {
-		if strings.Contains(body, old) {
-			t.Errorf("ancien CSS %q encore lié", old)
-		}
-	}
 }
 
 func TestStyleguideNotInProd(t *testing.T) {
 	t.Parallel()
 	if rec := styleguideGet(t, config.EnvProd); rec.Code != http.StatusNotFound {
-		t.Fatalf("code = %d, veut 404", rec.Code)
-	}
-}
-
-func TestStyleguideV2Dev(t *testing.T) {
-	t.Parallel()
-	rec := styleguidePathGet(t, config.EnvDev, "/dev/styleguide/v2")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("code = %d, veut 200", rec.Code)
-	}
-	body := rec.Body.String()
-	for _, want := range []string{
-		"dl-btn", "dl-alert--error", "dl-appt st-no_show", `data-theme="dark"`,
-		"dl-cal__head", "dl-cal-list", "dl-dialog", "dl-table", "dl-field is-invalid",
-	} {
-		if !strings.Contains(body, want) {
-			t.Errorf("fragment %q absent", want)
-		}
-	}
-	if strings.Contains(body, " style=") || strings.Contains(body, "<script>") {
-		t.Error("style ou script inline interdit par la CSP")
-	}
-}
-
-func TestStyleguideV2NotInProd(t *testing.T) {
-	t.Parallel()
-	if rec := styleguidePathGet(t, config.EnvProd, "/dev/styleguide/v2"); rec.Code != http.StatusNotFound {
 		t.Fatalf("code = %d, veut 404", rec.Code)
 	}
 }

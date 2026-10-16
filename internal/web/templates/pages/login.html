@@ -1,21 +1,21 @@
 {{define "title"}}Connexion{{end}}
 {{define "content"}}
-<section class="login">
-  <h1>Connexion</h1>
+<section class="mx-auto w-full max-w-md space-y-4">
+  <h1 class="text-2xl font-semibold">Connexion</h1>
   {{template "form_errors.html" .Data.Errors}}
-  <form class="dl-form" method="post" action="/admin/login">
+  <form class="space-y-4" method="post" action="/admin/login">
     {{csrf .CSRF}}
     <input type="hidden" name="next" value="{{.Data.Next}}">
-    <div class="dl-field{{if .Data.Failed}} is-invalid{{end}}">
-      <label class="dl-label" for="email">Adresse email</label>
-      <input class="dl-input" id="email" name="email" type="email" value="{{.Data.Email}}" autocomplete="username" required{{if .Data.Failed}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="email">Adresse email</label>
+      <input class="input w-full{{if .Data.Failed}} input-error{{end}}" id="email" name="email" type="email" value="{{.Data.Email}}" autocomplete="username" required{{if .Data.Failed}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
     </div>
-    <div class="dl-field{{if .Data.Failed}} is-invalid{{end}}">
-      <label class="dl-label" for="password">Mot de passe</label>
-      <input class="dl-input" id="password" name="password" type="password" autocomplete="current-password" required{{if .Data.Failed}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="password">Mot de passe</label>
+      <input class="input w-full{{if .Data.Failed}} input-error{{end}}" id="password" name="password" type="password" autocomplete="current-password" required{{if .Data.Failed}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
     </div>
-    <button class="dl-btn" type="submit">Se connecter</button>
+    <button class="btn btn-primary w-full" type="submit">Se connecter</button>
   </form>
-  <p><a href="/admin/password/forgot">Mot de passe oublié ?</a></p>
+  <p><a class="link link-primary" href="/admin/password/forgot">Mot de passe oublié ?</a></p>
 </section>
 {{end}}

@@ -1,6 +1,6 @@
 # Design system : Tailwind v4 + daisyUI 5
 
-Socle visuel : classes utilitaires Tailwind et composants daisyUI, deux thèmes `doctolibre` (clair, défaut) et `doctolibre-dark` définis dans `internal/web/input.css` (palette « pétrole & papier » de `design/tokens.css`).
+Socle visuel : classes utilitaires Tailwind et composants daisyUI, deux thèmes `doctolibre` (clair, défaut) et `doctolibre-dark` définis dans `internal/web/input.css` (palette « pétrole & papier »).
 Le CSS est **généré** dans `internal/web/static/ui.css` (commité) : `make tools` (une fois, télécharge l'exécutable Tailwind épinglé dans `bin/`) puis `make css` après toute modification d'un template, de `static/app.js` ou d'`input.css`. `make css-check` (inclus dans `make check`, obligatoire en CI) vérifie qu'`ui.css` est à jour.
 Page de contrôle (dev uniquement) : `GET /dev/styleguide` (404 en prod), composants rendus en clair et en sombre.
 Décision et alternatives écartées : `docs/decisions.md` (2026-10-16).
@@ -83,8 +83,8 @@ Appel : `{{template "nom.html" donnée}}` (les partials sont dans le même ensem
 | `booking_summary` | `Summary{Practice, Practitioner, Type, Duration, Start}` | — | `{{template "booking_summary.html" .Data.Summary}}` |
 | `booking_hidden`, `waitlist_hidden` | données du parcours de réservation / d'attente | — (champs cachés répétés d'une étape à l'autre) | `{{template "booking_hidden.html" .Data}}` |
 
-Autres partials (`calendar_grid`, `appointment_detail`, `appointment_form`, `availability_panel`, `absences_panel`, `types_panel`, `booking_grid`) : fragments propres à une page, rendus aussi comme réponses htmx de cette page.
+Autres partials (`appointment_detail`, `appointment_form`, `availability_panel`, `absences_panel`, `types_panel`, `booking_grid`) : fragments propres à une page, rendus aussi comme réponses htmx de cette page.
 
-## Héritage en cours de suppression (T084)
+## Fichiers statiques
 
-`pico.min.css`, `tokens.css`, `components.css`, `base.css`, `app.css` et la page `/dev/styleguide/v2` restent sur disque mais ne sont **plus liés** par `base.html`. Les pages pas encore migrées (T081–T083) sont donc sommaires jusque-là ; leurs classes `dl-*` et les `partials` ci-dessous qui en dépendent (`patient_fields`, `status_button`, `patient_results`, `booking_*`, `calendar_grid`…) seront réécrits en daisyUI avec leur page. Ne pas ajouter de nouveau lien vers ces fichiers.
+`internal/web/static/` ne contient que `ui.css` (généré par `make css`, commité), `app.js`, `agenda.js`, `htmx.min.js` et `vendor/` (EventCalendar). Aucune autre feuille de style applicative.

@@ -20,18 +20,6 @@
       "port": 8091
     },
     {
-      "name": "design",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": [
-        "-m",
-        "http.server",
-        "8092",
-        "--directory",
-        "design"
-      ],
-      "port": 8092
-    },
-    {
       "name": "app-dev",
       "runtimeExecutable": "/usr/bin/env",
       "runtimeArgs": [
@@ -46,18 +34,6 @@
         "serve"
       ],
       "port": 8099
-    },
-    {
-      "name": "poc-daisyui",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": [
-        "-m",
-        "http.server",
-        "8098",
-        "--directory",
-        "poc/daisyui"
-      ],
-      "port": 8098
     }
   ]
 }

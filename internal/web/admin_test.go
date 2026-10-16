@@ -185,8 +185,8 @@ func TestLoginFailureIsGeneric(t *testing.T) {
 			t.Error("cookie de session posé après un échec")
 		}
 	}
-	if body := bad.Body.String(); !strings.Contains(body, `class="dl-field is-invalid"`) || !strings.Contains(body, `aria-invalid="true"`) {
-		t.Error("champs de connexion non marqués en erreur (dl-field is-invalid, aria-invalid)")
+	if body := bad.Body.String(); !strings.Contains(body, `input-error`) || !strings.Contains(body, `aria-invalid="true"`) {
+		t.Error("champs de connexion non marqués en erreur (input-error, aria-invalid)")
 	}
 	if strings.Contains(bad.Body.String(), "mauvais-mot-de-passe") {
 		t.Error("le mot de passe est renvoyé dans la page")

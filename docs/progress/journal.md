@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T084 pages restantes, retrait de Pico et de l'ancien CSS (sonnet ; contrôle : opus)
+
+- **Tâches** : T084 (todo → review)
+- **Fait** : login, mot de passe oublié/réinitialisation, invitation, tableau de bord et statut en daisyUI ; supprimés : `pico.min.css`, `tokens.css`, `components.css`, `base.css`, `app.css`, `dev_styleguide_v2` et sa route, `design/`, `poc/` ; `static/` = `ui.css`, `app.js`, `agenda.js`, `htmx.min.js`, `vendor/` ; CSP inchangée. Binaire : 26 562 114 → 26 362 242 octets.
+- **Vérification** : `make check` ✅ (relancé par l'orchestrateur) ; les 3 grep des critères vides ; navigateur : contraste AA et débordement mesurés par script sur ~25 pages à 360 et 1280 px clair/sombre, agenda au clavier (Entrée, Échap rend le focus), connexion en erreur ; contrôle orchestrateur : connexion 1280 clair, tableau de bord 1280 sombre.
+- **Reste** : écrans non vus listés dans STATUS (prochaine action 3) ; `ui_review.md` (audit Pico obsolète à la racine) à supprimer ou garder : question à l'humain.
+- **Décisions** : suppression de `design/`, `poc/` et des CSS hérités (voir decisions.md).
+
 ## 2026-10-16 — T083 agenda staff avec EventCalendar (sonnet ; contrôle : opus)
 
 - **Tâches** : T083 (todo → review)

@@ -121,8 +121,6 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = OfferData{}
 			case "dev_styleguide":
 				data = styleguideView()
-			case "dev_styleguide_v2":
-				data = styleguideV2View()
 			}
 			rd.Page(rec, httptest.NewRequest("GET", "/", nil), n, data)
 			if rec.Code != 200 || !strings.Contains(rec.Body.String(), `<html lang="fr">`) {

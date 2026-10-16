@@ -1,24 +1,24 @@
 {{define "title"}}Activer mon compte{{end}}
 {{define "content"}}
-<section class="login">
-  <h1>Activer mon compte</h1>
+<section class="mx-auto w-full max-w-md space-y-4">
+  <h1 class="text-2xl font-semibold">Activer mon compte</h1>
   {{if .Data.Invalid}}
-  <div class="dl-alert dl-alert--error" role="alert"><div>Ce lien d'invitation est invalide ou a expiré. Les liens ne sont valables que 48 heures et ne servent qu'une fois. Demandez une nouvelle invitation à l'administrateur du cabinet.</div></div>
+  <div class="alert alert-error alert-soft" role="alert"><div>Ce lien d'invitation est invalide ou a expiré. Les liens ne sont valables que 48 heures et ne servent qu'une fois. Demandez une nouvelle invitation à l'administrateur du cabinet.</div></div>
   {{else}}
   <p>Vous êtes invité(e) à rejoindre <strong>{{.Data.Info.PracticeName}}</strong> ({{.Data.Info.RoleLabel}}) avec l'adresse <strong>{{.Data.Info.Email}}</strong>.</p>
   {{template "form_errors.html" .Data.Errors}}
-  <form class="dl-form" method="post" action="/admin/invitation">
+  <form class="space-y-4" method="post" action="/admin/invitation">
     {{csrf .CSRF}}
     <input type="hidden" name="token" value="{{.Data.Token}}">
-    <div class="dl-field">
-      <label class="dl-label" for="password">Choisissez un mot de passe (12 caractères minimum)</label>
-      <input class="dl-input" id="password" name="password" type="password" autocomplete="new-password" minlength="12" required>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="password">Choisissez un mot de passe (12 caractères minimum)</label>
+      <input class="input w-full" id="password" name="password" type="password" autocomplete="new-password" minlength="12" required>
     </div>
-    <div class="dl-field">
-      <label class="dl-label" for="password2">Confirmation</label>
-      <input class="dl-input" id="password2" name="password2" type="password" autocomplete="new-password" minlength="12" required>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="password2">Confirmation</label>
+      <input class="input w-full" id="password2" name="password2" type="password" autocomplete="new-password" minlength="12" required>
     </div>
-    <button class="dl-btn" type="submit">Activer mon compte</button>
+    <button class="btn btn-primary w-full" type="submit">Activer mon compte</button>
   </form>
   {{end}}
 </section>

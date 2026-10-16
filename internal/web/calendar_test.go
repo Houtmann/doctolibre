@@ -165,9 +165,6 @@ func TestCalendarPageWeekAndDay(t *testing.T) {
 	if strings.Contains(body, " style=") || strings.Contains(body, "<style") {
 		t.Errorf("style inline dans la page agenda")
 	}
-	if strings.Contains(body, "dl-cal") {
-		t.Errorf("reste de la grille maison")
-	}
 	// Une autre date : la liste du jour est vide, le calendrier est toujours là.
 	mustContain(t, e.c.do("GET", "/admin/calendar?view=day&date=2026-10-20", nil), 200, `Aucun rendez-vous ce jour-là.`, `data-view="day"`)
 	// Vue par praticien et vue inconnue (ignorée).
