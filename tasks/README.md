@@ -7,7 +7,7 @@ Chaque fichier `Txxx-*.md` est une tâche **autonome, exécutable par un LLM en 
 
 **Mode normal : orchestré.** Dans une session Opus, lancer `/run-task` (ou `/run-task Txxx`) : Opus choisit et contrôle, le sous-agent Sonnet `task-implementer` implémente. Rôles détaillés dans [`AGENTS.md`](../AGENTS.md).
 
-Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043, T050, T051, T052, T053, T055, T059, T060.
+Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043, T050, T051, T052, T053, T055, T059, T060, T067.
 
 Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS.md) (début / pendant / fin). En résumé :
 
@@ -64,13 +64,19 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T060 | [Ressources partagées (box, appareils)](T060-shared-resources.md) | 5 | T013, T014, T016 | todo |
 | T061 | [Affiche imprimable avec QR code](T061-qr-poster.md) | 5 | T014 | blocked |
 | T062 | [Design system léger : tokens, catalogue, styleguide](T062-design-system.md) | 5 | T004, T016 | review |
+| T063 | [Design v2 : socle embarqué et styleguide v2](T063-design-v2-foundation.md) | 5 | T062 | in_progress |
+| T064 | [Design v2 : layouts, navigation, messages, boutons](T064-design-v2-shell.md) | 5 | T063 | todo |
+| T065 | [Design v2 : formulaires et tableaux](T065-design-v2-forms.md) | 5 | T064 | todo |
+| T066 | [Design v2 : parcours patient](T066-design-v2-booking.md) | 5 | T064 | todo |
+| T067 | [Design v2 : agenda et dialogue de RDV](T067-design-v2-calendar.md) | 5 | T064 | todo |
+| T068 | [Design v2 : retrait de Pico et de l'ancien CSS](T068-design-v2-cleanup.md) | 5 | T065, T066, T067 | todo |
 
 ## Parallélisation possible
 
 - Après T001 : **T002**, **T003**, **T013** en parallèle (fichiers disjoints).
 - Après T020 : **T021** et **T022** en parallèle.
 - Phase 3 et 4 : la plupart des tâches sont indépendantes entre elles.
-- Phase 5 : T050 d'abord (débloque T051, T055) ; T052, T053, T054, T056, T058 indépendantes. T062 (design system) avant T057 et T061, qui touchent aussi `app.css` : pas en parallèle.
+- Phase 5 : T050 d'abord (débloque T051, T055) ; T052, T053, T054, T056, T058 indépendantes. T062 (design system) avant T057 et T061, qui touchent aussi `app.css` : pas en parallèle. Design v2 (`design/`) : T063 → T064 → {T065, T066, T067 en parallèle, templates disjoints} → T068 ; T057 et T061 après T064 ou à coordonner (`app.css`, agenda).
 
 ```
 T001 ─┬─ T002 ─┬─ T005 ─┐

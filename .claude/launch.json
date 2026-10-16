@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "demo",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        ". /private/tmp/claude-501/-Users-hadrien-Documents-doctolibre/4b863022-82ed-4e61-bda6-fe2145cd99fd/scratchpad/demo/env.sh && go run ./cmd/doctolibre serve"
+      ],
+      "port": 8090
+    },
+    {
+      "name": "t062",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        ". /private/tmp/claude-501/-Users-hadrien-Documents-doctolibre/4b863022-82ed-4e61-bda6-fe2145cd99fd/scratchpad/demo/env.sh && export DOCTOLIBRE_HTTP_ADDR=:8091 DOCTOLIBRE_BASE_URL=http://localhost:8091 && cd /Users/hadrien/Documents/doctolibre/.claude/worktrees/agent-a647a7b514599fec9 && go run ./cmd/doctolibre serve"
+      ],
+      "port": 8091
+    },
+    {
+      "name": "design",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8092",
+        "--directory",
+        "design"
+      ],
+      "port": 8092
+    }
+  ]
+}

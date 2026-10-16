@@ -1,0 +1,18 @@
+/* Mise en page des cartes d'aperçu uniquement (ne fait pas partie du design system). */
+body { padding: 0; }
+.pv { min-height: 100vh; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.pv--stack { grid-template-columns: 1fr; }
+.pv-panel { background: var(--dl-bg); color: var(--dl-text); padding: var(--dl-space-5); }
+.pv-tag { font-size: var(--dl-text-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--dl-text-muted); margin: 0 0 var(--dl-space-3); }
+.pv-row { display: flex; flex-wrap: wrap; gap: var(--dl-space-2); align-items: center; margin-bottom: var(--dl-space-3); }
+.pv-sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: var(--dl-space-2); margin-bottom: var(--dl-space-4); }
+.pv-chip { border-radius: var(--dl-radius-md); border: var(--dl-border-width) solid var(--dl-border); overflow: hidden; font-size: var(--dl-text-xs); background: var(--dl-surface); }
+.pv-chip i { display: block; height: 3rem; }
+.pv-chip span { display: block; padding: var(--dl-space-1) var(--dl-space-2); }
+.pv-chip code { background: none; padding: 0; color: var(--dl-text-muted); }
+.pv-box { padding: var(--dl-space-3); border-radius: var(--dl-radius-md); font-size: var(--dl-text-sm); }
+.pv-space { display: flex; align-items: center; gap: var(--dl-space-3); font-size: var(--dl-text-sm); margin-bottom: var(--dl-space-1); }
+.pv-space i { display: block; height: 0.75rem; background: var(--dl-primary); border-radius: 2px; }
+.pv-radius { display: flex; gap: var(--dl-space-3); flex-wrap: wrap; }
+.pv-radius i { display: grid; place-items: end start; width: 5rem; height: 3.5rem; background: var(--dl-primary-soft); color: var(--dl-primary-soft-fg); border: 2px solid var(--dl-primary); font-size: var(--dl-text-xs); font-style: normal; padding: var(--dl-space-1) var(--dl-space-2); }
+.pv-narrow { max-width: 24rem; }
