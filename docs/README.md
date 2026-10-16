@@ -10,7 +10,7 @@ Chaque document a **un seul rôle** : ne pas dupliquer une information, mettre u
 | L'orchestrateur (Opus) | `/run-task` — la commande [`../.claude/commands/run-task.md`](../.claude/commands/run-task.md) déroule tout |
 | Un agent qui démarre une session | [`progress/STATUS.md`](progress/STATUS.md) → [`../AGENTS.md`](../AGENTS.md) → la tâche en cours ou la suivante dans [`../tasks/`](../tasks/README.md) |
 | Un humain qui découvre le projet | [`../PLAN.md`](../PLAN.md) → [`progress/STATUS.md`](progress/STATUS.md) → [`decisions.md`](decisions.md) |
-| Un praticien qui veut installer | `install.md` (à venir, T044) |
+| Un praticien qui veut installer | [`install.md`](install.md), puis [`cost.md`](cost.md) |
 
 ## Carte des documents
 

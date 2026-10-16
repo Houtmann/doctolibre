@@ -37,8 +37,8 @@ Offre d'hébergement géré.
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** : `docs/install.md` (8 sections demandées + variante systemd + aide-mémoire des sous-commandes), `docs/cost.md` (3 profils, SMS renvoyés vers `sms.md`), lien dans `docs/README.md`. Contenu relu contre deploy/, config, backup.md, sms.md, email.md, routes admin.
+- **Reste à faire** : installation réelle sur VM neuve (critère non vérifiable ici) ; captures d'écran ; URL officielle du dépôt ; `docs/rgpd.md` (T043) à lier quand il existera.
+- **Notes de reprise** : prix hébergeurs et matériel indicatifs, non vérifiés en ligne (datés 2026-10-16).
+- **Écarts avec la spécification** : pas de captures d'écran (UI décrite en texte) ; pas de lien vers `rgpd.md` (inexistant) ; pas de CHANGELOG dans le dépôt (renvoi aux releases).
