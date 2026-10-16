@@ -1,11 +1,11 @@
 package web
 
 import (
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,9 +19,10 @@ import (
 
 // Chemins de l'agenda.
 const (
-	pathCalendar     = "/admin/calendar"
-	pathAppointments = "/admin/appointments"
-	pathPatientFind  = "/admin/patients/search"
+	pathCalendar       = "/admin/calendar"
+	pathCalendarEvents = "/admin/agenda/events"
+	pathAppointments   = "/admin/appointments"
+	pathPatientFind    = "/admin/patients/search"
 )
 
 // calendarRoutes enregistre l'agenda (admin, praticien et secrétariat).
@@ -34,6 +35,7 @@ func (d Deps) calendarRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logg
 	handleFor := func(pattern string, f http.HandlerFunc) { mux.Handle(pattern, require(target(f))) }
 
 	handle("GET "+pathCalendar, h.calendar)
+	handle("GET "+pathCalendarEvents, h.events)
 	handle("GET "+pathPatientFind, h.patientSearch)
 	handleFor("GET "+pathAppointments+"/new", h.newForm)
 	handleFor("POST "+pathAppointments, h.create)
@@ -92,17 +94,20 @@ func (h *calendarHandlers) show(w http.ResponseWriter, r *http.Request, page, pa
 
 // --- Agenda ---
 
-// CalendarPage est la donnée de la page admin_calendar et du fragment calendar_grid.
+// CalendarPage est la donnée de la page admin_calendar. Le calendrier
+// (EventCalendar) est configuré par des attributs data-* ; la liste du jour
+// rendue côté serveur sert de repli sans JavaScript.
 type CalendarPage struct {
-	CSRF       string
-	V          service.CalendarView
-	PrevURL    string
-	NextURL    string
-	TodayURL   string
-	DayURL     string
-	WeekURL    string
-	RefreshURL string
-	NewURL     string
+	CSRF string
+	A    service.Agenda
+	// View : « week », « day » ou « practitioners » (vue par praticien) ; vide = le défaut du navigateur.
+	View string
+	// ResourcesJSON : praticiens affichés, [{"id","title"}], pour EventCalendar.
+	ResourcesJSON string
+	PrevURL       string
+	NextURL       string
+	TodayURL      string
+	NewURL        string
 	// Picker : sélecteur de praticiens (nil si un seul est accessible).
 	Picker *CalendarPicker
 }
@@ -130,14 +135,11 @@ func (c calSel) apply(q url.Values) {
 	}
 }
 
-func calendarURL(mode, date string, from, to int, sel calSel) string {
+// calendarViews : valeurs acceptées pour le paramètre « view » de l'agenda.
+var calendarViews = map[string]bool{"week": true, "day": true, "practitioners": true}
+
+func calendarURL(mode, date string, sel calSel) string {
 	q := url.Values{"view": {mode}, "date": {date}}
-	if from > 0 {
-		q.Set("from", strconv.Itoa(from))
-	}
-	if to > 0 {
-		q.Set("to", strconv.Itoa(to))
-	}
 	sel.apply(q)
 	return pathCalendar + "?" + q.Encode()
 }
@@ -162,14 +164,6 @@ func selectionFrom(r *http.Request) (calSel, bool) {
 	return sel, true
 }
 
-func atoiOr0(s string) int {
-	n, err := strconv.Atoi(s)
-	if err != nil {
-		return 0
-	}
-	return n
-}
-
 func (h *calendarHandlers) calendar(w http.ResponseWriter, r *http.Request) {
 	begin := time.Now()
 	qv := r.URL.Query()
@@ -178,11 +172,11 @@ func (h *calendarHandlers) calendar(w http.ResponseWriter, r *http.Request) {
 		h.rd.Error(w, r, http.StatusBadRequest, "Praticien invalide.")
 		return
 	}
-	in := service.ViewInput{
-		Mode: qv.Get("view"), Date: qv.Get("date"), FromHour: atoiOr0(qv.Get("from")), ToHour: atoiOr0(qv.Get("to")),
-		PractitionerIDs: sel.ids, All: sel.all,
+	view := qv.Get("view")
+	if !calendarViews[view] {
+		view = ""
 	}
-	v, err := h.svc.View(r.Context(), actorFrom(r), in)
+	ag, err := h.svc.AgendaDay(r.Context(), actorFrom(r), qv.Get("date"), service.Selection{IDs: sel.ids, All: sel.all})
 	if msgs := validation(err); msgs != nil {
 		h.rd.Error(w, r, http.StatusBadRequest, msgs[0])
 		return
@@ -197,32 +191,48 @@ func (h *calendarHandlers) calendar(w http.ResponseWriter, r *http.Request) {
 	if len(link.ids) == 0 && !link.all && actorFrom(r).Role == domain.RoleSecretary {
 		link.all = true
 	}
-	newQ := url.Values{"start": {v.Date + "T09:00"}}
-	if !v.Multi {
-		newQ.Set(practitionerParam, v.PractitionerID.String())
+	mode := view
+	if mode == "" || mode == "practitioners" {
+		mode = "day"
 	}
-	p := CalendarPage{
-		CSRF: httpx.CSRFToken(r.Context()), V: v,
-		PrevURL:    calendarURL(v.Mode, v.PrevDate, in.FromHour, in.ToHour, link),
-		NextURL:    calendarURL(v.Mode, v.NextDate, in.FromHour, in.ToHour, link),
-		TodayURL:   calendarURL(v.Mode, v.TodayDate, in.FromHour, in.ToHour, link),
-		DayURL:     calendarURL("day", v.Date, in.FromHour, in.ToHour, link),
-		WeekURL:    calendarURL("week", v.Date, in.FromHour, in.ToHour, link),
-		RefreshURL: calendarURL(v.Mode, v.Date, in.FromHour, in.ToHour, link),
-		NewURL:     pathAppointments + "/new?" + newQ.Encode(),
+	newQ := url.Values{"start": {ag.Date + "T09:00"}}
+	if len(ag.Practitioners) == 1 {
+		newQ.Set(practitionerParam, ag.Practitioners[0].ID.String())
 	}
-	if p.Picker, err = h.picker(r, v, sel); err != nil {
+	res := make([]calendarResource, len(ag.Practitioners))
+	for i, p := range ag.Practitioners {
+		res[i] = calendarResource{ID: p.ID.String(), Title: p.Name}
+	}
+	resJSON, err := json.Marshal(res)
+	if err != nil {
 		h.fail(w, r, err)
 		return
 	}
-	h.show(w, r, "admin_calendar", "calendar_grid", p, false)
+	p := CalendarPage{
+		CSRF: httpx.CSRFToken(r.Context()), A: ag, View: view, ResourcesJSON: string(resJSON),
+		PrevURL:  calendarURL(mode, ag.PrevDate, link),
+		NextURL:  calendarURL(mode, ag.NextDate, link),
+		TodayURL: calendarURL(mode, ag.TodayDate, link),
+		NewURL:   pathAppointments + "/new?" + newQ.Encode(),
+	}
+	if p.Picker, err = h.picker(r, ag, view, sel); err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.Page(w, r, "admin_calendar", p)
 	httpx.LoggerFrom(r.Context()).Info("agenda rendu",
-		slog.String("view", v.Mode), slog.Int("appointments", v.AppointmentCount),
+		slog.String("view", view), slog.Int("appointments", len(ag.Appts)),
 		slog.Int64("duration_ms", time.Since(begin).Milliseconds()))
 }
 
+// calendarResource est un praticien tel que l'attend EventCalendar.
+type calendarResource struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
 // picker construit le sélecteur de praticiens ; nil si un seul est accessible.
-func (h *calendarHandlers) picker(r *http.Request, v service.CalendarView, sel calSel) (*CalendarPicker, error) {
+func (h *calendarHandlers) picker(r *http.Request, ag service.Agenda, view string, sel calSel) (*CalendarPicker, error) {
 	a := actorFrom(r)
 	prs, err := h.svc.ViewablePractitioners(r.Context(), a)
 	if err != nil {
@@ -232,10 +242,10 @@ func (h *calendarHandlers) picker(r *http.Request, v service.CalendarView, sel c
 		return nil, nil
 	}
 	shown := map[uuid.UUID]bool{}
-	for _, p := range v.Practitioners {
+	for _, p := range ag.Practitioners {
 		shown[p.ID] = true
 	}
-	pk := &CalendarPicker{Date: v.Date, Mode: v.Mode, AllChecked: sel.all}
+	pk := &CalendarPicker{Date: ag.Date, Mode: view, AllChecked: sel.all}
 	for _, p := range prs {
 		pk.Options = append(pk.Options, PractitionerOption{ID: p.ID.String(), Name: service.PractitionerName(p), Selected: shown[p.ID]})
 	}
@@ -281,6 +291,8 @@ type FormPage struct {
 	Errors    []string
 	// Practitioners : choix du praticien (secrétariat, administrateur) ; vide = un seul possible.
 	Practitioners []PractitionerOption
+	// Modal : rendu dans la boîte de dialogue de l'agenda (htmx) plutôt qu'en page.
+	Modal bool
 }
 
 func patientRow(p sqlcgen.Patient, selected bool) PatientRow {
@@ -300,7 +312,7 @@ func (h *calendarHandlers) formPage(r *http.Request, f FormValues, errs []string
 	if err != nil {
 		return nil, err
 	}
-	p := &FormPage{CSRF: httpx.CSRFToken(r.Context()), Form: f, Errors: errs}
+	p := &FormPage{CSRF: httpx.CSRFToken(r.Context()), Form: f, Errors: errs, Modal: httpx.IsHTMX(r)}
 	for _, t := range ts {
 		d, _, _ := service.TypeMinutes(t)
 		p.Types = append(p.Types, TypeChoice{ID: t.ID.String(), Name: t.Name, Minutes: d, Selected: t.ID.String() == f.TypeID})
@@ -388,14 +400,13 @@ func (h *calendarHandlers) create(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, r, err)
 		return
 	}
-	h.rd.SetFlash(w, "success", "Rendez-vous créé.")
-	httpx.Redirect(w, r, backURL(f.View, f.Date, f.Practitioner))
+	h.finish(w, r, "Rendez-vous créé.", f.View, f.Date, f.Practitioner)
 }
 
 // backURL retourne l'agenda sur la semaine (ou le jour) de la date donnée ;
 // une date invalide donne l'agenda courant.
 func backURL(view, date, practitioner string) string {
-	if view != "day" {
+	if !calendarViews[view] {
 		view = "week"
 	}
 	var sel calSel
@@ -407,8 +418,30 @@ func backURL(view, date, practitioner string) string {
 		sel.apply(q)
 		return pathCalendar + "?" + q.Encode()
 	}
-	return calendarURL(view, date, 0, 0, sel)
+	return calendarURL(view, date, sel)
 }
+
+// finish termine une action réussie. Dans la boîte de dialogue de l'agenda (requête
+// htmx), il n'y a ni message ni redirection : l'en-tête HX-Trigger demande à
+// l'agenda de se rafraîchir (et d'aller à la date concernée). Sinon : message
+// et redirection vers l'agenda.
+func (h *calendarHandlers) finish(w http.ResponseWriter, r *http.Request, flash, view, date, practitioner string) {
+	if httpx.IsHTMX(r) {
+		detail := map[string]string{}
+		if _, err := time.Parse("2006-01-02", date); err == nil {
+			detail["date"] = date
+		}
+		b, _ := json.Marshal(map[string]any{eventAgendaChanged: detail})
+		w.Header().Set("HX-Trigger", string(b))
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	h.rd.SetFlash(w, "success", flash)
+	httpx.Redirect(w, r, backURL(view, date, practitioner))
+}
+
+// eventAgendaChanged est l'événement htmx qui fait recharger les événements de l'agenda.
+const eventAgendaChanged = "agenda:changed"
 
 // --- Détail et actions ---
 
@@ -421,6 +454,7 @@ type DetailPage struct {
 	View   string
 	Errors []string
 	Plan   *service.PlanBadge // série de séances, nil sinon
+	Modal  bool               // rendu dans la boîte de dialogue de l'agenda (htmx)
 }
 
 func (h *calendarHandlers) detailPage(w http.ResponseWriter, r *http.Request, id uuid.UUID, move *service.MoveInput, reason string, errs []string) {
@@ -429,7 +463,7 @@ func (h *calendarHandlers) detailPage(w http.ResponseWriter, r *http.Request, id
 		h.fail(w, r, err)
 		return
 	}
-	p := DetailPage{CSRF: httpx.CSRFToken(r.Context()), D: d, Move: service.MoveInput{Date: d.MoveDate, Time: d.MoveTime}, Reason: reason, View: r.FormValue("view"), Errors: errs}
+	p := DetailPage{CSRF: httpx.CSRFToken(r.Context()), D: d, Move: service.MoveInput{Date: d.MoveDate, Time: d.MoveTime}, Reason: reason, View: r.FormValue("view"), Errors: errs, Modal: httpx.IsHTMX(r)}
 	if move != nil {
 		p.Move = *move
 	}
@@ -462,8 +496,7 @@ func (h *calendarHandlers) done(w http.ResponseWriter, r *http.Request, id uuid.
 		h.fail(w, r, err)
 		return
 	}
-	h.rd.SetFlash(w, "success", flash)
-	httpx.Redirect(w, r, backURL(r.PostFormValue("view"), date, r.PostFormValue(practitionerParam)))
+	h.finish(w, r, flash, r.PostFormValue("view"), date, r.PostFormValue(practitionerParam))
 }
 
 func (h *calendarHandlers) move(w http.ResponseWriter, r *http.Request) {

@@ -2,6 +2,7 @@ package web_test
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
@@ -95,7 +96,7 @@ var apptHref = regexp.MustCompile(`href="/admin/appointments/([0-9a-f-]{36})"`)
 
 func (e calEnv) firstAppointmentID(t *testing.T, date string) string {
 	t.Helper()
-	rec := e.c.do("GET", "/admin/calendar?view=week&date="+date, nil)
+	rec := e.c.do("GET", "/admin/calendar?view=day&date="+date, nil)
 	m := apptHref.FindStringSubmatch(rec.Body.String())
 	if m == nil {
 		t.Fatalf("aucun rendez-vous dans l'agenda du %s", date)
@@ -149,25 +150,40 @@ func TestCalendarPageWeekAndDay(t *testing.T) {
 	if rec := e.c.do("POST", "/admin/appointments", e.form("2026-10-19", "09:00")); rec.Code != 303 {
 		t.Fatalf("création: %d %s", rec.Code, rec.Body.String())
 	}
-	rec := e.c.do("GET", "/admin/calendar?view=week&date=2026-10-21", nil)
+	rec := e.c.do("GET", "/admin/calendar?view=week&date=2026-10-19", nil)
 	mustContain(t, rec, 200,
-		`id="calendar"`, `hx-trigger="every 60s"`, `dl-cal cols-7`, `Semaine du lundi 19 octobre au dimanche 25 octobre`,
-		// 09:00 → ligne (9-7)×4+2 = 10, 30 min → 2 lignes, colonne du lundi = 2.
-		`class="dl-appt gr-10 gs-2 gc-2 st-booked"`, `Durand Léa`, `dl-cal__band`, `<dialog id="appt-dialog" class="dl-dialog"`,
-		`href="/admin/calendar?date=2026-10-14&amp;view=week"`, `href="/admin/calendar?date=2026-10-28&amp;view=week"`,
-		`class="dl-cal-list"`,
+		// Calendrier : conteneur configuré par data-*, ressources et fuseau du cabinet, chargé seulement ici.
+		`id="agenda"`, `data-events-url="/admin/agenda/events"`, `data-view="week"`, `data-date="2026-10-19"`,
+		`data-resources=`, `vendor/event-calendar.min.css`, `vendor/event-calendar.min.js`, `agenda.js`,
+		// Dialogue daisyUI rempli par htmx.
+		`<dialog id="appt-dialog" class="modal`, `id="appt-dialog-body"`,
+		// Repli sans JS : liste du jour rendue par le serveur, navigation jour par jour par liens.
+		`id="agenda-fallback"`, `lundi 19 octobre`, `Durand Léa`, `Séance 30`, `À venir`,
+		`href="/admin/calendar?date=2026-10-18&amp;view=week"`, `href="/admin/calendar?date=2026-10-20&amp;view=week"`,
 	)
-	if strings.Contains(rec.Body.String(), `<div class="dl-cal__now`) {
-		t.Errorf("ligne « maintenant » hors de la vue du jour")
+	body := rec.Body.String()
+	if strings.Contains(body, " style=") || strings.Contains(body, "<style") {
+		t.Errorf("style inline dans la page agenda")
 	}
-	// htmx : le fragment de la grille seul.
-	rec = e.c.doHXGet("/admin/calendar?view=day&date=2026-10-15")
-	mustContain(t, rec, 200, `id="calendar"`, `class="dl-cal__now gr-18 gc-2"`, `jeudi 15 octobre`)
-	if strings.Contains(rec.Body.String(), "<html") || strings.Contains(rec.Body.String(), "<dialog") {
-		t.Errorf("le fragment htmx contient le layout")
+	if strings.Contains(body, "dl-cal") {
+		t.Errorf("reste de la grille maison")
+	}
+	// Une autre date : la liste du jour est vide, le calendrier est toujours là.
+	mustContain(t, e.c.do("GET", "/admin/calendar?view=day&date=2026-10-20", nil), 200, `Aucun rendez-vous ce jour-là.`, `data-view="day"`)
+	// Vue par praticien et vue inconnue (ignorée).
+	mustContain(t, e.c.do("GET", "/admin/calendar?view=practitioners&date=2026-10-20", nil), 200, `data-view="practitioners"`)
+	if rec := e.c.do("GET", "/admin/calendar?view=oups", nil); rec.Code != 200 || !strings.Contains(rec.Body.String(), `data-view=""`) {
+		t.Errorf("vue inconnue: %d", rec.Code)
 	}
 	if rec := e.c.do("GET", "/admin/calendar?date=oups", nil); rec.Code != 400 {
 		t.Errorf("date invalide: %d", rec.Code)
+	}
+	if rec := e.c.do("GET", "/admin/calendar?practitioner=pas-un-uuid", nil); rec.Code != 400 {
+		t.Errorf("praticien invalide: %d", rec.Code)
+	}
+	// Les ressources servent des titres (noms de praticiens), jamais de contact.
+	if m := regexp.MustCompile(`data-resources="([^"]*)"`).FindStringSubmatch(body); m == nil || !strings.Contains(m[1], "&#34;id&#34;") {
+		t.Errorf("ressources: %v", m)
 	}
 }
 
@@ -218,10 +234,15 @@ func TestCalendarCreateFlow(t *testing.T) {
 	if rec := e.c.do("POST", "/admin/appointments", late); rec.Code != 303 {
 		t.Errorf("hors horaires forcé: %d", rec.Code)
 	}
-	// Succès htmx : redirection côté client.
+	// Succès dans la boîte de dialogue (htmx) : 204, l'agenda se recharge via HX-Trigger, ni message ni redirection.
 	ok := e.form("2026-10-22", "09:00")
-	if rec := e.c.doHX("POST", "/admin/appointments", ok); rec.Code != 204 || rec.Header().Get("HX-Redirect") != "/admin/calendar?date=2026-10-22&view=week" {
-		t.Errorf("création htmx: %d %q", rec.Code, rec.Header().Get("HX-Redirect"))
+	if rec := e.c.doHX("POST", "/admin/appointments", ok); rec.Code != 204 || rec.Header().Get("HX-Trigger") != `{"agenda:changed":{"date":"2026-10-22"}}` || rec.Header().Get("HX-Redirect") != "" {
+		t.Errorf("création htmx: %d trigger=%q redirect=%q", rec.Code, rec.Header().Get("HX-Trigger"), rec.Header().Get("HX-Redirect"))
+	}
+	// Le formulaire en dialogue (htmx) poste en htmx ; en page, il fonctionne sans JS.
+	mustContain(t, e.c.doHXGet("/admin/appointments/new?start=2026-10-20T10:30"), 200, `hx-post="/admin/appointments"`, `method="dialog"`)
+	if strings.Contains(e.c.do("GET", "/admin/appointments/new?start=2026-10-20T10:30", nil).Body.String(), `hx-post="/admin/appointments"`) {
+		t.Errorf("la page plein écran ne doit pas dépendre de htmx")
 	}
 	// Champs manquants.
 	mustContain(t, e.c.do("POST", "/admin/appointments", url.Values{"date": {"2026-10-22"}, "time": {"09:00"}}), 422, `Choisissez un patient`, `Choisissez un motif`)
@@ -241,14 +262,24 @@ func TestCalendarMoveCancelStatusFlow(t *testing.T) {
 	// Détail : page complète et fragment htmx.
 	mustContain(t, e.c.do("GET", base, nil), 200, `Léa Durand`, `Séance 30`, `Saisi par le cabinet`, `Historique`, `Rendez-vous créé pour le`, `action="`+base+`/move"`, `action="`+base+`/cancel"`, `Marquer honoré`)
 	frag := e.c.doHXGet(base)
-	mustContain(t, frag, 200, `id="appt-detail"`)
+	mustContain(t, frag, 200, `id="appt-detail"`, `method="dialog"`)
+	if strings.Contains(e.c.do("GET", base, nil).Body.String(), "hx-post=") {
+		t.Errorf("la page du rendez-vous doit fonctionner sans htmx")
+	}
 	if strings.Contains(frag.Body.String(), "<html") {
 		t.Errorf("fragment avec layout")
 	}
 
 	// Déplacement en conflit (sur l'autre RDV de 10:00, buffer compris) → erreur, rien ne change.
 	mustContain(t, e.c.do("POST", base+"/move", url.Values{"date": {"2026-10-20"}, "time": {"09:45"}}), 422, `chevauche un autre rendez-vous`)
-	mustContain(t, e.c.doHX("POST", base+"/move", url.Values{"date": {"2026-10-20"}, "time": {"09:45"}}), 200, `id="appt-detail"`, `chevauche un autre rendez-vous`)
+	mustContain(t, e.c.doHX("POST", base+"/move", url.Values{"date": {"2026-10-20"}, "time": {"09:45"}}), 200, `id="appt-detail"`, `chevauche un autre rendez-vous`, `hx-post="`+base+`/move"`)
+	// Action réussie dans le dialogue : rafraîchissement de l'agenda demandé par HX-Trigger.
+	if rec := e.c.doHX("POST", base+"/status", url.Values{"status": {"done"}, "date": {"2026-10-20"}}); rec.Code != 204 || rec.Header().Get("HX-Trigger") != `{"agenda:changed":{"date":"2026-10-20"}}` {
+		t.Errorf("statut htmx: %d %q", rec.Code, rec.Header().Get("HX-Trigger"))
+	}
+	if rec := e.c.do("POST", base+"/status", url.Values{"status": {"booked"}, "date": {"2026-10-20"}}); rec.Code != 303 {
+		t.Fatalf("retour à venir: %d", rec.Code)
+	}
 	// Déplacement valide.
 	rec := e.c.do("POST", base+"/move", url.Values{"date": {"2026-10-21"}, "time": {"08:30"}, "view": {"week"}})
 	if rec.Code != 303 || rec.Header().Get("Location") != "/admin/calendar?date=2026-10-21&view=week" {
@@ -282,14 +313,17 @@ func TestCalendarMoveCancelStatusFlow(t *testing.T) {
 	if strings.Contains(body, "/move") || strings.Contains(body, "/cancel") {
 		t.Errorf("actions encore proposées pour un RDV annulé")
 	}
-	if strings.Contains(e.c.do("GET", "/admin/calendar?view=week&date=2026-10-21", nil).Body.String(), base) {
-		t.Errorf("RDV annulé encore dans l'agenda")
+	if strings.Contains(e.c.do("GET", "/admin/calendar?view=day&date=2026-10-21", nil).Body.String(), base) {
+		t.Errorf("RDV annulé encore dans la liste du jour")
+	}
+	if strings.Contains(e.c.do("GET", "/admin/agenda/events?start=2026-10-19&end=2026-10-26", nil).Body.String(), id) {
+		t.Errorf("RDV annulé encore dans les événements")
 	}
 	mustContain(t, e.c.do("POST", base+"/cancel", url.Values{}), 422, `Seul un rendez-vous à venir peut être annulé`)
 }
 
-// Chaque RDV affiché porte un libellé d'état accessible (jamais la couleur seule),
-// dans la grille comme dans la liste mobile ; le détail l'affiche en badge.
+// Chaque RDV porte un libellé d'état accessible (jamais la couleur seule), dans la liste
+// du jour comme dans les événements JSON ; le détail l'affiche en badge.
 func TestCalendarAppointmentsExposeStateLabel(t *testing.T) {
 	t.Parallel()
 	e := newCalendarEnv(t, domain.RoleAdmin)
@@ -300,7 +334,7 @@ func TestCalendarAppointmentsExposeStateLabel(t *testing.T) {
 	}
 	rows := e.c.do("GET", "/admin/calendar?view=day&date=2026-10-20", nil).Body.String()
 	var ids []string
-	for _, m := range regexp.MustCompile(`<a class="dl-appt [^"]*" href="/admin/appointments/([0-9a-f-]{36})"`).FindAllStringSubmatch(rows, -1) {
+	for _, m := range apptHref.FindAllStringSubmatch(rows, -1) {
 		ids = append(ids, m[1])
 	}
 	if len(ids) != 3 {
@@ -312,16 +346,144 @@ func TestCalendarAppointmentsExposeStateLabel(t *testing.T) {
 		}
 	}
 	body := e.c.do("GET", "/admin/calendar?view=day&date=2026-10-20", nil).Body.String()
-	for _, want := range []string{
-		`st-done`, `st-no_show`, `st-booked`,
-		`<span class="dl-visually-hidden"> (Honoré)</span>`, `<span class="dl-visually-hidden"> (Absent)</span>`, `<span class="dl-visually-hidden"> (À venir)</span>`,
-		`<small>(Honoré)</small>`, `<small>(Absent)</small>`, `<small>(À venir)</small>`,
-	} {
+	for _, want := range []string{`badge-success badge-soft">Honoré<`, `badge-warning badge-soft">Absent<`, `badge-primary badge-soft">À venir<`} {
 		if !strings.Contains(body, want) {
-			t.Errorf("agenda sans %q", want)
+			t.Errorf("liste du jour sans %q", want)
 		}
 	}
-	mustContain(t, e.c.do("GET", "/admin/appointments/"+ids[0], nil), 200, `dl-dialog__header`, `dl-badge dl-badge--st-`, `dl-dialog__footer`)
+	evs := e.events(t, "start=2026-10-19&end=2026-10-26")
+	got := map[string]string{}
+	for _, ev := range evs {
+		if ev.Display == "" {
+			got[ev.ExtendedProps["status"].(string)] = ev.ExtendedProps["status_label"].(string) + "/" + ev.ClassNames[0]
+		}
+	}
+	if got["done"] != "Honoré/appt-done" || got["no_show"] != "Absent/appt-noshow" || got["booked"] != "À venir/appt-booked" {
+		t.Errorf("statuts des événements: %v", got)
+	}
+	mustContain(t, e.c.do("GET", "/admin/appointments/"+ids[0], nil), 200, `badge badge-success badge-soft`, `Honoré`)
+}
+
+type eventsJSONEvent struct {
+	ID            string         `json:"id"`
+	ResourceID    string         `json:"resourceId"`
+	Start         string         `json:"start"`
+	End           string         `json:"end"`
+	Title         string         `json:"title"`
+	Display       string         `json:"display"`
+	ClassNames    []string       `json:"classNames"`
+	ExtendedProps map[string]any `json:"extendedProps"`
+}
+
+// events interroge /admin/agenda/events avec la requête brute et décode la réponse (200 attendu).
+func (e calEnv) events(t *testing.T, query string) []eventsJSONEvent {
+	t.Helper()
+	rec := e.c.do("GET", "/admin/agenda/events?"+query, nil)
+	if rec.Code != 200 || !strings.HasPrefix(rec.Header().Get("Content-Type"), "application/json") || rec.Header().Get("Cache-Control") != "no-store" {
+		t.Fatalf("events?%s : %d %q %q", query, rec.Code, rec.Header().Get("Content-Type"), rec.Body.String())
+	}
+	var out []eventsJSONEvent
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("JSON: %v\n%s", err, rec.Body.String())
+	}
+	return out
+}
+
+func TestCalendarEventsJSON(t *testing.T) {
+	t.Parallel()
+	e := newCalendarEnv(t, domain.RoleAdmin)
+	// Contact complet, motif à buffer de 10 min après le soin : rien de tout cela ne doit fuiter sauf le buffer.
+	if rec := e.c.do("POST", "/admin/appointments", e.form("2026-10-20", "09:00")); rec.Code != 303 {
+		t.Fatalf("création: %d", rec.Code)
+	}
+	rec := e.c.do("GET", "/admin/agenda/events?start=2026-10-19T00:00:00%2B02:00&end=2026-10-26T00:00:00%2B01:00", nil)
+	if rec.Code != 200 {
+		t.Fatalf("events: %d %s", rec.Code, rec.Body.String())
+	}
+	raw := rec.Body.String()
+	for _, secret := range []string{"0612345678", "33612345678", "@", "phone", "email", "note"} {
+		if strings.Contains(raw, secret) {
+			t.Errorf("le JSON contient %q : %s", secret, raw)
+		}
+	}
+	var appt *eventsJSONEvent
+	var closed int
+	var evs []eventsJSONEvent
+	if err := json.Unmarshal(rec.Body.Bytes(), &evs); err != nil {
+		t.Fatal(err)
+	}
+	for i, ev := range evs {
+		if ev.Display == "background" {
+			closed++
+			continue
+		}
+		appt = &evs[i]
+	}
+	if appt == nil || appt.Title != "Durand Léa" || appt.ResourceID == "" || appt.ID == "" {
+		t.Fatalf("RDV: %+v", evs)
+	}
+	if appt.Start != "2026-10-20T09:00:00+02:00" || appt.End != "2026-10-20T09:30:00+02:00" ||
+		appt.ExtendedProps["blocked_start"] != "2026-10-20T09:00:00+02:00" || appt.ExtendedProps["blocked_end"] != "2026-10-20T09:40:00+02:00" ||
+		appt.ExtendedProps["status"] != "booked" || appt.ExtendedProps["type"] != "Séance 30" || appt.ExtendedProps["home"] != false {
+		t.Errorf("RDV mal sérialisé: %+v", appt)
+	}
+	if closed == 0 {
+		t.Errorf("aucune indisponibilité (le samedi est fermé)")
+	}
+	// Les indisponibilités sont clippées à la plage demandée.
+	for _, ev := range e.events(t, "start=2026-10-24T10:00:00&end=2026-10-24T12:00:00") {
+		if ev.Display != "background" || ev.Start != "2026-10-24T10:00:00+02:00" || ev.End != "2026-10-24T12:00:00+02:00" {
+			t.Errorf("fermeture non clippée: %+v", ev)
+		}
+	}
+	// Praticien explicite : le sien, accepté ; « all » aussi.
+	mine := e.events(t, "start=2026-10-19&end=2026-10-26")
+	var rid string
+	for _, ev := range mine {
+		if ev.Display == "" {
+			rid = ev.ResourceID
+		}
+	}
+	if got := e.events(t, "start=2026-10-19&end=2026-10-26&practitioner="+rid); len(got) != len(mine) {
+		t.Errorf("praticien explicite: %d événements au lieu de %d", len(got), len(mine))
+	}
+	if got := e.events(t, "start=2026-10-19&end=2026-10-26&practitioner=all"); len(got) != len(mine) {
+		t.Errorf("all: %d événements au lieu de %d", len(got), len(mine))
+	}
+}
+
+func TestCalendarEventsValidationAndAccess(t *testing.T) {
+	t.Parallel()
+	e := newCalendarEnv(t, domain.RoleAdmin)
+	anon := newClient(t, e.h, "192.0.2.22")
+	if rec := anon.do("GET", "/admin/agenda/events?start=2026-10-19&end=2026-10-20", nil); rec.Code != 303 {
+		t.Errorf("sans session: %d", rec.Code)
+	}
+	for name, q := range map[string]string{
+		"plage de 43 jours":  "start=2026-10-01&end=2026-11-13T00:00:01",
+		"fin = début":        "start=2026-10-19&end=2026-10-19",
+		"fin avant début":    "start=2026-10-20&end=2026-10-19",
+		"date illisible":     "start=hier&end=2026-10-19",
+		"sans paramètres":    "",
+		"praticien invalide": "start=2026-10-19&end=2026-10-20&practitioner=zzz",
+	} {
+		rec := e.c.do("GET", "/admin/agenda/events?"+q, nil)
+		if rec.Code != 400 || !strings.HasPrefix(rec.Header().Get("Content-Type"), "application/json") || !strings.Contains(rec.Body.String(), `"error"`) {
+			t.Errorf("%s : %d %q", name, rec.Code, rec.Body.String())
+		}
+	}
+	// 42 jours exactement : accepté, même à travers le changement d'heure d'octobre.
+	e.events(t, "start=2026-10-01&end=2026-11-12")
+	// Un praticien d'un autre cabinet est introuvable, jamais lisible.
+	ctx := context.Background()
+	u, err := auth.CreateUser(ctx, e.db, auth.CreateUserParams{Email: "autre2@example.test", Role: domain.RoleAdmin, PracticeName: "Autre", Password: pw})
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherPr := testutil.NewPractitioner(t, e.db, u.PracticeID)
+	if rec := e.c.do("GET", "/admin/agenda/events?start=2026-10-19&end=2026-10-20&practitioner="+otherPr.ID.String(), nil); rec.Code != 404 {
+		t.Errorf("praticien d'un autre cabinet: %d", rec.Code)
+	}
 }
 
 func TestCalendarOtherPracticeIsNotFound(t *testing.T) {
@@ -351,12 +513,17 @@ func TestCalendarOtherPracticeIsNotFound(t *testing.T) {
 			t.Errorf("POST %s : %d", p, rec.Code)
 		}
 	}
-	if strings.Contains(e.c.do("GET", "/admin/calendar?view=week&date=2026-10-20", nil).Body.String(), "Autre Zoé") {
-		t.Errorf("RDV d'un autre cabinet dans l'agenda")
+	if strings.Contains(e.c.do("GET", "/admin/calendar?view=day&date=2026-10-20", nil).Body.String(), "Autre Zoé") {
+		t.Errorf("RDV d'un autre cabinet dans la liste du jour")
+	}
+	for _, ev := range e.events(t, "start=2026-10-19&end=2026-10-26&practitioner=all") {
+		if ev.Title != "" {
+			t.Errorf("RDV d'un autre cabinet dans les événements: %+v", ev)
+		}
 	}
 }
 
-// 150 RDV sur une semaine : page complète (requête + calcul + rendu) en moins de 100 ms.
+// 150 RDV sur une semaine : l'endpoint JSON (requête + calcul + sérialisation) répond en moins de 100 ms.
 func TestCalendarWeekWith150AppointmentsIsFast(t *testing.T) {
 	e := newCalendarEnv(t, domain.RoleAdmin)
 	ctx := context.Background()
@@ -388,16 +555,16 @@ func TestCalendarWeekWith150AppointmentsIsFast(t *testing.T) {
 	best := time.Hour
 	for i := 0; i < 3; i++ {
 		start := time.Now()
-		rec := e.c.do("GET", "/admin/calendar?view=week&date=2026-10-21", nil)
+		rec := e.c.do("GET", "/admin/agenda/events?start=2026-10-19T00:00:00%2B02:00&end=2026-10-26T00:00:00%2B01:00", nil)
 		d := time.Since(start)
-		if rec.Code != 200 || strings.Count(rec.Body.String(), `class="dl-appt `) != 150 {
-			t.Fatalf("page: %d, %d RDV", rec.Code, strings.Count(rec.Body.String(), `class="dl-appt `))
+		if rec.Code != 200 || strings.Count(rec.Body.String(), `"classNames":["appt-booked"]`) != 150 {
+			t.Fatalf("events: %d, %d RDV", rec.Code, strings.Count(rec.Body.String(), `"classNames":["appt-booked"]`))
 		}
 		best = min(best, d)
 	}
 	t.Logf("semaine de 150 RDV : %s", best)
 	if best > 100*time.Millisecond {
-		t.Errorf("agenda trop lent : %s (> 100 ms)", best)
+		t.Errorf("endpoint trop lent : %s (> 100 ms)", best)
 	}
 }
 
@@ -434,4 +601,38 @@ func (c *client) doHXGet(target string) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	c.h.ServeHTTP(rec, req)
 	return rec
+}
+
+// Un praticien ne lit pas l'agenda d'un confrère du même cabinet (JSON comme page) ; le sien reste lisible.
+func TestCalendarEventsForbiddenForOtherPractitioner(t *testing.T) {
+	t.Parallel()
+	e := newCalendarEnv(t, domain.RolePractitioner)
+	mate := testutil.NewPractitioner(t, e.db, e.actor.PracticeID)
+	if rec := e.c.do("GET", "/admin/agenda/events?start=2026-10-19&end=2026-10-20&practitioner="+mate.ID.String(), nil); rec.Code != 403 {
+		t.Errorf("événements d'un confrère: %d, attendu 403", rec.Code)
+	}
+	if rec := e.c.do("GET", "/admin/calendar?practitioner="+mate.ID.String(), nil); rec.Code != 403 {
+		t.Errorf("page, agenda d'un confrère: %d", rec.Code)
+	}
+	e.events(t, "start=2026-10-19&end=2026-10-20")
+}
+
+// Semaine du changement d'heure d'automne (dimanche 25 octobre 2026) : décalages corrects de part et d'autre.
+func TestCalendarEventsDSTWeek(t *testing.T) {
+	t.Parallel()
+	e := newCalendarEnv(t, domain.RoleAdmin)
+	for _, c := range [][2]string{{"2026-10-24", "09:00"}, {"2026-10-25", "09:00"}} {
+		if _, err := e.cal.Create(context.Background(), e.actor, e.form2(c[0], c[1])); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var starts []string
+	for _, ev := range e.events(t, "start=2026-10-19T00:00:00&end=2026-10-26T00:00:00") {
+		if ev.Display == "" {
+			starts = append(starts, ev.Start)
+		}
+	}
+	if len(starts) != 2 || starts[0] != "2026-10-24T09:00:00+02:00" || starts[1] != "2026-10-25T09:00:00+01:00" {
+		t.Errorf("heures: %v", starts)
+	}
 }

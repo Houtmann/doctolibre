@@ -1,8 +1,80 @@
 {{/* layout: admin */}}
 {{define "title"}}Agenda{{end}}
 {{define "content"}}
-{{template "calendar_grid.html" .Data}}
-<dialog id="appt-dialog" class="dl-dialog" aria-labelledby="appt-dialog-title">
-  <div id="appt-dialog-body"></div>
+{{/* EventCalendar et agenda.js ne sont chargés que sur cette page (le <link> en <body> est valide en HTML5). */}}
+<link rel="stylesheet" href="{{asset "vendor/event-calendar.min.css"}}">
+<script src="{{asset "vendor/event-calendar.min.js"}}" defer></script>
+<script src="{{asset "agenda.js"}}" defer></script>
+{{with .Data}}
+<div id="agenda" class="space-y-4" data-events-url="/admin/agenda/events" data-detail-url="/admin/appointments" data-new-url="/admin/appointments/new"
+     data-view="{{.View}}" data-date="{{.A.Date}}" data-resources="{{.ResourcesJSON}}">
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <h1 class="text-2xl font-semibold">Agenda</h1>
+    <a class="btn btn-primary btn-sm" href="{{.NewURL}}" hx-get="{{.NewURL}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false">Nouveau rendez-vous</a>
+  </div>
+
+  {{with .Picker}}
+  <form id="agenda-picker" method="get" action="/admin/calendar" aria-label="Praticiens affichés">
+    {{if .Mode}}<input type="hidden" name="view" value="{{.Mode}}">{{end}}
+    <input type="hidden" name="date" value="{{.Date}}">
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">Praticiens affichés</legend>
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {{range .Options}}<label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="practitioner" value="{{.ID}}"{{if .Selected}} checked{{end}}> {{.Name}}</label>{{end}}
+        <label class="flex items-center gap-2 text-sm"><input class="checkbox checkbox-primary checkbox-sm" type="checkbox" name="practitioner" value="all"{{if .AllChecked}} checked{{end}}> Tous</label>
+        <button class="btn btn-outline btn-sm" type="submit">Afficher</button>
+      </div>
+    </fieldset>
+  </form>
+  {{end}}
+
+  <div id="agenda-error" class="alert alert-error" role="alert" hidden><span>Impossible de charger l'agenda. Rechargez la page.</span></div>
+
+  {{/* Repli sans JavaScript : la liste du jour rendue par le serveur ; agenda.js la masque quand le calendrier démarre. */}}
+  <section id="agenda-fallback" class="space-y-3" aria-labelledby="agenda-day-title">
+    <nav class="flex flex-wrap items-center gap-2" aria-label="Jour de l'agenda">
+      <a class="btn btn-outline btn-sm" href="{{.PrevURL}}">Jour précédent</a>
+      <a class="btn btn-outline btn-sm" href="{{.TodayURL}}">Aujourd'hui</a>
+      <a class="btn btn-outline btn-sm" href="{{.NextURL}}">Jour suivant</a>
+    </nav>
+    <h2 id="agenda-day-title" class="text-lg font-semibold">{{.A.Title}}{{if .A.Holiday}} <span class="badge badge-ghost">Férié</span>{{end}}</h2>
+    {{if .A.Appts}}
+    {{$multi := gt (len .A.Practitioners) 1}}
+    <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+      <table class="table">
+        <caption class="sr-only">Rendez-vous du {{.A.Title}}</caption>
+        <thead><tr><th scope="col">Heure</th><th scope="col">Patient</th><th scope="col" class="hidden sm:table-cell">Motif</th>{{if $multi}}<th scope="col" class="hidden sm:table-cell">Praticien</th>{{end}}<th scope="col">Statut</th></tr></thead>
+        <tbody>
+          {{range .A.Appts}}
+          <tr>
+            <td class="whitespace-nowrap"><time>{{localTime .Start}}</time>–<time>{{localTime .End}}</time></td>
+            <td><a class="link link-primary" href="/admin/appointments/{{.ID}}">{{.Patient}}</a>{{if .AtHome}} <span class="badge badge-ghost badge-sm">À domicile</span>{{end}}</td>
+            <td class="hidden sm:table-cell">{{.TypeName}}</td>
+            {{if $multi}}<td class="hidden sm:table-cell">{{.Practitioner}}</td>{{end}}
+            <td><span class="badge badge-sm {{if eq .Status "done"}}badge-success badge-soft{{else if eq .Status "no_show"}}badge-warning badge-soft{{else}}badge-primary badge-soft{{end}}">{{.StatusName}}</span></td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    {{else}}<p class="alert alert-info alert-soft">Aucun rendez-vous ce jour-là.</p>{{end}}
+  </section>
+
+  <div id="agenda-calendar" hidden>
+    <ul class="mb-2 flex flex-wrap gap-2 text-xs" aria-label="Légende des statuts">
+      <li class="badge badge-soft badge-primary">À venir</li>
+      <li class="badge badge-soft badge-success">Honoré</li>
+      <li class="badge badge-soft badge-warning">Absent</li>
+      <li class="badge badge-ghost">Temps de préparation</li>
+      <li class="badge badge-ghost">Indisponible</li>
+    </ul>
+    <div class="card card-border bg-base-100 p-2"><div id="ec"></div></div>
+  </div>
+</div>
+{{end}}
+
+<dialog id="appt-dialog" class="modal modal-bottom sm:modal-middle" aria-labelledby="appt-dialog-title">
+  <div class="modal-box max-h-[90vh] sm:max-w-2xl" id="appt-dialog-body"></div>
+  <form method="dialog" class="modal-backdrop"><button aria-label="Fermer">Fermer</button></form>
 </dialog>
 {{end}}

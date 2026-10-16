@@ -31,13 +31,13 @@ Templates **de cette tâche** (et eux seuls) : `pages/admin_calendar.html`, `pag
 Règles communes : `ui.css` est **généré** : `make css` après toute modif de template ; en cas de conflit au merge, **relancer `make css`** plutôt que résoudre à la main. Un seul agent à la fois sur les templates de layout. Pas de classe construite dynamiquement. CSP inchangée (pas de style ni script inline ; EventCalendar fonctionne sous CSP stricte : le vérifier).
 
 ## Critères d'acceptation
-- [ ] Semaine, jour et vue par praticien fonctionnent ; buffers et indisponibilités visibles ; heures correctes sur une semaine de changement d'heure.
-- [ ] Clic sur un RDV → dialogue ; chaque action existante fonctionne et rafraîchit l'agenda.
-- [ ] JS désactivé : liste du jour utilisable, actions via la page du RDV.
-- [ ] Endpoint : plage > 42 jours refusée, isolation par cabinet testée, aucune donnée de contact dans le JSON.
-- [ ] EXPLAIN joint, index utilisé.
+- [x] Semaine, jour et vue par praticien fonctionnent ; buffers et indisponibilités visibles ; heures correctes sur une semaine de changement d'heure.
+- [x] Clic sur un RDV → dialogue ; chaque action existante fonctionne et rafraîchit l'agenda.
+- [x] JS désactivé : liste du jour utilisable, actions via la page du RDV.
+- [x] Endpoint : plage > 42 jours refusée, isolation par cabinet testée, aucune donnée de contact dans le JSON.
+- [x] EXPLAIN joint, index utilisé.
 - [ ] Vérifié à 360 px (vue jour) et 1280 px (4 praticiens, semaine), clair et sombre, au clavier ; aucune erreur de console ni violation CSP.
-- [ ] `make css` sans diff ; `make check` vert, aucun `style=` ajouté.
+- [x] `make css` sans diff ; `make check` vert, aucun `style=` ajouté.
 
 ## Vérification
 ```bash
@@ -52,8 +52,26 @@ Glisser-déposer, couleurs par praticien/motif (T057, à faire après), vue « M
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** :
+  - SQL : `ListCalendarAppointments` remplacée (plusieurs praticiens via `ANY(@practitioner_ids)`, `practice_id`, bornes de `during_blocked`) ; `service/calendar_events.go` : `AgendaRange` (RDV non annulés + indisponibilités jour par jour avec `AddDate`, fériés et absences) et `AgendaDay` (liste du jour, repli) ; suppression de `View`, `buildColumn`, `CalDay/CalBand/CalSlot/CalHour`, `wallMinutes`, `ceilDiv`.
+  - `web/calendar_events.go` : `GET /admin/agenda/events` (JSON, erreurs JSON 400/403/404, `Cache-Control: no-store`). Dates : RFC 3339 ou heure murale sans décalage (lue dans le fuseau du cabinet) ; plage max 42 jours calendaires, `end > start`.
+  - EventCalendar 5.15.0 vendored (`static/vendor/` : js, css, `VERSION` avec URL et sha256, `LICENSE-event-calendar` MIT récupérée sur le dépôt) ; `static/agenda.js` ; `input.css` (`@source agenda.js`, fonds par statut, indisponible, hachures pour les buffers) ; templates agenda, détail, formulaire, bouton de statut migrés en daisyUI ; `calendar_grid.html` supprimé.
+  - Dialogue `<dialog class="modal">` rempli en htmx ; action réussie dans le dialogue = 204 + `HX-Trigger: {"agenda:changed":{"date":"..."}}` (pas de flash ni redirection) ; `agenda.js` ferme, va à la date et fait `refetchEvents()`. Hors dialogue (page plein écran) : POST classique + redirection, sans attributs `hx-*` sur les formulaires (`.Modal` = requête htmx).
+  - Tests : service (`TestAgendaRangeDST` 25/10 et 29/03 avec formes de date sans décalage et RFC 3339, bornes/validation, annulés, isolation cabinet, confrère 403, liste du jour) ; web (page, JSON sans contact, validation 400, 404 autre cabinet, 403 confrère, semaine DST, fériés, `TestCalendarWeekWith150AppointmentsIsFast` sur l'endpoint, seuil 100 ms inchangé : ~1,3 ms).
+- **EXPLAIN** (base de test dédiée, 610 740 RDV, 60 praticiens, 20 cabinets ; semaine de 150 RDV, 3 praticiens) : `Bitmap Index Scan on appointment_no_overlap` (cond. `practitioner_id = ANY(...) AND during_blocked && ...`), puis Bitmap Heap Scan filtré `practice_id` ; `Execution Time: 3.9 ms`. Plan résumé : Sort -> Nested Loop (appointment_type, patient : 20 lignes chacun) -> Bitmap Heap Scan on appointment <- Bitmap Index Scan on appointment_no_overlap.
+- **Vérifié au navigateur** (volet du client, ~800 px de large ; serveur local sur base jetable, supprimée) : semaine et « par praticien » à 4 praticiens (clair), dimanche 25/10/2026 (heures 09:00 et 11:00 correctes après correction), indisponibilités et hachures de buffer, clic sur un créneau -> formulaire en dialogue -> création -> fermeture + rafraîchissement, clic RDV -> dialogue -> « Marquer honoré » -> rafraîchissement, vue jour à 360 px en sombre. Aucune violation CSP ni erreur de console avec la version finale (le journal de la console contenait des erreurs d'une première version, corrigée).
+- **Reste à faire / non vu** : vue 1280 px réelle (le volet fait ~800 px), mode sombre à 1280, navigation au clavier de l'agenda (Tab, Entrée sur un RDV : `tabindex`, `role=button` et `keydown` posés mais non essayés), déplacer/annuler dans le dialogue (couverts seulement par les tests HTTP), JS désactivé dans un vrai navigateur (couvert par les tests : liste du jour, formulaires sans `hx-*`).
+- **Notes de reprise** :
+  - EventCalendar est utilisé avec `timeZone: "UTC"` sur l'heure murale du cabinet : le serveur envoie des dates avec décalage, `agenda.js` retire le décalage. Raison : en fuseau local du navigateur (et aussi avec `timeZone: "Europe/Paris"`), la grille est décalée d'une heure après 03:00 le dimanche du retour à l'heure d'hiver (vu : RDV de 09:00 affiché à 10:00). Conséquences : jamais utiliser les objets `Date` d'EventCalendar (ce sont des dates du navigateur), seulement `startStr`/`dateStr` ; `nowIndicator` désactivé (il serait en UTC) ; la mise en évidence d'« aujourd'hui » peut être fausse 1 à 2 h après minuit.
+  - `eventSources: [{events: fn}]` (l'option `events` n'accepte que des tableaux).
+  - Le CSS d'EventCalendar est chargé par un `<link>` dans le contenu de la page agenda (valide en HTML5 dans `<body>`), idem les scripts en `defer` : aucun layout touché ; n'est donc pas importé dans `input.css`, ce qui évite de l'alourdir (15 Ko) sur toutes les pages. Les surcharges `.ec.ec` d'`input.css` l'emportent par spécificité.
+  - Semaine ou jour (hors « par praticien ») : seul le premier praticien sélectionné est affiché (comme l'ancienne vue semaine) ; le sélecteur à cases reste un formulaire GET classique, dont `agenda.js` tient les champs `view` et `date` à jour.
+  - Les RDV annulés ne sont pas servis par l'endpoint (comme l'ancien agenda) ; les classes `appt-cancelled` / `--st-cancelled-*` restent prêtes.
+  - Le serveur de dev perd les sessions à chaque redémarrage (se reconnecter).
+- **Écarts avec la spécification** :
+  - JSON : `resourceId` (un seul praticien par RDV, EventCalendar l'accepte au lieu de `resourceIds`) ; statut `cancelled` jamais renvoyé (voir ci-dessus).
+  - Titre = « Nom Prénom » (ce que l'ancienne grille affichait), pas abrégé.
+  - Ligne « maintenant » de la vue jour perdue (voir notes). Pas de lien « créneau » au clavier : un bouton « Nouveau rendez-vous » est présent à la place.
+  - Les fonctions de `service` ne sont plus `View`/`ViewInput` : `AgendaRange`, `AgendaDay`, `Selection`.
+  - `team_test.go` et `holidays_test.go` adaptés (hors liste de la tâche, ils testaient la grille supprimée).

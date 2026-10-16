@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T083 agenda staff avec EventCalendar (sonnet ; contrôle : opus)
+
+- **Tâches** : T083 (todo → review)
+- **Fait** : EventCalendar 5.15.0 vendored (`static/vendor/`, VERSION + sha256 + licence MIT), chargé seulement par la page agenda ; `static/agenda.js` (semaine / jour / par praticien, buffers hachurés, indisponibilités en fond) ; endpoint `GET /admin/agenda/events` (cabinet de la session, 403 confrère / 404 autre cabinet, plage ≤ 42 jours calendaires, JSON sans contact) ; dialogue htmx (`appointment_detail`, `appointment_form`) avec 204 + `HX-Trigger agenda:changed` puis `refetchEvents` ; repli sans JS = liste du jour serveur ; grille maison `calendar_grid` supprimée ; `ListCalendarAppointments` multi-praticiens.
+- **Vérification** : `make check` ✅ (relancé par l'orchestrateur) ; EXPLAIN : `Bitmap Index Scan on appointment_no_overlap`, 3,9 ms sur 610 k RDV ; `TestCalendarWeekWith150AppointmentsIsFast` adapté (~1,3 ms) ; tests DST 29/03 et 25/10. Navigateur (base demo, 4 praticiens, 88 RDV) : vue par praticien 1280 px clair, semaine 1280 px sombre, jour 360 px sombre sans débordement ; Entrée sur un RDV ouvre le dialogue, « Marquer honoré » ferme et rafraîchit, focus 2 px visible ; aucune erreur console nouvelle.
+- **Reste** : non vu dans un vrai navigateur : JS désactivé, déplacer/annuler via dialogue (tests HTTP seulement) ; le focus revient en haut de page à la fermeture du dialogue (au lieu du RDV) ; en vue semaine/jour seul le premier praticien coché est affiché. Ensuite T084.
+- **Décisions** : EventCalendar en `timeZone: "UTC"` sur l'heure murale ; CSS/JS d'EventCalendar chargés par la seule page agenda ; dialogue 204 + `HX-Trigger` (voir decisions.md).
+
 ## 2026-10-16 — T082 back-office en daisyUI (sonnet ; contrôle : opus)
 
 - **Tâches** : T082 (todo → review)

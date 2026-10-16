@@ -211,79 +211,184 @@ func TestCalendarOtherPracticeIsNotFound(t *testing.T) {
 	}
 }
 
-func TestCalendarViewDST(t *testing.T) {
+func isoRange(t *testing.T, f calFixture, start, end string) service.AgendaEvents {
+	t.Helper()
+	res, err := f.cal.AgendaRange(context.Background(), f.act, service.EventsInput{Start: start, End: end})
+	if err != nil {
+		t.Fatalf("AgendaRange(%s, %s): %v", start, end, err)
+	}
+	return res
+}
+
+func fmtRFC(t time.Time) string { return t.Format(time.RFC3339) }
+
+// Semaines de changement d'heure (dimanche 25 octobre et 29 mars 2026, Europe/Paris) :
+// un RDV à 09:00 mural reste à 09:00, avec le bon décalage ; les indisponibilités sont
+// calculées jour par jour (dimanche de 25 h ou de 23 h comprises).
+func TestAgendaRangeDST(t *testing.T) {
 	t.Parallel()
 	f := newCalFixture(t)
 	ctx := context.Background()
-	patientID := func() string {
-		ap, err := f.cal.Create(ctx, f.act, f.quick("2026-10-19", "08:00", false))
-		if err != nil {
-			t.Fatal(err)
-		}
-		return ap.PatientID.String()
-	}()
-	// Dimanche 25 octobre 2026 (retour à l'heure d'hiver) et dimanche 29 mars 2026
-	// (passage à l'heure d'été) : un RDV à 09:00 mural doit tomber ligne 10
-	// ((9-7) h × 4 lignes + en-tête), comme n'importe quel autre jour.
-	for _, date := range []string{"2026-10-25", "2026-03-29"} {
-		if _, err := f.cal.Create(ctx, f.act, service.NewAppointmentInput{PatientID: patientID, TypeID: f.typeID.String(), Date: date, Time: "09:00", Force: true}); err != nil {
-			t.Fatalf("%s: %v", date, err)
-		}
-		v, err := f.cal.View(ctx, f.act, service.ViewInput{Mode: "week", Date: date})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if len(v.Days) != 7 || v.Days[6].DateStr != date || v.Days[0].Date.Weekday() != time.Monday {
-			t.Fatalf("%s: semaine %v → %v", date, v.First, v.Last)
-		}
-		sun := v.Days[6]
-		if len(sun.Appts) != 1 || sun.Appts[0].Row != 10 || sun.Appts[0].Span != 2 || sun.Appts[0].Start.Hour() != 9 {
-			t.Errorf("%s: RDV mal placé %+v", date, sun.Appts)
-		}
+	// Les plages créées par la fixture valent à partir du « jour même » (15 octobre) : on les fait remonter pour mars.
+	if _, err := f.db.Exec(ctx, "UPDATE availability_rule SET valid_from = DATE '2026-01-01'"); err != nil {
+		t.Fatal(err)
 	}
-	// Bandes grisées du dimanche 25 octobre (plage 08–12) : 07–08 et 12–21.
-	v, _ := f.cal.View(ctx, f.act, service.ViewInput{Mode: "week", Date: "2026-10-25"})
-	bands := v.Days[6].Bands
-	if len(bands) != 2 || bands[0] != (service.CalBand{Row: 2, Span: 4}) || bands[1] != (service.CalBand{Row: 22, Span: 36}) {
-		t.Errorf("bandes du dimanche DST: %+v", bands)
+	cases := []struct{ monday, sunday, nextMonday, offset, nextOffset string }{
+		{"2026-10-19", "2026-10-25", "2026-10-26", "+02:00", "+01:00"},
+		{"2026-03-23", "2026-03-29", "2026-03-30", "+01:00", "+02:00"},
 	}
-	// Samedi sans plage : tout grisé.
-	if sat := v.Days[5].Bands; len(sat) != 1 || sat[0].Span != 56 {
-		t.Errorf("bandes du samedi: %+v", sat)
-	}
-	// La semaine du 19 octobre : le RDV de 08:00 du lundi, et le jour d'avant/après.
-	if v.PrevDate != "2026-10-18" || v.NextDate != "2026-11-01" {
-		t.Errorf("navigation %s %s", v.PrevDate, v.NextDate)
+	for _, c := range cases {
+		in := f.quick(c.sunday, "09:00", true)
+		if _, err := f.cal.Create(ctx, f.act, in); err != nil {
+			t.Fatalf("%s: %v", c.sunday, err)
+		}
+		// Les deux formes de dates : heure murale sans décalage, et RFC 3339 avec décalage.
+		wall := isoRange(t, f, c.monday+"T00:00:00", c.nextMonday+"T00:00:00")
+		abs := isoRange(t, f, c.monday+"T00:00:00"+c.offset, c.nextMonday+"T00:00:00"+c.nextOffset)
+		if len(wall.Appts) != 1 || len(abs.Appts) != 1 {
+			t.Fatalf("%s: %d / %d RDV", c.sunday, len(wall.Appts), len(abs.Appts))
+		}
+		ap := wall.Appts[0]
+		if ap.Start.Hour() != 9 || ap.Start.Format("2006-01-02") != c.sunday || fmtRFC(ap.Start) != c.sunday+"T09:00:00"+c.nextOffset {
+			t.Errorf("%s: RDV mal placé %s", c.sunday, fmtRFC(ap.Start))
+		}
+		// Buffer de 10 min après le soin de 30 min ; rien avant.
+		if !ap.BlockedStart.Equal(ap.Start) || ap.BlockedEnd.Sub(ap.End) != 10*time.Minute || ap.End.Sub(ap.Start) != 30*time.Minute {
+			t.Errorf("%s: buffers %s %s %s %s", c.sunday, fmtRFC(ap.Start), fmtRFC(ap.End), fmtRFC(ap.BlockedStart), fmtRFC(ap.BlockedEnd))
+		}
+		if !ap.Start.Equal(abs.Appts[0].Start) {
+			t.Errorf("%s: formes de dates incohérentes", c.sunday)
+		}
+		// Samedi (sans plage) : un seul bloc de 24 h ; dimanche (08–12) : 00–08 et 12–minuit suivant.
+		var sat, sun []service.AgendaClosed
+		for _, cl := range wall.Closed {
+			switch cl.Start.Format("2006-01-02") {
+			case "2026-10-24", "2026-03-28":
+				sat = append(sat, cl)
+			case c.sunday:
+				sun = append(sun, cl)
+			}
+		}
+		if len(sat) != 1 || sat[0].End.Sub(sat[0].Start) != 24*time.Hour {
+			t.Errorf("%s: samedi %+v", c.sunday, sat)
+		}
+		if len(sun) != 2 || sun[0].Start.Hour() != 0 || sun[0].End.Hour() != 8 || sun[1].Start.Hour() != 12 || sun[1].End.Format("2006-01-02T15:04") != c.nextMonday+"T00:00" {
+			t.Errorf("%s: dimanche %+v", c.sunday, sun)
+		}
+		// Jour du changement d'heure : 25 h en octobre, 23 h en mars (durée réelle du jour).
+		dayLen := sun[0].End.Sub(sun[0].Start) + 4*time.Hour + sun[1].End.Sub(sun[1].Start)
+		want := 25 * time.Hour
+		if c.sunday == "2026-03-29" {
+			want = 23 * time.Hour
+		}
+		if dayLen != want {
+			t.Errorf("%s: jour de %s, attendu %s", c.sunday, dayLen, want)
+		}
 	}
 }
 
-func TestCalendarDayViewNowLineAndWindow(t *testing.T) {
+func TestAgendaRangeBoundsAndValidation(t *testing.T) {
 	t.Parallel()
 	f := newCalFixture(t)
 	ctx := context.Background()
-	// 2026-10-15 09:00 UTC = 11:00 à Paris : ligne « maintenant » à (11-7)×4 + 2.
-	v, err := f.cal.View(ctx, f.act, service.ViewInput{Mode: "day", Date: "2026-10-15"})
+	call := func(start, end string) error {
+		_, err := f.cal.AgendaRange(ctx, f.act, service.EventsInput{Start: start, End: end})
+		return err
+	}
+	// 42 jours calendaires à travers le changement d'heure d'octobre : accepté (42 × 24 h + 1 h).
+	if err := call("2026-10-01T00:00:00", "2026-11-12T00:00:00"); err != nil {
+		t.Errorf("42 jours: %v", err)
+	}
+	for name, c := range map[string][2]string{
+		"43 jours":          {"2026-10-01", "2026-11-13T00:00:01"},
+		"fin = début":       {"2026-10-19", "2026-10-19"},
+		"fin avant début":   {"2026-10-20", "2026-10-19"},
+		"début illisible":   {"hier", "2026-10-19"},
+		"fin illisible":     {"2026-10-19", "demain"},
+		"début vide":        {"", "2026-10-19"},
+		"mois sans le jour": {"2026-10", "2026-11"},
+	} {
+		if err := call(c[0], c[1]); len(domain.FieldErrors(err)) == 0 {
+			t.Errorf("%s : %v, attendu une erreur de validation", name, err)
+		}
+	}
+}
+
+func TestAgendaRangeExcludesCancelledAndOtherPractices(t *testing.T) {
+	t.Parallel()
+	f := newCalFixture(t)
+	ctx := context.Background()
+	keep, err := f.cal.Create(ctx, f.act, f.quick("2026-10-19", "09:00", false))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(v.Days) != 1 || !v.Days[0].Today || v.Days[0].NowRow != 18 || v.Rows != 56 {
-		t.Errorf("jour courant: %+v rows=%d", v.Days[0].NowRow, v.Rows)
-	}
-	if v2, _ := f.cal.View(ctx, f.act, service.ViewInput{Mode: "day", Date: "2026-10-16"}); v2.Days[0].NowRow != 0 {
-		t.Errorf("ligne « maintenant » un autre jour")
-	}
-	// Un RDV tôt/tard élargit la fenêtre au lieu d'être caché.
-	if _, err := f.cal.Create(ctx, f.act, f.quick("2026-10-16", "06:30", true)); err != nil {
+	gone, err := f.cal.Create(ctx, f.act, service.NewAppointmentInput{PatientID: keep.PatientID.String(), TypeID: f.typeID.String(), Date: "2026-10-19", Time: "10:00"})
+	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := f.cal.Create(ctx, f.act, f.quick("2026-10-16", "22:00", true)); err != nil {
+	if err := f.cal.Cancel(ctx, f.act, gone.ID, ""); err != nil {
 		t.Fatal(err)
 	}
-	v, _ = f.cal.View(ctx, f.act, service.ViewInput{Mode: "day", Date: "2026-10-16"})
-	if v.FromHour != 6 || v.ToHour != 23 || len(v.Days[0].Appts) != 2 {
-		t.Errorf("fenêtre %d–%d, %d RDV", v.FromHour, v.ToHour, len(v.Days[0].Appts))
+	res := isoRange(t, f, "2026-10-19", "2026-10-20")
+	if len(res.Appts) != 1 || res.Appts[0].ID != keep.ID || res.Appts[0].Patient != "Durand Léa" {
+		t.Fatalf("RDV: %+v", res.Appts)
 	}
-	if _, err := f.cal.View(ctx, f.act, service.ViewInput{Date: "pas-une-date"}); len(domain.FieldErrors(err)) == 0 {
+
+	// Un autre cabinet ne voit rien du premier, et ne peut pas viser son praticien.
+	u2, err := auth.CreateUser(ctx, f.db, auth.CreateUserParams{Email: "autre@example.test", Role: domain.RoleAdmin, PracticeName: "Autre", Password: testPassword})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := service.Actor{UserID: u2.ID, PracticeID: u2.PracticeID}
+	res2, err := f.cal.AgendaRange(ctx, other, service.EventsInput{Start: "2026-10-19", End: "2026-10-20"})
+	if err != nil || len(res2.Appts) != 0 {
+		t.Errorf("autre cabinet: %v %+v", err, res2.Appts)
+	}
+	pr, err := f.svc.Practitioner(ctx, f.act)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = f.cal.AgendaRange(ctx, other, service.EventsInput{Start: "2026-10-19", End: "2026-10-20", Selection: service.Selection{IDs: []uuid.UUID{pr.ID}}})
+	if !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("praticien d'un autre cabinet: %v", err)
+	}
+	// Un praticien ne vise pas l'agenda d'un confrère.
+	mate := service.Actor{UserID: u2.ID, PracticeID: f.act.PracticeID, Role: domain.RolePractitioner, PractitionerID: uuid.New()}
+	_, err = f.cal.AgendaRange(ctx, mate, service.EventsInput{Start: "2026-10-19", End: "2026-10-20", Selection: service.Selection{IDs: []uuid.UUID{pr.ID}}})
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("confrère: %v", err)
+	}
+}
+
+func TestAgendaDayListAndDST(t *testing.T) {
+	t.Parallel()
+	f := newCalFixture(t)
+	ctx := context.Background()
+	// 2026-10-15 09:00 UTC = 11:00 à Paris.
+	ag, err := f.cal.AgendaDay(ctx, f.act, "", service.Selection{})
+	if err != nil || ag.Date != "2026-10-15" || ag.PrevDate != "2026-10-14" || ag.NextDate != "2026-10-16" || ag.TodayDate != "2026-10-15" {
+		t.Fatalf("aujourd'hui: %v %+v", err, ag)
+	}
+	for _, c := range []struct{ date, prev, next string }{
+		{"2026-10-25", "2026-10-24", "2026-10-26"},
+		{"2026-03-29", "2026-03-28", "2026-03-30"},
+	} {
+		first, err := f.cal.Create(ctx, f.act, f.quick(c.date, "11:00", true))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.cal.Create(ctx, f.act, service.NewAppointmentInput{PatientID: first.PatientID.String(), TypeID: f.typeID.String(), Date: c.date, Time: "09:00", Force: true}); err != nil {
+			t.Fatal(err)
+		}
+		ag, err := f.cal.AgendaDay(ctx, f.act, c.date, service.Selection{})
+		if err != nil || ag.PrevDate != c.prev || ag.NextDate != c.next || len(ag.Appts) != 2 {
+			t.Fatalf("%s: %v %+v", c.date, err, ag)
+		}
+		if ag.Appts[0].Start.Hour() != 9 || ag.Appts[1].Start.Hour() != 11 || ag.Appts[0].Practitioner == "" {
+			t.Errorf("%s: tri ou heures: %+v", c.date, ag.Appts)
+		}
+	}
+	if _, err := f.cal.AgendaDay(ctx, f.act, "pas-une-date", service.Selection{}); len(domain.FieldErrors(err)) == 0 {
 		t.Errorf("date invalide: %v", err)
 	}
 }

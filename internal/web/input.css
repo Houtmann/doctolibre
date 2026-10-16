@@ -6,6 +6,7 @@
 @import "tailwindcss" source(none);
 @source "./templates/**/*.html";
 @source "./static/app.js";
+@source "./static/agenda.js";
 
 @plugin "../../tools/daisyui/daisyui.mjs" {
   themes: false;
@@ -121,9 +122,16 @@
   font-size: 0.8125rem;
 }
 .ec .ec-event { border-left: 3px solid var(--ec-event-border, var(--st-booked-bd)); border-radius: 0.375rem; cursor: pointer; }
-.ec .ec-event.appt-done { --ec-event-border: var(--st-done-bd); }
-.ec .ec-event.appt-noshow { --ec-event-border: var(--st-noshow-bd); }
-.ec .ec-event.appt-cancelled { --ec-event-border: var(--st-cancelled-bd); text-decoration: line-through; }
+.ec .ec-event.appt-booked { --ec-event-bg-color: var(--st-booked-bg); --ec-event-text-color: var(--st-booked-fg); }
+.ec .ec-event.appt-done { --ec-event-bg-color: var(--st-done-bg); --ec-event-text-color: var(--st-done-fg); --ec-event-border: var(--st-done-bd); }
+.ec .ec-event.appt-noshow { --ec-event-bg-color: var(--st-noshow-bg); --ec-event-text-color: var(--st-noshow-fg); --ec-event-border: var(--st-noshow-bd); }
+.ec .ec-event.appt-cancelled { --ec-event-bg-color: var(--st-cancelled-bg); --ec-event-text-color: var(--st-cancelled-fg); --ec-event-border: var(--st-cancelled-bd); text-decoration: line-through; }
+/* Indisponibilités (hors horaires, absences, fériés) et temps de préparation / remise en état autour d'un RDV. */
+.ec .ec-bg-event.agenda-closed { --ec-bg-event-color: color-mix(in oklab, var(--color-base-content) 9%, var(--color-base-100)); }
+.ec .ec-bg-event.agenda-buffer {
+  --ec-bg-event-color: transparent;
+  background-image: repeating-linear-gradient(135deg, color-mix(in oklab, var(--color-base-content) 22%, transparent) 0 2px, transparent 2px 7px);
+}
 .ec .ec-event:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
 .ec .ec-button { border-radius: var(--radius-field); }
 .ec .ec-toolbar { flex-wrap: wrap; gap: 0.5rem; }

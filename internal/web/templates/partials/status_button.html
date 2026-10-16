@@ -1,7 +1,7 @@
-<form method="post" action="/admin/appointments/{{.D.ID}}/status" hx-post="/admin/appointments/{{.D.ID}}/status" hx-target="#appt-detail" hx-swap="outerHTML">
+<form method="post" action="/admin/appointments/{{.D.ID}}/status"{{if .Modal}} hx-post="/admin/appointments/{{.D.ID}}/status" hx-target="#appt-detail" hx-swap="outerHTML"{{end}}>
   {{csrf .CSRF}}
   <input type="hidden" name="status" value="{{.Status}}">
   <input type="hidden" name="date" value="{{.D.MoveDate}}">
   <input type="hidden" name="view" value="{{.View}}">
-  <button class="dl-btn dl-btn--secondary" type="submit">{{.Label}}</button>
+  <button class="btn btn-secondary btn-sm" type="submit">{{.Label}}</button>
 </form>

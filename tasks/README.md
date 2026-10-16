@@ -77,7 +77,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T080 | [Outillage Tailwind + daisyUI, thème, layouts et partials](T080-daisyui-foundation.md) | 5 | — | review |
 | T081 | [Parcours patient public en daisyUI](T081-daisyui-public.md) | 5 | T080 | review |
 | T082 | [Back-office : formulaires et tableaux en daisyUI](T082-daisyui-backoffice.md) | 5 | T080 | review |
-| T083 | [Agenda staff avec EventCalendar](T083-eventcalendar-agenda.md) | 5 | T080 | todo |
+| T083 | [Agenda staff avec EventCalendar](T083-eventcalendar-agenda.md) | 5 | T080 | review |
 | T084 | [Pages restantes, retrait de Pico et de l'ancien CSS](T084-daisyui-cleanup.md) | 5 | T081, T082, T083 | todo |
 
 ## Parallélisation possible

@@ -21,15 +21,8 @@ import (
 	"doctolibre/internal/store/sqlcgen"
 )
 
-// Paramètres de la grille de l'agenda.
-const (
-	// RowMinutes : durée d'une ligne de la grille.
-	RowMinutes         = 15
-	DefaultFromHour    = 7
-	DefaultToHour      = 21
-	slotLinkEveryRows  = 2 // un lien « nouveau RDV » toutes les 30 min
-	patientSearchLimit = 10
-)
+// patientSearchLimit borne les résultats de la recherche de patient.
+const patientSearchLimit = 10
 
 // Calendar porte l'agenda du praticien : lecture jour/semaine, création,
 // déplacement, annulation et statut des rendez-vous. Chaque action émet un
@@ -62,111 +55,35 @@ func (c *Calendar) emit(ctx context.Context, e Event) {
 
 // --- Lecture de l'agenda ---
 
-// ViewInput sélectionne la période affichée.
-type ViewInput struct {
-	Mode     string // "day" | "week" (défaut : week)
-	Date     string // "2006-01-02", défaut : aujourd'hui (jour du cabinet)
-	FromHour int    // 0 = défaut (7)
-	ToHour   int    // 0 = défaut (21)
-	// PractitionerIDs : praticiens affichés. Vide = l'agenda du praticien connecté
-	// (tous les praticiens actifs pour le secrétariat, qui n'en a pas). En vue jour,
-	// plusieurs praticiens donnent une colonne chacun ; en vue semaine, seul le premier est affiché.
-	PractitionerIDs []uuid.UUID
+// Selection désigne les agendas demandés. Vide = l'agenda du praticien connecté
+// (tous les praticiens visibles pour le secrétariat, qui n'en a pas).
+type Selection struct {
+	IDs []uuid.UUID
 	// All : tous les praticiens actifs que l'utilisateur peut voir.
 	All bool
 }
 
-// MaxCalendarColumns borne le nombre de colonnes praticien de la vue jour.
-const MaxCalendarColumns = 7
-
-// CalAppt est un RDV placé dans la grille. Row/Span sont des numéros de ligne
-// CSS (1-based, l'en-tête occupe la ligne 1).
+// CalAppt est un RDV de la liste du jour (repli sans JavaScript de l'agenda).
 type CalAppt struct {
-	ID         uuid.UUID
-	Start, End time.Time
-	Row, Span  int
-	Patient    string
-	TypeName   string
-	Status     string
-	Source     string
-	Past       bool
-	StatusName string // libellé français du statut
-	AtHome     bool   // visite à domicile
-}
-
-// CalBand est une zone hors disponibilité (grisée).
-type CalBand struct{ Row, Span int }
-
-// CalSlot est un créneau vide de 30 min qui ouvre la création d'un RDV.
-type CalSlot struct {
-	Row   int
-	Start string // "2006-01-02T15:04", heure du cabinet
-	Label string
-}
-
-// CalHour est une graduation de la colonne des heures.
-type CalHour struct {
-	Row   int
-	Label string
-}
-
-// CalDay est une colonne (jour) de l'agenda.
-type CalDay struct {
-	Date      time.Time
-	DateStr   string
-	Label     string // « lun. 19 »
-	LongLabel string // « lundi 19 octobre »
-	Col       int    // colonne CSS (la 1re est la colonne des heures)
-	Today     bool
-	Holiday   bool // jour férié fermé
-	Appts     []CalAppt
-	Bands     []CalBand
-	Slots     []CalSlot
-	NowRow    int // 0 = pas de ligne « maintenant »
-	// PractitionerID : praticien de la colonne (le lien « nouveau RDV » le vise).
-	PractitionerID uuid.UUID
-}
-
-// CalendarView est la donnée complète d'un affichage jour ou semaine.
-type CalendarView struct {
-	Mode               string // day | week
-	Date               string // jour de référence "2006-01-02"
-	Title              string
-	First, Last        time.Time // premier et dernier jour affichés
-	PrevDate, NextDate string
-	TodayDate          string
-	FromHour, ToHour   int
-	Rows               int
-	Days               []CalDay
-	Hours              []CalHour
-	AppointmentCount   int
-	PractitionerID     uuid.UUID // premier praticien affiché
-	// Practitioners : praticiens affichés ; Multi = une colonne par praticien (vue jour).
-	Practitioners []CalPractitioner
-	Multi         bool
-	Loc           *time.Location
-	holidays      map[string]bool // jours fériés (option active), "2006-01-02"
+	ID           uuid.UUID
+	Start, End   time.Time
+	Practitioner string
+	Patient      string
+	TypeName     string
+	Status       string
+	StatusName   string // libellé français du statut
+	AtHome       bool   // visite à domicile
 }
 
 // CalPractitioner est un praticien affiché dans l'agenda.
 type CalPractitioner struct {
-	ID    uuid.UUID
-	Name  string
-	Color string
+	ID   uuid.UUID
+	Name string
 }
 
 // PractitionerName retourne « Prénom Nom » (ou le nom seul).
 func PractitionerName(p sqlcgen.Practitioner) string {
 	return strings.TrimSpace(p.FirstName + " " + p.LastName)
-}
-
-// calSource regroupe les données d'un praticien affiché.
-type calSource struct {
-	pr    sqlcgen.Practitioner
-	appts []sqlcgen.ListCalendarAppointmentsRow
-	rules []sqlcgen.AvailabilityRule
-	excs  []sqlcgen.AvailabilityException
-	hol   []booking.Interval // fériés fermés (journées moins ouvertures explicites)
 }
 
 // CheckTarget vérifie que le praticien visé (a.Target) existe dans le cabinet et
@@ -184,16 +101,17 @@ func (c *Calendar) ViewablePractitioners(ctx context.Context, a Actor) ([]sqlcge
 	return c.practice().TeamPractitioners(ctx, a)
 }
 
-// selectPractitioners résout la sélection de ViewInput en praticiens du cabinet.
-func (c *Calendar) selectPractitioners(ctx context.Context, a Actor, in ViewInput) ([]sqlcgen.Practitioner, error) {
+// selectPractitioners résout une Selection en praticiens du cabinet
+// (ErrForbidden si l'un n'est pas accessible à l'acteur, ErrNotFound s'il est d'un autre cabinet).
+func (c *Calendar) selectPractitioners(ctx context.Context, a Actor, in Selection) ([]sqlcgen.Practitioner, error) {
 	q := sqlcgen.New(c.Pool)
 	switch {
 	case in.All:
 		return c.ViewablePractitioners(ctx, a)
-	case len(in.PractitionerIDs) > 0:
+	case len(in.IDs) > 0:
 		var out []sqlcgen.Practitioner
 		seen := map[uuid.UUID]bool{}
-		for _, id := range in.PractitionerIDs {
+		for _, id := range in.IDs {
 			if seen[id] {
 				continue
 			}
@@ -219,199 +137,6 @@ func (c *Calendar) selectPractitioners(ctx context.Context, a Actor, in ViewInpu
 		return nil, err
 	}
 	return []sqlcgen.Practitioner{pr}, nil
-}
-
-// View construit l'agenda pour la période et les praticiens demandés (voir
-// ViewInput). Un praticien n'accède qu'à son propre agenda.
-func (c *Calendar) View(ctx context.Context, a Actor, in ViewInput) (CalendarView, error) {
-	prs, err := c.selectPractitioners(ctx, a, in)
-	if err != nil {
-		return CalendarView{}, err
-	}
-	pc, loc, err := c.practice().practiceAndLocation(ctx, a.PracticeID)
-	if err != nil {
-		return CalendarView{}, err
-	}
-	now := c.Clock.Now().In(loc)
-
-	mode := "week"
-	if in.Mode == "day" {
-		mode = "day"
-	}
-	if mode == "week" && len(prs) > 1 {
-		prs = prs[:1]
-	}
-	if len(prs) > MaxCalendarColumns {
-		prs = prs[:MaxCalendarColumns]
-	}
-	ref := midnight(now, loc)
-	if d := strings.TrimSpace(in.Date); d != "" {
-		t, err := time.Parse("2006-01-02", d)
-		if err != nil {
-			return CalendarView{}, domain.ErrValidation{Field: "date", Msg: "La date doit être au format AAAA-MM-JJ."}
-		}
-		ref = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, loc)
-	}
-	first, n, step := ref, 1, 1
-	if mode == "week" {
-		first, n, step = ref.AddDate(0, 0, -((int(ref.Weekday())+6)%7)), 7, 7
-	}
-	last := first.AddDate(0, 0, n-1)
-	to := first.AddDate(0, 0, n)
-
-	q := sqlcgen.New(c.Pool)
-	srcs := make([]calSource, 0, len(prs))
-	total := 0
-	for _, pr := range prs {
-		src := calSource{pr: pr}
-		if src.appts, err = q.ListCalendarAppointments(ctx, sqlcgen.ListCalendarAppointmentsParams{
-			PracticeID: a.PracticeID, PractitionerID: pr.ID, FromAt: first, ToAt: to,
-		}); err != nil {
-			return CalendarView{}, fmt.Errorf("liste des rendez-vous: %w", err)
-		}
-		if src.rules, err = q.ListAvailabilityRules(ctx, pr.ID); err != nil {
-			return CalendarView{}, fmt.Errorf("liste des plages: %w", err)
-		}
-		if src.excs, err = q.ListAvailabilityExceptions(ctx, sqlcgen.ListAvailabilityExceptionsParams{PractitionerID: pr.ID, FromAt: first, ToAt: to}); err != nil {
-			return CalendarView{}, fmt.Errorf("liste des absences: %w", err)
-		}
-		if pc.CloseOnHolidays {
-			_, opens := splitExceptions(src.excs)
-			for _, x := range booking.HolidayClosures(loc, first, to, pc.HolidaysAlsaceMoselle, opens) {
-				src.hol = append(src.hol, booking.Interval{Start: x.Start, End: x.End})
-			}
-		}
-		total += len(src.appts)
-		srcs = append(srcs, src)
-	}
-
-	// Fenêtre horaire : celle demandée, élargie pour ne jamais cacher un RDV.
-	h0, h1 := in.FromHour, in.ToHour
-	if h0 <= 0 || h0 > 23 {
-		h0 = DefaultFromHour
-	}
-	if h1 <= h0 || h1 > 24 {
-		h1 = max(DefaultToHour, h0+1)
-	}
-	for _, src := range srcs {
-		for _, ap := range src.appts {
-			day := midnight(ap.StartsAt.In(loc), loc)
-			h0 = min(h0, wallMinutes(day, ap.StartsAt.In(loc))/60)
-			h1 = max(h1, (wallMinutes(day, ap.EndsAt.In(loc))+59)/60)
-		}
-	}
-	rows := (h1 - h0) * 60 / RowMinutes
-
-	v := CalendarView{
-		Mode: mode, Date: ref.Format("2006-01-02"), First: first, Last: last,
-		PrevDate:  ref.AddDate(0, 0, -step).Format("2006-01-02"),
-		NextDate:  ref.AddDate(0, 0, step).Format("2006-01-02"),
-		TodayDate: midnight(now, loc).Format("2006-01-02"),
-		FromHour:  h0, ToHour: h1, Rows: rows, AppointmentCount: total,
-		Multi: mode == "day" && len(srcs) > 1, Loc: loc,
-	}
-	if len(srcs) > 0 {
-		v.PractitionerID = srcs[0].pr.ID
-	}
-	if pc.CloseOnHolidays {
-		v.holidays = map[string]bool{}
-		for _, h := range booking.HolidaysBetween(loc, first, last, pc.HolidaysAlsaceMoselle) {
-			v.holidays[fmt.Sprintf("%04d-%02d-%02d", h.Year, int(h.Month), h.Day)] = true
-		}
-	}
-	for _, src := range srcs {
-		v.Practitioners = append(v.Practitioners, CalPractitioner{ID: src.pr.ID, Name: PractitionerName(src.pr), Color: src.pr.Color})
-	}
-	if mode == "day" {
-		v.Title = frenchDay(first)
-	} else {
-		v.Title = fmt.Sprintf("Semaine du %s au %s", frenchDay(first), frenchDay(last))
-	}
-	for r := 0; r < rows; r += 60 / RowMinutes {
-		v.Hours = append(v.Hours, CalHour{Row: r + 2, Label: fmt.Sprintf("%02dh", h0+r/(60/RowMinutes))})
-	}
-
-	// Colonnes : un jour par colonne, ou (vue jour multi-praticiens) un praticien par colonne.
-	if v.Multi {
-		for i, src := range srcs {
-			v.Days = append(v.Days, buildColumn(src, first, i+2, v, loc, now))
-		}
-	} else if len(srcs) > 0 {
-		for i := 0; i < n; i++ {
-			v.Days = append(v.Days, buildColumn(srcs[0], first.AddDate(0, 0, i), i+2, v, loc, now))
-		}
-	}
-	return v, nil
-}
-
-// buildColumn construit la colonne d'un jour pour un praticien.
-func buildColumn(src calSource, d time.Time, colIdx int, v CalendarView, loc *time.Location, now time.Time) CalDay {
-	h0, h1, rows := v.FromHour, v.ToHour, v.Rows
-	closed, open := splitExceptions(src.excs)
-	dayIv := booking.Interval{Start: time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, loc)}
-	dayIv.End = dayIv.Start.AddDate(0, 0, 1)
-	for _, h := range src.hol {
-		if h.Overlaps(dayIv) {
-			closed = append(closed, h)
-		}
-	}
-	key := d.Format("2006-01-02")
-	holiday := v.holidays[key]
-	var appts []CalAppt
-	for _, ap := range src.appts {
-		st, en := ap.StartsAt.In(loc), ap.EndsAt.In(loc)
-		day := midnight(st, loc)
-		if day.Format("2006-01-02") != key {
-			continue
-		}
-		r0 := (wallMinutes(day, st) - h0*60) / RowMinutes
-		r1 := ceilDiv(wallMinutes(day, en)-h0*60, RowMinutes)
-		r0, r1 = max(r0, 0), min(r1, rows)
-		appts = append(appts, CalAppt{
-			ID: ap.ID, Start: st, End: en, Row: r0 + 2, Span: max(r1-r0, 1),
-			Patient: ap.LastName + " " + ap.FirstName, TypeName: ap.TypeName, Status: ap.Status, StatusName: statusLabels[ap.Status], Source: ap.Source,
-			Past: !en.After(now), AtHome: ap.TypeAtHome,
-		})
-	}
-	wd := (int(d.Weekday()) + 6) % 7
-	cd := CalDay{
-		Date: d, DateStr: key, Col: colIdx, Today: key == v.TodayDate, Holiday: holiday, Appts: appts,
-		Label: fmt.Sprintf("%s. %d", weekdayNames[wd][:3], d.Day()), LongLabel: frenchDay(d),
-		PractitionerID: src.pr.ID,
-	}
-	if v.Multi {
-		cd.Label = PractitionerName(src.pr)
-		cd.LongLabel = cd.Label + ", " + frenchDay(d)
-	}
-	gs, ge := wallTime(d, h0*60, loc), wallTime(d, h1*60, loc)
-	avail := booking.Intersect(dayOpen(d, loc, src.rules, open, uuid.Nil), []booking.Interval{{Start: gs, End: ge}})
-	avail = booking.Subtract(avail, closed)
-	for _, b := range booking.Subtract([]booking.Interval{{Start: gs, End: ge}}, avail) {
-		r0 := ceilDiv(wallMinutes(d, b.Start.In(loc))-h0*60, RowMinutes)
-		r1 := (wallMinutes(d, b.End.In(loc)) - h0*60) / RowMinutes
-		if r1 > r0 {
-			cd.Bands = append(cd.Bands, CalBand{Row: r0 + 2, Span: r1 - r0})
-		}
-	}
-	occupied := map[int]bool{}
-	for _, ap := range cd.Appts {
-		for r := ap.Row; r < ap.Row+ap.Span; r++ {
-			occupied[r] = true
-		}
-	}
-	for r := 0; r < rows; r += slotLinkEveryRows {
-		if occupied[r+2] && occupied[r+3] {
-			continue
-		}
-		t := wallTime(d, h0*60+r*RowMinutes, loc)
-		cd.Slots = append(cd.Slots, CalSlot{Row: r + 2, Start: t.Format("2006-01-02T15:04"), Label: t.Format("15h04")})
-	}
-	if v.Mode == "day" && cd.Today {
-		if m := wallMinutes(d, now); m >= h0*60 && m < h1*60 {
-			cd.NowRow = (m-h0*60)/RowMinutes + 2
-		}
-	}
-	return cd
 }
 
 // --- Disponibilités (grisage et contrôle « hors horaires ») ---
@@ -504,22 +229,6 @@ func midnight(t time.Time, loc *time.Location) time.Time {
 // 1440 donne minuit le lendemain (time.Date normalise).
 func wallTime(d time.Time, minutes int, loc *time.Location) time.Time {
 	return time.Date(d.Year(), d.Month(), d.Day(), minutes/60, minutes%60, 0, 0, loc)
-}
-
-// wallMinutes retourne l'heure murale de t en minutes depuis minuit du jour d,
-// 1440 si t tombe un jour suivant.
-func wallMinutes(d, t time.Time) int {
-	if civil(t) > civil(d) {
-		return 24 * 60
-	}
-	return t.Hour()*60 + t.Minute()
-}
-
-func ceilDiv(a, b int) int {
-	if a <= 0 {
-		return 0
-	}
-	return (a + b - 1) / b
 }
 
 func frenchDay(t time.Time) string {

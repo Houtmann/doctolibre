@@ -1,5 +1,9 @@
 {{/* layout: admin */}}
 {{define "title"}}Nouveau rendez-vous{{end}}
 {{define "content"}}
-{{template "appointment_form.html" .Data}}
+<div class="card card-border bg-base-100 max-w-2xl">
+  <div class="card-body">
+    {{template "appointment_form.html" .Data}}
+  </div>
+</div>
 {{end}}

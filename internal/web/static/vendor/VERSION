@@ -1,0 +1,11 @@
+EventCalendar (vkurko) 5.15.0, licence MIT (LICENSE-event-calendar)
+Source : https://cdn.jsdelivr.net/npm/@event-calendar/build@5.15.0/dist/event-calendar.min.js
+         https://cdn.jsdelivr.net/npm/@event-calendar/build@5.15.0/dist/event-calendar.min.css
+Dépôt  : https://github.com/vkurko/calendar (tag v5.15.0)
+
+sha256
+a77422093d8f2281cfc92ee71180e7c2953bfef825250559b8587f92a9dbc6b0  event-calendar.min.js
+6020fa15880f9471ccdcf6f642e9408287d63f740539dcfa8fd78cb7aa769869  event-calendar.min.css
+
+Mise à jour : télécharger les deux fichiers à l'URL ci-dessus (version épinglée), vérifier les empreintes,
+mettre ce fichier à jour, puis `make css`. Chargé uniquement par la page agenda (admin_calendar).

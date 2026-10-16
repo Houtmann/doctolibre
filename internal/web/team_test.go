@@ -209,7 +209,7 @@ func TestPractitionerCannotEditAnotherAvailability(t *testing.T) {
 	}
 }
 
-// Vue jour à 4 praticiens : une colonne par praticien, lisible côté HTML.
+// Vue jour à 4 praticiens : une ressource par praticien pour le calendrier, et le repli (liste du jour) lisible côté HTML.
 func TestDayViewWithFourPractitioners(t *testing.T) {
 	t.Parallel()
 	e := newGroupEnv(t)
@@ -227,26 +227,27 @@ func TestDayViewWithFourPractitioners(t *testing.T) {
 		if rec.Code != 200 {
 			t.Fatalf("%s: %d", tc.name, rec.Code)
 		}
-		if !strings.Contains(body, "dl-cal cols-4") {
-			t.Errorf("%s: pas de grille à 4 colonnes", tc.name)
+		// Une ressource par praticien (les clics sur un créneau visent la colonne) ; la liste du jour a la colonne Praticien.
+		if n := strings.Count(body, "&#34;title&#34;"); n != 4 || !strings.Contains(body, `scope="col" class="hidden sm:table-cell">Praticien<`) {
+			t.Errorf("%s: %d ressources, colonne praticien absente", tc.name, n)
 		}
 		for i := 1; i <= 4; i++ {
-			if !strings.Contains(body, fmt.Sprintf(">p%d<", i)) { // en-tête de colonne
-				t.Errorf("%s: colonne p%d absente", tc.name, i)
+			if !strings.Contains(body, e.pracIDs[i-1].String()) {
+				t.Errorf("%s: ressource du praticien %d absente", tc.name, i)
 			}
 			if !strings.Contains(body, fmt.Sprintf("Patient%d", i)) {
 				t.Errorf("%s: RDV du praticien %d absent", tc.name, i)
 			}
 		}
-		// Les créneaux vides visent la colonne : on crée un RDV pour le bon praticien.
-		if !strings.Contains(body, "practitioner="+e.pracIDs[2].String()) {
-			t.Errorf("%s: lien de création sans praticien", tc.name)
-		}
 	}
 	// Un praticien ne voit que son agenda, même en demandant « tous ».
 	rec := e.prac[0].do("GET", "/admin/calendar?view=day&date=2026-10-15&practitioner=all", nil)
-	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "dl-cal cols-1") || strings.Contains(rec.Body.String(), "Patient2") {
+	if b := rec.Body.String(); rec.Code != 200 || strings.Count(b, "&#34;title&#34;") != 1 || strings.Contains(b, e.pracIDs[1].String()) || strings.Contains(b, "Patient2") {
 		t.Errorf("praticien, tous: %d", rec.Code)
+	}
+	// Idem pour l'endpoint JSON : « all » se limite à son agenda.
+	if rec := e.prac[0].do("GET", "/admin/agenda/events?start=2026-10-15&end=2026-10-16&practitioner=all", nil); rec.Code != 200 || strings.Contains(rec.Body.String(), "Patient2") {
+		t.Errorf("praticien, tous (JSON): %d", rec.Code)
 	}
 	// Et se voit refuser l'agenda d'un autre.
 	if rec := e.prac[0].do("GET", "/admin/calendar?view=day&practitioner="+e.pracIDs[1].String(), nil); rec.Code != 403 {
@@ -254,7 +255,7 @@ func TestDayViewWithFourPractitioners(t *testing.T) {
 	}
 	// En vue semaine, une seule colonne praticien (7 jours).
 	rec = e.admin.do("GET", "/admin/calendar?view=week&date=2026-10-15&practitioner=all", nil)
-	if rec.Code != 200 || !strings.Contains(rec.Body.String(), "dl-cal cols-7") {
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), `data-view="week"`) {
 		t.Errorf("vue semaine multi: %d", rec.Code)
 	}
 }

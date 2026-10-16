@@ -1,16 +1,19 @@
 -- name: ListCalendarAppointments :many
--- Agenda d'un praticien : RDV non annulés dont la zone bloquée intersecte
--- [from_at, to_at) (utilise la contrainte GiST appointment_no_overlap).
-SELECT a.id, a.status, a.source, a.patient_id,
+-- Agenda de plusieurs praticiens d'un cabinet : RDV non annulés dont la zone
+-- bloquée (soin + buffers) intersecte [from_at, to_at). Utilise la contrainte
+-- GiST appointment_no_overlap (practitioner_id, during_blocked) WHERE status <> 'cancelled'.
+SELECT a.id, a.practitioner_id, a.status, a.source, a.patient_id,
        lower(a.during)::timestamptz AS starts_at,
        upper(a.during)::timestamptz AS ends_at,
+       lower(a.during_blocked)::timestamptz AS blocked_start,
+       upper(a.during_blocked)::timestamptz AS blocked_end,
        p.first_name, p.last_name,
        t.name AS type_name, t.at_home AS type_at_home
 FROM appointment a
 JOIN patient p ON p.id = a.patient_id
 JOIN appointment_type t ON t.id = a.appointment_type_id
 WHERE a.practice_id = @practice_id
-  AND a.practitioner_id = @practitioner_id
+  AND a.practitioner_id = ANY(@practitioner_ids::uuid[])
   AND a.status <> 'cancelled'
   AND a.during_blocked && tstzrange(@from_at::timestamptz, @to_at::timestamptz, '[)')
 ORDER BY lower(a.during), a.id;

@@ -1,89 +1,91 @@
-<div id="appt-detail">
-  <div class="dl-dialog__header">
-    <h2 id="appt-dialog-title">Rendez-vous</h2>
-    {{with .D}}<span class="dl-badge dl-badge--st-{{.Status}}">{{.StatusLabel}}</span>{{end}}
+<div id="appt-detail" class="space-y-4">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    {{if .Modal}}<h2 id="appt-dialog-title" class="text-xl font-semibold">Rendez-vous</h2>{{else}}<h1 id="appt-dialog-title" class="text-xl font-semibold">Rendez-vous</h1>{{end}}
+    {{with .D}}<span class="badge {{if eq .Status "done"}}badge-success badge-soft{{else if eq .Status "no_show"}}badge-warning badge-soft{{else if eq .Status "cancelled"}}badge-ghost{{else}}badge-primary badge-soft{{end}}">{{.StatusLabel}}</span>{{end}}
   </div>
-  <div class="dl-dialog__body">
   {{template "form_errors.html" .Errors}}
   {{with .D}}
-  <dl class="dl-details">
-    <dt>Patient</dt><dd>{{.Patient}}</dd>
-    {{if .Phone}}<dt>Téléphone</dt><dd>{{.Phone}}</dd>{{end}}
-    {{if .Email}}<dt>Email</dt><dd>{{.Email}}</dd>{{end}}
-    <dt>Motif</dt><dd>{{.TypeName}}</dd>
-    {{if .AtHome}}<dt>Lieu</dt><dd>À domicile{{if .Address}} : {{.Address}}
-      <br><a href="{{geoURL .Address}}">Ouvrir dans l'application de cartes</a>
-      · <a href="{{osmURL .Address}}" rel="noopener noreferrer" target="_blank">OpenStreetMap</a>{{end}}</dd>{{end}}
-    <dt>Date</dt><dd>{{localDate .Start}}, de {{localTime .Start}} à {{localTime .End}}</dd>
-    {{with $.Plan}}<dt>Série</dt><dd>{{if .Ordinal}}<strong>Séance {{.Ordinal}}/{{.Prescribed}}</strong>{{else}}{{.Count}}/{{.Prescribed}} séances faites ou planifiées{{end}}{{if .Label}} — {{.Label}}{{end}}
-      · <a href="/admin/patients/{{.PatientID}}">Fiche patient</a></dd>{{end}}
-    <dt>Origine</dt><dd>{{.SourceLabel}}, le {{localDate .CreatedAt}} à {{localTime .CreatedAt}}</dd>
-    {{if .CancelReason}}<dt>Motif d'annulation</dt><dd>{{.CancelReason}}</dd>{{end}}
+  <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+    <dt class="text-base-content/70">Patient</dt><dd class="font-medium">{{.Patient}}</dd>
+    {{if .Phone}}<dt class="text-base-content/70">Téléphone</dt><dd>{{.Phone}}</dd>{{end}}
+    {{if .Email}}<dt class="text-base-content/70">Email</dt><dd class="break-all">{{.Email}}</dd>{{end}}
+    <dt class="text-base-content/70">Motif</dt><dd>{{.TypeName}}</dd>
+    {{if .AtHome}}<dt class="text-base-content/70">Lieu</dt><dd>À domicile{{if .Address}} : {{.Address}}
+      <br><a class="link link-primary" href="{{geoURL .Address}}">Ouvrir dans l'application de cartes</a>
+      · <a class="link link-primary" href="{{osmURL .Address}}" rel="noopener noreferrer" target="_blank">OpenStreetMap</a>{{end}}</dd>{{end}}
+    <dt class="text-base-content/70">Date</dt><dd>{{localDate .Start}}, de {{localTime .Start}} à {{localTime .End}}</dd>
+    {{with $.Plan}}<dt class="text-base-content/70">Série</dt><dd>{{if .Ordinal}}<strong>Séance {{.Ordinal}}/{{.Prescribed}}</strong>{{else}}{{.Count}}/{{.Prescribed}} séances faites ou planifiées{{end}}{{if .Label}} — {{.Label}}{{end}}
+      · <a class="link link-primary" href="/admin/patients/{{.PatientID}}">Fiche patient</a></dd>{{end}}
+    <dt class="text-base-content/70">Origine</dt><dd>{{.SourceLabel}}, le {{localDate .CreatedAt}} à {{localTime .CreatedAt}}</dd>
+    {{if .CancelReason}}<dt class="text-base-content/70">Motif d'annulation</dt><dd>{{.CancelReason}}</dd>{{end}}
   </dl>
   {{if .History}}
-  <h3>Historique</h3>
-  <ul>
+  <h3 class="font-semibold">Historique</h3>
+  <ul class="list-disc pl-5 text-sm">
     {{range .History}}<li>{{localDate .At}} à {{localTime .At}} : {{.Text}}</li>{{end}}
   </ul>
   {{end}}
   {{end}}
 
   {{with .Plan}}{{with .Replacement}}
-  <h3>Remplacer la séance annulée</h3>
-  <p>Prochain créneau compatible avec la série : <strong>{{localDate .Start}} à {{localTime .Start}}</strong>.</p>
+  <h3 class="font-semibold">Remplacer la séance annulée</h3>
+  <p class="text-sm">Prochain créneau compatible avec la série : <strong>{{localDate .Start}} à {{localTime .Start}}</strong>.</p>
   <form method="post" action="/admin/care-plans/{{.PlanID}}/replace">
     {{csrf $.CSRF}}
     <input type="hidden" name="appointment_id" value="{{$.D.ID}}">
     <input type="hidden" name="date" value="{{.Date}}">
     <input type="hidden" name="time" value="{{.Time}}">
-    <button class="dl-btn dl-btn--sm" type="submit">Planifier cette séance</button>
+    <button class="btn btn-primary btn-sm" type="submit">Planifier cette séance</button>
   </form>
   {{end}}{{end}}
 
   {{if .D.CanMove}}
-  <h3>Déplacer</h3>
-  <form method="post" action="/admin/appointments/{{.D.ID}}/move" hx-post="/admin/appointments/{{.D.ID}}/move" hx-target="#appt-detail" hx-swap="outerHTML">
+  <h3 class="font-semibold">Déplacer</h3>
+  <form class="space-y-3" method="post" action="/admin/appointments/{{.D.ID}}/move"{{if .Modal}} hx-post="/admin/appointments/{{.D.ID}}/move" hx-target="#appt-detail" hx-swap="outerHTML"{{end}}>
     {{csrf .CSRF}}
     <input type="hidden" name="view" value="{{.View}}">
-    <div class="dl-cluster">
-      <div class="dl-field">
-        <label class="dl-label" for="move-date">Nouvelle date</label>
-        <input class="dl-input" id="move-date" name="date" type="date" value="{{.Move.Date}}" required>
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="move-date">Nouvelle date</label>
+        <input class="input w-full" id="move-date" name="date" type="date" value="{{.Move.Date}}" required>
       </div>
-      <div class="dl-field">
-        <label class="dl-label" for="move-time">Nouvelle heure</label>
-        <input class="dl-input" id="move-time" name="time" type="time" step="300" value="{{.Move.Time}}" required>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="move-time">Nouvelle heure</label>
+        <input class="input w-full" id="move-time" name="time" type="time" step="300" value="{{.Move.Time}}" required>
       </div>
     </div>
-    <label class="dl-check" for="move-force">
-      <input id="move-force" type="checkbox" name="force" value="1"{{if .Move.Force}} checked{{end}}>
+    <label class="flex items-start gap-3 text-sm" for="move-force">
+      <input class="checkbox checkbox-primary checkbox-sm mt-0.5" id="move-force" type="checkbox" name="force" value="1"{{if .Move.Force}} checked{{end}}>
       Hors horaires (autoriser en dehors des disponibilités)
     </label>
-    <button class="dl-btn dl-btn--sm" type="submit">Déplacer</button>
+    <button class="btn btn-primary btn-sm" type="submit">Déplacer</button>
   </form>
   {{end}}
 
   {{if .D.CanCancel}}
-  <h3>Annuler</h3>
-  <form method="post" action="/admin/appointments/{{.D.ID}}/cancel" hx-post="/admin/appointments/{{.D.ID}}/cancel" hx-target="#appt-detail" hx-swap="outerHTML">
+  <h3 class="font-semibold">Annuler</h3>
+  <form class="space-y-3" method="post" action="/admin/appointments/{{.D.ID}}/cancel"{{if .Modal}} hx-post="/admin/appointments/{{.D.ID}}/cancel" hx-target="#appt-detail" hx-swap="outerHTML"{{end}}>
     {{csrf .CSRF}}
     <input type="hidden" name="date" value="{{.D.MoveDate}}">
     <input type="hidden" name="view" value="{{.View}}">
-    <div class="dl-field">
-      <label class="dl-label" for="cancel-reason">Motif de l'annulation <span class="dl-optional">(facultatif, visible du cabinet uniquement)</span></label>
-      <input class="dl-input" id="cancel-reason" name="reason" value="{{.Reason}}" maxlength="200">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="cancel-reason">Motif de l'annulation <span class="text-base-content/70">(facultatif, visible du cabinet uniquement)</span></label>
+      <input class="input w-full" id="cancel-reason" name="reason" value="{{.Reason}}" maxlength="200">
     </div>
-    <button class="dl-btn dl-btn--danger dl-btn--sm" type="submit">Annuler le rendez-vous</button>
+    <button class="btn btn-error btn-outline btn-sm" type="submit">Annuler le rendez-vous</button>
   </form>
   {{end}}
 
-  </div>
-  <div class="dl-dialog__footer">
+  <div class="flex flex-wrap items-center gap-2 border-t border-base-300 pt-4">
     {{if ne .D.Status "cancelled"}}
-    {{if ne .D.Status "done"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "done" "Label" "Marquer honoré")}}{{end}}
-    {{if ne .D.Status "no_show"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "no_show" "Label" "Marquer absent")}}{{end}}
-    {{if ne .D.Status "booked"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "booked" "Label" "Remettre à venir")}}{{end}}
+    {{if ne .D.Status "done"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Modal" .Modal "Status" "done" "Label" "Marquer honoré")}}{{end}}
+    {{if ne .D.Status "no_show"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Modal" .Modal "Status" "no_show" "Label" "Marquer absent")}}{{end}}
+    {{if ne .D.Status "booked"}}{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Modal" .Modal "Status" "booked" "Label" "Remettre à venir")}}{{end}}
     {{end}}
-    <a class="dl-btn dl-btn--outline dl-btn--sm" href="/admin/calendar">Fermer</a>
+    {{if .Modal}}
+    <form method="dialog" class="ml-auto"><button class="btn btn-ghost btn-sm">Fermer</button></form>
+    {{else}}
+    <a class="btn btn-outline btn-sm ml-auto" href="/admin/calendar">Retour à l'agenda</a>
+    {{end}}
   </div>
 </div>

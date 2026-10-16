@@ -40,24 +40,31 @@ func TestSettingsHolidaysCheckboxes(t *testing.T) {
 func TestCalendarShowsHoliday(t *testing.T) {
 	t.Parallel()
 	e := newCalendarEnv(t, domain.RoleAdmin)
-	// Semaine du 26 octobre au 1er novembre 2026 (Toussaint, dimanche).
-	rec := e.c.do("GET", "/admin/calendar?view=week&date=2026-10-28", nil)
-	if strings.Contains(rec.Body.String(), "Férié") {
+	// Mercredi 11 novembre 2026 (Armistice) : plage 08–12 les jours ouvrés.
+	const day = "start=2026-11-11T00:00:00&end=2026-11-12T00:00:00"
+	if body := e.c.do("GET", "/admin/calendar?view=day&date=2026-11-11", nil).Body.String(); strings.Contains(body, "Férié") {
 		t.Fatal("option désactivée : pas de « Férié »")
+	}
+	if evs := e.events(t, day); len(evs) != 2 {
+		t.Fatalf("option désactivée : %d plages fermées, attendu 2 (avant 08h, après 12h)", len(evs))
 	}
 	if err := sqlcgen.New(e.db).SetPracticeHolidays(context.Background(), sqlcgen.SetPracticeHolidaysParams{ID: e.actor.PracticeID, CloseOnHolidays: true}); err != nil {
 		t.Fatal(err)
 	}
-	rec = e.c.do("GET", "/admin/calendar?view=week&date=2026-10-28", nil)
-	mustContain(t, rec, 200, `<small class="dl-cal__holiday">Férié</small>`)
-	if n := strings.Count(rec.Body.String(), "dl-cal__holiday"); n != 1 {
-		t.Errorf("« Férié » affiché %d fois, attendu 1", n)
+	mustContain(t, e.c.do("GET", "/admin/calendar?view=day&date=2026-11-11", nil), 200, `Férié`)
+	// Jour férié : une seule plage fermée, la journée entière.
+	evs := e.events(t, day)
+	if len(evs) != 1 || evs[0].Display != "background" || evs[0].Start != "2026-11-11T00:00:00+01:00" || evs[0].End != "2026-11-12T00:00:00+01:00" {
+		t.Fatalf("jour férié: %+v", evs)
 	}
-	// Ouverture exceptionnelle partielle le jour férié : il reste marqué « Férié ».
+	// Ouverture exceptionnelle partielle le jour férié : seule cette plage est ouverte.
 	if _, err := e.db.Exec(context.Background(), `INSERT INTO availability_exception (practitioner_id, during, kind, reason)
-		SELECT id, tstzrange('2026-11-01 14:00+01', '2026-11-01 16:00+01', '[)'), 'open', 'test' FROM practitioner WHERE practice_id = $1`, e.actor.PracticeID); err != nil {
+		SELECT id, tstzrange('2026-11-11 14:00+01', '2026-11-11 16:00+01', '[)'), 'open', 'test' FROM practitioner WHERE practice_id = $1`, e.actor.PracticeID); err != nil {
 		t.Fatal(err)
 	}
-	rec = e.c.do("GET", "/admin/calendar?view=week&date=2026-10-28", nil)
-	mustContain(t, rec, 200, `<small class="dl-cal__holiday">Férié</small>`)
+	evs = e.events(t, day)
+	if len(evs) != 2 || evs[0].End != "2026-11-11T14:00:00+01:00" || evs[1].Start != "2026-11-11T16:00:00+01:00" {
+		t.Fatalf("ouverture exceptionnelle: %+v", evs)
+	}
+	mustContain(t, e.c.do("GET", "/admin/calendar?view=day&date=2026-11-11", nil), 200, `Férié`)
 }
