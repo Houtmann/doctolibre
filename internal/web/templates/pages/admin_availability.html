@@ -4,10 +4,12 @@
 <h1>Horaires d'ouverture</h1>
 {{with .Data.Switch}}
 <form method="get" action="{{.Action}}" class="dl-cluster" role="search">
-  <label for="practitioner-select">Praticien</label>
-  <select id="practitioner-select" name="practitioner">
+  <div class="dl-field">
+    <label class="dl-label" for="practitioner-select">Praticien</label>
+    <select class="dl-select" id="practitioner-select" name="practitioner">
     {{range .Options}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
   </select>
+  </div>
   <button class="dl-btn dl-btn--outline" type="submit">Afficher</button>
 </form>
 {{end}}

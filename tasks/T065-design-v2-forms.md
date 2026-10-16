@@ -19,9 +19,9 @@ Tous les formulaires (connexion, mot de passe, réglages, motifs, disponibilité
 - Composant manquant ou inadapté : l'ajouter dans `internal/web/static/components.css` **et** `design/components.css` (jetons sémantiques uniquement), et le signaler dans Suivi.
 
 ## Critères d'acceptation
-- [ ] Aucun `<input>`/`<select>`/`<textarea>` visible sans classe `.dl-*` dans les templates listés (`grep` dans Suivi).
-- [ ] Un formulaire en erreur rend `dl-field is-invalid` et `aria-invalid="true"` (test httptest, ex. connexion ou nouveau patient).
-- [ ] `make check` vert, aucun `style=` ajouté.
+- [x] Aucun `<input>/`<select>`/`<textarea>` visible sans classe `.dl-*` dans les templates listés (`grep` dans Suivi).
+- [x] Un formulaire en erreur rend `dl-field is-invalid` et `aria-invalid="true"` (test httptest, ex. connexion ou nouveau patient).
+- [x] `make check` vert, aucun `style=` ajouté.
 - [ ] Vérifié dans le navigateur à 360 et 1280 px, clair et sombre, et au clavier (focus visible).
 
 ## Vérification
@@ -37,8 +37,14 @@ Parcours patient (T066), agenda et dialogue (T067), retrait de Pico (T068).
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** :
+  - Tous les champs des templates listés en `.dl-field` + `.dl-label` + `.dl-input/.dl-select/.dl-textarea`, cases en `label.dl-check`, groupes en `.dl-fieldset` (+ `.dl-checks`), aide en `p.dl-help`, avertissement note administrative en `.dl-note-warning` (patient_fields, care plan). Formulaires de saisie : `class="dl-form"` (max 40 rem). Rangées de champs (ex-`.grid` Pico) : `.dl-field-row`. Recherches : `.dl-search`.
+  - Tableaux (équipe, motifs, liste d'attente, messages, journal, statut, RGPD, patients, lignes de série) : `.dl-table-wrap > table.dl-table`, heures/dates/nombres en `.dl-num`, actions de ligne dans `div.dl-cluster` ; états vides en `.dl-empty`. `patient_results` : `ul.dl-choice-list` + `label.dl-check` (puce ronde native, contact sur la même ligne).
+  - Erreurs par champ : `PatientForm.Invalid map[string]bool` (helper `invalidFields(err)` dans admin_config.go, rempli à la création et à l'édition d'un patient) → `dl-field is-invalid` + `aria-invalid="true"` + `aria-describedby` (aide et `#form-errors`). Connexion : `LoginData.Failed` marque email et mot de passe. Lignes de série en conflit : `is-invalid` sur le champ.
+  - Pages invalides (lien expiré) et doublons de patient : `.dl-alert`.
+  - Tests : assertions ajoutées dans `TestLoginFailureIsGeneric`, `TestPatientEditAndNoMedicalWarning`, nouveau `TestPatientNewInvalidMarksFields`.
+  - CSS : section `/* ── T065 ── */` en fin de `design/components.css` et `static/components.css` (identiques) : `.dl-form`, `.dl-field-row`, `.dl-checks`, `.dl-choice-list`, `.dl-details-form`, `.dl-search`, règles de tableau (th de ligne, cellules d'actions). `app.css` : retrait de `.patient-results` uniquement.
+- **Reste à faire** : vérification navigateur des pages authentifiées (360/1280 px, clair/sombre, clavier) : seule `/dev/styleguide` (patient_fields, patient_results) a été vue (≈520 px, clair, pas de débordement). Critère 4 non coché.
+- **Notes de reprise** : `appointment_form` (dialogue) est mis en page en `.dl-form` ; T067 peut avoir à ajuster dans le dialogue. Les champs en erreur de la création rapide d'un patient dans le formulaire de RDV et ceux des autres formulaires (réglages, motifs…) n'ont que le message dans l'alerte (les handlers ne remontent pas les champs) ; seuls patient (création/édition) et connexion marquent les champs. `.week-grid`/`.week-day` (horaires) et `.is-inactive` restent dans `app.css` (utilisés, T068). `dev_styleguide.html` v1 hérite du nouveau `patient_fields`.
+- **Écarts avec la spécification** : `admin_dashboard.html` (champ « adresse à copier ») converti aussi (hors liste, mais couvert par le grep). Portée « is-invalid » limitée aux formulaires où le champ est identifiable (patient, connexion, série).

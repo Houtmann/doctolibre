@@ -1,11 +1,11 @@
 <div id="patient-results" aria-live="polite">
   {{if .Patients}}
-  <ul class="patient-results">
+  <ul class="dl-choice-list">
     {{range .Patients}}
     <li>
-      <label><input type="radio" name="patient_id" value="{{.ID}}" form="appt-create"{{if .Selected}} checked{{end}}> {{.Name}}{{if .Contact}} <small>({{.Contact}})</small>{{end}}</label>
+      <label class="dl-check"><input type="radio" name="patient_id" value="{{.ID}}" form="appt-create"{{if .Selected}} checked{{end}}> <span>{{.Name}}</span>{{if .Contact}} <span class="dl-muted">({{.Contact}})</span>{{end}}</label>
     </li>
     {{end}}
   </ul>
-  {{else if .Form.Query}}<p><small>Aucun patient trouvé. Créez-le ci-dessous.</small></p>{{end}}
+  {{else if .Form.Query}}<p class="dl-help">Aucun patient trouvé. Créez-le ci-dessous.</p>{{end}}
 </div>

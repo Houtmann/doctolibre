@@ -357,3 +357,28 @@ input.dl-input[aria-invalid], select.dl-select[aria-invalid], textarea.dl-textar
 .dl-sg-bg-danger { background: var(--dl-danger); }
 .dl-sg-bg-focus { background: var(--dl-focus); }
 .dl-sg-panel .dl-cal { display: grid; }
+
+/* ── T065 ── */
+/* Formulaires : rangées de champs, groupes de cases, liste de choix, cellules d'actions. */
+.dl-form { max-width: 40rem; }
+.dl-field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: 0 var(--dl-space-4); }
+.dl-checks { display: flex; flex-wrap: wrap; gap: 0 var(--dl-space-5); }
+.dl-fieldset > :last-child { margin-bottom: 0; }
+.dl-field > .dl-help, .dl-field > .dl-note-warning { margin: 0; }
+.dl-field > .dl-check { margin-bottom: 0; }
+p.dl-help { margin-bottom: var(--dl-space-4); }
+.dl-choice-list { list-style: none; margin: 0 0 var(--dl-space-4); padding: 0; }
+.dl-choice-list li { margin: 0; padding: 0; list-style: none; }
+.dl-choice-list .dl-check { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 var(--dl-space-2); }
+.dl-choice-list .dl-check .dl-muted { font-size: var(--dl-text-sm); }
+.dl-details-form { margin-bottom: var(--dl-space-4); }
+.dl-details-form summary { cursor: pointer; font-weight: var(--dl-weight-medium); margin-bottom: var(--dl-space-3); }
+.dl-search { display: flex; flex-wrap: wrap; gap: var(--dl-space-2); align-items: end; margin-bottom: var(--dl-space-4); }
+.dl-search .dl-field { flex: 1 1 14rem; margin-bottom: 0; }
+/* Tableaux : en-tête de ligne, cellules d'actions, liste sous forme de tableau sur mobile. */
+.dl-table tbody th[scope="row"] { background: transparent; color: var(--dl-text); font-weight: var(--dl-weight-medium); }
+.dl-table td > .dl-cluster, .dl-table td > form { margin: 0; }
+.dl-table td .dl-field { margin-bottom: 0; }
+.dl-table-wrap { margin-bottom: var(--dl-space-4); }
+.dl-table .dl-optional { color: var(--dl-text-muted); }
+.dl-inline-form { display: inline; margin: 0; }

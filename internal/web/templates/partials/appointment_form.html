@@ -2,74 +2,79 @@
   <h2 id="appt-dialog-title">Nouveau rendez-vous</h2>
   {{template "form_errors.html" .Errors}}
 
-  <form method="get" action="/admin/appointments/new" role="search">
+  <form class="dl-search" method="get" action="/admin/appointments/new" role="search">
     <input type="hidden" name="start" value="{{.Form.Start}}">
     <input type="hidden" name="view" value="{{.Form.View}}">
     {{if .Form.Practitioner}}<input type="hidden" name="practitioner" value="{{.Form.Practitioner}}">{{end}}
-    <label for="patient-q">Rechercher un patient (nom, prénom, téléphone ou email)</label>
-    <input id="patient-q" type="search" name="q" value="{{.Form.Query}}" autocomplete="off"
+    <div class="dl-field">
+      <label class="dl-label" for="patient-q">Rechercher un patient (nom, prénom, téléphone ou email)</label>
+      <input class="dl-input" id="patient-q" type="search" name="q" value="{{.Form.Query}}" autocomplete="off"
            hx-get="/admin/patients/search" hx-trigger="input changed delay:300ms, search" hx-target="#patient-results" hx-swap="outerHTML" hx-push-url="false">
+    </div>
     <button class="dl-btn dl-btn--outline" type="submit">Rechercher</button>
   </form>
 
-  <form id="appt-create" method="post" action="/admin/appointments" hx-post="/admin/appointments" hx-target="#appt-form" hx-swap="outerHTML">
+  <form class="dl-form" id="appt-create" method="post" action="/admin/appointments" hx-post="/admin/appointments" hx-target="#appt-form" hx-swap="outerHTML">
     {{csrf .CSRF}}
     <input type="hidden" name="view" value="{{.Form.View}}">
     {{if .Practitioners}}
-    <label for="appt-practitioner">Praticien</label>
-    <select id="appt-practitioner" name="practitioner" required>
-      {{range .Practitioners}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
-    </select>
+    <div class="dl-field">
+      <label class="dl-label" for="appt-practitioner">Praticien</label>
+      <select class="dl-select" id="appt-practitioner" name="practitioner" required>
+        {{range .Practitioners}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+    </div>
     {{else if .Form.Practitioner}}<input type="hidden" name="practitioner" value="{{.Form.Practitioner}}">{{end}}
     {{template "patient_results.html" .}}
-    <details{{if .QuickOpen}} open{{end}}>
+    <details class="dl-details-form"{{if .QuickOpen}} open{{end}}>
       <summary>Nouveau patient (création rapide)</summary>
-      <div class="grid">
-        <div>
-          <label for="new-last-name">Nom</label>
-          <input id="new-last-name" name="new_last_name" value="{{.Form.NewLastName}}" maxlength="80" autocomplete="off">
+      <div class="dl-field-row">
+        <div class="dl-field">
+          <label class="dl-label" for="new-last-name">Nom</label>
+          <input class="dl-input" id="new-last-name" name="new_last_name" value="{{.Form.NewLastName}}" maxlength="80" autocomplete="off">
         </div>
-        <div>
-          <label for="new-first-name">Prénom</label>
-          <input id="new-first-name" name="new_first_name" value="{{.Form.NewFirstName}}" maxlength="80" autocomplete="off">
-        </div>
-      </div>
-      <div class="grid">
-        <div>
-          <label for="new-phone">Téléphone</label>
-          <input id="new-phone" name="new_phone" type="tel" value="{{.Form.NewPhone}}" autocomplete="off">
-        </div>
-        <div>
-          <label for="new-email">Email</label>
-          <input id="new-email" name="new_email" type="email" value="{{.Form.NewEmail}}" autocomplete="off">
+        <div class="dl-field">
+          <label class="dl-label" for="new-first-name">Prénom</label>
+          <input class="dl-input" id="new-first-name" name="new_first_name" value="{{.Form.NewFirstName}}" maxlength="80" autocomplete="off">
         </div>
       </div>
-      <small>Un téléphone ou un email est requis. Aucune information médicale ici.</small>
+      <div class="dl-field-row">
+        <div class="dl-field">
+          <label class="dl-label" for="new-phone">Téléphone</label>
+          <input class="dl-input" id="new-phone" name="new_phone" type="tel" value="{{.Form.NewPhone}}" autocomplete="off">
+        </div>
+        <div class="dl-field">
+          <label class="dl-label" for="new-email">Email</label>
+          <input class="dl-input" id="new-email" name="new_email" type="email" value="{{.Form.NewEmail}}" autocomplete="off">
+        </div>
+      </div>
+      <p class="dl-help">Un téléphone ou un email est requis. Aucune information médicale ici.</p>
     </details>
 
-    <label for="appt-type">Motif</label>
-    <select id="appt-type" name="type_id" required>
+    <div class="dl-field">
+      <label class="dl-label" for="appt-type">Motif</label>
+      <select class="dl-select" id="appt-type" name="type_id" required>
       <option value="">Choisir…</option>
       {{range .Types}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}} ({{.Minutes}} min)</option>{{end}}
     </select>
+    </div>
 
-    <div class="grid">
-      <div>
-        <label for="appt-date">Date</label>
-        <input id="appt-date" name="date" type="date" value="{{.Form.Date}}" required>
+    <div class="dl-field-row">
+      <div class="dl-field">
+        <label class="dl-label" for="appt-date">Date</label>
+        <input class="dl-input" id="appt-date" name="date" type="date" value="{{.Form.Date}}" required>
       </div>
-      <div>
-        <label for="appt-time">Heure</label>
-        <input id="appt-time" name="time" type="time" step="300" value="{{.Form.Time}}" required>
+      <div class="dl-field">
+        <label class="dl-label" for="appt-time">Heure</label>
+        <input class="dl-input" id="appt-time" name="time" type="time" step="300" value="{{.Form.Time}}" required>
       </div>
     </div>
-    <label for="appt-address">Adresse (visites à domicile uniquement)</label>
-    <textarea id="appt-address" name="address" rows="2" maxlength="300" autocomplete="off">{{.Form.Address}}</textarea>
+    <div class="dl-field">
+      <label class="dl-label" for="appt-address">Adresse (visites à domicile uniquement)</label>
+      <textarea class="dl-textarea" id="appt-address" name="address" rows="2" maxlength="300" autocomplete="off">{{.Form.Address}}</textarea>
+    </div>
 
-    <label for="appt-force">
-      <input id="appt-force" type="checkbox" name="force" value="1"{{if .Form.Force}} checked{{end}}>
-      Hors horaires (autoriser en dehors des disponibilités)
-    </label>
+    <label class="dl-check" for="appt-force"><input id="appt-force" type="checkbox" name="force" value="1"{{if .Form.Force}} checked{{end}}> Hors horaires (autoriser en dehors des disponibilités)</label>
 
     <div class="dl-cluster">
       <button class="dl-btn" type="submit">Créer le rendez-vous</button>

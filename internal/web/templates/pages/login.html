@@ -3,13 +3,17 @@
 <section class="login">
   <h1>Connexion</h1>
   {{template "form_errors.html" .Data.Errors}}
-  <form method="post" action="/admin/login">
+  <form class="dl-form" method="post" action="/admin/login">
     {{csrf .CSRF}}
     <input type="hidden" name="next" value="{{.Data.Next}}">
-    <label for="email">Adresse email</label>
-    <input id="email" name="email" type="email" value="{{.Data.Email}}" autocomplete="username" required>
-    <label for="password">Mot de passe</label>
-    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <div class="dl-field{{if .Data.Failed}} is-invalid{{end}}">
+      <label class="dl-label" for="email">Adresse email</label>
+      <input class="dl-input" id="email" name="email" type="email" value="{{.Data.Email}}" autocomplete="username" required{{if .Data.Failed}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
+    </div>
+    <div class="dl-field{{if .Data.Failed}} is-invalid{{end}}">
+      <label class="dl-label" for="password">Mot de passe</label>
+      <input class="dl-input" id="password" name="password" type="password" autocomplete="current-password" required{{if .Data.Failed}} aria-invalid="true" aria-describedby="form-errors"{{end}}>
+    </div>
     <button class="dl-btn" type="submit">Se connecter</button>
   </form>
   <p><a href="/admin/password/forgot">Mot de passe oublié ?</a></p>

@@ -67,6 +67,7 @@ type PatientForm struct {
 	FirstName, LastName, Phone, Email, BirthDate, Notes string
 	SMSOptIn, EmailOptIn                                string // "1" si cochée
 	Force                                               bool
+	Invalid                                             map[string]bool // champs en erreur (clé = nom du champ)
 }
 
 func (f PatientForm) details() service.PatientDetails {
@@ -155,6 +156,7 @@ func (h *patientHandlers) create(w http.ResponseWriter, r *http.Request) {
 	f := readPatientForm(r)
 	p, dups, err := h.svc.Create(r.Context(), actorFrom(r), f.details(), f.Notes, f.Force)
 	if msgs := validation(err); msgs != nil {
+		f.Invalid = invalidFields(err)
 		h.rd.PageStatus(w, r, http.StatusUnprocessableEntity, "admin_patient_new", PatientNewPage{Form: f, Errors: msgs})
 		return
 	}
@@ -251,6 +253,7 @@ func (h *patientHandlers) update(w http.ResponseWriter, r *http.Request) {
 	f := readPatientForm(r)
 	_, err := h.svc.Update(r.Context(), actorFrom(r), id, f.details(), f.Notes)
 	if msgs := validation(err); msgs != nil {
+		f.Invalid = invalidFields(err)
 		p, perr := h.page(r, id, &f, msgs)
 		if perr != nil {
 			h.fail(w, r, perr)

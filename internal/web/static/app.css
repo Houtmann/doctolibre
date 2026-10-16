@@ -184,7 +184,6 @@ dialog#appt-dialog article { margin: 0; }
 .detail-list { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
 .detail-list dt { font-weight: 600; }
 .detail-list dd { margin: 0; }
-.patient-results { list-style: none; padding: 0; margin: 0 0 1rem; }
 .gr-1 { grid-row-start: 1; }
 .gr-2 { grid-row-start: 2; }
 .gr-3 { grid-row-start: 3; }

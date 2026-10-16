@@ -17,8 +17,10 @@
   {{end}}
   <p>Donnez cette adresse à vos patients :</p>
   <p><a href="{{.PracticeURL}}">{{.PracticeURL}}</a></p>
-  <label for="booking-url">Adresse à copier</label>
-  <input id="booking-url" type="text" readonly value="{{.PracticeURL}}">
+  <div class="dl-field">
+    <label class="dl-label" for="booking-url">Adresse à copier</label>
+    <input class="dl-input" id="booking-url" type="text" readonly value="{{.PracticeURL}}">
+  </div>
   {{if .Practitioners}}
   <h3>Par praticien</h3>
   <ul>

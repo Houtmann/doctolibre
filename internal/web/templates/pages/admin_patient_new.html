@@ -4,15 +4,15 @@
 <h1>Nouveau patient</h1>
 {{template "form_errors.html" .Data.Errors}}
 {{if .Data.Duplicates}}
-<article role="alert">
+<div class="dl-alert dl-alert--warning" role="alert"><div>
   <strong>Un patient avec le même téléphone ou le même email existe déjà :</strong>
   <ul>
-    {{range .Data.Duplicates}}<li><a href="/admin/patients/{{.ID}}">{{.Name}}</a> <small>{{.Phone}} {{.Email}}</small></li>{{end}}
+    {{range .Data.Duplicates}}<li><a href="/admin/patients/{{.ID}}">{{.Name}}</a> <span class="dl-muted dl-small">{{.Phone}} {{.Email}}</span></li>{{end}}
   </ul>
   <p>Ouvrez la fiche existante, ou créez quand même une nouvelle fiche avec le bouton ci-dessous.</p>
-</article>
+</div></div>
 {{end}}
-<form method="post" action="/admin/patients">
+<form class="dl-form" method="post" action="/admin/patients">
   {{csrf .CSRF}}
   {{template "patient_fields.html" .Data.Form}}
   {{if .Data.Duplicates}}

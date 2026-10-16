@@ -5,8 +5,8 @@
 <p>Quand un créneau se libère (annulation ou déplacement), les 5 premiers inscrits compatibles reçoivent un lien valable 2 heures ; le premier qui confirme obtient le créneau. Aucun créneau n'est attribué sans leur clic.</p>
 
 {{if .Data.Rows}}
-<div class="overflow-auto">
-<table>
+<div class="dl-table-wrap">
+<table class="dl-table">
   <caption class="dl-visually-hidden">Inscriptions en liste d'attente</caption>
   <thead>
     <tr>
@@ -27,9 +27,9 @@
       <td><a href="{{.PatientURL}}">{{.Patient}}</a></td>
       <td>{{.Type}}</td>
       <td>{{.Practitioner}}</td>
-      <td>{{.Period}}</td>
+      <td class="dl-num">{{.Period}}</td>
       <td>{{.Days}}</td>
-      <td>{{.Hours}}</td>
+      <td class="dl-num">{{.Hours}}</td>
       <td>{{.Status}}</td>
       <td>{{.Source}}</td>
       <td>
@@ -46,76 +46,78 @@
 </table>
 </div>
 {{else}}
-<p>Aucune inscription pour le moment.</p>
+<p class="dl-empty">Aucune inscription pour le moment.</p>
 {{end}}
 
 <h2>Inscrire un patient</h2>
 {{template "form_errors.html" .Data.Errors}}
-<form method="post" action="/admin/waitlist">
+<form class="dl-form" method="post" action="/admin/waitlist">
   {{csrf .CSRF}}
-  <div class="grid">
-    <div>
-      <label for="wl-last-name">Nom</label>
-      <input id="wl-last-name" name="last_name" value="{{.Data.Values.LastName}}" maxlength="80" required autocomplete="off">
+  <div class="dl-field-row">
+    <div class="dl-field">
+      <label class="dl-label" for="wl-last-name">Nom</label>
+      <input class="dl-input" id="wl-last-name" name="last_name" value="{{.Data.Values.LastName}}" maxlength="80" required autocomplete="off">
     </div>
-    <div>
-      <label for="wl-first-name">Prénom</label>
-      <input id="wl-first-name" name="first_name" value="{{.Data.Values.FirstName}}" maxlength="80" required autocomplete="off">
-    </div>
-  </div>
-  <div class="grid">
-    <div>
-      <label for="wl-phone">Téléphone</label>
-      <input id="wl-phone" name="phone" type="tel" value="{{.Data.Values.Phone}}" autocomplete="off">
-    </div>
-    <div>
-      <label for="wl-email">Email</label>
-      <input id="wl-email" name="email" type="email" value="{{.Data.Values.Email}}" autocomplete="off">
+    <div class="dl-field">
+      <label class="dl-label" for="wl-first-name">Prénom</label>
+      <input class="dl-input" id="wl-first-name" name="first_name" value="{{.Data.Values.FirstName}}" maxlength="80" required autocomplete="off">
     </div>
   </div>
-  <small>Un téléphone ou un email est requis. Le patient est retrouvé s'il existe déjà. Aucune information médicale ici.</small>
+  <div class="dl-field-row">
+    <div class="dl-field">
+      <label class="dl-label" for="wl-phone">Téléphone</label>
+      <input class="dl-input" id="wl-phone" name="phone" type="tel" value="{{.Data.Values.Phone}}" autocomplete="off">
+    </div>
+    <div class="dl-field">
+      <label class="dl-label" for="wl-email">Email</label>
+      <input class="dl-input" id="wl-email" name="email" type="email" value="{{.Data.Values.Email}}" autocomplete="off">
+    </div>
+  </div>
+  <p class="dl-help">Un téléphone ou un email est requis. Le patient est retrouvé s'il existe déjà. Aucune information médicale ici.</p>
 
-  <div class="grid">
-    <div>
-      <label for="wl-type">Motif</label>
-      <select id="wl-type" name="type_id" required>
-        <option value="">Choisir…</option>
-        {{range .Data.Types}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}} ({{.Minutes}} min)</option>{{end}}
-      </select>
+  <div class="dl-field-row">
+    <div class="dl-field">
+      <label class="dl-label" for="wl-type">Motif</label>
+      <select class="dl-select" id="wl-type" name="type_id" required>
+      <option value="">Choisir…</option>
+      {{range .Data.Types}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}} ({{.Minutes}} min)</option>{{end}}
+    </select>
     </div>
-    <div>
-      <label for="wl-practitioner">Praticien</label>
-      <select id="wl-practitioner" name="practitioner_id">
-        <option value="">Tous les praticiens</option>
-        {{range .Data.Practitioners}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
-      </select>
-    </div>
-  </div>
-
-  <div class="grid">
-    <div>
-      <label for="wl-earliest">À partir du</label>
-      <input id="wl-earliest" name="earliest" type="date" value="{{.Data.Values.Earliest}}" min="{{.Data.Today}}" required>
-    </div>
-    <div>
-      <label for="wl-latest">Jusqu'au</label>
-      <input id="wl-latest" name="latest" type="date" value="{{.Data.Values.Latest}}" min="{{.Data.Today}}" required>
+    <div class="dl-field">
+      <label class="dl-label" for="wl-practitioner">Praticien</label>
+      <select class="dl-select" id="wl-practitioner" name="practitioner_id">
+      <option value="">Tous les praticiens</option>
+      {{range .Data.Practitioners}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
+    </select>
     </div>
   </div>
 
-  <fieldset>
+  <div class="dl-field-row">
+    <div class="dl-field">
+      <label class="dl-label" for="wl-earliest">À partir du</label>
+      <input class="dl-input" id="wl-earliest" name="earliest" type="date" value="{{.Data.Values.Earliest}}" min="{{.Data.Today}}" required>
+    </div>
+    <div class="dl-field">
+      <label class="dl-label" for="wl-latest">Jusqu'au</label>
+      <input class="dl-input" id="wl-latest" name="latest" type="date" value="{{.Data.Values.Latest}}" min="{{.Data.Today}}" required>
+    </div>
+  </div>
+
+  <fieldset class="dl-fieldset">
     <legend>Jours possibles (aucun coché = tous les jours)</legend>
-    {{range .Data.Weekdays}}<label><input type="checkbox" name="weekdays" value="{{.Value}}"{{if .Checked}} checked{{end}}> {{.Label}}</label>{{end}}
+    <div class="dl-checks">
+    {{range .Data.Weekdays}}<label class="dl-check"><input type="checkbox" name="weekdays" value="{{.Value}}"{{if .Checked}} checked{{end}}> {{.Label}}</label>{{end}}
+    </div>
   </fieldset>
 
-  <div class="grid">
-    <div>
-      <label for="wl-from">Heure de début, de (facultatif)</label>
-      <input id="wl-from" name="time_from" type="time" value="{{.Data.Values.TimeFrom}}">
+  <div class="dl-field-row">
+    <div class="dl-field">
+      <label class="dl-label" for="wl-from">Heure de début, de (facultatif)</label>
+      <input class="dl-input" id="wl-from" name="time_from" type="time" value="{{.Data.Values.TimeFrom}}">
     </div>
-    <div>
-      <label for="wl-to">à</label>
-      <input id="wl-to" name="time_to" type="time" value="{{.Data.Values.TimeTo}}">
+    <div class="dl-field">
+      <label class="dl-label" for="wl-to">à</label>
+      <input class="dl-input" id="wl-to" name="time_to" type="time" value="{{.Data.Values.TimeTo}}">
     </div>
   </div>
   <button class="dl-btn dl-btn--sm" type="submit">Inscrire</button>

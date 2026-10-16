@@ -2,23 +2,27 @@
 {{define "title"}}Patients{{end}}
 {{define "content"}}
 <h1>Patients</h1>
-<form method="get" action="/admin/patients" role="search">
-  <label for="patient-q">Rechercher (nom, prénom, téléphone ou email)</label>
-  <input id="patient-q" type="search" name="q" value="{{.Data.Query}}" autocomplete="off">
+<form class="dl-search" method="get" action="/admin/patients" role="search">
+  <div class="dl-field">
+    <label class="dl-label" for="patient-q">Rechercher (nom, prénom, téléphone ou email)</label>
+    <input class="dl-input" id="patient-q" type="search" name="q" value="{{.Data.Query}}" autocomplete="off">
+  </div>
   <button class="dl-btn" type="submit">Rechercher</button>
 </form>
 <p><a class="dl-btn dl-btn--outline" href="{{.Data.NewURL}}">Nouveau patient</a></p>
 {{if .Data.Rows}}
-<table>
+<div class="dl-table-wrap">
+<table class="dl-table">
   <thead><tr><th scope="col">Nom</th><th scope="col">Téléphone</th><th scope="col">Email</th></tr></thead>
   <tbody>
     {{range .Data.Rows}}
-    <tr><td><a href="/admin/patients/{{.ID}}">{{.Name}}</a></td><td>{{.Phone}}</td><td>{{.Email}}</td></tr>
+    <tr><td><a href="/admin/patients/{{.ID}}">{{.Name}}</a></td><td class="dl-num">{{.Phone}}</td><td>{{.Email}}</td></tr>
     {{end}}
   </tbody>
 </table>
+</div>
 {{if .Data.NextURL}}<p><a href="{{.Data.NextURL}}">Page suivante</a></p>{{end}}
 {{else}}
-<p>Aucun patient{{if .Data.Query}} ne correspond à « {{.Data.Query}} »{{end}}.</p>
+<p class="dl-empty">Aucun patient{{if .Data.Query}} ne correspond à « {{.Data.Query}} »{{end}}.</p>
 {{end}}
 {{end}}

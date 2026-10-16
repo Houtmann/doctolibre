@@ -2,7 +2,8 @@
 {{define "title"}}État de l'instance{{end}}
 {{define "content"}}
 <h1>État de l'instance</h1>
-<table>
+<div class="dl-table-wrap">
+<table class="dl-table">
   <caption class="dl-visually-hidden">État de l'instance</caption>
   <tbody>
     <tr><th scope="row">Version</th><td>{{.Data.Version}}</td></tr>
@@ -13,5 +14,6 @@
     <tr><th scope="row">Dernière sauvegarde</th><td>{{if not .Data.BackupMonitored}}Suivi non configuré (DOCTOLIBRE_BACKUP_DIR){{else if .Data.LastBackup.IsZero}}Aucune sauvegarde enregistrée{{else}}{{formatDate .Data.LastBackup}} à {{formatTime .Data.LastBackup}}{{end}}</td></tr>
   </tbody>
 </table>
+</div>
 <p>Un email est envoyé aux administrateurs en cas de messages en échec ou d'absence de sauvegarde depuis plus de 48 heures.</p>
 {{end}}

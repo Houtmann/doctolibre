@@ -1,7 +1,8 @@
 <div id="types-panel">
   {{if .Notice}}<div class="dl-alert dl-alert--success" role="status">{{.Notice}}</div>{{end}}
   {{template "form_errors.html" .Errors}}
-  <table>
+  <div class="dl-table-wrap">
+  <table class="dl-table">
     <caption class="dl-visually-hidden">Motifs du cabinet</caption>
     <thead>
       <tr><th scope="col">Motif</th><th scope="col">Durée</th><th scope="col">Marges</th><th scope="col">Options</th><th scope="col">Actions</th></tr>
@@ -9,12 +10,12 @@
     <tbody>
       {{range .Rows}}
       <tr{{if not .Active}} class="is-inactive"{{end}}>
-        <th scope="row">{{.Name}}{{if not .Active}} <small>(désactivé)</small>{{end}}</th>
-        <td>{{.Duration}} min</td>
-        <td>{{.Before}} / {{.After}} min</td>
+        <th scope="row">{{.Name}}{{if not .Active}} <span class="dl-muted">(désactivé)</span>{{end}}</th>
+        <td class="dl-num">{{.Duration}} min</td>
+        <td class="dl-num">{{.Before}} / {{.After}} min</td>
         <td>{{if .Online}}Réservable en ligne{{else}}Cabinet uniquement{{end}}{{if .AtHome}}, à domicile{{end}}</td>
-        <td class="dl-cluster">
-          <a href="/admin/appointment-types/{{.ID}}" hx-get="/admin/appointment-types/{{.ID}}" hx-target="#types-panel" hx-swap="outerHTML">Modifier</a>
+        <td><div class="dl-cluster">
+          <a class="dl-btn dl-btn--outline dl-btn--sm" href="/admin/appointment-types/{{.ID}}" hx-get="/admin/appointment-types/{{.ID}}" hx-target="#types-panel" hx-swap="outerHTML">Modifier</a>
           {{if not .First}}
           <form method="post" action="/admin/appointment-types/{{.ID}}/move" hx-post="/admin/appointment-types/{{.ID}}/move" hx-target="#types-panel" hx-swap="outerHTML">
             {{csrf $.CSRF}}<input type="hidden" name="dir" value="up">
@@ -31,41 +32,48 @@
             {{csrf $.CSRF}}<input type="hidden" name="active" value="{{if .Active}}0{{else}}1{{end}}">
             <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit">{{if .Active}}Désactiver{{else}}Réactiver{{end}}</button>
           </form>
-        </td>
+        </div></td>
       </tr>
       {{end}}
     </tbody>
   </table>
+  </div>
 
   {{$action := "/admin/appointment-types"}}
   {{if .EditID}}{{$action = print "/admin/appointment-types/" .EditID}}{{end}}
   <h2>{{if .EditID}}Modifier le motif{{else}}Nouveau motif{{end}}</h2>
-  <form method="post" action="{{$action}}" hx-post="{{$action}}" hx-target="#types-panel" hx-swap="outerHTML">
+  <form class="dl-form" method="post" action="{{$action}}" hx-post="{{$action}}" hx-target="#types-panel" hx-swap="outerHTML">
     {{csrf .CSRF}}
     {{with .Form}}
-    <label for="type-name">Nom</label>
-    <input id="type-name" name="name" value="{{.Name}}" maxlength="60" required>
-    <div class="grid">
-      <div>
-        <label for="type-duration">Durée (minutes)</label>
-        <input id="type-duration" name="duration" type="number" inputmode="numeric" min="5" max="480" value="{{.DurationMin}}" required>
+    <div class="dl-field">
+      <label class="dl-label" for="type-name">Nom</label>
+      <input class="dl-input" id="type-name" name="name" value="{{.Name}}" maxlength="60" required>
+    </div>
+    <div class="dl-field-row">
+      <div class="dl-field">
+        <label class="dl-label" for="type-duration">Durée (minutes)</label>
+        <input class="dl-input" id="type-duration" name="duration" type="number" inputmode="numeric" min="5" max="480" value="{{.DurationMin}}" required>
       </div>
-      <div>
-        <label for="type-before">Marge avant (minutes)</label>
-        <input id="type-before" name="buffer_before" type="number" inputmode="numeric" min="0" max="120" value="{{.BufferBeforeMin}}">
+      <div class="dl-field">
+        <label class="dl-label" for="type-before">Marge avant (minutes)</label>
+        <input class="dl-input" id="type-before" name="buffer_before" type="number" inputmode="numeric" min="0" max="120" value="{{.BufferBeforeMin}}">
       </div>
-      <div>
-        <label for="type-after">Marge après (minutes)</label>
-        <input id="type-after" name="buffer_after" type="number" inputmode="numeric" min="0" max="120" value="{{.BufferAfterMin}}">
+      <div class="dl-field">
+        <label class="dl-label" for="type-after">Marge après (minutes)</label>
+        <input class="dl-input" id="type-after" name="buffer_after" type="number" inputmode="numeric" min="0" max="120" value="{{.BufferAfterMin}}">
       </div>
     </div>
-    <label for="type-travel">Temps de trajet (minutes, visites à domicile)</label>
-    <input id="type-travel" name="travel_buffer" type="number" inputmode="numeric" min="0" max="120" value="{{.TravelBufferMin}}" aria-describedby="type-travel-help">
-    <small id="type-travel-help">Réservé avant et après chaque visite à domicile. Deux visites consécutives cumulent leurs trajets (par exemple 15 + 15 = 30 minutes entre les deux) : c'est une marge de sécurité, sans calcul d'itinéraire.</small>
-    <label for="type-color">Couleur</label>
-    <input id="type-color" name="color" type="color" value="{{.Color}}">
-    <label><input type="checkbox" name="online_bookable" value="1"{{if .OnlineBookable}} checked{{end}}> Réservable en ligne par les patients</label>
-    <label><input type="checkbox" name="at_home" value="1"{{if .AtHome}} checked{{end}}> Séance à domicile</label>
+    <div class="dl-field">
+      <label class="dl-label" for="type-travel">Temps de trajet (minutes, visites à domicile)</label>
+      <input class="dl-input" id="type-travel" name="travel_buffer" type="number" inputmode="numeric" min="0" max="120" value="{{.TravelBufferMin}}" aria-describedby="type-travel-help">
+      <p class="dl-help" id="type-travel-help">Réservé avant et après chaque visite à domicile. Deux visites consécutives cumulent leurs trajets (par exemple 15 + 15 = 30 minutes entre les deux) : c'est une marge de sécurité, sans calcul d'itinéraire.</p>
+    </div>
+    <div class="dl-field">
+      <label class="dl-label" for="type-color">Couleur</label>
+      <input class="dl-input" id="type-color" name="color" type="color" value="{{.Color}}">
+    </div>
+    <label class="dl-check"><input type="checkbox" name="online_bookable" value="1"{{if .OnlineBookable}} checked{{end}}> Réservable en ligne par les patients</label>
+    <label class="dl-check"><input type="checkbox" name="at_home" value="1"{{if .AtHome}} checked{{end}}> Séance à domicile</label>
     {{end}}
     <button class="dl-btn dl-btn--sm" type="submit">{{if .EditID}}Enregistrer{{else}}Ajouter le motif{{end}}</button>
     {{if .EditID}}<a class="dl-btn dl-btn--outline dl-btn--sm" href="/admin/appointment-types" hx-get="/admin/appointment-types" hx-target="#types-panel" hx-swap="outerHTML">Annuler</a>{{end}}

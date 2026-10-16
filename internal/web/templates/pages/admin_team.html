@@ -5,25 +5,28 @@
 {{template "form_errors.html" .Data.Errors}}
 
 <h2>Membres</h2>
-<table>
+<div class="dl-table-wrap">
+<table class="dl-table">
   <thead>
     <tr><th scope="col">Compte</th><th scope="col">Rôle</th><th scope="col">Dernière connexion</th><th scope="col">Actions</th></tr>
   </thead>
   <tbody>
     {{range .Data.Members}}
     <tr{{if not .Active}} class="is-inactive"{{end}}>
-      <td>{{.Email}}{{if .Name}}<br><small>{{.Name}}</small>{{end}}{{if .Self}} <small>(vous)</small>{{end}}{{if not .Active}}<br><small>Désactivé</small>{{end}}</td>
+      <td>{{.Email}}{{if .Name}}<br><span class="dl-muted dl-small">{{.Name}}</span>{{end}}{{if .Self}} <span class="dl-muted dl-small">(vous)</span>{{end}}{{if not .Active}}<br><span class="dl-muted dl-small">Désactivé</span>{{end}}</td>
       <td>
         <form method="post" action="/admin/team/{{.ID}}/role" class="dl-cluster">
           {{csrf $.CSRF}}
-          <label class="dl-visually-hidden" for="role-{{.ID}}">Rôle de {{.Email}}</label>
-          <select id="role-{{.ID}}" name="role">
+          <div class="dl-field">
+            <label class="dl-label dl-visually-hidden" for="role-{{.ID}}">Rôle de {{.Email}}</label>
+            <select class="dl-select" id="role-{{.ID}}" name="role">
             {{range .Roles}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
           </select>
+          </div>
           <button class="dl-btn dl-btn--outline dl-btn--sm" type="submit">Changer</button>
         </form>
       </td>
-      <td>{{if .LastLogin.IsZero}}Jamais{{else}}{{formatDate .LastLogin}}{{end}}</td>
+      <td class="dl-num">{{if .LastLogin.IsZero}}Jamais{{else}}{{formatDate .LastLogin}}{{end}}</td>
       <td>
         {{if .Active}}
           {{if not .Self}}
@@ -45,6 +48,7 @@
     {{end}}
   </tbody>
 </table>
+</div>
 
 {{if .Data.Invitations}}
 <h2>Invitations en attente</h2>
@@ -62,15 +66,19 @@
 {{end}}
 
 <h2>Inviter un membre</h2>
-<form method="post" action="/admin/team/invite">
+<form class="dl-form" method="post" action="/admin/team/invite">
   {{csrf .CSRF}}
-  <label for="invite-email">Adresse email</label>
-  <input id="invite-email" name="email" type="email" value="{{.Data.Email}}" autocomplete="off" required>
-  <label for="invite-role">Rôle</label>
-  <select id="invite-role" name="role">
+  <div class="dl-field">
+    <label class="dl-label" for="invite-email">Adresse email</label>
+    <input class="dl-input" id="invite-email" name="email" type="email" value="{{.Data.Email}}" autocomplete="off" required>
+  </div>
+  <div class="dl-field">
+    <label class="dl-label" for="invite-role">Rôle</label>
+    <select class="dl-select" id="invite-role" name="role">
     {{range .Data.Roles}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
   </select>
-  <small>Praticien : son agenda et ses horaires. Secrétariat : tous les agendas et les patients, pas les réglages. Administrateur : tout. Un email avec un lien d'activation valable 48 heures est envoyé.</small>
+    <p class="dl-help">Praticien : son agenda et ses horaires. Secrétariat : tous les agendas et les patients, pas les réglages. Administrateur : tout. Un email avec un lien d'activation valable 48 heures est envoyé.</p>
+  </div>
   <button class="dl-btn dl-btn--sm" type="submit">Envoyer l'invitation</button>
 </form>
 {{end}}

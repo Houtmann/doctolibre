@@ -31,6 +31,7 @@ type LoginData struct {
 	Next   string
 	Email  string
 	Errors []string
+	Failed bool // identifiants refusés : les deux champs sont marqués en erreur
 }
 
 func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
@@ -105,7 +106,7 @@ func (h *adminHandlers) loginSubmit(w http.ResponseWriter, r *http.Request) {
 	password := r.PostFormValue("password")
 	fail := func() {
 		h.rd.PageStatus(w, r, http.StatusUnauthorized, "login",
-			LoginData{Next: next, Email: email, Errors: []string{errBadLoginText}})
+			LoginData{Next: next, Email: email, Errors: []string{errBadLoginText}, Failed: true})
 	}
 	if len(password) > maxPasswordLen {
 		fail()

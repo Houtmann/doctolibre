@@ -107,6 +107,20 @@ func validation(err error) []string {
 	return msgs
 }
 
+// invalidFields retourne l'ensemble des champs en erreur de err (clé = nom du
+// champ du formulaire), pour marquer les champs `is-invalid`.
+func invalidFields(err error) map[string]bool {
+	fe := domain.FieldErrors(err)
+	if len(fe) == 0 {
+		return nil
+	}
+	m := make(map[string]bool, len(fe))
+	for _, e := range fe {
+		m[e.Field] = true
+	}
+	return m
+}
+
 func pathID(r *http.Request) (uuid.UUID, bool) {
 	id, err := uuid.Parse(r.PathValue("id"))
 	return id, err == nil

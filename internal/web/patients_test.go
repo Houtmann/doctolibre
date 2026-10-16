@@ -130,6 +130,24 @@ func TestPatientEditAndNoMedicalWarning(t *testing.T) {
 	if rec.Code != 422 {
 		t.Errorf("saisie invalide: %d", rec.Code)
 	}
+	// Le champ fautif (téléphone) est marqué, pas le nom.
+	body := rec.Body.String()
+	if !strings.Contains(body, `class="dl-field is-invalid"`) || !strings.Contains(body, `id="pf-phone"`) ||
+		!strings.Contains(body, `aria-invalid="true"`) || !strings.Contains(body, `aria-describedby="pf-contact-help form-errors"`) {
+		t.Error("champ téléphone non marqué is-invalid / aria-invalid")
+	}
+	if strings.Contains(body, `id="pf-last-name" name="last_name" value="Y" maxlength="80" required autocomplete="off" aria-invalid`) {
+		t.Error("le nom ne devrait pas être marqué en erreur")
+	}
+}
+
+func TestPatientNewInvalidMarksFields(t *testing.T) {
+	e := newPatientEnv(t, domain.RoleSecretary)
+	rec := e.c.do("POST", "/admin/patients", url.Values{"first_name": {""}, "last_name": {"Martin"}, "phone": {"0612345678"}})
+	body := rec.Body.String()
+	if rec.Code != 422 || !strings.Contains(body, `class="dl-field is-invalid"`) || !strings.Contains(body, `aria-invalid="true"`) {
+		t.Fatalf("prénom manquant: %d, champ non marqué", rec.Code)
+	}
 }
 
 func TestPatientCreateDuplicateProposal(t *testing.T) {

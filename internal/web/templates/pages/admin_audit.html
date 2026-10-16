@@ -3,14 +3,16 @@
 {{define "content"}}
 <h1>Journal d'accès</h1>
 <p>Consultations de fiches patients, exports, suppressions, connexions et modifications. Le journal ne contient que des identifiants, jamais de coordonnées de patients.</p>
-<form method="get" action="/admin/audit" role="search">
-  <label for="action">Filtrer par action (exemples : patient_view, patient.exported, login_success)</label>
-  <input id="action" type="search" name="action" value="{{.Data.Action}}" maxlength="64" autocomplete="off">
+<form class="dl-search" method="get" action="/admin/audit" role="search">
+  <div class="dl-field">
+    <label class="dl-label" for="action">Filtrer par action (exemples : patient_view, patient.exported, login_success)</label>
+    <input class="dl-input" id="action" type="search" name="action" value="{{.Data.Action}}" maxlength="64" autocomplete="off">
+  </div>
   <button class="dl-btn dl-btn--outline" type="submit">Filtrer</button>
 </form>
 {{if .Data.Rows}}
-<div class="overflow-auto">
-<table>
+<div class="dl-table-wrap">
+<table class="dl-table">
   <caption class="dl-visually-hidden">Journal d'accès</caption>
   <thead>
     <tr>
@@ -24,7 +26,7 @@
   <tbody>
     {{range .Data.Rows}}
     <tr>
-      <td>{{formatDate .At}} {{formatTime .At}}</td>
+      <td class="dl-num">{{formatDate .At}} {{formatTime .At}}</td>
       <td>{{.User}}</td>
       <td>{{.Action}}</td>
       <td>{{if .EntityURL}}<a href="{{.EntityURL}}">{{.Entity}}</a>{{else}}{{.Entity}}{{end}}{{if .EntityID}} <small>{{.EntityID}}</small>{{end}}</td>
@@ -35,5 +37,5 @@
 </table>
 </div>
 {{if .Data.NextURL}}<p><a class="dl-btn dl-btn--outline" href="{{.Data.NextURL}}">Entrées plus anciennes</a></p>{{end}}
-{{else}}<p>Aucune entrée.</p>{{end}}
+{{else}}<p class="dl-empty">Aucune entrée.</p>{{end}}
 {{end}}
