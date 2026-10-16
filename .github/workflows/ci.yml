@@ -35,4 +35,8 @@ jobs:
       - uses: golangci/golangci-lint-action@v8
         with:
           version: latest
+      - name: Outillage front (Tailwind, sha256 vérifié)
+        run: make tools
+      - name: ui.css à jour
+        run: make css-check
       - run: make check

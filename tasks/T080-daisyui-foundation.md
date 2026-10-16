@@ -25,14 +25,14 @@ Le dépôt sait générer `internal/web/static/ui.css` avec Tailwind CSS v4 (ex�
 - Ajouter `bin/` au `.gitignore` s'il n'y est pas.
 
 ## Critères d'acceptation
-- [ ] `make tools && make css` sur une machine neuve produit un `ui.css` identique à celui commité (`git diff --exit-code`).
-- [ ] Un sha256 erroné fait échouer `make tools` (testé en altérant la somme).
-- [ ] La CI exécute `make tools` puis la vérification d'`ui.css` à jour.
-- [ ] `go build ./...` fonctionne sans `bin/tailwindcss`.
-- [ ] Layouts public et admin rendus en daisyUI, thèmes clair et sombre, bascule sans script inline, vérifiés à 360 et 1280 px.
-- [ ] `/dev/styleguide` montre les composants en clair et sombre ; ratios de contraste AA vérifiés pour les paires de couleurs des thèmes (outil ou calcul consigné dans Suivi).
-- [ ] `AGENTS.md`, `docs/design-system.md`, `PLAN.md` à jour.
-- [ ] `make check` vert, aucun `style=` ni hex hors blocs de thème.
+- [x] `make tools && make css` sur une machine neuve produit un `ui.css` identique à celui commité (`git diff --exit-code`).
+- [x] Un sha256 erroné fait échouer `make tools` (testé en altérant la somme).
+- [x] La CI exécute `make tools` puis la vérification d'`ui.css` à jour.
+- [x] `go build ./...` fonctionne sans `bin/tailwindcss`.
+- [x] Layouts public et admin rendus en daisyUI, thèmes clair et sombre, bascule sans script inline, vérifiés à 360 et 1280 px.
+- [x] `/dev/styleguide` montre les composants en clair et sombre ; ratios de contraste AA vérifiés pour les paires de couleurs des thèmes (outil ou calcul consigné dans Suivi).
+- [x] `AGENTS.md`, `docs/design-system.md`, `PLAN.md` à jour.
+- [x] `make check` vert, aucun `style=` ni hex hors blocs de thème.
 
 ## Vérification
 ```bash
@@ -47,8 +47,16 @@ Migration des pages (T081–T084), EventCalendar (T083), suppression de Pico et 
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** : `make tools` (`tools/fetch-tailwind.sh`, sha256 par plateforme dans `tools/tailwind.sha256`, testé avec une somme altérée : échec ; idempotent), `make css`, `make css-check` (compare une génération temporaire à `ui.css`, donc fonctionne même avant le premier commit ; sauté avec message si `bin/tailwindcss` absent, **échoue si `CI` est défini**), CI (`make tools` puis `make css-check` avant `make check`), daisyUI 5.7.47 dans `tools/daisyui/` (+ `VERSION`, `LICENSE` MIT), `internal/web/input.css` + `static/ui.css` généré, layouts base/public/admin (drawer), partials `flash`, `form_errors`, `theme_toggle`, `static/app.js` (thème sans flash + `data-dialog-open`), `/dev/styleguide` réécrit, tests adaptés (`render_test`, `styleguide_test`, `admin_config_test`), `AGENTS.md`, `PLAN.md`, `docs/design-system.md`, `docs/README.md`.
+- **Reste à faire** : rien pour T080. Les pages (T081–T083) restent sommaires (CSS Pico/dl-* plus lié) jusqu'à leur migration ; suppression des anciens CSS et du styleguide v2 en T084.
+- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) :
+  - `make tools && make css`. Après toute modif de template : `make css` (sinon `make check` échoue).
+  - Contrôle visuel fait au navigateur (serveur de dev sur un port libre, 8099 était pris par le POC) : `/dev/styleguide` à 360 et 1280 px, clair/sombre, bascule, dialogue ; layout admin vérifié en rendant `/admin/settings` d'un test dans une page statique (pas de compte admin créé en base) à 360 et 1280 px, clair et sombre (via `prefers-color-scheme`). Drawer ouvert au clic sur mobile non capturé.
+  - Contrastes (script jetable) : toutes les paires texte/fond >= 5,02 ; tableau dans `docs/design-system.md`.
+  - `ui.css` contient encore la définition `--fx-noise` (image `data:`) mais `input.css` la remplace par `none` : sans cela, une erreur CSP console par élément.
+- **Écarts avec la spécification** (et pourquoi) :
+  - `@source` ne scanne que `static/app.js` (pas `static/*.js`) : `htmx.min.js` ajouterait des classes parasites ; T083 ajoutera ses propres fichiers.
+  - Bordure des champs assombrie (`--input-color` à 55 % de `base-content`) pour atteindre 3:1 (WCAG 1.4.11), non demandé par la spec.
+  - `styleguide.go` : données des anciens blocs (jetons `--app-*`, agenda maison, partials patient/statut/résumé) supprimées ; ces partials ne sont plus montrés dans le styleguide (ils seront migrés avec leurs pages).
+  - Lien d'évitement et libellé du nom d'utilisateur : pas de nom d'utilisateur dans la navbar (`View` ne le porte pas).

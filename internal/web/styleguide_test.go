@@ -35,8 +35,8 @@ func TestStyleguideDev(t *testing.T) {
 	}
 	body := rec.Body.String()
 	for _, want := range []string{
-		"dl-alert--success", "dl-alert--warning", "st-no_show", "st-cancelled", "form-errors",
-		"sw-st-done", "patient-results",
+		"alert-success", "alert-warning", "alert-error", "badge-warning", "form-errors",
+		`data-theme="doctolibre-dark"`, `data-theme="doctolibre"`, "modal-box", "ui.css", "btn btn-primary", "table",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("fragment %q absent", want)
@@ -44,6 +44,11 @@ func TestStyleguideDev(t *testing.T) {
 	}
 	if strings.Contains(body, " style=") || strings.Contains(body, "<script>") {
 		t.Error("style ou script inline interdit par la CSP")
+	}
+	for _, old := range []string{"pico.min.css", "tokens.css", "components.css", "app.css"} {
+		if strings.Contains(body, old) {
+			t.Errorf("ancien CSS %q encore lié", old)
+		}
 	}
 }
 
@@ -63,7 +68,7 @@ func TestStyleguideV2Dev(t *testing.T) {
 	body := rec.Body.String()
 	for _, want := range []string{
 		"dl-btn", "dl-alert--error", "dl-appt st-no_show", `data-theme="dark"`,
-		"dl-cal__head", "dl-cal-list", "dl-dialog", "dl-table", "dl-field is-invalid", "tokens.css", "components.css",
+		"dl-cal__head", "dl-cal-list", "dl-dialog", "dl-table", "dl-field is-invalid",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("fragment %q absent", want)

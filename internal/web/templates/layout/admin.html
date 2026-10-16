@@ -1,34 +1,47 @@
 {{define "chrome"}}
-<header class="dl-header">
-  <div class="dl-container dl-header__inner">
-    <a class="dl-brand" href="/admin"><span class="dl-brand__mark" aria-hidden="true">D</span>Doctolibre</a>
-    <nav aria-label="Navigation du cabinet">
-      <ul class="dl-nav">
-        {{block "admin_nav" .}}
-        <li><a href="/admin/calendar"{{if eq .Current "/admin/calendar"}} aria-current="page"{{end}}>Agenda</a></li>
-        <li><a href="/admin/patients"{{if eq .Current "/admin/patients"}} aria-current="page"{{end}}>Patients</a></li>
-        <li><a href="/admin/waitlist"{{if eq .Current "/admin/waitlist"}} aria-current="page"{{end}}>Liste d'attente</a></li>
-        {{if ne .Role "secretary"}}
-        <li><a href="/admin/availability"{{if eq .Current "/admin/availability"}} aria-current="page"{{end}}>Horaires</a></li>
-        <li><a href="/admin/absences"{{if eq .Current "/admin/absences"}} aria-current="page"{{end}}>Absences</a></li>
-        <li><a href="/admin/appointment-types"{{if eq .Current "/admin/appointment-types"}} aria-current="page"{{end}}>Motifs</a></li>
-        <li><a href="/admin/settings"{{if eq .Current "/admin/settings"}} aria-current="page"{{end}}>Paramètres</a></li>
-        {{end}}
-        {{if eq .Role "admin"}}
-        <li><a href="/admin/privacy"{{if eq .Current "/admin/privacy"}} aria-current="page"{{end}}>Confidentialité</a></li>
-        <li><a href="/admin/team"{{if eq .Current "/admin/team"}} aria-current="page"{{end}}>Équipe</a></li>
-        {{end}}
-        {{end}}
-      </ul>
-    </nav>
-    <form class="dl-header__end" method="post" action="/admin/logout">
-      {{csrf .CSRF}}
-      <button type="submit" class="dl-btn dl-btn--outline dl-btn--sm">Se déconnecter</button>
-    </form>
+<div class="drawer lg:drawer-open">
+  <input id="nav-drawer" type="checkbox" class="drawer-toggle" aria-label="Ouvrir le menu">
+  <div class="drawer-content flex flex-col min-h-screen">
+    <header class="navbar bg-base-100 border-b border-base-300 px-4 sticky top-0 z-20">
+      <div class="flex-none lg:hidden"><label for="nav-drawer" class="btn btn-ghost btn-square" aria-label="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></label></div>
+      <div class="flex-1 px-2"><a class="font-semibold text-primary lg:hidden" href="/admin">Doctolibre</a></div>
+      <div class="flex-none flex items-center gap-2">
+        {{template "theme_toggle.html"}}
+        <form method="post" action="/admin/logout">
+          {{csrf .CSRF}}
+          <button type="submit" class="btn btn-ghost btn-sm">Se déconnecter</button>
+        </form>
+      </div>
+    </header>
+    <main id="main" class="p-4 space-y-4">
+      {{template "flash.html" .Flash}}
+      {{block "content" .}}{{end}}
+    </main>
   </div>
-</header>
-<main id="main" class="dl-container">
-  {{template "flash.html" .Flash}}
-  {{block "content" .}}{{end}}
-</main>
+  <div class="drawer-side z-30">
+    <label for="nav-drawer" aria-label="Fermer le menu" class="drawer-overlay"></label>
+    <aside class="bg-base-100 border-r border-base-300 min-h-full w-64">
+      <div class="px-6 py-4 text-lg font-semibold text-primary"><a href="/admin">Doctolibre</a></div>
+      <nav aria-label="Navigation du cabinet">
+        <ul class="menu w-full px-3 gap-1">
+          {{block "admin_nav" .}}
+          <li><a href="/admin/calendar"{{if eq .Current "/admin/calendar"}} class="menu-active" aria-current="page"{{end}}>Agenda</a></li>
+          <li><a href="/admin/patients"{{if eq .Current "/admin/patients"}} class="menu-active" aria-current="page"{{end}}>Patients</a></li>
+          <li><a href="/admin/waitlist"{{if eq .Current "/admin/waitlist"}} class="menu-active" aria-current="page"{{end}}>Liste d'attente</a></li>
+          {{if ne .Role "secretary"}}
+          <li><a href="/admin/availability"{{if eq .Current "/admin/availability"}} class="menu-active" aria-current="page"{{end}}>Horaires</a></li>
+          <li><a href="/admin/absences"{{if eq .Current "/admin/absences"}} class="menu-active" aria-current="page"{{end}}>Absences</a></li>
+          <li><a href="/admin/appointment-types"{{if eq .Current "/admin/appointment-types"}} class="menu-active" aria-current="page"{{end}}>Motifs</a></li>
+          <li><a href="/admin/settings"{{if eq .Current "/admin/settings"}} class="menu-active" aria-current="page"{{end}}>Paramètres</a></li>
+          {{end}}
+          {{if eq .Role "admin"}}
+          <li><a href="/admin/privacy"{{if eq .Current "/admin/privacy"}} class="menu-active" aria-current="page"{{end}}>Confidentialité</a></li>
+          <li><a href="/admin/team"{{if eq .Current "/admin/team"}} class="menu-active" aria-current="page"{{end}}>Équipe</a></li>
+          {{end}}
+          {{end}}
+        </ul>
+      </nav>
+    </aside>
+  </div>
+</div>
 {{end}}

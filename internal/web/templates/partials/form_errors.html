@@ -1,4 +1,6 @@
-{{if .}}<div class="dl-alert dl-alert--error" role="alert" id="form-errors"><div>
-  <span class="dl-alert__title">Le formulaire contient des erreurs :</span>
-  <ul>{{range .}}<li>{{.}}</li>{{end}}</ul>
-</div></div>{{end}}
+{{if .}}<div class="alert alert-error items-start" role="alert" id="form-errors">
+  <div>
+    <p class="font-semibold">Le formulaire contient des erreurs :</p>
+    <ul class="list-disc pl-5">{{range .}}<li>{{.}}</li>{{end}}</ul>
+  </div>
+</div>{{end}}

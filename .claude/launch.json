@@ -53,11 +53,11 @@
       "runtimeArgs": [
         "-m",
         "http.server",
-        "8099",
+        "8098",
         "--directory",
         "poc/daisyui"
       ],
-      "port": 8099
+      "port": 8098
     }
   ]
 }

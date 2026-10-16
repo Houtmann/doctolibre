@@ -39,8 +39,8 @@ navigateur ─┤ HTTP (net/http)  →  handlers  →  services (métier)  →  
 | Routing | `net/http` (patterns `GET /x/{id}`) | Zéro dépendance, suffisant. |
 | Accès DB | `pgx/v5` + **sqlc** | SQL écrit à la main, code Go généré typé : idéal pour un LLM (pas de magie ORM). |
 | Migrations | **goose** (fichiers SQL, embarqués) | Simple, SQL pur. |
-| Front | `html/template` + **htmx** + un peu d'**Alpine.js** si besoin + **Pico CSS** | Pas de toolchain JS, pas de `node_modules`, tout est embarqué dans le binaire. Très bien connu des LLM. |
-| Agenda praticien | Grille HTML/CSS maison (vue jour/semaine) rendue serveur | Évite FullCalendar (lourd). |
+| Front | `html/template` + **htmx** + **Tailwind v4 standalone + daisyUI 5** (CSS généré par `make css`, commité) | Pas de toolchain JS ni de `node_modules` (exécutable Tailwind autonome), tout est embarqué dans le binaire. Très bien connu des LLM. |
+| Agenda praticien | **EventCalendar** (vkurko, vendored), repli sans JS = liste du jour rendue serveur | Évite FullCalendar (lourd) et une grille maison à entretenir. |
 | Auth praticien | Mot de passe argon2id + session cookie stockée en DB | Simple, pas d'OAuth. |
 | Patient | **Pas de compte**. Vérification par code OTP (SMS ou email) à la réservation, puis lien signé pour gérer le RDV. | Moins de friction, moins de données. |
 | Jobs | Table `outbox` + worker `SKIP LOCKED` | Pas de Redis/RabbitMQ. |
@@ -100,7 +100,7 @@ internal/
   httpx/                 serveur, middlewares, helpers de rendu
   web/                   handlers HTTP (public/, admin/)
     templates/           html/template (layout, partials, pages)
-    static/              htmx.min.js, pico.min.css, app.css
+    static/              htmx.min.js, ui.css (généré), app.js
   domain/                types métier purs + erreurs
   booking/               moteur de créneaux (pur, sans DB)
   service/               orchestration métier (utilise store + notify)

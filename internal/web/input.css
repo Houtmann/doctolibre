@@ -1,0 +1,143 @@
+/*
+ * Source de ui.css (généré par `make css`, commité). Les couleurs ne vivent que dans les deux blocs de thème
+ * ci-dessous ; partout ailleurs on dérive des variables (color-mix). Valeurs : design/tokens.css, ratios AA dans
+ * docs/design-system.md. Les sources scannées : templates et static/app.js (pas htmx : voir AGENTS.md).
+ */
+@import "tailwindcss" source(none);
+@source "./templates/**/*.html";
+@source "./static/app.js";
+
+@plugin "../../tools/daisyui/daisyui.mjs" {
+  themes: false;
+}
+
+/* Thème clair « Pétrole & papier » (cf. design/tokens.css). */
+@plugin "../../tools/daisyui/daisyui-theme.mjs" {
+  name: "doctolibre";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #f7f6f3;
+  --color-base-300: #d9d5cc;
+  --color-base-content: #1c1b18;
+  --color-primary: #0f5e5a;
+  --color-primary-content: #ffffff;
+  --color-secondary: #4a463f;
+  --color-secondary-content: #ffffff;
+  --color-accent: #7dd3cb;
+  --color-accent-content: #06201e;
+  --color-neutral: #1c1b18;
+  --color-neutral-content: #f7f6f3;
+  --color-info: #1d5fa8;
+  --color-info-content: #ffffff;
+  --color-success: #2f7a45;
+  --color-success-content: #ffffff;
+  --color-warning: #b45309;
+  --color-warning-content: #ffffff;
+  --color-error: #b42318;
+  --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* Variante sombre. */
+@plugin "../../tools/daisyui/daisyui-theme.mjs" {
+  name: "doctolibre-dark";
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: #1a1e1d;
+  --color-base-200: #121514;
+  --color-base-300: #343a38;
+  --color-base-content: #ecebe6;
+  --color-primary: #5cc4bb;
+  --color-primary-content: #06201e;
+  --color-secondary: #a9aca6;
+  --color-secondary-content: #121514;
+  --color-accent: #0b4a47;
+  --color-accent-content: #bfe8e3;
+  --color-neutral: #262a29;
+  --color-neutral-content: #ecebe6;
+  --color-info: #7fb2e5;
+  --color-info-content: #0b1f33;
+  --color-success: #5fb97a;
+  --color-success-content: #0a2314;
+  --color-warning: #e08a3c;
+  --color-warning-content: #2a1704;
+  --color-error: #f2867a;
+  --color-error-content: #2a0b07;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* États de RDV dérivés des couleurs sémantiques : suivent le thème clair/sombre. */
+:root {
+  --st-booked-bg: color-mix(in oklab, var(--color-primary) 16%, var(--color-base-100));
+  --st-booked-fg: color-mix(in oklab, var(--color-primary) 80%, var(--color-base-content));
+  --st-booked-bd: var(--color-primary);
+  --st-done-bg: color-mix(in oklab, var(--color-success) 18%, var(--color-base-100));
+  --st-done-fg: color-mix(in oklab, var(--color-success) 70%, var(--color-base-content));
+  --st-done-bd: var(--color-success);
+  --st-noshow-bg: color-mix(in oklab, var(--color-warning) 20%, var(--color-base-100));
+  --st-noshow-fg: color-mix(in oklab, var(--color-warning) 70%, var(--color-base-content));
+  --st-noshow-bd: var(--color-warning);
+  --st-cancelled-bg: var(--color-base-200);
+  --st-cancelled-fg: color-mix(in oklab, var(--color-base-content) 65%, transparent);
+  --st-cancelled-bd: var(--color-base-300);
+}
+
+/* EventCalendar (vkurko) : on réaffecte ses variables aux jetons daisyUI, donc le thème sombre suit sans `.ec-dark`. */
+.ec.ec {
+  color-scheme: inherit;
+  --ec-bg-color: var(--color-base-100);
+  --ec-text-color: var(--color-base-content);
+  --ec-border-color: var(--color-base-300);
+  --ec-today-bg-color: color-mix(in oklab, var(--color-primary) 7%, var(--color-base-100));
+  --ec-highlight-color: color-mix(in oklab, var(--color-primary) 12%, var(--color-base-100));
+  --ec-now-indicator-color: var(--color-error);
+  --ec-popup-bg-color: var(--color-base-100);
+  --ec-button-bg-color: var(--color-base-100);
+  --ec-button-border-color: var(--color-base-300);
+  --ec-button-text-color: var(--color-base-content);
+  --ec-button-active-bg-color: var(--color-primary);
+  --ec-button-active-border-color: var(--color-primary);
+  --ec-button-active-text-color: var(--color-primary-content);
+  --ec-event-bg-color: var(--st-booked-bg);
+  --ec-event-text-color: var(--st-booked-fg);
+  --ec-bg-event-opacity: 1;
+  font-size: 0.8125rem;
+}
+.ec .ec-event { border-left: 3px solid var(--ec-event-border, var(--st-booked-bd)); border-radius: 0.375rem; cursor: pointer; }
+.ec .ec-event.appt-done { --ec-event-border: var(--st-done-bd); }
+.ec .ec-event.appt-noshow { --ec-event-border: var(--st-noshow-bd); }
+.ec .ec-event.appt-cancelled { --ec-event-border: var(--st-cancelled-bd); text-decoration: line-through; }
+.ec .ec-event:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.ec .ec-button { border-radius: var(--radius-field); }
+.ec .ec-toolbar { flex-wrap: wrap; gap: 0.5rem; }
+
+/* Bordures de champs : contraste non textuel >= 3:1 (WCAG 1.4.11). :where() garde une spécificité nulle,
+   donc .input-error & co. (couleur d'état) l'emportent. */
+@layer components {
+  :where(.input, .select, .textarea, .checkbox, .radio) {
+    --input-color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
+  }
+}
+
+/* Le grain (--noise: 0, donc invisible) de daisyUI est une image data: que la CSP (default-src 'self') bloque :
+   on la neutralise pour éviter une erreur console par élément. */
+:root {
+  --fx-noise: none;
+}

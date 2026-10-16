@@ -1,56 +1,110 @@
 {{define "title"}}Styleguide{{end}}
+{{define "sg_components"}}
+<div class="space-y-6">
+  <section class="space-y-2" aria-label="Boutons">
+    <h3 class="font-semibold">Boutons</h3>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn btn-primary">Primaire</button>
+      <button type="button" class="btn btn-secondary">Secondaire</button>
+      <button type="button" class="btn btn-outline">Contour</button>
+      <button type="button" class="btn btn-ghost">Discret</button>
+      <button type="button" class="btn btn-error">Danger</button>
+      <button type="button" class="btn btn-primary" disabled>Désactivé</button>
+      <button type="button" class="btn btn-primary btn-sm">Petit</button>
+    </div>
+  </section>
+
+  <section class="space-y-2" aria-label="Champs">
+    <h3 class="font-semibold">Champs</h3>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <label class="fieldset">
+        <span class="fieldset-legend">Nom</span>
+        <input type="text" class="input w-full" value="Martin" autocomplete="off">
+        <span class="label">Aide : nom de famille.</span>
+      </label>
+      <label class="fieldset">
+        <span class="fieldset-legend">Téléphone</span>
+        <input type="tel" class="input input-error w-full" value="06" aria-invalid="true">
+        <span class="label text-error">Numéro incomplet.</span>
+      </label>
+      <label class="fieldset">
+        <span class="fieldset-legend">Motif</span>
+        <select class="select w-full"><option>Séance de rééducation</option><option>Bilan initial</option></select>
+      </label>
+      <label class="fieldset">
+        <span class="fieldset-legend">Note administrative</span>
+        <textarea class="textarea w-full" rows="2">Rappeler en début de semaine.</textarea>
+      </label>
+    </div>
+    <label class="label cursor-pointer justify-start gap-3">
+      <input type="checkbox" class="checkbox checkbox-primary" checked>
+      <span>Recevoir les rappels par SMS</span>
+    </label>
+  </section>
+
+  <section class="space-y-2" aria-label="Messages">
+    <h3 class="font-semibold">Messages</h3>
+    {{range .Flashes}}{{template "flash.html" .}}{{end}}
+  </section>
+
+  <section class="space-y-2" aria-label="États de rendez-vous">
+    <h3 class="font-semibold">États de rendez-vous</h3>
+    <ul class="flex flex-wrap gap-2">
+      <li class="badge badge-soft badge-primary">Réservé</li>
+      <li class="badge badge-soft badge-success">Honoré</li>
+      <li class="badge badge-soft badge-warning">Absent</li>
+      <li class="badge badge-ghost">Annulé</li>
+    </ul>
+  </section>
+
+  <section class="space-y-2" aria-label="Tableau">
+    <h3 class="font-semibold">Tableau</h3>
+    <div class="overflow-x-auto rounded-box border border-base-300">
+      <table class="table">
+        <caption class="sr-only">Prochains rendez-vous</caption>
+        <thead><tr><th scope="col">Heure</th><th scope="col">Patient</th><th scope="col">État</th></tr></thead>
+        <tbody>
+          {{range .Rows}}<tr><td>{{.Time}}</td><td>{{.Name}}</td><td><span class="badge {{if eq .Status "booked"}}badge-soft badge-primary{{else if eq .Status "done"}}badge-soft badge-success{{else if eq .Status "no_show"}}badge-soft badge-warning{{else}}badge-ghost{{end}}">{{.StatusName}}</span></td></tr>{{end}}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{{end}}
+
 {{define "content"}}
-<h1>Styleguide</h1>
-<p class="dl-muted">Page de contrôle visuel, disponible uniquement en dev. Voir <code>docs/design-system.md</code>.</p>
+<h1 class="text-2xl font-semibold">Styleguide</h1>
+<p class="text-base-content/70">Page de contrôle visuel (daisyUI), disponible uniquement en dev. Chaque bloc est rendu en clair puis en sombre. Voir <code>docs/design-system.md</code>.</p>
+<p><a class="link link-primary" href="/dev/styleguide/v2">Ancien styleguide v2</a> (supprimé en T084).</p>
 
-<p>Design system v2 en cours de migration : <a href="/dev/styleguide/v2">/dev/styleguide/v2</a>.</p>
-
-<h2>Jetons</h2>
-<div class="sw-grid">
-  {{range .Data.Swatches}}<div class="sw {{.Class}}"><code>--app-{{.Name}}</code></div>{{end}}
-</div>
-
-<h2>Boutons</h2>
-<p class="dl-cluster">
-  <button type="button">Primaire</button>
-  <button type="button" class="secondary">Secondaire</button>
-  <button type="button" class="outline">Contour</button>
-  <button type="button" disabled>Désactivé</button>
-</p>
-
-<h2>Messages (flash)</h2>
-{{range .Data.Flashes}}{{template "flash.html" .}}{{end}}
-
-<h2>Formulaire et erreurs</h2>
+<h2 class="text-xl font-semibold">Formulaire et erreurs</h2>
 {{template "form_errors.html" .Data.Errors}}
-<form method="post" action="/dev/styleguide">
-  {{csrf .CSRF}}
-  {{template "patient_fields.html" .Data.Form}}
-  <button type="submit">Enregistrer</button>
-</form>
 
-<h2>Agenda : un RDV par état</h2>
-<div class="dl-cal cols-4" role="group" aria-label="Extrait d'agenda">
-  <div class="dl-cal__head gr-1 gc-1"></div>
-  {{range .Data.Appts}}<div class="dl-cal__head gr-1 gc-{{.Col}}">{{.Head}}</div>{{end}}
-  <div class="dl-cal__hour gr-2 gs-4 gc-all" aria-hidden="true"></div>
-  <div class="dl-cal__hour-label gr-2 gc-1" aria-hidden="true">09h00</div>
-  {{range .Data.Appts}}<a class="dl-appt gr-3 gs-{{.Span}} gc-{{.Col}} st-{{.Status}}" href="#"><strong>{{.Time}}</strong> {{.Patient}}<br>{{.StatusName}}</a>{{end}}
-  <div class="dl-cal__band gr-5 gs-2 gc-2" aria-hidden="true"></div>
-  <div class="dl-cal__now gr-6 gc-3" aria-hidden="true"></div>
-</div>
-<div class="dl-cal-list">
-  <h2>Liste (mobile)</h2>
-  <ol>
-    {{range .Data.Appts}}<li><a class="st-{{.Status}}" href="#"><strong>{{.Time}}</strong> · {{.Patient}} <small>({{.StatusName}})</small></a></li>{{end}}
-  </ol>
+<h2 class="text-xl font-semibold">Composants</h2>
+<div class="grid gap-4 lg:grid-cols-2">
+  <div class="rounded-box border border-base-300 bg-base-100 p-4 text-base-content" data-theme="doctolibre">
+    <p class="mb-3 text-sm font-semibold text-primary">Clair</p>
+    {{template "sg_components" .Data}}
+  </div>
+  <div class="rounded-box border border-base-300 bg-base-100 p-4 text-base-content" data-theme="doctolibre-dark">
+    <p class="mb-3 text-sm font-semibold text-primary">Sombre</p>
+    {{template "sg_components" .Data}}
+  </div>
 </div>
 
-<h2>Partials réutilisables</h2>
-<h3>status_button</h3>
-{{template "status_button.html" .Data.StatusBtn}}
-<h3>patient_results</h3>
-{{template "patient_results.html" .Data.Results}}
-<h3>booking_summary</h3>
-{{template "booking_summary.html" .Data.Summary}}
+<h2 class="text-xl font-semibold">Dialogue</h2>
+<p><button type="button" class="btn btn-outline" data-dialog-open="sg-dialog">Ouvrir le dialogue</button></p>
+<dialog id="sg-dialog" class="modal" aria-labelledby="sg-dialog-title">
+  <div class="modal-box">
+    <h3 id="sg-dialog-title" class="text-lg font-semibold">Annuler ce rendez-vous ?</h3>
+    <p class="py-3">Le patient sera prévenu par message.</p>
+    <div class="modal-action">
+      <form method="dialog" class="flex gap-2">
+        <button class="btn btn-ghost">Retour</button>
+        <button class="btn btn-error">Annuler le rendez-vous</button>
+      </form>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button aria-label="Fermer">Fermer</button></form>
+</dialog>
 {{end}}

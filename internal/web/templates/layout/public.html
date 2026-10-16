@@ -1,14 +1,13 @@
 {{define "chrome"}}
-<header class="dl-header">
-  <div class="dl-container dl-container--narrow dl-header__inner">
-    <a class="dl-brand" href="/"><span class="dl-brand__mark" aria-hidden="true">D</span>Doctolibre</a>
-  </div>
+<header class="navbar bg-base-100 border-b border-base-300 px-4">
+  <div class="flex-1"><a class="font-semibold text-primary" href="/">Doctolibre</a></div>
+  <div class="flex-none">{{template "theme_toggle.html"}}</div>
 </header>
-<main id="main" class="dl-container dl-container--narrow">
+<main id="main" class="mx-auto w-full max-w-3xl p-4 pb-16 space-y-4">
   {{template "flash.html" .Flash}}
   {{block "content" .}}{{end}}
 </main>
-<footer class="dl-container dl-container--narrow dl-footer">
+<footer class="mx-auto w-full max-w-3xl px-4 pb-8 text-sm text-base-content/70">
   <p>Doctolibre, prise de rendez-vous libre et auto-hébergeable.</p>
 </footer>
 {{end}}

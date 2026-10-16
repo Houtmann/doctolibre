@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — Choix daisyUI, POC, T080 (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T080–T084 créées ; T065–T067 → done, T068 → superseded ; T080 (todo → review).
+- **Fait** : POC `poc/daisyui/` validé par l'humain ; outillage Tailwind v4 standalone (`make tools` avec sha256 épinglé, `make css`, `make css-check` en CI), daisyUI 5.7.47 versionné dans `tools/daisyui/`, thèmes `doctolibre`/`doctolibre-dark`, layouts public/admin et partials `flash`/`form_errors` en daisyUI, `/dev/styleguide` réécrit, AGENTS.md/PLAN.md/design-system.md à jour. `base.html` ne charge plus que `ui.css`.
+- **Vérification** : `make check` ✅ (relancé par l'orchestrateur), `go build` sans binaire ✅ ; navigateur : styleguide clair/sombre OK, pages non migrées sommaires (attendu).
+- **Reste / reprise** : relecture humaine de T080 ; puis T081, T082, T083 en parallèle (worktrees). Non testé : `make tools` sous Linux et en CI réelle ; drawer admin mobile avec un vrai compte.
+- **Décisions** : `decisions.md`, 2026-10-16 (front daisyUI, css-check, `--fx-noise`).
+
 ## 2026-10-16 — T065, T066, T067 en parallèle (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T064 (review → done, validée par l'humain) ; T065, T066, T067 (todo → review) en trois worktrees, fusionnées sur main.

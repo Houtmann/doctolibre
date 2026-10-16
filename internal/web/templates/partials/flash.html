@@ -1,1 +1,1 @@
-{{if .}}<div class="dl-alert dl-alert--{{.Kind}}" role="{{if eq .Kind "error"}}alert{{else}}status{{end}}">{{.Message}}</div>{{end}}
+{{if .}}<div class="alert {{if eq .Kind "success"}}alert-success{{else if eq .Kind "error"}}alert-error{{else if eq .Kind "warning"}}alert-warning{{else}}alert-info{{end}}" role="{{if eq .Kind "error"}}alert{{else}}status{{end}}"><span>{{.Message}}</span></div>{{end}}

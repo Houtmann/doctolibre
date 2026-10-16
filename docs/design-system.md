@@ -1,50 +1,72 @@
-# Design system léger
+# Design system : Tailwind v4 + daisyUI 5
 
-Socle visuel unique : Pico CSS + les jetons `--app-*` de `internal/web/static/app.css` + les partials de `internal/web/templates/partials/`.
-Page de contrôle (dev uniquement) : `GET /dev/styleguide` (404 en prod).
-Design system v2 « Pétrole & papier » en cours de migration : voir la section en fin de document.
+Socle visuel : classes utilitaires Tailwind et composants daisyUI, deux thèmes `doctolibre` (clair, défaut) et `doctolibre-dark` définis dans `internal/web/input.css` (palette « pétrole & papier » de `design/tokens.css`).
+Le CSS est **généré** dans `internal/web/static/ui.css` (commité) : `make tools` (une fois, télécharge l'exécutable Tailwind épinglé dans `bin/`) puis `make css` après toute modification d'un template, de `static/app.js` ou d'`input.css`. `make css-check` (inclus dans `make check`, obligatoire en CI) vérifie qu'`ui.css` est à jour.
+Page de contrôle (dev uniquement) : `GET /dev/styleguide` (404 en prod), composants rendus en clair et en sombre.
+Décision et alternatives écartées : `docs/decisions.md` (2026-10-16).
 
 ## Règles
 
+- **Aucune couleur hex hors des deux blocs de thème** d'`input.css`. Vérification : `grep -nE '#[0-9a-fA-F]{3,6}\b' internal/web/input.css` ne remonte que des lignes `--color-*` des blocs `@plugin "…daisyui-theme.mjs"`.
+- **Aucune classe construite dynamiquement** (`"btn-" + x`) : Tailwind scanne le texte des templates, il faut les noms complets (`{{if …}}alert-error{{else}}…`).
+- Ni `style=` ni `<script>` inline, ni image `data:` (CSP `default-src 'self'`). Le grain de daisyUI (`--fx-noise`, image `data:`) est neutralisé dans `input.css`.
 - Un message = partial `flash` ; une erreur de formulaire = partial `form_errors`.
-- **Aucune couleur hex hors des blocs `:root`** de `app.css`. Pas de nouvelle classe de couleur sans jeton (clair **et** sombre).
-- Ni `style=` ni `<script>` inline (CSP) : une classe CSS par variante.
-- Vérification : `grep -nE '#[0-9a-fA-F]{3,6}\b' internal/web/static/app.css` ne doit remonter que des lignes de blocs `:root`.
+- Chaque champ a un `<label>` ; une erreur de champ = `input-error` + `aria-invalid="true"` + texte d'erreur visible (pas la couleur seule).
+- Lien d'évitement (`sr-only focus:not-sr-only`) en tête de `base.html`, navigation dans un `<nav aria-label>`, page courante marquée `aria-current="page"`.
+- Mobile-first : le menu admin est un `drawer` (bouton « Menu » sous `lg`), les tableaux dans `overflow-x-auto`.
+
+## Thèmes et bascule
+
+- `base.html` ne pose pas `data-theme` : sans JS, `prefers-color-scheme` choisit (daisyUI : thème `doctolibre-dark` est `prefersdark`).
+- `static/app.js` (chargé dans `<head>` **sans `defer`**, donc avant le premier rendu : pas de flash) applique le choix mémorisé (`localStorage`, clé `doctolibre-theme`, dans un `try/catch`) ; le bouton `data-theme-toggle` (partial `theme_toggle`) bascule clair/sombre au clic.
+- `[data-theme="doctolibre-dark"]` sur un élément suffit à rendre un bloc en sombre (utilisé par le styleguide).
 
 ## Jetons
 
 | Famille | Jetons | Usage |
 |---|---|---|
-| Sémantiques | `--app-{success,error,info,warning}-{bg,fg}` | `.flash-*`, `.form-errors`, `.callout`, jour courant de l'agenda |
-| États de RDV | `--app-st-{booked,done,no_show,cancelled}-{bg,fg,border}` | `.cal-appt.st-*`, `.cal-list a.st-*` (`border` = liseré gauche) |
-| Agenda | `--app-band-a`, `--app-band-b`, `--app-now` | bande hachurée « indisponible », ligne « maintenant » |
-| Espacement | `--app-space-1..4` (0,25 / 0,5 / 0,75 / 1 rem) | marges et paddings des composants |
-| Rayon | `--app-radius-sm` (3 px) | RDV de l'agenda |
+| Couleurs daisyUI | `base-100/200/300`, `base-content`, `primary`, `secondary`, `accent`, `neutral`, `info`, `success`, `warning`, `error` (+ `-content`) | classes `bg-*`, `text-*`, `border-*`, composants |
+| États de RDV | `--st-{booked,done,noshow,cancelled}-{bg,fg,bd}` (dérivés par `color-mix`) | agenda EventCalendar (T083) ; badges : `badge-soft badge-primary` (réservé), `badge-success` (honoré), `badge-warning` (absent), `badge-ghost` (annulé) |
+| EventCalendar | `--ec-*` réaffectés aux jetons daisyUI | CSS de la lib ajouté en T083 |
+| Formes | rayons 0,5 / 0,5 / 0,75 rem (sélecteur, champ, boîte), bordure 1 px, sans ombre ni grain | thème |
 
-Le mode sombre redéfinit les mêmes jetons sous `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { … } }`, et sous `:root[data-theme="dark"]` (même garde que Pico).
-Les pastilles de `/dev/styleguide` sont les classes `.sw-*`.
+## Composants retenus (modèles dans `/dev/styleguide`)
+
+| Besoin | Markup |
+|---|---|
+| Boutons | `btn btn-primary` / `btn-secondary` / `btn-outline` / `btn-ghost` / `btn-error`, `btn-sm`, `disabled` |
+| Champ | `<label class="fieldset"><span class="fieldset-legend">…</span><input class="input w-full">` (aide ou erreur : `<span class="label">`) ; `select select`, `textarea textarea`, `checkbox checkbox-primary` |
+| Message | `alert alert-success|error|warning|info` (`role="alert"` pour les erreurs, `status` sinon) |
+| Tableau | `table` dans `overflow-x-auto rounded-box border`, `<caption class="sr-only">`, `<th scope="col">` |
+| Badge d'état | `badge badge-soft badge-primary` etc. (voir ci-dessus) |
+| Dialogue | `<dialog class="modal">` + `modal-box` + `modal-action` ; ouverture par `<button data-dialog-open="id">` (`app.js`), fermeture par `<form method="dialog">` |
+| Navigation admin | `drawer lg:drawer-open` + `menu` (`menu-active` sur la page courante), `navbar` en haut |
 
 ## Contraste (WCAG 2.x, luminance relative ; seuil 4,5:1 texte, 3:1 non-texte)
 
-Calculé avec un script jetable ; fond de page Pico : `#ffffff` (clair), `#13171f` (sombre).
+Calculé le 2026-10-16 avec un script jetable sur les valeurs d'`input.css`.
 
-| Paire | Clair | Sombre |
+| Paire (texte / fond) | Clair | Sombre |
 |---|---|---|
-| success fg/bg | `#0b4a1d`/`#e6f4ea` : 9,19 | `#b7e4c4`/`#12301c` : 10,17 |
-| error fg/bg | `#7a1010`/`#fdecea` : 9,62 | `#f5c2c0`/`#3d1414` : 10,21 |
-| info fg/bg | `#0b2f6b`/`#e8f0fe` : 11,22 | `#c4d8fb`/`#14274d` : 10,20 |
-| warning fg/bg | `#5c4400`/`#fff4d6` : 8,40 | `#f5deb0`/`#3d3000` : 9,84 |
-| st-booked fg/bg | `#0b2f6b`/`#dbe8ff` : 10,41 | `#c4d8fb`/`#14274d` : 10,20 |
-| st-done fg/bg | `#0b4a1d`/`#d9f0df` : 8,69 | `#b7e4c4`/`#12301c` : 10,17 |
-| st-no_show fg/bg | `#6b3200`/`#ffe6cc` : 8,38 | `#ffd9b0`/`#3d2300` : 10,98 |
-| st-cancelled fg/bg | `#3d3d3d`/`#ececec` : 9,19 | `#cfcfcf`/`#2a2a2a` : 9,21 |
-| Liseré st-booked / bg (≥ 3) | 10,41 | 6,09 |
-| Liseré st-done / bg | 8,69 | 5,85 |
-| Liseré st-no_show / bg | 8,38 | 5,95 |
-| Liseré st-cancelled / bg | 4,51 | 4,16 |
-| Ligne « maintenant » / page (≥ 3) | `#c0171d` : 6,21 | `#ff6b70` : 6,49 |
+| base-content / base-100 | 17,22 | 14,10 |
+| base-content / base-200 | 15,94 | 15,39 |
+| base-content / base-300 | 11,76 | 9,73 |
+| primary-content / primary | 7,58 | 8,17 |
+| secondary-content / secondary | 9,38 | 7,99 |
+| accent-content / accent | 9,77 | 7,61 |
+| neutral-content / neutral | 15,94 | 12,17 |
+| info-content / info | 6,45 | 7,47 |
+| success-content / success | 5,26 | 6,89 |
+| warning-content / warning | 5,02 | 6,44 |
+| error-content / error | 6,57 | 7,37 |
+| primary / base-100 (liens, texte coloré) | 7,58 | 8,07 |
+| primary / base-200 | 7,02 | 8,81 |
+| error / base-100 | 6,57 | 6,79 |
+| success / base-100 | 5,26 | 6,98 |
+| warning / base-100 | 5,02 | 6,31 |
+| info / base-100 | 6,45 | 7,54 |
 
-Toutes les paires texte/fond dépassent 4,5:1 (minimum 8,38) et tous les éléments non textuels 3:1.
+Toutes les paires texte/fond dépassent 4,5:1 (minimum 5,02). Les bordures décoratives `base-300` (1,36 à 1,58 contre les fonds) ne portent pas d'information ; en revanche **la bordure des champs** (non-texte, critère 1.4.11) est assombrie dans `input.css` à 55 % de `base-content` (`--input-color`), soit environ 4:1 sur `base-100`, au lieu des 20 % de daisyUI (environ 1,5:1). Les badges « soft » (texte coloré sur teinte de la couleur) et les états EventCalendar sont à re-vérifier avec leurs pages (T081–T083).
 
 ## Partials réutilisables
 
@@ -54,6 +76,7 @@ Appel : `{{template "nom.html" donnée}}` (les partials sont dans le même ensem
 |---|---|---|---|
 | `flash` | `*Flash{Kind, Message}` (`success`, `error`, `info`, `warning`) ; nil = rien | Déjà inclus par les layouts via `.Flash` (cookie signé, `Renderer.SetFlash`) | `{{template "flash.html" .Flash}}` |
 | `form_errors` | `[]string` ; vide = rien | Rendu seul avec `rd.Partial(w, r, "form_errors", errs)` | `{{template "form_errors.html" .Data.Errors}}` |
+| `theme_toggle` | aucune | Bouton de bascule clair/sombre (`data-theme-toggle`), dans les navbars | `{{template "theme_toggle.html"}}` |
 | `patient_fields` | `PatientForm` (noms, contact, opt-in `"1"`, note) | — (champs d'un `<form>` fourni par la page) | `{{template "patient_fields.html" .Data.Form}}` |
 | `status_button` | `dict "CSRF" … "D" détail-RDV "View" … "Status" … "Label" …` | `hx-post` → remplace `#appt-detail` | `{{template "status_button.html" (dict "CSRF" .CSRF "D" .D "View" .View "Status" "done" "Label" "Marquer honoré")}}` |
 | `patient_results` | `{Patients []{ID, Name, Contact, Selected}, Form.Query}` | Réponse de la recherche de patients (`rd.Partial(…, "patient_results", p)`) | `{{template "patient_results.html" .}}` |
@@ -62,20 +85,6 @@ Appel : `{{template "nom.html" donnée}}` (les partials sont dans le même ensem
 
 Autres partials (`calendar_grid`, `appointment_detail`, `appointment_form`, `availability_panel`, `absences_panel`, `types_panel`, `booking_grid`) : fragments propres à une page, rendus aussi comme réponses htmx de cette page.
 
-## v2 en cours de migration
+## Héritage en cours de suppression (T084)
 
-Le design system v2 (`design/`) remplacera Pico et les jetons `--app-*` famille par famille (tâches T064–T068). Références : [`design/README.md`](../design/README.md) (jetons, composants, règles) et [`design/MIGRATION.md`](../design/MIGRATION.md) (correspondance ancien → nouveau).
-
-Fichiers statiques embarqués (`internal/web/static/`) :
-
-| Fichier | Contenu | Lié ? |
-|---|---|---|
-| `tokens.css` | copie exacte de `design/tokens.css` (jetons `--dl-*`) | oui |
-| `components.css` | `design/components.css` sans le bloc « Base » (sélecteurs d'éléments), plus les classes `.dl-sg-*` du styleguide v2 (jamais dans l'application) | oui |
-| `base.css` | le bloc « Base » retiré (reset, titres, liens, focus) | **non**, il remplacera Pico en T068 |
-
-Ordre de chargement dans `layout/base.html` : `pico.min.css` → `tokens.css` → `components.css` → `app.css` (`app.css` garde le dernier mot pendant la transition). Les classes de grille `.gr-N` / `.gs-N` / `.gc-N` restent dans `app.css`.
-
-Coexistence avec Pico : les composants `.dl-*` neutralisent explicitement les styles par élément de Pico (marges de `button` / `input`, `appearance` des champs, puces de liste, fond des `td`, groupe `role="group"`) ; ces corrections vivent dans `design/components.css`, copie source. Une seule exception à « pas de `!important` » : `padding-inline` des champs `[aria-invalid]`, que Pico impose en `!important`.
-
-Page de contrôle : `GET /dev/styleguide/v2` (dev uniquement), chaque bloc en clair puis en sombre (`data-theme="dark"`).
+`pico.min.css`, `tokens.css`, `components.css`, `base.css`, `app.css` et la page `/dev/styleguide/v2` restent sur disque mais ne sont **plus liés** par `base.html`. Les pages pas encore migrées (T081–T083) sont donc sommaires jusque-là ; leurs classes `dl-*` et les `partials` ci-dessous qui en dépendent (`patient_fields`, `status_button`, `patient_results`, `booking_*`, `calendar_grid`…) seront réécrits en daisyUI avec leur page. Ne pas ajouter de nouveau lien vers ces fichiers.

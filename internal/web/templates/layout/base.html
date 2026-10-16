@@ -6,15 +6,13 @@
   <meta name="csrf-token" content="{{.CSRF}}">
   <meta name="htmx-config" content='{"includeIndicatorStyles":false,"allowEval":false}'>
   <title>{{block "title" .}}Accueil{{end}} · Doctolibre</title>
-  <link rel="stylesheet" href="{{asset "pico.min.css"}}">
-  <link rel="stylesheet" href="{{asset "tokens.css"}}">
-  <link rel="stylesheet" href="{{asset "components.css"}}">
-  <link rel="stylesheet" href="{{asset "app.css"}}">
+  <link rel="stylesheet" href="{{asset "ui.css"}}">
+  {{/* app.js sans defer : il pose data-theme avant le premier rendu (pas de flash). */}}
+  <script src="{{asset "app.js"}}"></script>
   <script src="{{asset "htmx.min.js"}}" defer></script>
-  <script src="{{asset "app.js"}}" defer></script>
 </head>
-<body hx-headers="{{.HXHeaders}}">
-  <a class="dl-skip-link" href="#main">Aller au contenu</a>
+<body class="bg-base-200 text-base-content min-h-screen" hx-headers="{{.HXHeaders}}">
+  <a class="sr-only focus:not-sr-only btn btn-primary btn-sm absolute z-50 m-2" href="#main">Aller au contenu</a>
   {{template "chrome" .}}
 </body>
 </html>

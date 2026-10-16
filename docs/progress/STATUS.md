@@ -17,11 +17,11 @@
 
 ## En cours
 
-En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system). T063–T067 `done` (T065–T067 mergées, leur CSS `dl-*` sera supprimé en T084). T068 `superseded` (absorbée par T084).
+En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system), **T080** (outillage Tailwind + daisyUI, layouts ; pages non migrées volontairement sommaires jusqu’à T081–T084). T063–T067 `done` (T065–T067 mergées, leur CSS `dl-*` sera supprimé en T084). T068 `superseded` (absorbée par T084).
 
 ## Prochaine action
 
-1. **Migration front (daisyUI)** : lancer **T080** (outillage Tailwind + daisyUI, thèmes, layouts, partials ; revue renforcée), puis **T081, T082, T083 en parallèle** (templates disjoints ; `ui.css` est généré : relancer `make css` en cas de conflit), puis **T084** (pages restantes, retrait de Pico et de l'ancien CSS). T057, T061 et T070–T073 (UI) après T080.
+1. **Migration front (daisyUI)** : relire **T080** (en review), puis lancer **T081, T082, T083 en parallèle** (templates disjoints ; `ui.css` est généré : relancer `make css` en cas de conflit), puis **T084** (pages restantes, retrait de Pico et de l'ancien CSS). T057, T061 et T070–T073 (UI) après T080.
 2. Relire et passer en `done` T050 (débloque T051, T055), T052, T058, T062. Prêtes en parallèle (hors UI) : T053, T054, T056, T059, T060 (attention aux numéros de migration : 00020 et suivants, un seul agent à la fois sur `sqlc`). T072 prête ; T070 dès que T058 est `done` ; T071 après T055 ; T073 après T072 + T059.
 3. Passage navigateur : rendu 360 px de toutes les pages, agenda au clavier, vue jour à 4 praticiens à 1280 px (critère T033 non coché) ; repris dans le contrôle final de T084.
 4. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
@@ -45,6 +45,7 @@ En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours 
 - `TestCalendarWeekWith150AppointmentsIsFast` (seuil 100 ms) peut échouer sous forte charge machine ; passe seul.
 - `DOCTOLIBRE_SECRET_KEY` désormais obligatoire en dev aussi : l'ajouter à son `.env` local (exemple dans `.env.example`).
 - Défauts d'affichage repérés via `/dev/styleguide` (antérieurs à T062) : puce carrée Pico et contact à la ligne dans `patient_results` ; la CSP bloque les icônes SVG `data:` de Pico (case à cocher, champ date) — ajouter `img-src 'self' data:` ou surcharger les icônes.
+- Outillage front : `make tools` (télécharge `bin/tailwindcss`, sha256 vérifié) puis `make css` après toute modif de template ; non testé sous Linux / CI réelle.
 - Disque : le cache Go des sous-agents (`/tmp/go-build`) peut remplir le disque (19 Go le 2026-10-16) ; `GOCACHE=/tmp/go-build go clean -cache`.
 - Petits manques : le déplacement d'un RDV par le cabinet envoie un message sans lien de gestion ; pas de lien vers `/admin/status` ni vers la page de réservation publique dans le tableau de bord ; les RDV créés par une série ne comptent pas dans la métrique `AppointmentsCreated`.
 
@@ -57,4 +58,4 @@ En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours 
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 28 (dont 1 remplacée) | 5 | 4 |
+| 5 — Retours terrain | 28 (dont 1 remplacée) | 5 | 5 |

@@ -220,18 +220,18 @@ func TestStaticAssets(t *testing.T) {
 	t.Parallel()
 	h := newHandler(nil)
 	home := getPage(h, "/").Body.String()
-	m := regexp.MustCompile(`/static/app\.css\?v=[0-9a-f]+`).FindString(home)
+	m := regexp.MustCompile(`/static/ui\.css\?v=[0-9a-f]+`).FindString(home)
 	if m == "" {
-		t.Fatal("URL app.css versionnée absente")
+		t.Fatal("URL ui.css versionnée absente")
 	}
 	rec := getPage(h, m)
 	if rec.Code != 200 || !strings.Contains(rec.Header().Get("Cache-Control"), "immutable") {
 		t.Errorf("code %d cache %q", rec.Code, rec.Header().Get("Cache-Control"))
 	}
-	if rec := getPage(h, "/static/app.css"); rec.Header().Get("Cache-Control") != "no-cache" {
+	if rec := getPage(h, "/static/ui.css"); rec.Header().Get("Cache-Control") != "no-cache" {
 		t.Errorf("sans ?v= : cache %q", rec.Header().Get("Cache-Control"))
 	}
-	for _, p := range []string{"/static/htmx.min.js", "/static/pico.min.css", "/static/app.js"} {
+	for _, p := range []string{"/static/htmx.min.js", "/static/ui.css", "/static/app.js"} {
 		if rec := getPage(h, p); rec.Code != 200 || rec.Body.Len() == 0 {
 			t.Errorf("%s: code %d", p, rec.Code)
 		}
@@ -262,7 +262,7 @@ func TestFlashRoundTrip(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	body := rec.Body.String()
-	if !strings.Contains(body, `class="dl-alert dl-alert--success"`) || !strings.Contains(body, "Rendez-vous &lt;confirmé&gt;") {
+	if !strings.Contains(body, `class="alert alert-success"`) || !strings.Contains(body, "Rendez-vous &lt;confirmé&gt;") {
 		t.Errorf("flash non rendu/échappé: %q", body)
 	}
 	cleared := false

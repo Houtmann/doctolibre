@@ -268,7 +268,7 @@ func TestAdminNavMarksCurrentPage(t *testing.T) {
 	_, c := newConfigAdmin(t, domain.RoleAdmin)
 
 	rec := c.do("GET", "/admin/settings", nil)
-	mustContain(t, rec, 200, `<a href="/admin/settings" aria-current="page">Paramètres</a>`, `class="dl-nav"`, `class="dl-btn dl-btn--outline dl-btn--sm"`)
+	mustContain(t, rec, 200, `<a href="/admin/settings" class="menu-active" aria-current="page">Paramètres</a>`, `class="menu w-full`, `drawer-side`, `data-theme-toggle`)
 	if n := strings.Count(rec.Body.String(), `aria-current="page"`); n != 1 {
 		t.Fatalf("aria-current=page: %d occurrences, attendu 1", n)
 	}

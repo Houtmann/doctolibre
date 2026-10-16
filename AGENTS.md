@@ -57,7 +57,9 @@ make migrate    # applique les migrations
 make sqlc       # régénère internal/store/sqlcgen après modif de queries/*.sql ou migrations
 make run        # lance le serveur en dev (:8080)
 make test       # tous les tests (tests DB skippés si Postgres absent)
-make check      # fmt + vet + lint + test — doit être vert
+make tools      # télécharge Tailwind (sha256 épinglé) dans bin/
+make css        # régénère internal/web/static/ui.css (à commiter)
+make check      # fmt + vet + lint + test + css-check — doit être vert
 ```
 
 ## Architecture et dépendances entre packages
@@ -99,10 +101,13 @@ cmd/doctolibre → web → service → store, booking, notify, outbox, auth
 
 ## Front
 
-- `html/template` + htmx (vendored dans `internal/web/static`). Pas de Node, pas de bundler, pas de framework JS.
+- `html/template` + htmx (vendored dans `internal/web/static`) + **Tailwind CSS v4 (exécutable autonome, sans Node) + daisyUI 5**. Pas de Node, pas de bundler, pas de framework JS.
+- Style : classes utilitaires Tailwind + composants daisyUI (`btn`, `input`, `alert`, `table`, `badge`, `menu`, `modal`, `drawer`…). **Les couleurs ne vivent que dans les blocs de thème d'`internal/web/input.css`** (`doctolibre` clair, `doctolibre-dark`) ; ailleurs, on utilise les jetons daisyUI (`bg-base-100`, `text-primary`…) ou `color-mix` sur des variables, jamais d'hex.
+- `internal/web/static/ui.css` est **généré et commité** : lancer **`make css` après toute modification d'un template, de `static/app.js` ou d'`input.css`** (`make tools` une fois pour obtenir `bin/tailwindcss`). `make check` et la CI vérifient qu'il est à jour (`make css-check`) ; `go build` n'a pas besoin du binaire.
+- **Aucune classe construite dynamiquement** : pas de `"btn-" + x`, pas de `class="alert-{{.Kind}}"`. Écrire les noms complets (`{{if eq .Kind "error"}}alert-error{{else}}…`), sinon Tailwind ne les voit pas et `ui.css` ne les contient pas.
 - Chaque formulaire **fonctionne sans JS** (POST classique + redirect) ; htmx est une amélioration (`hx-post`, `hx-target`, `hx-swap`). Le handler détecte `HX-Request` pour renvoyer un partial au lieu de la page.
-- Réutiliser les jetons CSS (`--app-*`, aucune couleur hex hors `:root`) et les partials de [`docs/design-system.md`](docs/design-system.md) ; page de contrôle `/dev/styleguide` en dev.
-- Pas de script ni de style inline (CSP). Pas de ressource externe (CDN, polices Google…) : tout est embarqué.
+- Réutiliser les partials et modèles de [`docs/design-system.md`](docs/design-system.md) ; page de contrôle `/dev/styleguide` en dev.
+- Pas de script ni de style inline (CSP inchangée : `default-src 'self'`, donc pas d'image `data:` non plus). Pas de ressource externe (CDN, polices Google…) : tout est embarqué. `static/app.js` est chargé dans `<head>` sans `defer` (il pose `data-theme` avant le rendu).
 - Templates : `pages/` (une par route), `partials/` (fragments réutilisables et réponses htmx), `layout/`. Noms de fichiers en snake_case.
 - Mobile-first, accessible : `<label>` sur chaque champ, `<button>` pour les actions, contrastes AA, `lang="fr"`.
 - Textes en français, centralisés dans les templates (pas d'i18n en v1, mais pas de texte en dur dans le Go hors messages d'erreur métier).
