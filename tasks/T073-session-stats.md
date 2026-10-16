@@ -1,5 +1,7 @@
 # T073 — Statistiques de séances et export pour rétrocession
 
+> UI à faire en daisyUI ; à lancer après T080 (décision du 2026-10-16).
+
 - **Phase** : 5
 - **Dépend de** : T072, T059
 - **Taille estimée** : M

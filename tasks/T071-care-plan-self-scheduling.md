@@ -1,5 +1,7 @@
 # T071 — Auto-planification de la série par le patient
 
+> UI à faire en daisyUI ; à lancer après T080 (décision du 2026-10-16).
+
 - **Phase** : 5
 - **Dépend de** : T055, T030, T014
 - **Taille estimée** : L

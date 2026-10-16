@@ -7,7 +7,7 @@ Chaque fichier `Txxx-*.md` est une tâche **autonome, exécutable par un LLM en 
 
 **Mode normal : orchestré.** Dans une session Opus, lancer `/run-task` (ou `/run-task Txxx`) : Opus choisit et contrôle, le sous-agent Sonnet `task-implementer` implémente. Rôles détaillés dans [`AGENTS.md`](../AGENTS.md).
 
-Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043, T050, T051, T052, T053, T055, T059, T060, T067.
+Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043, T050, T051, T052, T053, T055, T059, T060, T067, T080, T083.
 
 Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS.md) (début / pendant / fin). En résumé :
 
@@ -16,7 +16,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 3. Exécuter les commandes de « Vérification » ; toutes doivent passer.
 4. En fin de session : section Suivi de la tâche, statut ci-dessous, `STATUS.md`, `journal.md`.
 
-**Ce tableau est la seule source de vérité des statuts** : `todo` · `in_progress` · `blocked` · `review` · `done` (définitions dans `AGENTS.md`).
+**Ce tableau est la seule source de vérité des statuts** : `todo` · `in_progress` · `blocked` · `review` · `done` · `superseded` (définitions dans `AGENTS.md`).
 
 ## État
 
@@ -66,21 +66,26 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T062 | [Design system léger : tokens, catalogue, styleguide](T062-design-system.md) | 5 | T004, T016 | review |
 | T063 | [Design v2 : socle embarqué et styleguide v2](T063-design-v2-foundation.md) | 5 | T062 | done |
 | T064 | [Design v2 : layouts, navigation, messages, boutons](T064-design-v2-shell.md) | 5 | T063 | done |
-| T065 | [Design v2 : formulaires et tableaux](T065-design-v2-forms.md) | 5 | T064 | review |
-| T066 | [Design v2 : parcours patient](T066-design-v2-booking.md) | 5 | T064 | review |
-| T067 | [Design v2 : agenda et dialogue de RDV](T067-design-v2-calendar.md) | 5 | T064 | review |
-| T068 | [Design v2 : retrait de Pico et de l'ancien CSS](T068-design-v2-cleanup.md) | 5 | T065, T066, T067 | todo |
+| T065 | [Design v2 : formulaires et tableaux](T065-design-v2-forms.md) | 5 | T064 | done |
+| T066 | [Design v2 : parcours patient](T066-design-v2-booking.md) | 5 | T064 | done |
+| T067 | [Design v2 : agenda et dialogue de RDV](T067-design-v2-calendar.md) | 5 | T064 | done |
+| T068 | [Design v2 : retrait de Pico et de l'ancien CSS](T068-design-v2-cleanup.md) | 5 | T065, T066, T067 | superseded |
 | T070 | [Consignes par motif et prérequis à la réservation](T070-appointment-type-instructions.md) | 5 | T014, T023, T058 | todo |
 | T071 | [Auto-planification de la série par le patient](T071-care-plan-self-scheduling.md) | 5 | T055, T030, T014 | todo |
 | T072 | [« Ma journée » : tournée domicile et pointage en un clic](T072-my-day-check-in.md) | 5 | T016, T032, T033 | todo |
 | T073 | [Statistiques de séances et export pour rétrocession](T073-session-stats.md) | 5 | T072, T059 | todo |
+| T080 | [Outillage Tailwind + daisyUI, thème, layouts et partials](T080-daisyui-foundation.md) | 5 | — | todo |
+| T081 | [Parcours patient public en daisyUI](T081-daisyui-public.md) | 5 | T080 | todo |
+| T082 | [Back-office : formulaires et tableaux en daisyUI](T082-daisyui-backoffice.md) | 5 | T080 | todo |
+| T083 | [Agenda staff avec EventCalendar](T083-eventcalendar-agenda.md) | 5 | T080 | todo |
+| T084 | [Pages restantes, retrait de Pico et de l'ancien CSS](T084-daisyui-cleanup.md) | 5 | T081, T082, T083 | todo |
 
 ## Parallélisation possible
 
 - Après T001 : **T002**, **T003**, **T013** en parallèle (fichiers disjoints).
 - Après T020 : **T021** et **T022** en parallèle.
 - Phase 3 et 4 : la plupart des tâches sont indépendantes entre elles.
-- Phase 5 : T050 d'abord (débloque T051, T055) ; T052, T053, T054, T056, T058 indépendantes. T062 (design system) avant T057 et T061, qui touchent aussi `app.css` : pas en parallèle. Design v2 (`design/`) : T063 → T064 → {T065, T066, T067 en parallèle, templates disjoints} → T068 ; T057 et T061 après T064 ou à coordonner (`app.css`, agenda). T070 et T072 indépendantes (T070 attend T058, en review) ; T071 après T055 ; T073 après T072 et T059. T070, T071, T072 ajoutent chacune une migration : numéros à attribuer au lancement, un seul agent à la fois sur `sqlc`.
+- Phase 5 : T050 d'abord (débloque T051, T055) ; T052, T053, T054, T056, T058 indépendantes. T062 (design system) avant T057 et T061, qui touchent aussi `app.css` : pas en parallèle. Design v2 (`design/`) : T063–T067 faites (T065–T067 mergées), **T068 `superseded`** par la migration daisyUI (décision du 2026-10-16) : T080 (outillage, layouts) → {T081, T082, T083 en parallèle, templates disjoints ; `ui.css` est généré : en cas de conflit relancer `make css`} → T084 (pages restantes, retrait de Pico). T057, T061, T070–T073 (UI) : après T080, en classes daisyUI. T070 et T072 indépendantes (T070 attend T058, en review) ; T071 après T055 ; T073 après T072 et T059. T070, T071, T072 ajoutent chacune une migration : numéros à attribuer au lancement, un seul agent à la fois sur `sqlc`.
 
 ```
 T001 ─┬─ T002 ─┬─ T005 ─┐

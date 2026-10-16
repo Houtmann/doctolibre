@@ -44,6 +44,7 @@ En mode orchestré, l'exécutant fait l'étape 1, l'orchestrateur les étapes 2 
    | `blocked` | Bloquée ; la raison est dans Suivi **et** dans STATUS.md (« Blocages ») |
    | `review` | Implémentée, `make check` vert, en attente de relecture humaine |
    | `done` | Relue / mergée, critères d'acceptation cochés |
+   | `superseded` | Remplacée par une autre tâche, nommée dans Suivi ; ne pas l'implémenter |
 3. **[`docs/progress/STATUS.md`](docs/progress/STATUS.md)** : réécrire (date, en cours, prochaine action, blocages, compteurs par phase).
 4. **[`docs/progress/journal.md`](docs/progress/journal.md)** : ajouter une entrée **en haut** (modèle dans le fichier).
 5. `make check` vert avant `review`. Un commit par tâche (ou par session si la tâche est longue : `T014 (wip): …`).

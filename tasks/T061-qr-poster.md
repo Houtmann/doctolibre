@@ -1,5 +1,7 @@
 # T061 — Affiche imprimable avec QR code
 
+> UI à faire en daisyUI ; à lancer après T080 (décision du 2026-10-16).
+
 - **Phase** : 5
 - **Dépend de** : T014
 - **Taille estimée** : S

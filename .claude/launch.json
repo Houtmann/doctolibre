@@ -46,6 +46,18 @@
         "serve"
       ],
       "port": 8099
+    },
+    {
+      "name": "poc-daisyui",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8099",
+        "--directory",
+        "poc/daisyui"
+      ],
+      "port": 8099
     }
   ]
 }

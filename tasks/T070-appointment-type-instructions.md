@@ -1,5 +1,7 @@
 # T070 — Consignes par motif et prérequis à la réservation
 
+> UI à faire en daisyUI ; à lancer après T080 (décision du 2026-10-16).
+
 - **Phase** : 5
 - **Dépend de** : T014, T023, T058
 - **Taille estimée** : S

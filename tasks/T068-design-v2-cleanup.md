@@ -1,5 +1,7 @@
 # T068 — Design v2 : retrait de Pico et de l'ancien CSS
 
+> **Remplacée** par T084 (migration vers Tailwind + daisyUI). Ne pas implémenter.
+
 - **Phase** : 5
 - **Dépend de** : T065, T066, T067
 - **Taille estimée** : M
@@ -47,3 +49,4 @@ Nouveaux composants, theming par cabinet, couleurs praticien/motif (T057).
 - **Reste à faire** : —
 - **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
 - **Écarts avec la spécification** (et pourquoi) : —
+- **Clôture (2026-10-16)** : `superseded` — absorbée par T084 (migration daisyUI, voir `docs/decisions.md`). Ne pas l'implémenter.

@@ -1,5 +1,7 @@
 # T057 — Couleurs dans l'agenda compatibles CSP
 
+> UI à faire en daisyUI ; à lancer après T080 (décision du 2026-10-16). Agenda : EventCalendar (T083) — les couleurs passent par les propriétés d'événement/classes de l'agenda, plus par `.cal-*` ; reprendre la spécification après T083.
+
 - **Phase** : 5
 - **Dépend de** : T016
 - **Taille estimée** : S

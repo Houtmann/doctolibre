@@ -1,5 +1,7 @@
 # T072 — « Ma journée » : tournée domicile et pointage en un clic
 
+> UI à faire en daisyUI ; à lancer après T080 (décision du 2026-10-16).
+
 - **Phase** : 5
 - **Dépend de** : T016, T032, T033
 - **Taille estimée** : M
