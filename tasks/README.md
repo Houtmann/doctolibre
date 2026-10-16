@@ -53,23 +53,24 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T046 | [Observabilité : branchements et /admin/status](T046-observability-wiring.md) | 4 | T045, T014, T020, T041 | done |
 | T050 | [Jeton de gestion dérivé (HMAC)](T050-derived-manage-token.md) | 5 | T023, T030 | review |
 | T051 | [Absence imprévue : annulation groupée](T051-sick-day-bulk-cancel.md) | 5 | T050 | todo |
-| T052 | [Jours fériés français automatiques](T052-public-holidays.md) | 5 | T013 | todo |
+| T052 | [Jours fériés français automatiques](T052-public-holidays.md) | 5 | T013 | review |
 | T053 | [Import CSV des patients](T053-patient-csv-import.md) | 5 | T017 | todo |
 | T054 | [Garde-fou absences répétées](T054-no-show-guard.md) | 5 | T014, T017 | todo |
 | T055 | [Lien de série pour le patient](T055-care-plan-patient-link.md) | 5 | T050 | todo |
 | T056 | [Réglages : profil vs cabinet, séries au secrétariat](T056-settings-split-and-secretary-plans.md) | 5 | T033, T030 | todo |
 | T057 | [Couleurs dans l'agenda compatibles CSP](T057-calendar-colors.md) | 5 | T016 | todo |
-| T058 | [Alarmes dans les fichiers ICS patient](T058-ics-valarm.md) | 5 | T042 | todo |
+| T058 | [Alarmes dans les fichiers ICS patient](T058-ics-valarm.md) | 5 | T042 | review |
 | T059 | [Remplaçant : accès borné dans le temps](T059-locum-delegation.md) | 5 | T033 | todo |
 | T060 | [Ressources partagées (box, appareils)](T060-shared-resources.md) | 5 | T013, T014, T016 | todo |
 | T061 | [Affiche imprimable avec QR code](T061-qr-poster.md) | 5 | T014 | blocked |
+| T062 | [Design system léger : tokens, catalogue, styleguide](T062-design-system.md) | 5 | T004, T016 | review |
 
 ## Parallélisation possible
 
 - Après T001 : **T002**, **T003**, **T013** en parallèle (fichiers disjoints).
 - Après T020 : **T021** et **T022** en parallèle.
 - Phase 3 et 4 : la plupart des tâches sont indépendantes entre elles.
-- Phase 5 : T050 d'abord (débloque T051, T055) ; T052, T053, T054, T056, T057, T058 indépendantes.
+- Phase 5 : T050 d'abord (débloque T051, T055) ; T052, T053, T054, T056, T058 indépendantes. T062 (design system) avant T057 et T061, qui touchent aussi `app.css` : pas en parallèle.
 
 ```
 T001 ─┬─ T002 ─┬─ T005 ─┐

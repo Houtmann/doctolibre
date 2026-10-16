@@ -14,6 +14,16 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T052, T058, T062 en parallèle (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T052, T058, T062 (todo → review), en trois worktrees ; T050 reste en review (relecture humaine en attente).
+- **Fait** : jours fériés français (option cabinet, Alsace-Moselle, migration 00019, « Férié » dans l'agenda) ; deux `VALARM` (-P1D, -PT2H) dans le `.ics` patient, aucun dans le flux praticien ; tokens `--app-*` et mode sombre dans `app.css`, `docs/design-system.md`, page `/dev/styleguide` (dev seulement).
+- **Revue** : T052 en revue renforcée, une correction renvoyée : une ouverture exceptionnelle partielle rouvrait tout le jour férié ; désormais férié = journée moins les ouvertures explicites. T062 vérifiée dans le navigateur (1280 px clair, 360 px sombre). Conflit `app.css` T052 × T062 résolu à la main (ajout `.cal-holiday` en fin de fichier).
+- **Vérification** : `make check` ✅ sur chaque worktree puis sur main après fusion ; `make sqlc` stable.
+- **Incident** : disque plein pendant T052 (cache Go des sous-agents, 19 Go dans `/tmp/go-build`), vidé avec `go clean -cache` après accord.
+- **Reste / reprise** : valider T050, T052, T058, T062 ; ensuite T051 et T055 (après T050), T057 et T061 (après T062), T053, T054, T056, T059, T060.
+- **Décisions** : jours fériés en `Exception{Closed}` (journée moins ouvertures) ; design system par tokens (`decisions.md`, 2026-10-16).
+
 ## 2026-10-16 — Phase 5 ouverte, T050 (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T014–T046 en review → done (validées par l'humain) ; 12 tâches T050–T061 créées (phase 5 « Retours terrain ») ; T050 → review.

@@ -8,7 +8,7 @@
 ## Où on en est
 
 - **Phases 0 à 4 terminées** : 29 `done`.
-- **Phase 5 — Retours terrain** ouverte : 12 tâches (T050–T061) issues d'une liste de propositions challengée le 2026-10-16. Écartés : tournées par secteur (fusion de marges incompatible avec `during_blocked` stocké), Web Push / Wallet / manifest, re-confirmation J-2 avec libération auto, PDF, capacité N des ressources (v1 = capacité 1).
+- **Phase 5 — Retours terrain** ouverte : 13 tâches (T050–T062) ; T050–T061 issues d'une liste de propositions challengée le 2026-10-16. Écartés : tournées par secteur (fusion de marges incompatible avec `during_blocked` stocké), Web Push / Wallet / manifest, re-confirmation J-2 avec libération auto, PDF, capacité N des ressources (v1 = capacité 1).
 - **Cœur RDV** : réservation (T014), gestion par le patient (T015), agenda (T016), fiches patients (T017) `done`.
 - **Notifications** : confirmations et rappels (T023) `done`.
 - **Kiné** : séries (T030), liste d'attente (T031), domicile (T032), multi-praticiens et rôles (T033) `done`.
@@ -17,12 +17,12 @@
 
 ## En cours
 
-T050 (jeton de gestion dérivé) en `review`.
+En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system).
 
 ## Prochaine action
 
-1. Relire T050 et la passer en `done` (débloque T051 et T055) ; en parallèle possible : T052, T053, T054, T056, T057, T058.
-2. Passage navigateur : rendu 360 px de toutes les pages, agenda au clavier, vue jour à 4 praticiens à 1280 px (critère T033 non coché).
+1. Relire et passer en `done` T050 (débloque T051, T055), T052, T058, T062 (débloque T057, T061). Prêtes en parallèle : T053, T054, T056, T059, T060 (attention aux numéros de migration : 00020 et suivants, un seul agent à la fois sur `sqlc`).
+2. Passage navigateur : rendu 360 px de toutes les pages, agenda au clavier, vue jour à 4 praticiens à 1280 px (critère T033 non coché) ; `/dev/styleguide` sert de page de contrôle.
 3. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
 
 ## Blocages et questions ouvertes pour l'humain
@@ -43,6 +43,8 @@ T050 (jeton de gestion dérivé) en `review`.
 - Postgres.app doit être démarré, et les tests utilisent `127.0.0.1` (pas `localhost`) : `DOCTOLIBRE_TEST_DATABASE_URL=postgres://hadrien@127.0.0.1:5432/doctolibre_test?sslmode=disable`.
 - `TestCalendarWeekWith150AppointmentsIsFast` (seuil 100 ms) peut échouer sous forte charge machine ; passe seul.
 - `DOCTOLIBRE_SECRET_KEY` désormais obligatoire en dev aussi : l'ajouter à son `.env` local (exemple dans `.env.example`).
+- Défauts d'affichage repérés via `/dev/styleguide` (antérieurs à T062) : puce carrée Pico et contact à la ligne dans `patient_results` ; la CSP bloque les icônes SVG `data:` de Pico (case à cocher, champ date) — ajouter `img-src 'self' data:` ou surcharger les icônes.
+- Disque : le cache Go des sous-agents (`/tmp/go-build`) peut remplir le disque (19 Go le 2026-10-16) ; `GOCACHE=/tmp/go-build go clean -cache`.
 - Petits manques : le déplacement d'un RDV par le cabinet envoie un message sans lien de gestion ; pas de lien vers `/admin/status` ni vers la page de réservation publique dans le tableau de bord ; les RDV créés par une série ne comptent pas dans la métrique `AppointmentsCreated`.
 
 ## Avancement par phase
@@ -54,4 +56,4 @@ T050 (jeton de gestion dérivé) en `review`.
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 12 | 0 | 1 |
+| 5 — Retours terrain | 13 | 0 | 4 |
