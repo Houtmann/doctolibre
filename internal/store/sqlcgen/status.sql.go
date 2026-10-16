@@ -58,7 +58,7 @@ func (q *Queries) DatabaseSize(ctx context.Context) (int64, error) {
 
 const listPracticeAdminEmails = `-- name: ListPracticeAdminEmails :many
 SELECT id, email::text AS email FROM app_user
-WHERE practice_id = $1 AND role = 'admin'
+WHERE practice_id = $1 AND role = 'admin' AND active
 ORDER BY id
 `
 

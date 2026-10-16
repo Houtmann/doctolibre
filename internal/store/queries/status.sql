@@ -11,7 +11,7 @@ WHERE practice_id = @practice_id AND status = 'failed' AND updated_at >= @since 
 
 -- name: ListPracticeAdminEmails :many
 SELECT id, email::text AS email FROM app_user
-WHERE practice_id = @practice_id AND role = 'admin'
+WHERE practice_id = @practice_id AND role = 'admin' AND active
 ORDER BY id;
 
 -- name: DatabaseSize :one

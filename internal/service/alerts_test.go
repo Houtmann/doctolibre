@@ -105,6 +105,27 @@ func TestAlertsIgnoreScrubbedFailedMessages(t *testing.T) {
 	}
 }
 
+func TestAlertsSkipInactiveAdmins(t *testing.T) {
+	t.Parallel()
+	now := time.Now().UTC().Truncate(time.Hour).Add(5 * time.Minute)
+	db, _, al, _ := alertsEnv(t, now)
+	ctx := context.Background()
+
+	if _, err := db.Exec(ctx, "UPDATE app_user SET active = false WHERE role = 'admin'"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(ctx, `INSERT INTO outbox_message (practice_id, kind, template, recipient, status, updated_at)
+		SELECT id, 'sms', 'reminder', '+33600000000', 'failed', $1 FROM practice`, now.Add(-3*time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	if n, err := al.RunOnce(ctx); err != nil || n != 0 {
+		t.Fatalf("admin désactivé: n=%d err=%v", n, err)
+	}
+	if got := alertCount(t, db); got != 0 {
+		t.Errorf("alertes enfilées = %d, attendu 0", got)
+	}
+}
+
 func TestAlertsBackupStale(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

@@ -300,7 +300,7 @@ func TestMarkSentRemovesSecretsFromPayload(t *testing.T) {
 	e := newPrivEnv(t)
 	ctx := context.Background()
 	id := e.message(t, nil, "a@example.test", "sending", nil)
-	e.exec(t, `UPDATE outbox_message SET attempts = 1, payload = payload || '{"reset_url":"https://x.test/reset/SECRETTOKEN","offer_url":"https://x.test/w/OFFERTOKEN","code":"123456","otp":true}' WHERE id = $1`, id)
+	e.exec(t, `UPDATE outbox_message SET attempts = 1, payload = payload || '{"reset_url":"https://x.test/reset/SECRETTOKEN","offer_url":"https://x.test/w/OFFERTOKEN","accept_url":"https://x.test/invitation/INVITETOKEN","code":"123456","otp":true}' WHERE id = $1`, id)
 	n, err := sqlcgen.New(e.db).MarkOutboxSent(ctx, sqlcgen.MarkOutboxSentParams{Now: privNow, ID: id, Attempts: 1})
 	if err != nil || n != 1 {
 		t.Fatalf("MarkOutboxSent = %d, %v", n, err)
@@ -309,7 +309,7 @@ func TestMarkSentRemovesSecretsFromPayload(t *testing.T) {
 	if err := e.db.QueryRow(ctx, `SELECT payload::text FROM outbox_message WHERE id = $1`, id).Scan(&payload); err != nil {
 		t.Fatal(err)
 	}
-	for _, secret := range []string{"manage_url", "reset_url", "SECRETTOKEN", "offer_url", "OFFERTOKEN", "123456", "body"} {
+	for _, secret := range []string{"manage_url", "reset_url", "SECRETTOKEN", "offer_url", "OFFERTOKEN", "accept_url", "INVITETOKEN", "123456", "body"} {
 		if strings.Contains(payload, secret) {
 			t.Errorf("payload après envoi contient encore %q : %s", secret, payload)
 		}
@@ -338,6 +338,8 @@ func TestPurgeRunOnceWithFixedClock(t *testing.T) {
 	// Sessions, jetons, codes expirés ou valides.
 	e.exec(t, `INSERT INTO session (id, user_id, expires_at) VALUES ('old', $1, $2), ('live', $1, $3)`, e.user, day(1), privNow.Add(time.Hour))
 	e.exec(t, `INSERT INTO password_reset (token_hash, user_id, expires_at) VALUES ('old', $1, $2), ('live', $1, $3)`, e.user, day(1), privNow.Add(time.Hour))
+	e.exec(t, `INSERT INTO user_invitation (token_hash, practice_id, email, role, expires_at) VALUES
+		('old', $1, 'old@example.test', 'secretary', $2), ('live', $1, 'live@example.test', 'secretary', $3)`, e.pc.ID, day(1), privNow.Add(time.Hour))
 	e.exec(t, `INSERT INTO otp_challenge (practice_id, channel, recipient_hash, binding_hash, code_hash, expires_at) VALUES
 		($1, 'sms', 'r', 'b', 'c', $2), ($1, 'sms', 'r', 'b', 'c', $3)`, e.pc.ID, day(1), privNow.Add(time.Hour))
 
@@ -382,6 +384,15 @@ func TestPurgeRunOnceWithFixedClock(t *testing.T) {
 	}
 	if n := e.count(t, `SELECT count(*) FROM password_reset WHERE user_id = $1`, e.user); n != 1 {
 		t.Errorf("jetons restants = %d, attendu 1", n)
+	}
+	if n := e.count(t, `SELECT count(*) FROM user_invitation WHERE practice_id = $1 AND token_hash = 'live'`, e.pc.ID); n != 1 {
+		t.Error("invitation valide supprimée")
+	}
+	if n := e.count(t, `SELECT count(*) FROM user_invitation WHERE practice_id = $1`, e.pc.ID); n != 1 {
+		t.Errorf("invitations restantes = %d, attendu 1", n)
+	}
+	if res.Invitations != 1 {
+		t.Errorf("invitations purgées = %d, attendu 1", res.Invitations)
 	}
 	if n := e.count(t, `SELECT count(*) FROM otp_challenge WHERE practice_id = $1`, e.pc.ID); n != 1 {
 		t.Errorf("codes restants = %d, attendu 1", n)

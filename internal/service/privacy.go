@@ -198,6 +198,7 @@ type PurgeResult struct {
 	MessagesScrubbed    int64
 	SessionsDeleted     int64
 	PasswordResets      int64
+	Invitations         int64
 	AuditDeleted        int64
 	PatientsAnonymized  int
 	OTPChallengesPurged bool
@@ -219,7 +220,7 @@ func (s *Privacy) Run(ctx context.Context) error {
 		case err == nil:
 			s.log().Info("purge RGPD terminée",
 				"messages_scrubbed", res.MessagesScrubbed, "sessions", res.SessionsDeleted,
-				"password_resets", res.PasswordResets, "audit_deleted", res.AuditDeleted, "patients_anonymized", res.PatientsAnonymized)
+				"password_resets", res.PasswordResets, "invitations", res.Invitations, "audit_deleted", res.AuditDeleted, "patients_anonymized", res.PatientsAnonymized)
 		}
 		select {
 		case <-ctx.Done():
@@ -247,6 +248,9 @@ func (s *Privacy) RunOnce(ctx context.Context) (PurgeResult, error) {
 	n, err = q.DeleteExpiredPasswordResets(ctx, now)
 	res.PasswordResets = n
 	errs = append(errs, wrapPurge("jetons de réinitialisation expirés", err))
+	n, err = q.DeleteExpiredInvitations(ctx, now)
+	res.Invitations = n
+	errs = append(errs, wrapPurge("invitations expirées", err))
 	err = q.DeleteOldOTPChallenges(ctx, now)
 	res.OTPChallengesPurged = err == nil
 	errs = append(errs, wrapPurge("codes de vérification expirés", err))
