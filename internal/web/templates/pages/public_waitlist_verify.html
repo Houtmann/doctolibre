@@ -1,0 +1,21 @@
+{{define "title"}}Vérification{{end}}
+{{define "content"}}
+<nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Retour aux créneaux</a></nav>
+<h1>Confirmez votre inscription</h1>
+<p>{{.Data.TypeName}} avec {{.Data.Practitioner}}, {{.Data.Practice}}.</p>
+{{template "form_errors.html" .Data.Errors}}
+<p>Un code à 6 chiffres vient d'être envoyé {{if eq .Data.Channel "email"}}par email à{{else}}par SMS au{{end}} <strong>{{.Data.Destination}}</strong>. Il est valable 10 minutes.</p>
+<form method="post" action="{{.Data.Action}}">
+  {{csrf .CSRF}}
+  {{template "waitlist_hidden.html" .Data}}
+  <input type="hidden" name="challenge_id" value="{{.Data.ChallengeID}}">
+  <label for="code">Code de vérification</label>
+  <input id="code" name="code" type="text" inputmode="numeric" pattern="[0-9 ]{6,8}" maxlength="8" autocomplete="one-time-code" required autofocus>
+  <button type="submit">Confirmer mon inscription</button>
+</form>
+<form method="post" action="{{.Data.ResendURL}}" class="resend">
+  {{csrf .CSRF}}
+  {{template "waitlist_hidden.html" .Data}}
+  <button type="submit" class="outline secondary">Recevoir un nouveau code</button>
+</form>
+{{end}}

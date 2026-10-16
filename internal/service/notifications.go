@@ -265,20 +265,22 @@ func (n notifier) seriesBooked(ctx context.Context, tx pgx.Tx, q *sqlcgen.Querie
 }
 
 // cancelled annule les messages en attente du rendez-vous et, si l'annulation
-// vient du cabinet, prévient le patient.
+// vient du cabinet, prévient le patient. Le créneau libéré est proposé à la liste
+// d'attente (T031).
 func (n notifier) cancelled(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, appt sqlcgen.Appointment, byStaff bool) error {
 	if err := outbox.CancelForAppointment(ctx, tx, n.clock, appt.ID); err != nil {
 		return err
 	}
-	if !byStaff {
-		return nil
+	if byStaff {
+		v, err := loadView(ctx, q, appt)
+		if err != nil {
+			return err
+		}
+		if _, err := n.enqueue(ctx, tx, v, v.practice.NotifyChangeChannel, TemplateCancellation, n.data(v, ""), time.Time{}, TemplateCancellation, ""); err != nil {
+			return err
+		}
 	}
-	v, err := loadView(ctx, q, appt)
-	if err != nil {
-		return err
-	}
-	_, err = n.enqueue(ctx, tx, v, v.practice.NotifyChangeChannel, TemplateCancellation, n.data(v, ""), time.Time{}, TemplateCancellation, "")
-	return err
+	return n.slotFreed(ctx, tx, q, appt, appt.During.Lower.Time)
 }
 
 // rescheduled annule les anciens messages en attente (rappels de l'ancienne heure
@@ -297,7 +299,11 @@ func (n notifier) rescheduled(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries
 	data["old_date"], data["old_date_short"], data["old_time"] = frenchDay(old), old.Format("02/01"), clockText(old)
 	_, err = n.enqueue(ctx, tx, v, v.practice.NotifyChangeChannel, TemplateReschedule, data, time.Time{},
 		TemplateReschedule, fmt.Sprint(appt.UpdatedAt.UnixMicro()))
-	return err
+	if err != nil {
+		return err
+	}
+	// L'ancien créneau est libre : il est proposé à la liste d'attente (T031).
+	return n.slotFreed(ctx, tx, q, appt, oldStart)
 }
 
 func marshalPayload(v any) ([]byte, error) {

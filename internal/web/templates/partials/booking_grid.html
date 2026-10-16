@@ -16,4 +16,5 @@
   {{else}}
   <p class="muted">Aucun créneau disponible cette semaine.{{if .NextURL}} Essayez la semaine suivante.{{end}}</p>
   {{end}}
+  {{if .WaitlistURL}}<p class="waitlist-cta"><a href="{{.WaitlistURL}}" role="button" class="outline secondary">Aucun créneau ne me convient</a></p>{{end}}
 </div>

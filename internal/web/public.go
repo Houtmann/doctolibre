@@ -31,11 +31,13 @@ type publicHandlers struct {
 	svc    *service.Booking
 	rd     *Renderer
 	logger *slog.Logger
+	// waitlist : la liste d'attente est activée (lien sous la grille de créneaux).
+	waitlist bool
 }
 
 // publicRoutes enregistre la réservation en ligne (sans compte) et le lien du patient.
 func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
-	h := &publicHandlers{svc: d.Booking, rd: rd, logger: logger}
+	h := &publicHandlers{svc: d.Booking, rd: rd, logger: logger, waitlist: d.Waitlist != nil}
 	limit := func() httpx.Middleware {
 		return httpx.RateLimit(httpx.ClientIP, rate.Every(publicInterval), publicBurst)
 	}
@@ -56,6 +58,9 @@ func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	mux.Handle("GET /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleGrid), manage))
 	mux.Handle("GET /r/{token}/reschedule/confirm", httpx.Chain(http.HandlerFunc(h.rescheduleConfirm), manage))
 	mux.Handle("POST /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleSubmit), manage))
+	if d.Waitlist != nil {
+		d.waitlistRoutes(mux, rd, logger)
+	}
 }
 
 // fail traduit une erreur non attendue en réponse HTTP (un seul endroit).
@@ -116,6 +121,8 @@ type GridData struct {
 	PrevURL      string
 	NextURL      string
 	BackURL      string
+	// WaitlistURL : inscription à la liste d'attente ; vide = fonction désactivée ou motif à domicile.
+	WaitlistURL string
 }
 
 // GridDay regroupe les créneaux d'un jour.
@@ -297,6 +304,9 @@ func (h *publicHandlers) grid(w http.ResponseWriter, r *http.Request) {
 		Type:      TypeView{ID: typeID.String(), Name: t.Type.Name, Duration: typeDuration(t.Type)},
 		WeekLabel: fmt.Sprintf("du %s au %s", frenchDate(mon), frenchDate(mon.AddDate(0, 0, 6))),
 		BackURL:   base,
+	}
+	if h.waitlist && !t.Type.AtHome {
+		data.WaitlistURL = base + "/waitlist?" + url.Values{"type": {typeID.String()}}.Encode()
 	}
 	if mon.After(minMon) {
 		data.PrevURL = gridURL(mon.AddDate(0, 0, -7))

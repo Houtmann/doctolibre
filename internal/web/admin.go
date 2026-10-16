@@ -56,6 +56,9 @@ func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger)
 	if d.Calendar != nil {
 		d.calendarRoutes(mux, rd, logger)
 	}
+	if d.Waitlist != nil {
+		d.waitlistAdminRoutes(mux, rd, logger)
+	}
 	if d.Patients != nil {
 		d.patientRoutes(mux, rd, logger)
 		if d.CarePlans != nil {

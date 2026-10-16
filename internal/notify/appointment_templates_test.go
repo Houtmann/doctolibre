@@ -22,6 +22,7 @@ func apptData(manage bool) map[string]any {
 		"type_name": "Séance de kinésithérapie", "date": "jeudi 15 octobre", "date_short": "15/10", "time": "14h30",
 		"manage_url": "", "signature": "Cabinet de kinésithérapie Dupont",
 		"old_date": "mardi 13 octobre", "old_date_short": "13/10", "old_time": "9h00",
+		"valid_until": "16h30", "offer_url": "https://rdv.cabinet-dupont.fr/w/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde",
 		"count": 10, "sessions": []string{"jeudi 15 octobre à 14h30", "lundi 19 octobre à 14h30", "jeudi 22 octobre à 14h30"},
 	}
 	if manage {
@@ -57,7 +58,7 @@ func TestAppointmentTemplatesGolden(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"confirmation", "reminder", "cancellation", "reschedule", "series"} {
+	for _, name := range []string{"confirmation", "reminder", "cancellation", "reschedule", "series", "waitlist"} {
 		for _, manage := range []bool{true, false} {
 			variant := "avec_lien"
 			if !manage {
@@ -82,7 +83,7 @@ func TestAppointmentTemplatesGolden(t *testing.T) {
 				if !strings.Contains(e.Text, "Léa") || !strings.Contains(e.HTML, "15 octobre") {
 					t.Errorf("email %s : prénom ou date absents", name)
 				}
-				wantLink := manage && name != "cancellation" && name != "series"
+				wantLink := manage && name != "cancellation" && name != "series" && name != "waitlist"
 				if wantLink != strings.Contains(e.Text, "/r/") {
 					t.Errorf("email %s : lien de gestion présent=%v, attendu %v", name, !wantLink, wantLink)
 				}

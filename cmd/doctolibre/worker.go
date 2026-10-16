@@ -27,7 +27,15 @@ func startWorker(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, d o
 	}
 	w := &outbox.Worker{Pool: pool, Dispatcher: d, Clock: domain.SystemClock{}, Logger: logger}
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
+	// Expiration des inscriptions en liste d'attente dont la fenêtre est passée.
+	wl := &service.Waitlist{Pool: pool, Clock: domain.SystemClock{}, Logger: logger}
+	go func() {
+		defer wg.Done()
+		if err := wl.Run(ctx); err != nil {
+			logger.Error("liste d'attente: expiration en échec", "error", err)
+		}
+	}()
 	// Rappels de rendez-vous : enfilés peu avant l'envoi (opt-out relu à ce moment).
 	rem := &service.Reminders{Pool: pool, Clock: domain.SystemClock{}, Logger: logger}
 	go func() {

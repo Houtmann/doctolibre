@@ -77,7 +77,7 @@ func TestMigrateUpDownUp(t *testing.T) {
 	}
 	before := count("")
 	// Redescend jusqu'à la migration outbox_message (les suivantes ne créent que des index).
-	for i := 0; i < 10 && count("outbox_message") != 0; i++ {
+	for i := 0; i < 25 && count("outbox_message") != 0; i++ {
 		if err := store.MigrateDown(ctx, db); err != nil {
 			t.Fatalf("down: %v", err)
 		}

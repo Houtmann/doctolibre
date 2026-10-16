@@ -45,6 +45,8 @@ type Deps struct {
 	Booking *service.Booking
 	// Feed (flux ICS du praticien) est optionnel : nil = pas de /ics/… ni de réglage d'abonnement.
 	Feed *service.CalendarFeed
+	// Waitlist (liste d'attente) est optionnel : nil = pas de liste d'attente (ni /w/…, ni /admin/waitlist).
+	Waitlist *service.Waitlist
 }
 
 const pingTimeout = 2 * time.Second
