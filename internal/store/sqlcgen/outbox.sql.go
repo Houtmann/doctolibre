@@ -44,7 +44,7 @@ UPDATE outbox_message m
 SET status = 'sending', attempts = m.attempts + 1, updated_at = $1
 FROM due
 WHERE m.id = due.id
-RETURNING m.id, m.practice_id, m.kind, m.template, m.payload, m.recipient, m.appointment_id, m.dedup_key, m.run_at, m.status, m.attempts, m.last_error, m.sent_at, m.provider_ref, m.created_at, m.updated_at
+RETURNING m.id, m.practice_id, m.kind, m.template, m.payload, m.recipient, m.appointment_id, m.dedup_key, m.run_at, m.status, m.attempts, m.last_error, m.sent_at, m.provider_ref, m.created_at, m.updated_at, m.scrubbed_at
 `
 
 type ClaimOutboxMessagesParams struct {
@@ -79,6 +79,7 @@ func (q *Queries) ClaimOutboxMessages(ctx context.Context, arg ClaimOutboxMessag
 			&i.ProviderRef,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ScrubbedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -126,7 +127,7 @@ func (q *Queries) EnqueueOutboxMessage(ctx context.Context, arg EnqueueOutboxMes
 }
 
 const listRecentOutboxMessages = `-- name: ListRecentOutboxMessages :many
-SELECT id, practice_id, kind, template, payload, recipient, appointment_id, dedup_key, run_at, status, attempts, last_error, sent_at, provider_ref, created_at, updated_at FROM outbox_message
+SELECT id, practice_id, kind, template, payload, recipient, appointment_id, dedup_key, run_at, status, attempts, last_error, sent_at, provider_ref, created_at, updated_at, scrubbed_at FROM outbox_message
 WHERE practice_id = $1
 ORDER BY created_at DESC, id
 LIMIT $2
@@ -163,6 +164,7 @@ func (q *Queries) ListRecentOutboxMessages(ctx context.Context, arg ListRecentOu
 			&i.ProviderRef,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ScrubbedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -230,7 +232,7 @@ func (q *Queries) MarkOutboxRetry(ctx context.Context, arg MarkOutboxRetryParams
 
 const markOutboxSent = `-- name: MarkOutboxSent :execrows
 UPDATE outbox_message
-SET status = 'sent', sent_at = $1::timestamptz, provider_ref = $2, last_error = NULL, updated_at = $1
+SET payload = payload - 'manage_url' - 'reset_url' - 'code' - 'body', status = 'sent', sent_at = $1::timestamptz, provider_ref = $2, last_error = NULL, updated_at = $1
 WHERE id = $3 AND status = 'sending' AND attempts = $4
 `
 
@@ -241,6 +243,8 @@ type MarkOutboxSentParams struct {
 	Attempts    int32
 }
 
+// Une fois envoyé, les secrets du message (lien de gestion, lien de réinitialisation,
+// code, texte du SMS qui les reprend) sont retirés tout de suite du payload.
 func (q *Queries) MarkOutboxSent(ctx context.Context, arg MarkOutboxSentParams) (int64, error) {
 	result, err := q.db.Exec(ctx, markOutboxSent,
 		arg.Now,
@@ -338,7 +342,7 @@ func (q *Queries) ReleaseOutboxMessage(ctx context.Context, arg ReleaseOutboxMes
 const resendOutboxMessage = `-- name: ResendOutboxMessage :execrows
 UPDATE outbox_message
 SET status = 'pending', attempts = 0, run_at = $1, last_error = NULL, updated_at = $1
-WHERE id = $2 AND practice_id = $3 AND status IN ('failed', 'cancelled')
+WHERE id = $2 AND practice_id = $3 AND status IN ('failed', 'cancelled') AND scrubbed_at IS NULL
 `
 
 type ResendOutboxMessageParams struct {

@@ -687,7 +687,7 @@ func audit(ctx context.Context, q *sqlcgen.Queries, a Actor, action string, id u
 		return fmt.Errorf("meta audit: %w", err)
 	}
 	if err := q.CreateAuditLog(ctx, sqlcgen.CreateAuditLogParams{
-		UserID: pgtype.UUID{Bytes: a.UserID, Valid: true}, Actor: "user", Action: action,
+		UserID: pgtype.UUID{Bytes: a.UserID, Valid: true}, PracticeID: pgtype.UUID{Bytes: a.PracticeID, Valid: true}, Actor: "user", Action: action,
 		Entity: "appointment", EntityID: pgtype.UUID{Bytes: id, Valid: true}, Meta: b,
 	}); err != nil {
 		return fmt.Errorf("journal d'audit: %w", err)

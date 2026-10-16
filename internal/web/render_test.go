@@ -80,6 +80,12 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = PatientPage{}
 			case "admin_care_plan_new":
 				data = CarePlanPage{}
+			case "admin_privacy":
+				data = PrivacyPage{}
+			case "admin_audit":
+				data = AuditPageData{}
+			case "public_privacy":
+				data = PrivacyNoticeData{}
 			case "public_practice":
 				data = PublicPracticeData{}
 			case "public_practitioner":

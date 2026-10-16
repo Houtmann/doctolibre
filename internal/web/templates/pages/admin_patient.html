@@ -50,6 +50,17 @@
 </ul>
 {{else}}<p>Aucun rendez-vous passé.</p>{{end}}
 
+{{if .Data.CanManage}}
+<h2>Données personnelles (RGPD)</h2>
+<p>Droit d'accès : <a href="/admin/patients/{{.Data.ID}}/export.json" download>exporter en JSON</a> ou <a href="/admin/patients/{{.Data.ID}}/export.csv" download>en CSV</a>. Chaque export est enregistré dans le journal d'accès.</p>
+<form method="post" action="/admin/patients/{{.Data.ID}}/delete">
+  {{csrf .CSRF}}
+  <p>Droit à l'effacement : le nom, les coordonnées, la note et l'adresse sont effacés. Les rendez-vous passés sont conservés sans identité pour les statistiques. Cette action est irréversible ; les rendez-vous à venir doivent d'abord être annulés.</p>
+  <label><input type="checkbox" name="confirm" value="1" required> Je confirme la suppression de cette fiche</label>
+  <button type="submit" class="secondary">Supprimer la fiche</button>
+</form>
+{{end}}
+
 <h2>Fusionner un doublon</h2>
 <p>Cette fiche sera fusionnée dans la fiche choisie : ses rendez-vous y seront rattachés, puis elle sera supprimée.</p>
 <form method="get" action="/admin/patients/{{.Data.ID}}" role="search">

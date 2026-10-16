@@ -13,7 +13,7 @@ import (
 )
 
 const findPatientByEmail = `-- name: FindPatientByEmail :one
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient
 WHERE practice_id = $1 AND email = $2
   AND lower(first_name) = lower($3) AND lower(last_name) = lower($4)
   AND deleted_at IS NULL
@@ -52,12 +52,13 @@ func (q *Queries) FindPatientByEmail(ctx context.Context, arg FindPatientByEmail
 		&i.UpdatedAt,
 		&i.MergedInto,
 		&i.Address,
+		&i.AnonymizedAt,
 	)
 	return i, err
 }
 
 const findPatientByPhone = `-- name: FindPatientByPhone :one
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient
 WHERE practice_id = $1 AND phone = $2
   AND lower(first_name) = lower($3) AND lower(last_name) = lower($4)
   AND deleted_at IS NULL
@@ -96,6 +97,7 @@ func (q *Queries) FindPatientByPhone(ctx context.Context, arg FindPatientByPhone
 		&i.UpdatedAt,
 		&i.MergedInto,
 		&i.Address,
+		&i.AnonymizedAt,
 	)
 	return i, err
 }

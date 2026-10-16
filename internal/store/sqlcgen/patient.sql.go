@@ -33,7 +33,7 @@ func (q *Queries) AbsorbPatient(ctx context.Context, arg AbsorbPatientParams) er
 const createPatient = `-- name: CreatePatient :one
 INSERT INTO patient (practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, address)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address
+RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at
 `
 
 type CreatePatientParams struct {
@@ -79,12 +79,13 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 		&i.UpdatedAt,
 		&i.MergedInto,
 		&i.Address,
+		&i.AnonymizedAt,
 	)
 	return i, err
 }
 
 const findPatientDuplicates = `-- name: FindPatientDuplicates :many
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL
   AND (($2::text <> '' AND phone = $2::text) OR ($3::text <> '' AND email = $3::text))
 ORDER BY last_name, first_name, id
@@ -123,6 +124,7 @@ func (q *Queries) FindPatientDuplicates(ctx context.Context, arg FindPatientDupl
 			&i.UpdatedAt,
 			&i.MergedInto,
 			&i.Address,
+			&i.AnonymizedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -135,7 +137,7 @@ func (q *Queries) FindPatientDuplicates(ctx context.Context, arg FindPatientDupl
 }
 
 const getPatient = `-- name: GetPatient :one
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address FROM patient WHERE id = $1 AND practice_id = $2 AND deleted_at IS NULL
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient WHERE id = $1 AND practice_id = $2 AND deleted_at IS NULL
 `
 
 type GetPatientParams struct {
@@ -162,6 +164,7 @@ func (q *Queries) GetPatient(ctx context.Context, arg GetPatientParams) (Patient
 		&i.UpdatedAt,
 		&i.MergedInto,
 		&i.Address,
+		&i.AnonymizedAt,
 	)
 	return i, err
 }
@@ -218,7 +221,7 @@ func (q *Queries) ListPatientAppointments(ctx context.Context, arg ListPatientAp
 }
 
 const listPatients = `-- name: ListPatients :many
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL
   AND (last_name, first_name, id) > ($2::text, $3::text, $4::uuid)
 ORDER BY last_name, first_name, id
@@ -264,6 +267,7 @@ func (q *Queries) ListPatients(ctx context.Context, arg ListPatientsParams) ([]P
 			&i.UpdatedAt,
 			&i.MergedInto,
 			&i.Address,
+			&i.AnonymizedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -276,7 +280,7 @@ func (q *Queries) ListPatients(ctx context.Context, arg ListPatientsParams) ([]P
 }
 
 const listPatientsPage = `-- name: ListPatientsPage :many
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL
   AND (last_name, first_name, id) > ($2::text, $3::text, $4::uuid)
 ORDER BY last_name, first_name, id
@@ -323,6 +327,7 @@ func (q *Queries) ListPatientsPage(ctx context.Context, arg ListPatientsPagePara
 			&i.UpdatedAt,
 			&i.MergedInto,
 			&i.Address,
+			&i.AnonymizedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -335,7 +340,7 @@ func (q *Queries) ListPatientsPage(ctx context.Context, arg ListPatientsPagePara
 }
 
 const lockPatient = `-- name: LockPatient :one
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address FROM patient WHERE id = $1 AND practice_id = $2 AND deleted_at IS NULL FOR UPDATE
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient WHERE id = $1 AND practice_id = $2 AND deleted_at IS NULL FOR UPDATE
 `
 
 type LockPatientParams struct {
@@ -362,6 +367,7 @@ func (q *Queries) LockPatient(ctx context.Context, arg LockPatientParams) (Patie
 		&i.UpdatedAt,
 		&i.MergedInto,
 		&i.Address,
+		&i.AnonymizedAt,
 	)
 	return i, err
 }
@@ -418,7 +424,7 @@ func (q *Queries) ReassignPatientAppointments(ctx context.Context, arg ReassignP
 }
 
 const searchPatientsPage = `-- name: SearchPatientsPage :many
-SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address FROM patient
+SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL
   AND (patient_search_text(first_name, last_name, phone, email) LIKE '%' || f_unaccent(lower($2::text)) || '%'
        OR ($3::text <> '' AND phone = $3::text))
@@ -473,6 +479,7 @@ func (q *Queries) SearchPatientsPage(ctx context.Context, arg SearchPatientsPage
 			&i.UpdatedAt,
 			&i.MergedInto,
 			&i.Address,
+			&i.AnonymizedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -490,7 +497,7 @@ UPDATE patient SET
     email = $5, sms_opt_in = $6, email_opt_in = $7,
     notes_admin = $8, updated_at = now()
 WHERE id = $9 AND practice_id = $10 AND deleted_at IS NULL
-RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address
+RETURNING id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at
 `
 
 type UpdatePatientParams struct {
@@ -536,6 +543,7 @@ func (q *Queries) UpdatePatient(ctx context.Context, arg UpdatePatientParams) (P
 		&i.UpdatedAt,
 		&i.MergedInto,
 		&i.Address,
+		&i.AnonymizedAt,
 	)
 	return i, err
 }

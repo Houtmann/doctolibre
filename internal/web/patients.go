@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"doctolibre/internal/auth"
 	"doctolibre/internal/domain"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/service"
@@ -32,6 +34,11 @@ func (d Deps) patientRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logge
 	handle("GET "+pathPatients+"/{id}", h.detail)
 	handle("POST "+pathPatients+"/{id}", h.update)
 	handle("POST "+pathPatients+"/{id}/merge", h.merge)
+	// Export et suppression (droits RGPD) : pas pour le secrétariat.
+	clinical := d.Auth.RequireUser(domain.RoleAdmin, domain.RolePractitioner)
+	mux.Handle("GET "+pathPatients+"/{id}/export.json", clinical(http.HandlerFunc(h.exportJSON)))
+	mux.Handle("GET "+pathPatients+"/{id}/export.csv", clinical(http.HandlerFunc(h.exportCSV)))
+	mux.Handle("POST "+pathPatients+"/{id}/delete", clinical(http.HandlerFunc(h.erase)))
 }
 
 type patientHandlers struct {
@@ -179,6 +186,7 @@ type PatientPage struct {
 	Plans      []service.PlanView
 	MergeQuery string
 	Candidates []PatientRowView
+	CanManage  bool // export et suppression (administrateur, praticien)
 }
 
 func (h *patientHandlers) page(r *http.Request, id uuid.UUID, form *PatientForm, errs []string) (PatientPage, error) {
@@ -187,8 +195,10 @@ func (h *patientHandlers) page(r *http.Request, id uuid.UUID, form *PatientForm,
 	if err != nil {
 		return PatientPage{}, err
 	}
+	u, _ := auth.UserFrom(r.Context())
 	p := PatientPage{
-		ID: d.Patient.ID.String(), Name: d.Patient.FirstName + " " + d.Patient.LastName,
+		CanManage: u.Role != domain.RoleSecretary,
+		ID:        d.Patient.ID.String(), Name: d.Patient.FirstName + " " + d.Patient.LastName,
 		Form: formOf(d.Patient), Errors: errs, Upcoming: d.Upcoming, History: d.History, NoShows: d.NoShows,
 	}
 	if h.plans != nil {
@@ -222,6 +232,10 @@ func (h *patientHandlers) detail(w http.ResponseWriter, r *http.Request) {
 	}
 	p, err := h.page(r, id, nil, nil)
 	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	if err := h.svc.AuditView(r.Context(), actorFrom(r), id); err != nil {
 		h.fail(w, r, err)
 		return
 	}
@@ -288,4 +302,82 @@ func (h *patientHandlers) merge(w http.ResponseWriter, r *http.Request) {
 		slog.String("from", id.String()), slog.String("into", into.String()), slog.Int64("appointments", n))
 	h.rd.SetFlash(w, "success", "Fiches fusionnées : les rendez-vous ont été rattachés à cette fiche.")
 	httpx.Redirect(w, r, pathPatients+"/"+into.String())
+}
+
+// exportJSON télécharge toutes les données du patient (JSON).
+func (h *patientHandlers) exportJSON(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(r)
+	if !ok {
+		h.rd.Error(w, r, http.StatusNotFound, "")
+		return
+	}
+	exp, err := h.svc.Export(r.Context(), actorFrom(r), id, "json")
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	setDownloadHeaders(w, "application/json; charset=utf-8", "patient-"+id.String()+".json")
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(exp); err != nil {
+		httpx.LoggerFrom(r.Context()).Error("export JSON en échec", slog.String("patient_id", id.String()), slog.String("err", err.Error()))
+	}
+}
+
+// exportCSV télécharge les coordonnées et les rendez-vous du patient (CSV).
+func (h *patientHandlers) exportCSV(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(r)
+	if !ok {
+		h.rd.Error(w, r, http.StatusNotFound, "")
+		return
+	}
+	exp, err := h.svc.Export(r.Context(), actorFrom(r), id, "csv")
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	setDownloadHeaders(w, "text/csv; charset=utf-8", "patient-"+id.String()+".csv")
+	if err := exp.WriteCSV(w); err != nil {
+		httpx.LoggerFrom(r.Context()).Error("export CSV en échec", slog.String("patient_id", id.String()), slog.String("err", err.Error()))
+	}
+}
+
+// setDownloadHeaders : téléchargement jamais mis en cache (données personnelles).
+func setDownloadHeaders(w http.ResponseWriter, contentType, filename string) {
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+}
+
+// erase supprime ou anonymise la fiche (confirmation « confirm=1 » obligatoire).
+func (h *patientHandlers) erase(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(r)
+	if !ok {
+		h.rd.Error(w, r, http.StatusNotFound, "")
+		return
+	}
+	var err error
+	msgs := []string(nil)
+	if r.PostFormValue("confirm") != "1" {
+		msgs = []string{"Cochez la case pour confirmer la suppression."}
+	} else {
+		_, err = h.svc.Erase(r.Context(), actorFrom(r), id)
+		msgs = validation(err)
+	}
+	if msgs != nil {
+		p, perr := h.page(r, id, nil, msgs)
+		if perr != nil {
+			h.fail(w, r, perr)
+			return
+		}
+		h.rd.PageStatus(w, r, http.StatusUnprocessableEntity, "admin_patient", p)
+		return
+	}
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.SetFlash(w, "success", "Fiche patient supprimée : ses données personnelles ont été effacées.")
+	httpx.Redirect(w, r, pathPatients)
 }

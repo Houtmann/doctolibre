@@ -27,7 +27,8 @@ Chaque document a **un seul rôle** : ne pas dupliquer une information, mettre u
 | [`decisions.md`](decisions.md) | Décisions d'architecture/produit, avec l'alternative écartée | Orchestrateur / humain | Dès qu'une décision est prise |
 | [`sms.md`](sms.md) | Fournisseurs SMS, coûts, réglages par défaut | Agent (T022) | Quand les prix ou drivers changent |
 | [`backup.md`](backup.md) | Sauvegardes chiffrées (age), restauration, envoi S3 | Agent (T041) | Quand le dispositif change |
-| `email.md`, `rgpd.md`, `install.md`, `cost.md` | Docs d'exploitation | Créés par T021, T043, T044 | — |
+| [`rgpd.md`](rgpd.md) | Registre de traitement, durées de conservation, HDS, recommandations | Agent (T043) | Quand le traitement des données change |
+| `email.md`, `install.md`, `cost.md` | Docs d'exploitation | Créés par T021, T044 | — |
 
 ## Règles d'écriture
 
