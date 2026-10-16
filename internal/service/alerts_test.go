@@ -86,6 +86,25 @@ func TestAlertsFailedMessagesOncePerWindow(t *testing.T) {
 	}
 }
 
+func TestAlertsIgnoreScrubbedFailedMessages(t *testing.T) {
+	t.Parallel()
+	now := time.Now().UTC().Truncate(time.Hour).Add(5 * time.Minute)
+	db, _, al, _ := alertsEnv(t, now)
+	ctx := context.Background()
+
+	// Vieux message en échec, effacé par la purge à l'instant (updated_at = scrubbed_at = now).
+	if _, err := db.Exec(ctx, `INSERT INTO outbox_message (practice_id, kind, template, recipient, status, updated_at, scrubbed_at)
+		SELECT id, 'sms', 'reminder', '', 'failed', $1, $1 FROM practice`, now.Add(-time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	if n, err := al.RunOnce(ctx); err != nil || n != 0 {
+		t.Fatalf("échec effacé: n=%d err=%v", n, err)
+	}
+	if got := alertCount(t, db); got != 0 {
+		t.Errorf("alertes enfilées = %d, attendu 0", got)
+	}
+}
+
 func TestAlertsBackupStale(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

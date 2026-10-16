@@ -4,9 +4,10 @@ SELECT count(*)::bigint FROM outbox_message
 WHERE practice_id = @practice_id AND status = 'failed';
 
 -- name: CountFailedOutboxSince :one
--- Échecs récents hors alertes admin (une alerte en échec ne doit pas en déclencher une autre).
+-- Échecs récents hors alertes admin (une alerte en échec ne doit pas en déclencher une autre)
+-- et hors messages effacés par la purge RGPD (non renvoyables, leur updated_at est celui de la purge).
 SELECT count(*)::bigint FROM outbox_message
-WHERE practice_id = @practice_id AND status = 'failed' AND updated_at >= @since AND template <> 'admin_alert';
+WHERE practice_id = @practice_id AND status = 'failed' AND updated_at >= @since AND template <> 'admin_alert' AND scrubbed_at IS NULL;
 
 -- name: ListPracticeAdminEmails :many
 SELECT id, email::text AS email FROM app_user

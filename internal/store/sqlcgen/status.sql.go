@@ -28,7 +28,7 @@ func (q *Queries) CountFailedOutbox(ctx context.Context, practiceID uuid.UUID) (
 
 const countFailedOutboxSince = `-- name: CountFailedOutboxSince :one
 SELECT count(*)::bigint FROM outbox_message
-WHERE practice_id = $1 AND status = 'failed' AND updated_at >= $2 AND template <> 'admin_alert'
+WHERE practice_id = $1 AND status = 'failed' AND updated_at >= $2 AND template <> 'admin_alert' AND scrubbed_at IS NULL
 `
 
 type CountFailedOutboxSinceParams struct {
@@ -36,7 +36,8 @@ type CountFailedOutboxSinceParams struct {
 	Since      time.Time
 }
 
-// Échecs récents hors alertes admin (une alerte en échec ne doit pas en déclencher une autre).
+// Échecs récents hors alertes admin (une alerte en échec ne doit pas en déclencher une autre)
+// et hors messages effacés par la purge RGPD (non renvoyables, leur updated_at est celui de la purge).
 func (q *Queries) CountFailedOutboxSince(ctx context.Context, arg CountFailedOutboxSinceParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countFailedOutboxSince, arg.PracticeID, arg.Since)
 	var column_1 int64
