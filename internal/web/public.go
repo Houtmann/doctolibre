@@ -96,6 +96,7 @@ type TypeView struct {
 	Name     string
 	Duration time.Duration
 	URL      string
+	AtHome   bool // visite à domicile : badge « Domicile »
 }
 
 // PublicPractitionerData est la donnée de la page public_practitioner.
@@ -241,7 +242,7 @@ func (h *publicHandlers) practitioner(w http.ResponseWriter, r *http.Request) {
 	data := PublicPractitionerData{Practice: p.Practice, Practitioner: pv}
 	for _, t := range p.Types {
 		data.Types = append(data.Types, TypeView{
-			ID: t.ID.String(), Name: t.Name, Duration: typeDuration(t),
+			ID: t.ID.String(), Name: t.Name, Duration: typeDuration(t), AtHome: t.AtHome,
 			URL: pv.URL + "/book?type=" + t.ID.String(),
 		})
 	}

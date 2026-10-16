@@ -1,20 +1,20 @@
 <div id="slot-grid" class="slot-grid">
-  <nav class="week-nav" aria-label="Navigation par semaine">
-    {{if .PrevURL}}<a class="dl-btn dl-btn--outline" href="{{.PrevURL}}" hx-get="{{.PrevURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">&larr; Semaine précédente</a>{{else}}<span></span>{{end}}
-    {{if .NextURL}}<a class="dl-btn dl-btn--outline" href="{{.NextURL}}" hx-get="{{.NextURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">Semaine suivante &rarr;</a>{{end}}
+  <nav class="dl-week-nav" aria-label="Navigation par semaine">
+    {{if .PrevURL}}<a class="dl-btn dl-btn--outline dl-btn--sm" href="{{.PrevURL}}" hx-get="{{.PrevURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">&larr; Semaine précédente</a>{{else}}<span></span>{{end}}
+    <h2 class="dl-week-nav__label">Semaine {{.WeekLabel}}</h2>
+    {{if .NextURL}}<a class="dl-btn dl-btn--outline dl-btn--sm" href="{{.NextURL}}" hx-get="{{.NextURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">Semaine suivante &rarr;</a>{{end}}
   </nav>
-  <h2 class="week-label">Semaine {{.WeekLabel}}</h2>
   {{if .Days}}
   {{range .Days}}
-  <section class="slot-day" aria-label="{{.Label}}">
+  <section class="dl-slot-day" aria-label="{{.Label}}">
     <h3>{{.Label}}</h3>
-    <ul class="slot-list">
-      {{range .Slots}}<li><a class="dl-btn dl-btn--outline" href="{{.URL}}"><time datetime="{{.Datetime}}">{{localTime .Time}}</time></a></li>{{end}}
+    <ul class="dl-slots">
+      {{range .Slots}}<li><a class="dl-slot" href="{{.URL}}"><time datetime="{{.Datetime}}">{{localTime .Time}}</time></a></li>{{end}}
     </ul>
   </section>
   {{end}}
   {{else}}
-  <p class="dl-muted">Aucun créneau disponible cette semaine.{{if .NextURL}} Essayez la semaine suivante.{{end}}</p>
+  <p class="dl-empty">Aucun créneau disponible cette semaine.{{if .NextURL}} Essayez la semaine suivante.{{end}}</p>
   {{end}}
-  {{if .WaitlistURL}}<p class="waitlist-cta"><a class="dl-btn dl-btn--outline" href="{{.WaitlistURL}}">Aucun créneau ne me convient</a></p>{{end}}
+  {{if .WaitlistURL}}<p class="dl-waitlist-cta"><a class="dl-btn dl-btn--outline" href="{{.WaitlistURL}}">Aucun créneau ne me convient</a></p>{{end}}
 </div>

@@ -1,5 +1,9 @@
-<article class="booking-summary" aria-label="Votre rendez-vous">
-  <p><strong>{{.Type}}</strong> ({{formatDuration .Duration}})<br>
-  avec {{.Practitioner}}, {{.Practice}}<br>
-  <time datetime="{{.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Start}} à {{localTime .Start}}</time></p>
+<article class="dl-card" aria-label="Votre rendez-vous">
+  <div class="dl-card__header"><h2>Votre rendez-vous</h2></div>
+  <dl class="dl-details">
+    <dt>Cabinet</dt><dd>{{.Practice}}</dd>
+    <dt>Praticien</dt><dd>{{.Practitioner}}</dd>
+    <dt>Motif</dt><dd>{{.Type}} (<span class="dl-num">{{formatDuration .Duration}}</span>)</dd>
+    <dt>Date</dt><dd class="dl-num"><time datetime="{{.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Start}} à {{localTime .Start}}</time></dd>
+  </dl>
 </article>

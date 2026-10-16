@@ -2,39 +2,52 @@
 {{define "content"}}
 <nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Changer de créneau</a></nav>
 <h1>Vos coordonnées</h1>
+<ol class="dl-steps" aria-label="Étapes de la réservation"><li class="is-done">Motif</li><li class="is-done">Créneau</li><li aria-current="step">Coordonnées</li><li>Vérification</li></ol>
 {{template "booking_summary.html" .Data.Summary}}
 {{template "form_errors.html" .Data.Errors}}
 <form method="post" action="{{.Data.Action}}">
   {{csrf .CSRF}}
   <input type="hidden" name="type" value="{{.Data.TypeID}}">
   <input type="hidden" name="start" value="{{.Data.Start}}">
-  <label for="first_name">Prénom</label>
-  <input id="first_name" name="first_name" type="text" value="{{.Data.Form.FirstName}}" autocomplete="given-name" maxlength="80" required>
-  <label for="last_name">Nom</label>
-  <input id="last_name" name="last_name" type="text" value="{{.Data.Form.LastName}}" autocomplete="family-name" maxlength="80" required>
-  <label for="phone">Téléphone portable</label>
-  <input id="phone" name="phone" type="tel" value="{{.Data.Form.Phone}}" autocomplete="tel" inputmode="tel" aria-describedby="phone-help">
-  <small id="phone-help">Exemple : 06 12 34 56 78</small>
-  <label for="email">Adresse email</label>
-  <input id="email" name="email" type="email" value="{{.Data.Form.Email}}" autocomplete="email" maxlength="254">
+  <div class="dl-field">
+    <label class="dl-label" for="first_name">Prénom</label>
+    <input class="dl-input" id="first_name" name="first_name" type="text" value="{{.Data.Form.FirstName}}" autocomplete="given-name" maxlength="80" required>
+  </div>
+  <div class="dl-field">
+    <label class="dl-label" for="last_name">Nom</label>
+    <input class="dl-input" id="last_name" name="last_name" type="text" value="{{.Data.Form.LastName}}" autocomplete="family-name" maxlength="80" required>
+  </div>
+  <div class="dl-field">
+    <label class="dl-label" for="phone">Téléphone portable</label>
+    <input class="dl-input" id="phone" name="phone" type="tel" value="{{.Data.Form.Phone}}" autocomplete="tel" inputmode="tel" aria-describedby="phone-help">
+    <p class="dl-help" id="phone-help">Exemple : 06 12 34 56 78</p>
+  </div>
+  <div class="dl-field">
+    <label class="dl-label" for="email">Adresse email</label>
+    <input class="dl-input" id="email" name="email" type="email" value="{{.Data.Form.Email}}" autocomplete="email" maxlength="254">
+  </div>
   {{if .Data.AtHome}}
-  <label for="address">Adresse de la visite à domicile</label>
-  <textarea id="address" name="address" rows="3" maxlength="300" autocomplete="street-address" required aria-describedby="address-help">{{.Data.Form.Address}}</textarea>
-  <small id="address-help">Numéro, rue, code postal et commune. Le praticien se déplace uniquement dans la zone desservie.</small>
+  <div class="dl-field">
+    <label class="dl-label" for="address">Adresse de la visite à domicile</label>
+    <textarea class="dl-textarea" id="address" name="address" rows="3" maxlength="300" autocomplete="street-address" required aria-describedby="address-help">{{.Data.Form.Address}}</textarea>
+    <p class="dl-help" id="address-help">Numéro, rue, code postal et commune. Le praticien se déplace uniquement dans la zone desservie.</p>
+  </div>
   {{end}}
-  <label for="birth_date">Date de naissance (facultatif)</label>
-  <input id="birth_date" name="birth_date" type="date" value="{{.Data.Form.BirthDate}}" autocomplete="bday">
+  <div class="dl-field">
+    <label class="dl-label" for="birth_date">Date de naissance <span class="dl-optional">(facultatif)</span></label>
+    <input class="dl-input" id="birth_date" name="birth_date" type="date" value="{{.Data.Form.BirthDate}}" autocomplete="bday">
+  </div>
 
-  <fieldset>
+  <fieldset class="dl-fieldset">
     <legend>Recevoir le code de vérification par</legend>
-    <label><input type="radio" name="channel" value="sms"{{if eq .Data.Form.Channel "sms"}} checked{{end}}> SMS (au téléphone indiqué)</label>
-    <label><input type="radio" name="channel" value="email"{{if ne .Data.Form.Channel "sms"}} checked{{end}}> Email (recommandé, à l'adresse indiquée)</label>
+    <label class="dl-check"><input type="radio" name="channel" value="sms"{{if eq .Data.Form.Channel "sms"}} checked{{end}}> SMS (au téléphone indiqué)</label>
+    <label class="dl-check"><input type="radio" name="channel" value="email"{{if ne .Data.Form.Channel "sms"}} checked{{end}}> Email (recommandé, à l'adresse indiquée)</label>
   </fieldset>
 
-  <fieldset>
+  <fieldset class="dl-fieldset">
     <legend>Notifications</legend>
-    <label><input type="checkbox" name="sms_opt_in" value="on"{{if .Data.Form.SMSOptIn}} checked{{end}}> Je souhaite recevoir des rappels par SMS</label>
-    <label><input type="checkbox" name="email_opt_in" value="on"{{if .Data.Form.EmailOptIn}} checked{{end}}> Je souhaite recevoir des messages par email</label>
+    <label class="dl-check"><input type="checkbox" name="sms_opt_in" value="on"{{if .Data.Form.SMSOptIn}} checked{{end}}> Je souhaite recevoir des rappels par SMS</label>
+    <label class="dl-check"><input type="checkbox" name="email_opt_in" value="on"{{if .Data.Form.EmailOptIn}} checked{{end}}> Je souhaite recevoir des messages par email</label>
   </fieldset>
 
   <div class="dl-hp" aria-hidden="true">
@@ -42,8 +55,8 @@
     <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
   </div>
 
-  <label><input type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> J'accepte que mes coordonnées soient utilisées par le cabinet pour gérer ce rendez-vous.</label>
-  <p><small>N'indiquez aucune information médicale. Ce service sert uniquement à fixer un rendez-vous.</small></p>
+  <label class="dl-check"><input type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> J'accepte que mes coordonnées soient utilisées par le cabinet pour gérer ce rendez-vous.</label>
+  <p class="dl-help">N'indiquez aucune information médicale. Ce service sert uniquement à fixer un rendez-vous.</p>
   <button class="dl-btn" type="submit">Recevoir mon code</button>
 </form>
 {{end}}

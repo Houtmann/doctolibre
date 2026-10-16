@@ -28,7 +28,7 @@ func (h *publicHandlers) firstTypes(r *http.Request, practiceSlug string) ([]Typ
 	out := make([]TypeView, 0, len(types))
 	for _, t := range types {
 		out = append(out, TypeView{
-			ID: t.ID.String(), Name: t.Name, Duration: typeDuration(t),
+			ID: t.ID.String(), Name: t.Name, Duration: typeDuration(t), AtHome: t.AtHome,
 			URL: base + "?" + url.Values{"type": {t.ID.String()}}.Encode(),
 		})
 	}

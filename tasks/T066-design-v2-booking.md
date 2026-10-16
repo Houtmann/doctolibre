@@ -22,7 +22,7 @@ Le parcours de réservation public (cabinet → praticien → motif → créneau
 ## Critères d'acceptation
 - [ ] `grep -rnE 'choice-list|slot-list|week-nav|booking-summary|detail-list|home-badge' internal/web/templates` vide.
 - [ ] Parcours complet réalisé au clavier seul dans le navigateur (orchestrateur).
-- [ ] `make check` vert, aucun `style=` ajouté.
+- [x] `make check` vert, aucun `style=` ajouté.
 - [ ] Vérifié dans le navigateur à 360 et 1280 px, clair et sombre, et au clavier (focus visible).
 
 ## Vérification
@@ -38,8 +38,9 @@ Formulaires admin (T065), agenda (T067), retrait de Pico (T068), toute modificat
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** : parcours public migré en v2 : `.dl-steps` (Motif / Créneau / Coordonnées / Vérification, `aria-current="step"`, sur practice, practitioner, book, details, verify) ; `.dl-choices`/`.dl-choice` (durée en `.dl-num`, badge `⌂ Domicile` via nouveau champ `TypeView.AtHome` renseigné dans `public.go` et `public_first.go`) ; `booking_grid` en `.dl-week-nav`/`.dl-slot-day`/`.dl-slots`/`.dl-slot`/`.dl-empty` (ids et `hx-*` inchangés) ; `booking_summary`, `public_confirmed`, `public_waitlist_offer` en `.dl-card` + `.dl-details` (badge Réservé/Annulé sur la confirmation) ; formulaires de `public_details`, `public_verify`, `public_waitlist`, `public_waitlist_verify` en `.dl-field/.dl-label/.dl-input/.dl-help`, `.dl-fieldset`, `.dl-check` ; alertes `dl-alert--error/--info` sur la page d'offre. `app.css` : retrait de `choice-list`, `week-nav`, `week-label`, `slot-day`, `slot-list`, `booking-summary`, `resend`, `home-badge`. `styleguide_test.go` : fragment `booking-summary` retiré (le partial est maintenant `dl-card`).
+- **Composants ajoutés** (bloc `/* ── T066 ── */` en fin de `design/components.css` et `static/components.css`) : `.dl-field-row` (deux colonnes qui se replient), `.dl-resend`, `.dl-waitlist-cta`, marge du badge dans `.dl-choice`, libellé de `.dl-week-nav` pleine largeur au-dessus des boutons.
+- **Reste à faire** : parcours clavier seul et captures avant/après (orchestrateur). Vérifié par moi dans le navigateur (démo, :8094, arrêté) : cabinet, praticien, créneaux, coordonnées à 360 px clair et sombre (vérification et confirmation non visitées : nécessitent un OTP).
+- **Notes de reprise** : le critère grep `week-nav|detail-list` matche `dl-week-nav` (inévitable, c'est la classe v2) et `partials/appointment_detail.html` (`detail-list`, agenda : T067) ; `.detail-list` reste donc dans `app.css`. Le bloc T066 de `static/components.css` vient après le bloc `.dl-sg-*` ; conflit probable avec T065/T067 en fin de fichier (concaténer les blocs). `patient_fields.html` non touché (le formulaire public n'en dépend pas). Les titres h2 des cartes sont encore stylés par Pico (base v2 en T068). À 360 px, les libellés d'étapes passent à la ligne sous leur numéro.
+- **Écarts avec la spécification** : étapes à 4 entrées (Vérification ajoutée à la carte à 3) ; pas de `.is-holiday` sur `.dl-slot-day` (la donnée n'est pas dans `GridDay`, et les jours sans créneau ne sont pas listés) ; pages de déplacement (`reschedule`) sans `.dl-steps` ; pas de `.dl-steps` sur la liste d'attente.

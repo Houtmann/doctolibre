@@ -382,3 +382,10 @@ p.dl-help { margin-bottom: var(--dl-space-4); }
 .dl-table-wrap { margin-bottom: var(--dl-space-4); }
 .dl-table .dl-optional { color: var(--dl-text-muted); }
 .dl-inline-form { display: inline; margin: 0; }
+/* ── T066 ── (parcours patient) */
+/* .dl-field-row : défini dans le bloc T065. */
+.dl-resend { margin-top: var(--dl-space-4); }
+.dl-waitlist-cta { margin-top: var(--dl-space-5); }
+.dl-choice .dl-badge { margin-left: var(--dl-space-1); }
+.dl-week-nav__label { flex: 1 1 100%; order: -1; font-size: var(--dl-text-md); margin: 0; }
+.dl-choice > span { min-width: 0; }

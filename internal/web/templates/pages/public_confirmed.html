@@ -1,26 +1,30 @@
 {{define "title"}}Rendez-vous confirmé{{end}}
 {{define "content"}}
 <h1>{{if .Data.Cancelled}}Rendez-vous annulé{{else}}Rendez-vous confirmé{{end}}</h1>
-<article class="booking-summary">
+<article class="dl-card">
+  <div class="dl-card__header"><h2>Votre rendez-vous</h2>{{if .Data.Cancelled}}<span class="dl-badge dl-badge--st-cancelled">Annulé</span>{{else}}<span class="dl-badge dl-badge--st-booked">Réservé</span>{{end}}</div>
   <p>{{.Data.FirstName}}, votre rendez-vous{{if .Data.Cancelled}} était prévu{{else}} est réservé{{end}} :</p>
-  <p><strong>{{.Data.Type}}</strong> ({{formatDuration .Data.Duration}})<br>
-  avec {{.Data.Practitioner}}<br>
-  <time datetime="{{.Data.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Start}} à {{localTime .Data.Start}}</time></p>
-  {{if and .Data.AtHome .Data.Address}}<p><strong>Visite à domicile</strong><br>{{.Data.Address}}</p>{{end}}
-  <p>{{.Data.Practice.Name}}{{if .Data.Practice.Address}}<br>{{.Data.Practice.Address}}{{end}}{{if .Data.Practice.Phone}}<br>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}</p>
+  <dl class="dl-details">
+    <dt>Cabinet</dt><dd>{{.Data.Practice.Name}}{{if .Data.Practice.Address}}<br>{{.Data.Practice.Address}}{{end}}{{if .Data.Practice.Phone}}<br>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}</dd>
+    <dt>Praticien</dt><dd>{{.Data.Practitioner}}</dd>
+    <dt>Motif</dt><dd>{{.Data.Type}} (<span class="dl-num">{{formatDuration .Data.Duration}}</span>)</dd>
+    <dt>Date</dt><dd class="dl-num"><time datetime="{{.Data.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Start}} à {{localTime .Data.Start}}</time></dd>
+    {{if and .Data.AtHome .Data.Address}}<dt>Visite à domicile</dt><dd>{{.Data.Address}}</dd>{{end}}
+  </dl>
+  {{if .Data.Cancelled}}
+  <div class="dl-card__footer"><a class="dl-btn" href="{{.Data.RebookURL}}">Reprendre rendez-vous</a></div>
+  {{else}}
+  <div class="dl-card__footer">
+    <a class="dl-btn dl-btn--outline dl-btn--sm" href="{{.Data.ICSURL}}">Ajouter à mon agenda</a>
+    {{if .Data.Changeable}}
+    <a class="dl-btn dl-btn--outline dl-btn--sm" href="{{.Data.ManageURL}}/reschedule">Déplacer le rendez-vous</a>
+    <a class="dl-btn dl-btn--ghost dl-btn--sm" href="{{.Data.ManageURL}}/cancel">Annuler le rendez-vous</a>
+    {{end}}
+  </div>
+  {{end}}
 </article>
-{{if .Data.Cancelled}}
-<p><a class="dl-btn" href="{{.Data.RebookURL}}">Reprendre rendez-vous</a></p>
-{{else}}
-<p><a class="dl-btn" href="{{.Data.ICSURL}}">Ajouter à mon agenda</a></p>
-{{if .Data.Changeable}}
-<p class="actions">
-  <a class="dl-btn dl-btn--outline" href="{{.Data.ManageURL}}/reschedule">Déplacer le rendez-vous</a>
-  <a class="dl-btn dl-btn--outline" href="{{.Data.ManageURL}}/cancel">Annuler le rendez-vous</a>
-</p>
-{{else}}
-<p><small>Ce rendez-vous ne peut plus être déplacé ni annulé en ligne (délai de {{formatDuration .Data.MinCancel}}){{if .Data.Practice.Phone}} : appelez le cabinet au <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}.</small></p>
+{{if and (not .Data.Cancelled) (not .Data.Changeable)}}
+<p class="dl-help">Ce rendez-vous ne peut plus être déplacé ni annulé en ligne (délai de {{formatDuration .Data.MinCancel}}){{if .Data.Practice.Phone}} : appelez le cabinet au <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}.</p>
 {{end}}
-{{end}}
-<p><small>Conservez l'adresse de cette page : elle vous permettra de retrouver votre rendez-vous. Ne la partagez pas.</small></p>
+{{if not .Data.Cancelled}}<p class="dl-help">Conservez l'adresse de cette page : elle vous permettra de retrouver votre rendez-vous. Ne la partagez pas.</p>{{end}}
 {{end}}
