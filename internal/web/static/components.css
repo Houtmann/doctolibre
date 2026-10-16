@@ -357,3 +357,11 @@ input.dl-input[aria-invalid], select.dl-select[aria-invalid], textarea.dl-textar
 .dl-sg-bg-danger { background: var(--dl-danger); }
 .dl-sg-bg-focus { background: var(--dl-focus); }
 .dl-sg-panel .dl-cal { display: grid; }
+
+/* ── T066 ── (parcours patient) */
+.dl-field-row { display: grid; gap: 0 var(--dl-space-4); grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+.dl-resend { margin-top: var(--dl-space-4); }
+.dl-waitlist-cta { margin-top: var(--dl-space-5); }
+.dl-choice .dl-badge { margin-left: var(--dl-space-1); }
+.dl-week-nav__label { flex: 1 1 100%; order: -1; font-size: var(--dl-text-md); margin: 0; }
+.dl-choice > span { min-width: 0; }

@@ -5,13 +5,14 @@
 {{if .Data.Practitioner.Title}}<p>{{.Data.Practitioner.Title}}</p>{{end}}
 {{if .Data.Practitioner.Bio}}<p>{{.Data.Practitioner.Bio}}</p>{{end}}
 <h2>Choisissez un motif de rendez-vous</h2>
+<ol class="dl-steps" aria-label="Étapes de la réservation"><li aria-current="step">Motif</li><li>Créneau</li><li>Coordonnées</li><li>Vérification</li></ol>
 {{if .Data.Types}}
-<ul class="choice-list">
+<ul class="dl-choices">
   {{range .Data.Types}}
-  <li><a class="dl-btn dl-btn--outline" href="{{.URL}}">{{.Name}} <small>({{formatDuration .Duration}})</small></a></li>
+  <li><a class="dl-choice" href="{{.URL}}"><span><span class="dl-choice__title">{{.Name}}</span>{{if .AtHome}} <span class="dl-badge">⌂ Domicile</span>{{end}}<br><span class="dl-choice__meta dl-num">{{formatDuration .Duration}}</span></span></a></li>
   {{end}}
 </ul>
 {{else}}
-<p>Aucun rendez-vous n'est réservable en ligne pour le moment.{{if .Data.Practice.Phone}} Appelez le cabinet au <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>.{{end}}</p>
+<p class="dl-empty">Aucun rendez-vous n'est réservable en ligne pour le moment.{{if .Data.Practice.Phone}} Appelez le cabinet au <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>.{{end}}</p>
 {{end}}
 {{end}}

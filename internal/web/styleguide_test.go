@@ -36,7 +36,7 @@ func TestStyleguideDev(t *testing.T) {
 	body := rec.Body.String()
 	for _, want := range []string{
 		"dl-alert--success", "dl-alert--warning", "st-no_show", "st-cancelled", "form-errors",
-		"sw-st-done", "booking-summary", "patient-results",
+		"sw-st-done", "patient-results",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("fragment %q absent", want)

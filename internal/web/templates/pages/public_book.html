@@ -2,6 +2,7 @@
 {{define "content"}}
 <nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Changer de motif</a></nav>
 <h1>Choisir un créneau</h1>
+<ol class="dl-steps" aria-label="Étapes de la réservation"><li class="is-done">Motif</li><li aria-current="step">Créneau</li><li>Coordonnées</li><li>Vérification</li></ol>
 <p>{{.Data.Type.Name}} ({{formatDuration .Data.Type.Duration}}) avec {{.Data.Practitioner}}</p>
 {{template "booking_grid.html" .Data}}
 {{end}}

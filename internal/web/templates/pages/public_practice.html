@@ -4,26 +4,24 @@
 {{if .Data.Practice.Address}}<p>{{.Data.Practice.Address}}</p>{{end}}
 {{if .Data.Practice.Phone}}<p>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a></p>{{end}}
 <h2>Prendre rendez-vous</h2>
+<ol class="dl-steps" aria-label="Étapes de la réservation"><li aria-current="step">Motif</li><li>Créneau</li><li>Coordonnées</li><li>Vérification</li></ol>
 {{if .Data.FirstTypes}}
 <h3>Premier créneau disponible</h3>
 <p>Vous n'avez pas de préférence ? Choisissez un motif : nous vous proposons le créneau le plus proche, tous praticiens confondus.</p>
-<ul class="choice-list">
+<ul class="dl-choices">
   {{range .Data.FirstTypes}}
-  <li><a class="dl-btn" href="{{.URL}}">{{.Name}} <small>({{formatDuration .Duration}})</small></a></li>
+  <li><a class="dl-choice" href="{{.URL}}"><span><span class="dl-choice__title">{{.Name}}</span>{{if .AtHome}} <span class="dl-badge">⌂ Domicile</span>{{end}}<br><span class="dl-choice__meta dl-num">{{formatDuration .Duration}}</span></span></a></li>
   {{end}}
 </ul>
 <h3>Ou choisissez un praticien</h3>
 {{end}}
 {{if .Data.Practitioners}}
-<ul class="choice-list">
+<ul class="dl-choices">
   {{range .Data.Practitioners}}
-  <li>
-    <a class="dl-btn dl-btn--outline" href="{{.URL}}">{{.Name}}{{if .Title}} <small>({{.Title}})</small>{{end}}</a>
-    {{if .Bio}}<p><small>{{.Bio}}</small></p>{{end}}
-  </li>
+  <li><a class="dl-choice" href="{{.URL}}"><span><span class="dl-choice__title">{{.Name}}</span>{{if .Title}} <span class="dl-choice__meta">({{.Title}})</span>{{end}}{{if .Bio}}<br><span class="dl-choice__meta">{{.Bio}}</span>{{end}}</span></a></li>
   {{end}}
 </ul>
 {{else}}
-<p>La prise de rendez-vous en ligne n'est pas encore ouverte pour ce cabinet.</p>
+<p class="dl-empty">La prise de rendez-vous en ligne n'est pas encore ouverte pour ce cabinet.</p>
 {{end}}
 {{end}}
