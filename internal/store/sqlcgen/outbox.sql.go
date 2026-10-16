@@ -232,7 +232,7 @@ func (q *Queries) MarkOutboxRetry(ctx context.Context, arg MarkOutboxRetryParams
 
 const markOutboxSent = `-- name: MarkOutboxSent :execrows
 UPDATE outbox_message
-SET payload = payload - 'manage_url' - 'reset_url' - 'code' - 'body', status = 'sent', sent_at = $1::timestamptz, provider_ref = $2, last_error = NULL, updated_at = $1
+SET payload = payload - 'manage_url' - 'reset_url' - 'code' - 'body' - 'offer_url', status = 'sent', sent_at = $1::timestamptz, provider_ref = $2, last_error = NULL, updated_at = $1
 WHERE id = $3 AND status = 'sending' AND attempts = $4
 `
 
@@ -244,7 +244,7 @@ type MarkOutboxSentParams struct {
 }
 
 // Une fois envoyé, les secrets du message (lien de gestion, lien de réinitialisation,
-// code, texte du SMS qui les reprend) sont retirés tout de suite du payload.
+// lien de proposition de liste d'attente, code, texte du SMS qui les reprend) sont retirés tout de suite du payload.
 func (q *Queries) MarkOutboxSent(ctx context.Context, arg MarkOutboxSentParams) (int64, error) {
 	result, err := q.db.Exec(ctx, markOutboxSent,
 		arg.Now,

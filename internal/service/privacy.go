@@ -374,6 +374,9 @@ func erasePatient(ctx context.Context, q *sqlcgen.Queries, practiceID uuid.UUID,
 	if _, err := q.ScrubOutboxForPatients(ctx, sqlcgen.ScrubOutboxForPatientsParams{Now: now, PracticeID: practiceID, Ids: ids, Recipients: recipients}); err != nil {
 		return "", fmt.Errorf("effacement des messages: %w", err)
 	}
+	if _, err := q.DeletePatientWaitlist(ctx, sqlcgen.DeletePatientWaitlistParams{PracticeID: practiceID, Ids: ids}); err != nil {
+		return "", fmt.Errorf("suppression de la liste d'attente: %w", err)
+	}
 	mode, action := "anonymized", ActionPatientAnonymized
 	if total == 0 && len(ids) == 1 {
 		mode, action = "deleted", ActionPatientDeleted

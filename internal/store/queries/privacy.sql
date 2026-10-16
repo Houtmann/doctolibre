@@ -121,3 +121,17 @@ WHERE m.practice_id = @practice_id
        OR (cardinality(@recipients::text[]) > 0 AND lower(m.recipient) = ANY(@recipients::text[])))
 ORDER BY m.created_at, m.id
 LIMIT 5000;
+
+-- name: DeletePatientWaitlist :execrows
+-- Inscriptions en liste d'attente des fiches (les propositions partent en cascade).
+DELETE FROM waitlist_entry WHERE practice_id = @practice_id AND patient_id = ANY(@ids::uuid[]);
+
+-- name: ExportPatientWaitlist :many
+SELECT w.id, t.name AS type_name, w.practitioner_id, pr.first_name AS practitioner_first_name, pr.last_name AS practitioner_last_name,
+       w.earliest, w.latest, w.weekdays, w.time_from, w.time_to, w.status, w.created_at
+FROM waitlist_entry w
+JOIN appointment_type t ON t.id = w.appointment_type_id
+LEFT JOIN practitioner pr ON pr.id = w.practitioner_id
+WHERE w.practice_id = @practice_id AND w.patient_id = @patient_id
+ORDER BY w.created_at, w.id
+LIMIT 200;

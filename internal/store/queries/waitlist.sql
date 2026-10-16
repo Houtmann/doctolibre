@@ -71,3 +71,7 @@ UPDATE waitlist_entry SET status = 'fulfilled' WHERE id = @id;
 
 -- name: MarkWaitlistOfferClaimed :exec
 UPDATE waitlist_offer SET claimed_at = @now WHERE id = @id;
+
+-- name: ReassignPatientWaitlist :execrows
+UPDATE waitlist_entry SET patient_id = @into_id
+WHERE patient_id = @from_id AND practice_id = @practice_id;

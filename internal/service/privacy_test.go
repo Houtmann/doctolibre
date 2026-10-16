@@ -127,6 +127,21 @@ VALUES ($1, 'email', 'confirmation', $2::jsonb, $3, $4, $5, $6, $7, $8, $8) RETU
 	return id
 }
 
+// waitlist inscrit le patient en liste d'attente, avec une proposition en cours.
+func (e *privEnv) waitlist(t *testing.T, patientID uuid.UUID) {
+	t.Helper()
+	var id uuid.UUID
+	err := e.db.QueryRow(context.Background(), `
+INSERT INTO waitlist_entry (practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays, time_from, time_to)
+VALUES ($1, $2, $3, $4, '2026-10-15', '2026-10-31', '{0,2}', '09:00', '12:30') RETURNING id`,
+		e.pc.ID, patientID, e.pr.ID, e.typ.ID).Scan(&id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	e.exec(t, `INSERT INTO waitlist_offer (entry_id, practice_id, practitioner_id, slot_start, token_hash, expires_at)
+		VALUES ($1, $2, $3, '2026-10-20T09:00:00Z', $4, '2026-10-20T00:00:00Z')`, id, e.pc.ID, e.pr.ID, "wl-"+uuid.NewString())
+}
+
 // dump retourne le contenu textuel de toutes les tables du schéma public.
 func (e *privEnv) dump(t *testing.T) string {
 	t.Helper()
@@ -184,6 +199,7 @@ func TestEraseAnonymizesAndLeavesNoIdentifyingData(t *testing.T) {
 	e.message(t, nil, mkPhone, "sent", &sent) // code de vérification, sans rendez-vous
 	e.exec(t, `INSERT INTO care_plan (practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, start_date)
 		VALUES ($1, $2, $3, $4, $5, 5, 2, '2026-09-01')`, e.pc.ID, p.ID, e.pr.ID, e.typ.ID, mkLabel)
+	e.waitlist(t, p.ID)
 	// Du bruit : un autre patient ne doit pas être touché.
 	other := e.patient(t, "Autre", "Personne", "+33611223344", "autre@example.test")
 
@@ -194,6 +210,12 @@ func TestEraseAnonymizesAndLeavesNoIdentifyingData(t *testing.T) {
 	// Seule la fiche « autre » garde ses données (marqueurs retirés pour la comparaison).
 	e.exec(t, `UPDATE patient SET notes_admin = '', address = NULL WHERE id = $1`, other.ID)
 	assertNoMarkers(t, e)
+	if n := e.count(t, `SELECT count(*) FROM waitlist_entry`); n != 0 {
+		t.Errorf("inscriptions en liste d'attente restantes = %d", n)
+	}
+	if n := e.count(t, `SELECT count(*) FROM waitlist_offer`); n != 0 {
+		t.Errorf("propositions restantes = %d", n)
+	}
 	if n := e.count(t, `SELECT count(*) FROM appointment WHERE patient_id = $1`, p.ID); n != 2 {
 		t.Errorf("rendez-vous conservés = %d, attendu 2", n)
 	}
@@ -221,9 +243,13 @@ func TestEraseHardDeletesPatientWithoutAppointments(t *testing.T) {
 	p := e.patient(t, mkFirst, mkLast, mkPhone, mkEmail)
 	sent := privNow.AddDate(0, 0, -1)
 	e.message(t, nil, mkEmail, "sent", &sent)
+	e.waitlist(t, p.ID)
 	mode, err := e.pat.Erase(context.Background(), e.actor, p.ID)
 	if err != nil || mode != "deleted" {
 		t.Fatalf("Erase = %q, %v", mode, err)
+	}
+	if n := e.count(t, `SELECT count(*) FROM waitlist_entry`) + e.count(t, `SELECT count(*) FROM waitlist_offer`); n != 0 {
+		t.Errorf("liste d'attente restante = %d lignes", n)
 	}
 	if n := e.count(t, `SELECT count(*) FROM patient WHERE id = $1`, p.ID); n != 0 {
 		t.Error("fiche toujours présente")
@@ -252,8 +278,12 @@ func TestEraseCascadesToMergedDuplicates(t *testing.T) {
 	keep := e.patient(t, mkFirst, mkLast, mkPhone, mkEmail)
 	dup := e.patient(t, mkFirst, mkLast, "+33699887755", "dup."+mkEmail)
 	e.appt(t, keep.ID, privNow.AddDate(0, 0, -20), "done")
+	e.waitlist(t, dup.ID)
 	if _, err := e.pat.Merge(ctx, e.actor, dup.ID, keep.ID); err != nil {
 		t.Fatal(err)
+	}
+	if n := e.count(t, `SELECT count(*) FROM waitlist_entry WHERE patient_id = $1`, keep.ID); n != 1 {
+		t.Errorf("inscription non réaffectée à la fiche gardée : %d", n)
 	}
 	if mode, err := e.pat.Erase(ctx, e.actor, keep.ID); err != nil || mode != "anonymized" {
 		t.Fatalf("Erase = %q, %v", mode, err)
@@ -270,7 +300,7 @@ func TestMarkSentRemovesSecretsFromPayload(t *testing.T) {
 	e := newPrivEnv(t)
 	ctx := context.Background()
 	id := e.message(t, nil, "a@example.test", "sending", nil)
-	e.exec(t, `UPDATE outbox_message SET attempts = 1, payload = payload || '{"reset_url":"https://x.test/reset/SECRETTOKEN","code":"123456","otp":true}' WHERE id = $1`, id)
+	e.exec(t, `UPDATE outbox_message SET attempts = 1, payload = payload || '{"reset_url":"https://x.test/reset/SECRETTOKEN","offer_url":"https://x.test/w/OFFERTOKEN","code":"123456","otp":true}' WHERE id = $1`, id)
 	n, err := sqlcgen.New(e.db).MarkOutboxSent(ctx, sqlcgen.MarkOutboxSentParams{Now: privNow, ID: id, Attempts: 1})
 	if err != nil || n != 1 {
 		t.Fatalf("MarkOutboxSent = %d, %v", n, err)
@@ -279,7 +309,7 @@ func TestMarkSentRemovesSecretsFromPayload(t *testing.T) {
 	if err := e.db.QueryRow(ctx, `SELECT payload::text FROM outbox_message WHERE id = $1`, id).Scan(&payload); err != nil {
 		t.Fatal(err)
 	}
-	for _, secret := range []string{"manage_url", "reset_url", "SECRETTOKEN", "123456", "body"} {
+	for _, secret := range []string{"manage_url", "reset_url", "SECRETTOKEN", "offer_url", "OFFERTOKEN", "123456", "body"} {
 		if strings.Contains(payload, secret) {
 			t.Errorf("payload après envoi contient encore %q : %s", secret, payload)
 		}
@@ -428,6 +458,8 @@ func TestExportContainsAllDataAndIsAudited(t *testing.T) {
 	e.exec(t, `INSERT INTO care_plan (practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, start_date)
 		VALUES ($1, $2, $3, $4, $5, 5, 2, '2026-09-01')`, e.pc.ID, p.ID, e.pr.ID, e.typ.ID, mkLabel)
 
+	e.waitlist(t, p.ID)
+
 	exp, err := e.pat.Export(ctx, e.actor, p.ID, "csv")
 	if err != nil {
 		t.Fatal(err)
@@ -440,6 +472,10 @@ func TestExportContainsAllDataAndIsAudited(t *testing.T) {
 	}
 	if len(exp.CarePlans) != 1 || exp.CarePlans[0].Label != mkLabel || len(exp.Messages) != 1 || exp.Messages[0].Recipient != mkEmail {
 		t.Errorf("séries/messages exportés : %+v / %+v", exp.CarePlans, exp.Messages)
+	}
+	if len(exp.Waitlist) != 1 || exp.Waitlist[0].Earliest != "2026-10-15" || exp.Waitlist[0].Status != "active" ||
+		exp.Waitlist[0].TimeFrom != "09:00" || exp.Waitlist[0].TimeTo != "12:30" || len(exp.Waitlist[0].Weekdays) != 2 || exp.Waitlist[0].Practitioner == "" {
+		t.Errorf("liste d'attente exportée : %+v", exp.Waitlist)
 	}
 	if strings.Contains(exp.Messages[0].Template+exp.Messages[0].Status, "SECRETTOKEN") {
 		t.Error("l'export ne doit pas contenir de jeton")

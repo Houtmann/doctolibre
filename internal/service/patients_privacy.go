@@ -47,6 +47,7 @@ type PatientExport struct {
 	Patient      ExportedPatient    `json:"patient"`
 	Appointments []ExportedAppt     `json:"appointments"`
 	CarePlans    []ExportedCarePlan `json:"care_plans"`
+	Waitlist     []ExportedWaitlist `json:"waitlist"`
 	Messages     []ExportedMessage  `json:"messages"`
 }
 
@@ -88,6 +89,20 @@ type ExportedCarePlan struct {
 	FrequencyPerWeek   int    `json:"frequency_per_week"`
 	StartDate          string `json:"start_date"`
 	Status             string `json:"status"`
+}
+
+// ExportedWaitlist est une inscription en liste d'attente.
+type ExportedWaitlist struct {
+	ID           string `json:"id"`
+	Type         string `json:"type"`
+	Practitioner string `json:"practitioner,omitempty"`
+	Earliest     string `json:"earliest"`
+	Latest       string `json:"latest"`
+	Weekdays     []int  `json:"weekdays"`
+	TimeFrom     string `json:"time_from,omitempty"`
+	TimeTo       string `json:"time_to,omitempty"`
+	Status       string `json:"status"`
+	CreatedAt    string `json:"created_at"`
 }
 
 // ExportedMessage est un email ou SMS envoyé au patient (sans son contenu).
@@ -156,6 +171,30 @@ func (s *Patients) Export(ctx context.Context, a Actor, id uuid.UUID, format str
 				ep.StartDate = c.StartDate.Time.Format("2006-01-02")
 			}
 			out.CarePlans = append(out.CarePlans, ep)
+		}
+		wl, err := q.ExportPatientWaitlist(ctx, sqlcgen.ExportPatientWaitlistParams{PracticeID: a.PracticeID, PatientID: id})
+		if err != nil {
+			return fmt.Errorf("liste d'attente du patient: %w", err)
+		}
+		out.Waitlist = make([]ExportedWaitlist, 0, len(wl))
+		for _, w := range wl {
+			ew := ExportedWaitlist{
+				ID: w.ID.String(), Type: w.TypeName, Earliest: w.Earliest.Time.Format("2006-01-02"), Latest: w.Latest.Time.Format("2006-01-02"),
+				Weekdays: make([]int, 0, len(w.Weekdays)), Status: w.Status, CreatedAt: ts(w.CreatedAt),
+			}
+			if w.PractitionerFirstName.Valid {
+				ew.Practitioner = strings.TrimSpace(w.PractitionerFirstName.String + " " + w.PractitionerLastName.String)
+			}
+			for _, d := range w.Weekdays {
+				ew.Weekdays = append(ew.Weekdays, int(d))
+			}
+			if w.TimeFrom.Valid {
+				ew.TimeFrom = time.UnixMicro(w.TimeFrom.Microseconds).UTC().Format("15:04")
+			}
+			if w.TimeTo.Valid {
+				ew.TimeTo = time.UnixMicro(w.TimeTo.Microseconds).UTC().Format("15:04")
+			}
+			out.Waitlist = append(out.Waitlist, ew)
 		}
 		var recipients []string
 		if p.Phone.Valid {

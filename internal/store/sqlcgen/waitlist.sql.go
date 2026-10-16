@@ -413,3 +413,22 @@ func (q *Queries) MarkWaitlistOfferClaimed(ctx context.Context, arg MarkWaitlist
 	_, err := q.db.Exec(ctx, markWaitlistOfferClaimed, arg.Now, arg.ID)
 	return err
 }
+
+const reassignPatientWaitlist = `-- name: ReassignPatientWaitlist :execrows
+UPDATE waitlist_entry SET patient_id = $1
+WHERE patient_id = $2 AND practice_id = $3
+`
+
+type ReassignPatientWaitlistParams struct {
+	IntoID     uuid.UUID
+	FromID     uuid.UUID
+	PracticeID uuid.UUID
+}
+
+func (q *Queries) ReassignPatientWaitlist(ctx context.Context, arg ReassignPatientWaitlistParams) (int64, error) {
+	result, err := q.db.Exec(ctx, reassignPatientWaitlist, arg.IntoID, arg.FromID, arg.PracticeID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}

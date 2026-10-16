@@ -183,6 +183,24 @@ func (q *Queries) DeletePatientRow(ctx context.Context, arg DeletePatientRowPara
 	return err
 }
 
+const deletePatientWaitlist = `-- name: DeletePatientWaitlist :execrows
+DELETE FROM waitlist_entry WHERE practice_id = $1 AND patient_id = ANY($2::uuid[])
+`
+
+type DeletePatientWaitlistParams struct {
+	PracticeID uuid.UUID
+	Ids        []uuid.UUID
+}
+
+// Inscriptions en liste d'attente des fiches (les propositions partent en cascade).
+func (q *Queries) DeletePatientWaitlist(ctx context.Context, arg DeletePatientWaitlistParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deletePatientWaitlist, arg.PracticeID, arg.Ids)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const exportPatientAppointments = `-- name: ExportPatientAppointments :many
 SELECT a.id, lower(a.during)::timestamptz AS starts_at, upper(a.during)::timestamptz AS ends_at,
        a.status, a.source, t.name AS type_name, a.address, a.cancel_reason, a.cancelled_at, a.created_at
@@ -285,6 +303,70 @@ func (q *Queries) ExportPatientMessages(ctx context.Context, arg ExportPatientMe
 			&i.Recipient,
 			&i.CreatedAt,
 			&i.SentAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const exportPatientWaitlist = `-- name: ExportPatientWaitlist :many
+SELECT w.id, t.name AS type_name, w.practitioner_id, pr.first_name AS practitioner_first_name, pr.last_name AS practitioner_last_name,
+       w.earliest, w.latest, w.weekdays, w.time_from, w.time_to, w.status, w.created_at
+FROM waitlist_entry w
+JOIN appointment_type t ON t.id = w.appointment_type_id
+LEFT JOIN practitioner pr ON pr.id = w.practitioner_id
+WHERE w.practice_id = $1 AND w.patient_id = $2
+ORDER BY w.created_at, w.id
+LIMIT 200
+`
+
+type ExportPatientWaitlistParams struct {
+	PracticeID uuid.UUID
+	PatientID  uuid.UUID
+}
+
+type ExportPatientWaitlistRow struct {
+	ID                    uuid.UUID
+	TypeName              string
+	PractitionerID        pgtype.UUID
+	PractitionerFirstName pgtype.Text
+	PractitionerLastName  pgtype.Text
+	Earliest              pgtype.Date
+	Latest                pgtype.Date
+	Weekdays              []int16
+	TimeFrom              pgtype.Time
+	TimeTo                pgtype.Time
+	Status                string
+	CreatedAt             time.Time
+}
+
+func (q *Queries) ExportPatientWaitlist(ctx context.Context, arg ExportPatientWaitlistParams) ([]ExportPatientWaitlistRow, error) {
+	rows, err := q.db.Query(ctx, exportPatientWaitlist, arg.PracticeID, arg.PatientID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ExportPatientWaitlistRow
+	for rows.Next() {
+		var i ExportPatientWaitlistRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TypeName,
+			&i.PractitionerID,
+			&i.PractitionerFirstName,
+			&i.PractitionerLastName,
+			&i.Earliest,
+			&i.Latest,
+			&i.Weekdays,
+			&i.TimeFrom,
+			&i.TimeTo,
+			&i.Status,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

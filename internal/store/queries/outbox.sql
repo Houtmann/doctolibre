@@ -27,9 +27,9 @@ RETURNING m.*;
 
 -- name: MarkOutboxSent :execrows
 -- Une fois envoyé, les secrets du message (lien de gestion, lien de réinitialisation,
--- code, texte du SMS qui les reprend) sont retirés tout de suite du payload.
+-- lien de proposition de liste d'attente, code, texte du SMS qui les reprend) sont retirés tout de suite du payload.
 UPDATE outbox_message
-SET payload = payload - 'manage_url' - 'reset_url' - 'code' - 'body', status = 'sent', sent_at = @now::timestamptz, provider_ref = @provider_ref, last_error = NULL, updated_at = @now
+SET payload = payload - 'manage_url' - 'reset_url' - 'code' - 'body' - 'offer_url', status = 'sent', sent_at = @now::timestamptz, provider_ref = @provider_ref, last_error = NULL, updated_at = @now
 WHERE id = @id AND status = 'sending' AND attempts = @attempts;
 
 -- name: MarkOutboxRetry :execrows

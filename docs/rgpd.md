@@ -9,6 +9,7 @@
 | Nom, prénom, téléphone, email, date de naissance, adresse (visite à domicile), note administrative | `patient` | Donnée personnelle ; un RDV chez un kiné est une donnée de santé **indirecte** |
 | Dates, motifs (« séance », « bilan »), statut, motif d'annulation, adresse du RDV | `appointment`, `care_plan` | Idem |
 | Contenu des emails et SMS (prénom, date, lien de gestion) | `outbox_message` | Effacé après la durée de conservation (voir ci-dessous) |
+| Inscriptions en liste d'attente (fenêtre de dates, jours, plage horaire souhaités, statut) et propositions de créneaux | `waitlist_entry`, `waitlist_offer` | Donnée personnelle ; supprimées avec la fiche patient (suppression dure comme anonymisation), reprises dans l'export, réaffectées lors d'une fusion de fiches ; le lien de proposition est retiré du message dès son envoi |
 | Codes de vérification, jetons | `otp_challenge`, `session`, `password_reset` | Seuls des hachés sont stockés ; supprimés une fois expirés |
 | Journal d'accès | `audit_log` | Identifiants uniquement (jamais de nom, téléphone, email). L'adresse IP des connexions du personnel y figure |
 
