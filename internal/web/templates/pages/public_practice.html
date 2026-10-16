@@ -1,27 +1,31 @@
 {{define "title"}}{{.Data.Practice.Name}}{{end}}
 {{define "content"}}
-<h1>{{.Data.Practice.Name}}</h1>
-{{if .Data.Practice.Address}}<p>{{.Data.Practice.Address}}</p>{{end}}
-{{if .Data.Practice.Phone}}<p>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a></p>{{end}}
-<h2>Prendre rendez-vous</h2>
-<ol class="dl-steps" aria-label="Étapes de la réservation"><li aria-current="step">Motif</li><li>Créneau</li><li>Coordonnées</li><li>Vérification</li></ol>
+<section class="card bg-base-100 border border-base-300">
+  <div class="card-body gap-1">
+    <h1 class="card-title text-2xl">{{.Data.Practice.Name}}</h1>
+    {{if .Data.Practice.Address}}<p class="text-base-content/70">{{.Data.Practice.Address}}</p>{{end}}
+    {{if .Data.Practice.Phone}}<p class="text-base-content/70">Téléphone : <a class="link link-primary" href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a></p>{{end}}
+  </div>
+</section>
+<h2 class="text-lg font-semibold">Prendre rendez-vous</h2>
+<nav aria-label="Étapes de la réservation"><ul class="steps steps-horizontal w-full text-xs sm:text-sm"><li class="step step-primary" aria-current="step">Motif</li><li class="step">Créneau</li><li class="step">Coordonnées</li><li class="step">Vérification</li></ul></nav>
 {{if .Data.FirstTypes}}
-<h3>Premier créneau disponible</h3>
-<p>Vous n'avez pas de préférence ? Choisissez un motif : nous vous proposons le créneau le plus proche, tous praticiens confondus.</p>
-<ul class="dl-choices">
+<h3 class="font-semibold">Premier créneau disponible</h3>
+<p class="text-sm text-base-content/70">Vous n'avez pas de préférence ? Choisissez un motif : nous vous proposons le créneau le plus proche, tous praticiens confondus.</p>
+<ul class="grid gap-3 sm:grid-cols-2">
   {{range .Data.FirstTypes}}
-  <li><a class="dl-choice" href="{{.URL}}"><span><span class="dl-choice__title">{{.Name}}</span>{{if .AtHome}} <span class="dl-badge">⌂ Domicile</span>{{end}}<br><span class="dl-choice__meta dl-num">{{formatDuration .Duration}}</span></span></a></li>
+  <li><a class="card card-border bg-base-100 hover:border-primary focus-visible:outline-2 focus-visible:outline-primary" href="{{.URL}}"><span class="card-body p-4"><span class="font-semibold">{{.Name}}{{if .AtHome}} <span class="badge badge-sm badge-soft badge-secondary">⌂ Domicile</span>{{end}}</span><span class="text-sm text-base-content/70">{{formatDuration .Duration}}</span></span></a></li>
   {{end}}
 </ul>
-<h3>Ou choisissez un praticien</h3>
+<h3 class="font-semibold">Ou choisissez un praticien</h3>
 {{end}}
 {{if .Data.Practitioners}}
-<ul class="dl-choices">
+<ul class="grid gap-3 sm:grid-cols-2">
   {{range .Data.Practitioners}}
-  <li><a class="dl-choice" href="{{.URL}}"><span><span class="dl-choice__title">{{.Name}}</span>{{if .Title}} <span class="dl-choice__meta">({{.Title}})</span>{{end}}{{if .Bio}}<br><span class="dl-choice__meta">{{.Bio}}</span>{{end}}</span></a></li>
+  <li><a class="card card-border bg-base-100 hover:border-primary focus-visible:outline-2 focus-visible:outline-primary" href="{{.URL}}"><span class="card-body p-4"><span class="font-semibold">{{.Name}}{{if .Title}} <span class="text-sm font-normal text-base-content/70">({{.Title}})</span>{{end}}</span>{{if .Bio}}<span class="text-sm text-base-content/70">{{.Bio}}</span>{{end}}</span></a></li>
   {{end}}
 </ul>
 {{else}}
-<p class="dl-empty">La prise de rendez-vous en ligne n'est pas encore ouverte pour ce cabinet.</p>
+<div class="alert alert-info alert-soft" role="status">La prise de rendez-vous en ligne n'est pas encore ouverte pour ce cabinet.</div>
 {{end}}
 {{end}}

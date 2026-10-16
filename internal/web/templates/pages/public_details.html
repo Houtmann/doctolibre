@@ -1,62 +1,64 @@
 {{define "title"}}Vos coordonnées{{end}}
 {{define "content"}}
-<nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Changer de créneau</a></nav>
-<h1>Vos coordonnées</h1>
-<ol class="dl-steps" aria-label="Étapes de la réservation"><li class="is-done">Motif</li><li class="is-done">Créneau</li><li aria-current="step">Coordonnées</li><li>Vérification</li></ol>
+<nav aria-label="Fil d'Ariane"><a class="link link-primary" href="{{.Data.BackURL}}">&larr; Changer de créneau</a></nav>
+<h1 class="text-2xl font-semibold">Vos coordonnées</h1>
+<nav aria-label="Étapes de la réservation"><ul class="steps steps-horizontal w-full text-xs sm:text-sm"><li class="step step-primary">Motif</li><li class="step step-primary">Créneau</li><li class="step step-primary" aria-current="step">Coordonnées</li><li class="step">Vérification</li></ul></nav>
 {{template "booking_summary.html" .Data.Summary}}
 {{template "form_errors.html" .Data.Errors}}
-<form method="post" action="{{.Data.Action}}">
+<form method="post" action="{{.Data.Action}}" class="space-y-4">
   {{csrf .CSRF}}
   <input type="hidden" name="type" value="{{.Data.TypeID}}">
   <input type="hidden" name="start" value="{{.Data.Start}}">
-  <div class="dl-field">
-    <label class="dl-label" for="first_name">Prénom</label>
-    <input class="dl-input" id="first_name" name="first_name" type="text" value="{{.Data.Form.FirstName}}" autocomplete="given-name" maxlength="80" required>
-  </div>
-  <div class="dl-field">
-    <label class="dl-label" for="last_name">Nom</label>
-    <input class="dl-input" id="last_name" name="last_name" type="text" value="{{.Data.Form.LastName}}" autocomplete="family-name" maxlength="80" required>
-  </div>
-  <div class="dl-field">
-    <label class="dl-label" for="phone">Téléphone portable</label>
-    <input class="dl-input" id="phone" name="phone" type="tel" value="{{.Data.Form.Phone}}" autocomplete="tel" inputmode="tel" aria-describedby="phone-help">
-    <p class="dl-help" id="phone-help">Exemple : 06 12 34 56 78</p>
-  </div>
-  <div class="dl-field">
-    <label class="dl-label" for="email">Adresse email</label>
-    <input class="dl-input" id="email" name="email" type="email" value="{{.Data.Form.Email}}" autocomplete="email" maxlength="254">
-  </div>
-  {{if .Data.AtHome}}
-  <div class="dl-field">
-    <label class="dl-label" for="address">Adresse de la visite à domicile</label>
-    <textarea class="dl-textarea" id="address" name="address" rows="3" maxlength="300" autocomplete="street-address" required aria-describedby="address-help">{{.Data.Form.Address}}</textarea>
-    <p class="dl-help" id="address-help">Numéro, rue, code postal et commune. Le praticien se déplace uniquement dans la zone desservie.</p>
-  </div>
-  {{end}}
-  <div class="dl-field">
-    <label class="dl-label" for="birth_date">Date de naissance <span class="dl-optional">(facultatif)</span></label>
-    <input class="dl-input" id="birth_date" name="birth_date" type="date" value="{{.Data.Form.BirthDate}}" autocomplete="bday">
-  </div>
+  <div class="card bg-base-100 border border-base-300"><div class="card-body grid gap-4 sm:grid-cols-2">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="first_name">Prénom</label>
+      <input class="input w-full" id="first_name" name="first_name" type="text" value="{{.Data.Form.FirstName}}" autocomplete="given-name" maxlength="80" required>
+    </div>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="last_name">Nom</label>
+      <input class="input w-full" id="last_name" name="last_name" type="text" value="{{.Data.Form.LastName}}" autocomplete="family-name" maxlength="80" required>
+    </div>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="phone">Téléphone portable</label>
+      <input class="input w-full" id="phone" name="phone" type="tel" value="{{.Data.Form.Phone}}" autocomplete="tel" inputmode="tel" aria-describedby="phone-help">
+      <p class="text-sm text-base-content/70" id="phone-help">Exemple : 06 12 34 56 78</p>
+    </div>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="email">Adresse email</label>
+      <input class="input w-full" id="email" name="email" type="email" value="{{.Data.Form.Email}}" autocomplete="email" maxlength="254">
+    </div>
+    {{if .Data.AtHome}}
+    <div class="space-y-1 sm:col-span-2">
+      <label class="block text-sm font-medium" for="address">Adresse de la visite à domicile</label>
+      <textarea class="textarea w-full" id="address" name="address" rows="3" maxlength="300" autocomplete="street-address" required aria-describedby="address-help">{{.Data.Form.Address}}</textarea>
+      <p class="text-sm text-base-content/70" id="address-help">Numéro, rue, code postal et commune. Le praticien se déplace uniquement dans la zone desservie.</p>
+    </div>
+    {{end}}
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="birth_date">Date de naissance <span class="text-base-content/70">(facultatif)</span></label>
+      <input class="input w-full" id="birth_date" name="birth_date" type="date" value="{{.Data.Form.BirthDate}}" autocomplete="bday">
+    </div>
+  </div></div>
 
-  <fieldset class="dl-fieldset">
-    <legend>Recevoir le code de vérification par</legend>
-    <label class="dl-check"><input type="radio" name="channel" value="sms"{{if eq .Data.Form.Channel "sms"}} checked{{end}}> SMS (au téléphone indiqué)</label>
-    <label class="dl-check"><input type="radio" name="channel" value="email"{{if ne .Data.Form.Channel "sms"}} checked{{end}}> Email (recommandé, à l'adresse indiquée)</label>
-  </fieldset>
+  <fieldset class="card bg-base-100 border border-base-300"><div class="card-body gap-3">
+    <legend class="font-semibold">Recevoir le code de vérification par</legend>
+    <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="channel" value="sms"{{if eq .Data.Form.Channel "sms"}} checked{{end}}> <span>SMS (au téléphone indiqué)</span></label>
+    <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="channel" value="email"{{if ne .Data.Form.Channel "sms"}} checked{{end}}> <span>Email (recommandé, à l'adresse indiquée)</span></label>
+  </div></fieldset>
 
-  <fieldset class="dl-fieldset">
-    <legend>Notifications</legend>
-    <label class="dl-check"><input type="checkbox" name="sms_opt_in" value="on"{{if .Data.Form.SMSOptIn}} checked{{end}}> Je souhaite recevoir des rappels par SMS</label>
-    <label class="dl-check"><input type="checkbox" name="email_opt_in" value="on"{{if .Data.Form.EmailOptIn}} checked{{end}}> Je souhaite recevoir des messages par email</label>
-  </fieldset>
+  <fieldset class="card bg-base-100 border border-base-300"><div class="card-body gap-3">
+    <legend class="font-semibold">Notifications</legend>
+    <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="sms_opt_in" value="on"{{if .Data.Form.SMSOptIn}} checked{{end}}> <span>Je souhaite recevoir des rappels par SMS</span></label>
+    <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="email_opt_in" value="on"{{if .Data.Form.EmailOptIn}} checked{{end}}> <span>Je souhaite recevoir des messages par email</span></label>
+  </div></fieldset>
 
-  <div class="dl-hp" aria-hidden="true">
+  <div class="sr-only" aria-hidden="true">
     <label for="website">Ne pas remplir ce champ</label>
     <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
   </div>
 
-  <label class="dl-check"><input type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> J'accepte que mes coordonnées soient utilisées par le cabinet pour gérer ce rendez-vous.</label>
-  <p class="dl-help">N'indiquez aucune information médicale. Ce service sert uniquement à fixer un rendez-vous.</p>
-  <button class="dl-btn" type="submit">Recevoir mon code</button>
+  <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> <span>J'accepte que mes coordonnées soient utilisées par le cabinet pour gérer ce rendez-vous.</span></label>
+  <p class="text-sm text-base-content/70">N'indiquez aucune information médicale. Ce service sert uniquement à fixer un rendez-vous.</p>
+  <button class="btn btn-primary w-full sm:w-auto" type="submit">Recevoir mon code</button>
 </form>
 {{end}}

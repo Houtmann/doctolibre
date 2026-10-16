@@ -1,9 +1,11 @@
 {{define "title"}}{{.Data.Title}}{{end}}
 {{define "content"}}
-<section class="error-page">
-  <p class="status" aria-hidden="true">{{.Data.Status}}</p>
-  <h1>{{.Data.Title}}</h1>
-  <p>{{.Data.Message}}</p>
-  <p><a class="dl-btn" href="/">Retour à l'accueil</a></p>
+<section class="card bg-base-100 border border-base-300 text-center">
+  <div class="card-body items-center gap-2">
+    <p class="text-6xl font-bold text-primary" aria-hidden="true">{{.Data.Status}}</p>
+    <h1 class="card-title text-2xl">{{.Data.Title}}</h1>
+    <p class="text-base-content/70">{{.Data.Message}}</p>
+    <div class="card-actions mt-2"><a class="btn btn-primary" href="/">Retour à l'accueil</a></div>
+  </div>
 </section>
 {{end}}

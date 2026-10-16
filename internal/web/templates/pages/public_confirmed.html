@@ -1,30 +1,35 @@
 {{define "title"}}Rendez-vous confirmé{{end}}
 {{define "content"}}
-<h1>{{if .Data.Cancelled}}Rendez-vous annulé{{else}}Rendez-vous confirmé{{end}}</h1>
-<article class="dl-card">
-  <div class="dl-card__header"><h2>Votre rendez-vous</h2>{{if .Data.Cancelled}}<span class="dl-badge dl-badge--st-cancelled">Annulé</span>{{else}}<span class="dl-badge dl-badge--st-booked">Réservé</span>{{end}}</div>
-  <p>{{.Data.FirstName}}, votre rendez-vous{{if .Data.Cancelled}} était prévu{{else}} est réservé{{end}} :</p>
-  <dl class="dl-details">
-    <dt>Cabinet</dt><dd>{{.Data.Practice.Name}}{{if .Data.Practice.Address}}<br>{{.Data.Practice.Address}}{{end}}{{if .Data.Practice.Phone}}<br>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}</dd>
-    <dt>Praticien</dt><dd>{{.Data.Practitioner}}</dd>
-    <dt>Motif</dt><dd>{{.Data.Type}} (<span class="dl-num">{{formatDuration .Data.Duration}}</span>)</dd>
-    <dt>Date</dt><dd class="dl-num"><time datetime="{{.Data.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Start}} à {{localTime .Data.Start}}</time></dd>
-    {{if and .Data.AtHome .Data.Address}}<dt>Visite à domicile</dt><dd>{{.Data.Address}}</dd>{{end}}
-  </dl>
-  {{if .Data.Cancelled}}
-  <div class="dl-card__footer"><a class="dl-btn" href="{{.Data.RebookURL}}">Reprendre rendez-vous</a></div>
-  {{else}}
-  <div class="dl-card__footer">
-    <a class="dl-btn dl-btn--outline dl-btn--sm" href="{{.Data.ICSURL}}">Ajouter à mon agenda</a>
-    {{if .Data.Changeable}}
-    <a class="dl-btn dl-btn--outline dl-btn--sm" href="{{.Data.ManageURL}}/reschedule">Déplacer le rendez-vous</a>
-    <a class="dl-btn dl-btn--ghost dl-btn--sm" href="{{.Data.ManageURL}}/cancel">Annuler le rendez-vous</a>
+<h1 class="text-2xl font-semibold">{{if .Data.Cancelled}}Rendez-vous annulé{{else}}Rendez-vous confirmé{{end}}</h1>
+<article class="card bg-base-100 border border-base-300">
+  <div class="card-body gap-4">
+    <div class="flex items-center justify-between gap-2">
+      <h2 class="card-title">Votre rendez-vous</h2>
+      {{if .Data.Cancelled}}<span class="badge badge-soft badge-error">Annulé</span>{{else}}<span class="badge badge-soft badge-success">Réservé</span>{{end}}
+    </div>
+    <p>{{.Data.FirstName}}, votre rendez-vous{{if .Data.Cancelled}} était prévu{{else}} est réservé{{end}} :</p>
+    <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+      <dt class="text-base-content/70">Cabinet</dt><dd>{{.Data.Practice.Name}}{{if .Data.Practice.Address}}<br>{{.Data.Practice.Address}}{{end}}{{if .Data.Practice.Phone}}<br>Téléphone : <a class="link link-primary" href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}</dd>
+      <dt class="text-base-content/70">Praticien</dt><dd>{{.Data.Practitioner}}</dd>
+      <dt class="text-base-content/70">Motif</dt><dd>{{.Data.Type}} ({{formatDuration .Data.Duration}})</dd>
+      <dt class="text-base-content/70">Date</dt><dd><time datetime="{{.Data.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Start}} à {{localTime .Data.Start}}</time></dd>
+      {{if and .Data.AtHome .Data.Address}}<dt class="text-base-content/70">Visite à domicile</dt><dd>{{.Data.Address}}</dd>{{end}}
+    </dl>
+    {{if .Data.Cancelled}}
+    <div class="card-actions"><a class="btn btn-primary w-full sm:w-auto" href="{{.Data.RebookURL}}">Reprendre rendez-vous</a></div>
+    {{else}}
+    <div class="card-actions flex-col sm:flex-row">
+      <a class="btn btn-outline btn-sm w-full sm:w-auto" href="{{.Data.ICSURL}}">Ajouter à mon agenda</a>
+      {{if .Data.Changeable}}
+      <a class="btn btn-outline btn-sm w-full sm:w-auto" href="{{.Data.ManageURL}}/reschedule">Déplacer le rendez-vous</a>
+      <a class="btn btn-ghost btn-sm w-full sm:w-auto" href="{{.Data.ManageURL}}/cancel">Annuler le rendez-vous</a>
+      {{end}}
+    </div>
     {{end}}
   </div>
-  {{end}}
 </article>
 {{if and (not .Data.Cancelled) (not .Data.Changeable)}}
-<p class="dl-help">Ce rendez-vous ne peut plus être déplacé ni annulé en ligne (délai de {{formatDuration .Data.MinCancel}}){{if .Data.Practice.Phone}} : appelez le cabinet au <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}.</p>
+<p class="text-sm text-base-content/70">Ce rendez-vous ne peut plus être déplacé ni annulé en ligne (délai de {{formatDuration .Data.MinCancel}}){{if .Data.Practice.Phone}} : appelez le cabinet au <a class="link link-primary" href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}.</p>
 {{end}}
-{{if not .Data.Cancelled}}<p class="dl-help">Conservez l'adresse de cette page : elle vous permettra de retrouver votre rendez-vous. Ne la partagez pas.</p>{{end}}
+{{if not .Data.Cancelled}}<p class="text-sm text-base-content/70">Conservez l'adresse de cette page : elle vous permettra de retrouver votre rendez-vous. Ne la partagez pas.</p>{{end}}
 {{end}}

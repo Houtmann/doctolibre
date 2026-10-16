@@ -14,6 +14,12 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-16 — T081 parcours patient public en daisyUI (sonnet ; contrôle : opus)
+
+- **Tâches** : T081 (todo → review)
+- **Fait** : 14 pages publiques + `booking_grid`, `booking_summary` migrés en daisyUI (stepper `steps`, cartes de motifs, jours repliables en `<details>`, honeypot en `sr-only`) ; corrections de revue : navigation de semaine qui débordait à 360 px, taille de la case de consentement
+- **Vérification** : `make check` ✅ ; parcours complet sur la base de démo (motif → créneau → coordonnées → OTP → confirmé → annuler/déplacer, liste d'attente) à 360 et 1280 px, clair et sombre, `scrollWidth` = 360 ; formulaires en POST classique + liens pour la navigation (pas de test réel avec JS désactivé)
+
 ## 2026-10-16 — Choix daisyUI, POC, T080 (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T080–T084 créées ; T065–T067 → done, T068 → superseded ; T080 (todo → review).

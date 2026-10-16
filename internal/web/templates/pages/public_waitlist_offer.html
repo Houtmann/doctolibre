@@ -1,27 +1,29 @@
 {{define "title"}}Un créneau s'est libéré{{end}}
 {{define "content"}}
-<h1>Un créneau s'est libéré</h1>
-<article class="dl-card">
-  <div class="dl-card__header"><h2>Créneau proposé</h2></div>
-  <p>{{.Data.FirstName}}, ce créneau vous est proposé :</p>
-  <dl class="dl-details">
-    <dt>Cabinet</dt><dd>{{.Data.Practice}}</dd>
-    <dt>Praticien</dt><dd>{{.Data.Practitioner}}</dd>
-    <dt>Motif</dt><dd>{{.Data.Type}} (<span class="dl-num">{{formatDuration .Data.Duration}}</span>)</dd>
-    <dt>Date</dt><dd class="dl-num"><time datetime="{{.Data.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Start}} à {{localTime .Data.Start}}</time></dd>
-  </dl>
+<h1 class="text-2xl font-semibold">Un créneau s'est libéré</h1>
+<article class="card bg-base-100 border border-base-300">
+  <div class="card-body gap-3">
+    <h2 class="card-title">Créneau proposé</h2>
+    <p>{{.Data.FirstName}}, ce créneau vous est proposé :</p>
+    <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+      <dt class="text-base-content/70">Cabinet</dt><dd>{{.Data.Practice}}</dd>
+      <dt class="text-base-content/70">Praticien</dt><dd>{{.Data.Practitioner}}</dd>
+      <dt class="text-base-content/70">Motif</dt><dd>{{.Data.Type}} ({{formatDuration .Data.Duration}})</dd>
+      <dt class="text-base-content/70">Date</dt><dd><time datetime="{{.Data.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Start}} à {{localTime .Data.Start}}</time></dd>
+    </dl>
+  </div>
 </article>
 {{if .Data.Available}}
 <p>Le premier à confirmer l'obtient. Cette proposition est valable jusqu'à {{localTime .Data.ExpiresAt}}.</p>
 <form method="post" action="{{.Data.Action}}">
   {{csrf .CSRF}}
-  <button class="dl-btn" type="submit">Réserver ce créneau</button>
+  <button class="btn btn-primary w-full sm:w-auto" type="submit">Réserver ce créneau</button>
 </form>
 {{else if eq .Data.Reason "taken"}}
-<p class="dl-alert dl-alert--error" role="alert">Ce créneau vient d'être pris par une autre personne. Vous restez sur la liste d'attente : nous vous préviendrons si un autre créneau correspondant se libère.</p>
+<div class="alert alert-error" role="alert">Ce créneau vient d'être pris par une autre personne. Vous restez sur la liste d'attente : nous vous préviendrons si un autre créneau correspondant se libère.</div>
 {{else if eq .Data.Reason "claimed"}}
-<p class="dl-alert dl-alert--info" role="status">Ce créneau a déjà été réservé avec ce lien. Vous avez reçu la confirmation par message.</p>
+<div class="alert alert-info" role="status">Ce créneau a déjà été réservé avec ce lien. Vous avez reçu la confirmation par message.</div>
 {{else}}
-<p class="dl-alert dl-alert--error" role="alert">Cette proposition a expiré.{{if .Data.Phone}} Pour prendre rendez-vous, appelez le cabinet au <a href="tel:{{.Data.Phone}}">{{.Data.Phone}}</a>.{{end}}</p>
+<div class="alert alert-error" role="alert"><span>Cette proposition a expiré.{{if .Data.Phone}} Pour prendre rendez-vous, appelez le cabinet au <a class="link" href="tel:{{.Data.Phone}}">{{.Data.Phone}}</a>.{{end}}</span></div>
 {{end}}
 {{end}}

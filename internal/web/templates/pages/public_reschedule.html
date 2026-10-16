@@ -1,7 +1,7 @@
 {{define "title"}}Déplacer le rendez-vous · {{.Data.Practice}}{{end}}
 {{define "content"}}
-<nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Retour au rendez-vous</a></nav>
-<h1>Choisir un nouveau créneau</h1>
-<p>{{.Data.Type.Name}} ({{formatDuration .Data.Type.Duration}}) avec {{.Data.Practitioner}}</p>
+<nav aria-label="Fil d'Ariane"><a class="link link-primary" href="{{.Data.BackURL}}">&larr; Retour au rendez-vous</a></nav>
+<h1 class="text-2xl font-semibold">Choisir un nouveau créneau</h1>
+<p class="text-base-content/70">{{.Data.Type.Name}} ({{formatDuration .Data.Type.Duration}}) avec {{.Data.Practitioner}}</p>
 {{template "booking_grid.html" .Data}}
 {{end}}

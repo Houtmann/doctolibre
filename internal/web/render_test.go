@@ -144,7 +144,7 @@ func TestHomeRender(t *testing.T) {
 		t.Fatalf("code %d", rec.Code)
 	}
 	for _, want := range []string{
-		"<h1>Prise de rendez-vous en ligne</h1>",
+		"Prise de rendez-vous en ligne</h1>",
 		`<html lang="fr">`,
 		`name="viewport"`,
 		`<meta name="csrf-token" content="`,

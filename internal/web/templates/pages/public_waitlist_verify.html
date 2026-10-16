@@ -1,23 +1,23 @@
 {{define "title"}}Vérification{{end}}
 {{define "content"}}
-<nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Retour aux créneaux</a></nav>
-<h1>Confirmez votre inscription</h1>
-<p>{{.Data.TypeName}} avec {{.Data.Practitioner}}, {{.Data.Practice}}.</p>
+<nav aria-label="Fil d'Ariane"><a class="link link-primary" href="{{.Data.BackURL}}">&larr; Retour aux créneaux</a></nav>
+<h1 class="text-2xl font-semibold">Confirmez votre inscription</h1>
+<p class="text-base-content/70">{{.Data.TypeName}} avec {{.Data.Practitioner}}, {{.Data.Practice}}.</p>
 {{template "form_errors.html" .Data.Errors}}
 <p>Un code à 6 chiffres vient d'être envoyé {{if eq .Data.Channel "email"}}par email à{{else}}par SMS au{{end}} <strong>{{.Data.Destination}}</strong>. Il est valable 10 minutes.</p>
-<form method="post" action="{{.Data.Action}}">
+<form method="post" action="{{.Data.Action}}" class="space-y-4">
   {{csrf .CSRF}}
   {{template "waitlist_hidden.html" .Data}}
   <input type="hidden" name="challenge_id" value="{{.Data.ChallengeID}}">
-  <div class="dl-field">
-    <label class="dl-label" for="code">Code de vérification</label>
-    <input class="dl-input dl-num" id="code" name="code" type="text" inputmode="numeric" pattern="[0-9 ]{6,8}" maxlength="8" autocomplete="one-time-code" required autofocus>
+  <div class="space-y-1 max-w-xs">
+    <label class="block text-sm font-medium" for="code">Code de vérification</label>
+    <input class="input w-full tracking-[0.5em] text-center text-lg" id="code" name="code" type="text" inputmode="numeric" pattern="[0-9 ]{6,8}" maxlength="8" autocomplete="one-time-code" required autofocus>
   </div>
-  <button class="dl-btn" type="submit">Confirmer mon inscription</button>
+  <button class="btn btn-primary w-full sm:w-auto" type="submit">Confirmer mon inscription</button>
 </form>
-<form method="post" action="{{.Data.ResendURL}}" class="dl-resend">
+<form method="post" action="{{.Data.ResendURL}}">
   {{csrf .CSRF}}
   {{template "waitlist_hidden.html" .Data}}
-  <button class="dl-btn dl-btn--outline" type="submit">Recevoir un nouveau code</button>
+  <button class="btn btn-outline btn-sm" type="submit">Recevoir un nouveau code</button>
 </form>
 {{end}}

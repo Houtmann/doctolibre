@@ -1,11 +1,11 @@
 {{define "title"}}Annuler le rendez-vous{{end}}
 {{define "content"}}
-<nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Retour au rendez-vous</a></nav>
-<h1>Annuler le rendez-vous ?</h1>
+<nav aria-label="Fil d'Ariane"><a class="link link-primary" href="{{.Data.BackURL}}">&larr; Retour au rendez-vous</a></nav>
+<h1 class="text-2xl font-semibold">Annuler le rendez-vous ?</h1>
 {{template "booking_summary.html" .Data.Summary}}
-<form method="post" action="{{.Data.Action}}">
+<form method="post" action="{{.Data.Action}}" class="flex flex-col gap-3 sm:flex-row sm:items-center">
   {{csrf .CSRF}}
-  <button class="dl-btn dl-btn--danger" type="submit">Confirmer l'annulation</button>
+  <button class="btn btn-error w-full sm:w-auto" type="submit">Confirmer l'annulation</button>
+  <a class="link link-primary" href="{{.Data.BackURL}}">Conserver mon rendez-vous</a>
 </form>
-<p><a href="{{.Data.BackURL}}">Conserver mon rendez-vous</a></p>
 {{end}}

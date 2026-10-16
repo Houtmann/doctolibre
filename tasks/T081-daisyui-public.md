@@ -21,11 +21,11 @@ Contenu : stepper des étapes (`steps`), cartes de motifs, grille de créneaux (
 Règles communes : `ui.css` est **généré** : après modification de templates, lancer `make css` ; en cas de conflit au merge sur `ui.css`, **relancer `make css`** plutôt que résoudre à la main. Un seul agent à la fois sur les templates de layout (non modifiés ici). Pas de classe construite dynamiquement. Les tests `httptest` qui cherchent d'anciennes classes `dl-*` sont adaptés (fragments clés, pas le HTML entier).
 
 ## Critères d'acceptation
-- [ ] `grep -rn 'dl-' ` sur les templates listés ci-dessus : vide.
+- [x] `grep -rn 'dl-' ` sur les templates listés ci-dessus : vide.
 - [ ] Parcours complet (cabinet → praticien → créneau → coordonnées → OTP → confirmation, annulation, déplacement, liste d'attente) vérifié dans le navigateur à 360 et 1280 px, clair et sombre, au clavier.
 - [ ] Formulaires utilisables sans JS (désactiver JS pour vérifier).
 - [ ] Aucun débordement horizontal à 360 px.
-- [ ] `make css` ne produit aucun diff après commit ; `make check` vert, aucun `style=` ajouté.
+- [x] `make css` ne produit aucun diff après commit ; `make check` vert, aucun `style=` ajouté.
 
 ## Vérification
 ```bash
@@ -40,8 +40,8 @@ Layouts et partials transverses (T080), back-office (T082), agenda (T083), retra
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** : les 14 pages et 4 partials listés migrés vers daisyUI (steps, cartes de motifs/praticiens en `card card-border`, jours de la grille en `<details class="collapse">` ouverts par défaut, créneaux en `btn btn-outline`, champs `input`/`checkbox`/`radio`, alertes, badges). `id`, `name`, `hx-*`, `action`, champs cachés, CSRF conservés ; honeypot masqué par `sr-only`. `make css` relancé, `make check` vert. `render_test.go` adapté (`<h1>` a maintenant des classes). `grep dl-` sur les templates listés : vide.
+- **Reste à faire** (maj) : parcours réservation/annulation/déplacement vérifié par l'orchestrateur (base demo, clair et sombre) ; corrigé ensuite : nav de semaine en `flex-wrap` (libellé pleine largeur au-dessus des boutons sur mobile, `sm:` inchangé) et cases de `public_details` alignées (`checkbox-sm` + `text-sm`). Reste : liste d'attente publique, test sans JS, `scrollWidth` 360 sur `?week=2026-43` (nécessite redémarrage du serveur demo). Ancien texte : vérification navigateur du parcours complet (aucun cabinet en base `doctolibre_test`, pas de données de démo) ; relecture visuelle à 1280 px, clair/sombre, clavier et sans JS.
+- **Notes de reprise** : seule la page 404 (error.html) a été vue au navigateur à 360 px (clair) : rendu correct, pas de débordement (scrollWidth 360). Créer un cabinet + praticien + motif + règle de disponibilité pour parcourir `/p/<slug>`.
+- **Écarts avec la spécification** : stepper rendu en `<ul class="steps">` dans un `<nav>` (le « stepper » de la spec) ; les jours de créneaux utilisent `<details>` (repliables partout, pas seulement sur mobile, sans JS). Critères de parcours navigateur non cochés faute de données.

@@ -1,9 +1,11 @@
-<article class="dl-card" aria-label="Votre rendez-vous">
-  <div class="dl-card__header"><h2>Votre rendez-vous</h2></div>
-  <dl class="dl-details">
-    <dt>Cabinet</dt><dd>{{.Practice}}</dd>
-    <dt>Praticien</dt><dd>{{.Practitioner}}</dd>
-    <dt>Motif</dt><dd>{{.Type}} (<span class="dl-num">{{formatDuration .Duration}}</span>)</dd>
-    <dt>Date</dt><dd class="dl-num"><time datetime="{{.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Start}} à {{localTime .Start}}</time></dd>
-  </dl>
+<article class="card bg-base-100 border border-base-300" aria-label="Votre rendez-vous">
+  <div class="card-body gap-3">
+    <h2 class="card-title">Votre rendez-vous</h2>
+    <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+      <dt class="text-base-content/70">Cabinet</dt><dd>{{.Practice}}</dd>
+      <dt class="text-base-content/70">Praticien</dt><dd>{{.Practitioner}}</dd>
+      <dt class="text-base-content/70">Motif</dt><dd>{{.Type}} ({{formatDuration .Duration}})</dd>
+      <dt class="text-base-content/70">Date</dt><dd><time datetime="{{.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Start}} à {{localTime .Start}}</time></dd>
+    </dl>
+  </div>
 </article>

@@ -1,24 +1,24 @@
 {{define "title"}}Vérification{{end}}
 {{define "content"}}
-<nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Changer de créneau</a></nav>
-<h1>Confirmez votre rendez-vous</h1>
-<ol class="dl-steps" aria-label="Étapes de la réservation"><li class="is-done">Motif</li><li class="is-done">Créneau</li><li class="is-done">Coordonnées</li><li aria-current="step">Vérification</li></ol>
+<nav aria-label="Fil d'Ariane"><a class="link link-primary" href="{{.Data.BackURL}}">&larr; Changer de créneau</a></nav>
+<h1 class="text-2xl font-semibold">Confirmez votre rendez-vous</h1>
+<nav aria-label="Étapes de la réservation"><ul class="steps steps-horizontal w-full text-xs sm:text-sm"><li class="step step-primary">Motif</li><li class="step step-primary">Créneau</li><li class="step step-primary">Coordonnées</li><li class="step step-primary" aria-current="step">Vérification</li></ul></nav>
 {{template "booking_summary.html" .Data.Summary}}
 {{template "form_errors.html" .Data.Errors}}
 <p>Un code à 6 chiffres vient d'être envoyé {{if eq .Data.Channel "email"}}par email à{{else}}par SMS au{{end}} <strong>{{.Data.Destination}}</strong>. Il est valable 10 minutes.</p>
-<form method="post" action="{{.Data.Action}}">
+<form method="post" action="{{.Data.Action}}" class="space-y-4">
   {{csrf .CSRF}}
   {{template "booking_hidden.html" .Data}}
   <input type="hidden" name="challenge_id" value="{{.Data.ChallengeID}}">
-  <div class="dl-field">
-    <label class="dl-label" for="code">Code de vérification</label>
-    <input class="dl-input dl-num" id="code" name="code" type="text" inputmode="numeric" pattern="[0-9 ]{6,8}" maxlength="8" autocomplete="one-time-code" required autofocus>
+  <div class="space-y-1 max-w-xs">
+    <label class="block text-sm font-medium" for="code">Code de vérification</label>
+    <input class="input w-full tracking-[0.5em] text-center text-lg" id="code" name="code" type="text" inputmode="numeric" pattern="[0-9 ]{6,8}" maxlength="8" autocomplete="one-time-code" required autofocus>
   </div>
-  <button class="dl-btn" type="submit">Confirmer le rendez-vous</button>
+  <button class="btn btn-primary w-full sm:w-auto" type="submit">Confirmer le rendez-vous</button>
 </form>
-<form method="post" action="{{.Data.ResendURL}}" class="dl-resend">
+<form method="post" action="{{.Data.ResendURL}}">
   {{csrf .CSRF}}
   {{template "booking_hidden.html" .Data}}
-  <button class="dl-btn dl-btn--outline" type="submit">Recevoir un nouveau code</button>
+  <button class="btn btn-outline btn-sm" type="submit">Recevoir un nouveau code</button>
 </form>
 {{end}}
