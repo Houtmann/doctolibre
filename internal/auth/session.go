@@ -215,6 +215,8 @@ func (s *Service) Login(ctx context.Context, p LoginParams) (Session, error) {
 		if verr != nil {
 			s.logger().Error("hash de mot de passe inexploitable", slog.String("user_id", row.ID.String()))
 		}
+		// Compte désactivé : mêmes réponse et travail que pour un mauvais mot de passe.
+		ok = ok && row.Active
 	} else {
 		dummyVerify(p.Password)
 	}
@@ -285,6 +287,10 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Session, erro
 	}
 	if err != nil {
 		return Session{}, fmt.Errorf("lecture utilisateur: %w", err)
+	}
+	if !row.Active {
+		_ = q.DeleteSession(ctx, id)
+		return Session{}, ErrUnauthenticated
 	}
 	exp := sess.ExpiresAt
 	refreshed := false

@@ -15,7 +15,7 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO app_user (practice_id, practitioner_id, email, password_hash, role)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at
+RETURNING id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at, active
 `
 
 type CreateUserParams struct {
@@ -45,12 +45,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AppUser
 		&i.LastLoginAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Active,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at FROM app_user WHERE id = $1
+SELECT id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at, active FROM app_user WHERE id = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (AppUser, error) {
@@ -66,12 +67,13 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (AppUser, error) {
 		&i.LastLoginAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Active,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at FROM app_user WHERE email = $1
+SELECT id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at, active FROM app_user WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AppUser, error) {
@@ -87,12 +89,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AppUser, er
 		&i.LastLoginAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Active,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at FROM app_user
+SELECT id, practice_id, practitioner_id, email, password_hash, role, last_login_at, created_at, updated_at, active FROM app_user
 WHERE practice_id = $1
 ORDER BY email, id
 LIMIT $2
@@ -122,6 +125,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]AppUser
 			&i.LastLoginAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Active,
 		); err != nil {
 			return nil, err
 		}

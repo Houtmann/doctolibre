@@ -13,7 +13,7 @@
         Du {{localDate .Start}} à {{localTime .Start}} au {{localDate .End}} à {{localTime .End}}
       {{end}}
       {{if .Reason}}<small>({{.Reason}})</small>{{end}}
-      <form method="post" action="/admin/absences/{{.ID}}/delete" hx-post="/admin/absences/{{.ID}}/delete" hx-target="#absences-panel" hx-swap="outerHTML">
+      <form method="post" action="/admin/absences/{{.ID}}/delete{{$.Q}}" hx-post="/admin/absences/{{.ID}}/delete{{$.Q}}" hx-target="#absences-panel" hx-swap="outerHTML">
         {{csrf $.CSRF}}
         <button type="submit" class="outline secondary">Supprimer</button>
       </form>
@@ -25,7 +25,7 @@
   {{end}}
 
   <h2>Ajouter une absence</h2>
-  <form method="post" action="/admin/absences" hx-post="/admin/absences" hx-target="#absences-panel" hx-swap="outerHTML">
+  <form method="post" action="/admin/absences{{.Q}}" hx-post="/admin/absences{{.Q}}" hx-target="#absences-panel" hx-swap="outerHTML">
     {{csrf .CSRF}}
     {{with .Form}}
     <div class="grid">

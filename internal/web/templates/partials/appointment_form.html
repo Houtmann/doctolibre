@@ -5,6 +5,7 @@
   <form method="get" action="/admin/appointments/new" role="search">
     <input type="hidden" name="start" value="{{.Form.Start}}">
     <input type="hidden" name="view" value="{{.Form.View}}">
+    {{if .Form.Practitioner}}<input type="hidden" name="practitioner" value="{{.Form.Practitioner}}">{{end}}
     <label for="patient-q">Rechercher un patient (nom, prénom, téléphone ou email)</label>
     <input id="patient-q" type="search" name="q" value="{{.Form.Query}}" autocomplete="off"
            hx-get="/admin/patients/search" hx-trigger="input changed delay:300ms, search" hx-target="#patient-results" hx-swap="outerHTML" hx-push-url="false">
@@ -14,6 +15,12 @@
   <form id="appt-create" method="post" action="/admin/appointments" hx-post="/admin/appointments" hx-target="#appt-form" hx-swap="outerHTML">
     {{csrf .CSRF}}
     <input type="hidden" name="view" value="{{.Form.View}}">
+    {{if .Practitioners}}
+    <label for="appt-practitioner">Praticien</label>
+    <select id="appt-practitioner" name="practitioner" required>
+      {{range .Practitioners}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
+    </select>
+    {{else if .Form.Practitioner}}<input type="hidden" name="practitioner" value="{{.Form.Practitioner}}">{{end}}
     {{template "patient_results.html" .}}
     <details{{if .QuickOpen}} open{{end}}>
       <summary>Nouveau patient (création rapide)</summary>

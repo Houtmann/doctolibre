@@ -48,13 +48,17 @@ func (d Deps) configRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	handle("POST "+pathTypes+"/{id}/active", h.typesActive)
 	handle("POST "+pathTypes+"/{id}/move", h.typesMove)
 
-	handle("GET "+pathAvailability, h.availabilityPage)
-	handle("POST "+pathAvailability, h.availabilityAdd)
-	handle("POST "+pathAvailability+"/{id}/delete", h.availabilityDelete)
+	// Horaires et absences : le praticien visé (paramètre « practitioner ») est
+	// contrôlé par la matrice de permissions (un praticien ne règle que les siens).
+	target := withTarget(rd, auth.ActionAvailabilityEdit)
+	handleFor := func(pattern string, f http.HandlerFunc) { mux.Handle(pattern, require(target(f))) }
+	handleFor("GET "+pathAvailability, h.availabilityPage)
+	handleFor("POST "+pathAvailability, h.availabilityAdd)
+	handleFor("POST "+pathAvailability+"/{id}/delete", h.availabilityDelete)
 
-	handle("GET "+pathAbsences, h.absencesPage)
-	handle("POST "+pathAbsences, h.absencesAdd)
-	handle("POST "+pathAbsences+"/{id}/delete", h.absencesDelete)
+	handleFor("GET "+pathAbsences, h.absencesPage)
+	handleFor("POST "+pathAbsences, h.absencesAdd)
+	handleFor("POST "+pathAbsences+"/{id}/delete", h.absencesDelete)
 }
 
 type configHandlers struct {
@@ -67,7 +71,11 @@ type configHandlers struct {
 
 func actorFrom(r *http.Request) service.Actor {
 	u, _ := auth.UserFrom(r.Context())
-	return service.Actor{UserID: u.ID, PracticeID: u.PracticeID}
+	a := service.Actor{UserID: u.ID, PracticeID: u.PracticeID, Role: u.Role, Target: targetFrom(r.Context())}
+	if u.PractitionerID.Valid {
+		a.PractitionerID = u.PractitionerID.UUID
+	}
+	return a
 }
 
 // fail traduit une erreur non attendue en réponse HTTP (un seul endroit).
@@ -371,6 +379,8 @@ type RuleForm struct {
 
 // AvailabilityPage est la donnée de la page admin_availability et de son panneau.
 type AvailabilityPage struct {
+	Switch *PractitionerSwitch // nil = un seul praticien accessible
+	Q      string              // « ?practitioner=<id> » quand un autre praticien est visé
 	CSRF   string
 	Days   [7]service.DayView
 	Types  []TypeOption
@@ -389,6 +399,9 @@ func (h *configHandlers) availabilityData(r *http.Request, form RuleForm, errs [
 		return nil, err
 	}
 	p := &AvailabilityPage{CSRF: httpx.CSRFToken(r.Context()), Days: v.Days, Form: form, Errors: errs, Notice: notice}
+	if p.Switch, p.Q, err = h.practitionerSwitch(r, pathAvailability); err != nil {
+		return nil, err
+	}
 	for _, t := range v.Types {
 		p.Types = append(p.Types, TypeOption{ID: t.ID.String(), Name: t.Name, Checked: form.TypeIDs == nil || form.TypeIDs[t.ID.String()]})
 	}
@@ -405,7 +418,7 @@ func (h *configHandlers) availabilityShow(w http.ResponseWriter, r *http.Request
 }
 
 func (h *configHandlers) availabilityDone(w http.ResponseWriter, r *http.Request, msg string) {
-	h.succeed(w, r, pathAvailability, msg, "availability_panel", func(notice string) (any, error) {
+	h.succeed(w, r, pathAvailability+targetQuery(r), msg, "availability_panel", func(notice string) (any, error) {
 		return h.availabilityData(r, defaultRuleForm(), nil, notice)
 	})
 }
@@ -456,6 +469,8 @@ func (h *configHandlers) availabilityDelete(w http.ResponseWriter, r *http.Reque
 
 // AbsencesPage est la donnée de la page admin_absences et de son panneau.
 type AbsencesPage struct {
+	Switch   *PractitionerSwitch
+	Q        string
 	CSRF     string
 	Closures []service.ClosureView
 	Form     service.ClosureInput
@@ -468,7 +483,11 @@ func (h *configHandlers) absencesData(r *http.Request, form service.ClosureInput
 	if err != nil {
 		return nil, err
 	}
-	return &AbsencesPage{CSRF: httpx.CSRFToken(r.Context()), Closures: cs, Form: form, Errors: errs, Notice: notice}, nil
+	p := &AbsencesPage{CSRF: httpx.CSRFToken(r.Context()), Closures: cs, Form: form, Errors: errs, Notice: notice}
+	if p.Switch, p.Q, err = h.practitionerSwitch(r, pathAbsences); err != nil {
+		return nil, err
+	}
+	return p, nil
 }
 
 func (h *configHandlers) absencesShow(w http.ResponseWriter, r *http.Request, form service.ClosureInput, errs []string) {
@@ -481,7 +500,7 @@ func (h *configHandlers) absencesShow(w http.ResponseWriter, r *http.Request, fo
 }
 
 func (h *configHandlers) absencesDone(w http.ResponseWriter, r *http.Request, msg string) {
-	h.succeed(w, r, pathAbsences, msg, "absences_panel", func(notice string) (any, error) {
+	h.succeed(w, r, pathAbsences+targetQuery(r), msg, "absences_panel", func(notice string) (any, error) {
 		return h.absencesData(r, service.ClosureInput{}, nil, notice)
 	})
 }
@@ -566,4 +585,49 @@ func (h *configHandlers) notifySubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	h.rd.SetFlash(w, "success", "Réglages de notification enregistrés.")
 	httpx.Redirect(w, r, pathNotify)
+}
+
+// PractitionerOption est un praticien proposé dans un sélecteur.
+type PractitionerOption struct {
+	ID, Name string
+	Selected bool
+}
+
+// PractitionerSwitch est le sélecteur de praticien des pages d'horaires et d'absences.
+type PractitionerSwitch struct {
+	Action  string
+	Options []PractitionerOption
+	Name    string // nom du praticien affiché
+}
+
+// targetQuery retourne « ?practitioner=<id> » si la requête vise un autre praticien.
+func targetQuery(r *http.Request) string {
+	if id := targetFrom(r.Context()); id != uuid.Nil {
+		return "?" + practitionerParam + "=" + id.String()
+	}
+	return ""
+}
+
+// practitionerSwitch construit le sélecteur (nil s'il n'y a qu'un praticien
+// accessible) et la chaîne de requête à ajouter aux actions de la page.
+func (h *configHandlers) practitionerSwitch(r *http.Request, action string) (*PractitionerSwitch, string, error) {
+	a := actorFrom(r)
+	prs, err := h.svc.TeamPractitioners(r.Context(), a)
+	if err != nil {
+		return nil, "", err
+	}
+	q := targetQuery(r)
+	if len(prs) < 2 {
+		return nil, q, nil
+	}
+	sw := &PractitionerSwitch{Action: action}
+	for _, p := range prs {
+		sel := p.ID == a.Target || (a.Target == uuid.Nil && p.ID == a.PractitionerID)
+		o := PractitionerOption{ID: p.ID.String(), Name: service.PractitionerName(p), Selected: sel}
+		if sel {
+			sw.Name = o.Name
+		}
+		sw.Options = append(sw.Options, o)
+	}
+	return sw, q, nil
 }

@@ -104,7 +104,17 @@
   position: relative;
 }
 .cal-grid.cal-cols-1 { grid-template-columns: 3.5rem 1fr; }
+.cal-grid.cal-cols-2 { grid-template-columns: 3.5rem repeat(2, minmax(0, 1fr)); }
+.cal-grid.cal-cols-3 { grid-template-columns: 3.5rem repeat(3, minmax(0, 1fr)); }
+.cal-grid.cal-cols-4 { grid-template-columns: 3.5rem repeat(4, minmax(0, 1fr)); }
+.cal-grid.cal-cols-5 { grid-template-columns: 3.5rem repeat(5, minmax(0, 1fr)); }
+.cal-grid.cal-cols-6 { grid-template-columns: 3.5rem repeat(6, minmax(0, 1fr)); }
 .cal-grid.cal-cols-7 { grid-template-columns: 3.5rem repeat(7, minmax(0, 1fr)); }
+.cal-picker { margin-bottom: 1rem; }
+.cal-picker fieldset { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; align-items: center; border: 0; padding: 0; margin: 0 0 0.5rem; }
+.cal-picker legend { font-weight: 600; font-size: 0.9rem; }
+.cal-picker label { margin: 0; }
+.cal-picker button { margin: 0; padding: 0.35rem 0.8rem; }
 .gc-all { grid-column: 1 / -1; }
 .cal-head { text-align: center; font-weight: 600; font-size: 0.85rem; border-left: 1px solid var(--pico-muted-border-color); }
 .cal-head.is-today { background: var(--app-info-bg); color: var(--app-info-fg); }

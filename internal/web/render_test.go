@@ -66,6 +66,10 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = &AvailabilityPage{}
 			case "admin_absences":
 				data = &AbsencesPage{}
+			case "admin_team":
+				data = TeamPage{}
+			case "invitation":
+				data = InvitationData{}
 			case "admin_calendar":
 				data = &CalendarPage{}
 			case "admin_appointment_new":

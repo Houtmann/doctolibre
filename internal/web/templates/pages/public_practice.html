@@ -4,6 +4,16 @@
 {{if .Data.Practice.Address}}<p>{{.Data.Practice.Address}}</p>{{end}}
 {{if .Data.Practice.Phone}}<p>Téléphone : <a href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a></p>{{end}}
 <h2>Prendre rendez-vous</h2>
+{{if .Data.FirstTypes}}
+<h3>Premier créneau disponible</h3>
+<p>Vous n'avez pas de préférence ? Choisissez un motif : nous vous proposons le créneau le plus proche, tous praticiens confondus.</p>
+<ul class="choice-list">
+  {{range .Data.FirstTypes}}
+  <li><a href="{{.URL}}" role="button">{{.Name}} <small>({{formatDuration .Duration}})</small></a></li>
+  {{end}}
+</ul>
+<h3>Ou choisissez un praticien</h3>
+{{end}}
 {{if .Data.Practitioners}}
 <ul class="choice-list">
   {{range .Data.Practitioners}}

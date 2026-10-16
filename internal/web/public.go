@@ -43,6 +43,7 @@ func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	const base = "/p/{practice}/{practitioner}/book"
 	mux.HandleFunc("GET /p/{practice}", h.practice)
 	mux.HandleFunc("GET /p/{practice}/{practitioner}", h.practitioner)
+	mux.Handle("GET "+firstPath, httpx.Chain(http.HandlerFunc(h.firstAvailable), search))
 	mux.Handle("GET "+base, httpx.Chain(http.HandlerFunc(h.grid), search))
 	mux.Handle("GET "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsForm), search))
 	mux.Handle("POST "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsSubmit), limit()))
@@ -75,6 +76,8 @@ func (h *publicHandlers) fail(w http.ResponseWriter, r *http.Request, err error)
 type PublicPracticeData struct {
 	Practice      sqlcgen.Practice
 	Practitioners []PractitionerView
+	// FirstTypes : motifs proposés par « premier créneau disponible » (cabinet de plusieurs praticiens).
+	FirstTypes []TypeView
 }
 
 // PractitionerView est un praticien affiché.
@@ -211,6 +214,10 @@ func (h *publicHandlers) practice(w http.ResponseWriter, r *http.Request) {
 	data := PublicPracticeData{Practice: p.Practice}
 	for _, pr := range p.Practitioners {
 		data.Practitioners = append(data.Practitioners, practitionerView(p.Practice.Slug, pr))
+	}
+	if data.FirstTypes, err = h.firstTypes(r, p.Practice.Slug); err != nil {
+		h.fail(w, r, err)
+		return
 	}
 	h.rd.Page(w, r, "public_practice", data)
 }
