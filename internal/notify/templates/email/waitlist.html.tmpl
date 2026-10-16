@@ -1,0 +1,11 @@
+{{define "title"}}Un créneau s'est libéré{{end}}
+{{define "content"}}
+<h1 style="margin:0 0 16px;font-size:20px;">Un créneau s'est libéré</h1>
+<p style="margin:0 0 16px;">Bonjour {{.first_name}},</p>
+<p style="margin:0 0 16px;">Un créneau ({{.type_name}}) avec {{.practitioner}} vient de se libérer :</p>
+<p style="margin:0 0 16px;font-size:18px;"><strong>{{.date}} à {{.time}}</strong><br>{{.practice_name}}{{if .practice_address}}<br>{{.practice_address}}{{end}}</p>
+<p style="margin:0 0 16px;">Vous êtes sur la liste d'attente : le premier à confirmer obtient ce créneau. Cette proposition est valable jusqu'à {{.valid_until}} (2 heures).</p>
+{{if .offer_url}}<p style="margin:0 0 16px;"><a href="{{.offer_url}}">Réserver ce créneau</a></p>{{end}}
+{{if .practice_phone}}<p style="margin:0 0 16px;font-size:14px;">Une question ? Appelez le {{.practice_phone}}.</p>{{end}}
+<p style="margin:0;font-size:14px;">{{.signature}}</p>
+{{end}}

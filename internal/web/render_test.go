@@ -107,6 +107,14 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = RescheduleConfirmData{}
 			case "public_cancel":
 				data = CancelData{}
+			case "admin_waitlist":
+				data = WaitlistPageData{}
+			case "public_waitlist":
+				data = WaitlistFormData{}
+			case "public_waitlist_verify":
+				data = WaitlistVerifyData{}
+			case "public_waitlist_offer":
+				data = OfferData{}
 			}
 			rd.Page(rec, httptest.NewRequest("GET", "/", nil), n, data)
 			if rec.Code != 200 || !strings.Contains(rec.Body.String(), `<html lang="fr">`) {

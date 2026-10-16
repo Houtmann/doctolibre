@@ -51,6 +51,8 @@ type Deps struct {
 	Feed *service.CalendarFeed
 	// Status (état de l'instance) est optionnel : nil = pas de page /admin/status.
 	Status StatusSource
+	// Waitlist (liste d'attente) est optionnel : nil = pas de liste d'attente (ni /w/…, ni /admin/waitlist).
+	Waitlist *service.Waitlist
 }
 
 const pingTimeout = 2 * time.Second

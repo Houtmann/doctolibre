@@ -238,3 +238,32 @@ type Session struct {
 	UserAgent string
 	Ip        string
 }
+
+type WaitlistEntry struct {
+	ID                uuid.UUID
+	PracticeID        uuid.UUID
+	PatientID         uuid.UUID
+	PractitionerID    pgtype.UUID
+	AppointmentTypeID uuid.UUID
+	Earliest          pgtype.Date
+	Latest            pgtype.Date
+	Weekdays          []int16
+	TimeFrom          pgtype.Time
+	TimeTo            pgtype.Time
+	Status            string
+	VerifiedChannel   pgtype.Text
+	Source            string
+	CreatedAt         time.Time
+}
+
+type WaitlistOffer struct {
+	ID             uuid.UUID
+	EntryID        uuid.UUID
+	PracticeID     uuid.UUID
+	PractitionerID uuid.UUID
+	SlotStart      time.Time
+	TokenHash      string
+	ExpiresAt      time.Time
+	ClaimedAt      pgtype.Timestamptz
+	CreatedAt      time.Time
+}

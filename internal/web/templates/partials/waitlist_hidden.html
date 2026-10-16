@@ -1,0 +1,14 @@
+<input type="hidden" name="type" value="{{.TypeID}}">
+<input type="hidden" name="earliest" value="{{.Form.Earliest}}">
+<input type="hidden" name="latest" value="{{.Form.Latest}}">
+<input type="hidden" name="time_from" value="{{.Form.TimeFrom}}">
+<input type="hidden" name="time_to" value="{{.Form.TimeTo}}">
+{{range .Form.Weekdays}}<input type="hidden" name="weekdays" value="{{.}}">{{end}}
+<input type="hidden" name="first_name" value="{{.Form.FirstName}}">
+<input type="hidden" name="last_name" value="{{.Form.LastName}}">
+<input type="hidden" name="phone" value="{{.Form.Phone}}">
+<input type="hidden" name="email" value="{{.Form.Email}}">
+<input type="hidden" name="channel" value="{{.Form.Channel}}">
+{{if .Form.SMSOptIn}}<input type="hidden" name="sms_opt_in" value="on">{{end}}
+{{if .Form.EmailOptIn}}<input type="hidden" name="email_opt_in" value="on">{{end}}
+{{if .Form.Consent}}<input type="hidden" name="consent" value="on">{{end}}

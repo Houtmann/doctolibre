@@ -1,0 +1,23 @@
+{{define "title"}}Un créneau s'est libéré{{end}}
+{{define "content"}}
+<h1>Un créneau s'est libéré</h1>
+<article class="booking-summary">
+  <p>{{.Data.FirstName}}, ce créneau vous est proposé :</p>
+  <p><strong>{{.Data.Type}}</strong> ({{formatDuration .Data.Duration}})<br>
+  avec {{.Data.Practitioner}}, {{.Data.Practice}}<br>
+  <time datetime="{{.Data.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Start}} à {{localTime .Data.Start}}</time></p>
+</article>
+{{if .Data.Available}}
+<p>Le premier à confirmer l'obtient. Cette proposition est valable jusqu'à {{localTime .Data.ExpiresAt}}.</p>
+<form method="post" action="{{.Data.Action}}">
+  {{csrf .CSRF}}
+  <button type="submit">Réserver ce créneau</button>
+</form>
+{{else if eq .Data.Reason "taken"}}
+<p role="alert">Ce créneau vient d'être pris par une autre personne. Vous restez sur la liste d'attente : nous vous préviendrons si un autre créneau correspondant se libère.</p>
+{{else if eq .Data.Reason "claimed"}}
+<p role="status">Ce créneau a déjà été réservé avec ce lien. Vous avez reçu la confirmation par message.</p>
+{{else}}
+<p role="alert">Cette proposition a expiré.{{if .Data.Phone}} Pour prendre rendez-vous, appelez le cabinet au <a href="tel:{{.Data.Phone}}">{{.Data.Phone}}</a>.{{end}}</p>
+{{end}}
+{{end}}

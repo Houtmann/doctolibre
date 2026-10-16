@@ -1,0 +1,70 @@
+{{define "title"}}Liste d'attente{{end}}
+{{define "content"}}
+<nav aria-label="Fil d'Ariane"><a href="{{.Data.BackURL}}">&larr; Retour aux créneaux</a></nav>
+<h1>Aucun créneau ne me convient</h1>
+<p>{{.Data.TypeName}} avec {{.Data.Practitioner}}, {{.Data.Practice}}.</p>
+<p>Indiquez quand vous seriez disponible : si un créneau correspondant se libère, nous vous le proposons par SMS ou par email. Le premier à confirmer l'obtient.</p>
+{{template "form_errors.html" .Data.Errors}}
+<form method="post" action="{{.Data.Action}}">
+  {{csrf .CSRF}}
+  <input type="hidden" name="type" value="{{.Data.TypeID}}">
+  <fieldset>
+    <legend>Mes disponibilités</legend>
+    <div class="grid">
+      <div>
+        <label for="earliest">À partir du</label>
+        <input id="earliest" name="earliest" type="date" value="{{.Data.Form.Earliest}}" min="{{.Data.Today}}" required>
+      </div>
+      <div>
+        <label for="latest">Jusqu'au</label>
+        <input id="latest" name="latest" type="date" value="{{.Data.Form.Latest}}" min="{{.Data.Today}}" required>
+      </div>
+    </div>
+    <fieldset>
+      <legend>Jours possibles (aucun coché = tous les jours)</legend>
+      {{range .Data.Weekdays}}<label><input type="checkbox" name="weekdays" value="{{.Value}}"{{if .Checked}} checked{{end}}> {{.Label}}</label>{{end}}
+    </fieldset>
+    <div class="grid">
+      <div>
+        <label for="time_from">Heure de début, de (facultatif)</label>
+        <input id="time_from" name="time_from" type="time" value="{{.Data.Form.TimeFrom}}">
+      </div>
+      <div>
+        <label for="time_to">à</label>
+        <input id="time_to" name="time_to" type="time" value="{{.Data.Form.TimeTo}}">
+      </div>
+    </div>
+  </fieldset>
+
+  <label for="first_name">Prénom</label>
+  <input id="first_name" name="first_name" type="text" value="{{.Data.Form.FirstName}}" autocomplete="given-name" maxlength="80" required>
+  <label for="last_name">Nom</label>
+  <input id="last_name" name="last_name" type="text" value="{{.Data.Form.LastName}}" autocomplete="family-name" maxlength="80" required>
+  <label for="phone">Téléphone portable</label>
+  <input id="phone" name="phone" type="tel" value="{{.Data.Form.Phone}}" autocomplete="tel" inputmode="tel" aria-describedby="phone-help">
+  <small id="phone-help">Exemple : 06 12 34 56 78</small>
+  <label for="email">Adresse email</label>
+  <input id="email" name="email" type="email" value="{{.Data.Form.Email}}" autocomplete="email" maxlength="254">
+
+  <fieldset>
+    <legend>Recevoir le code de vérification par</legend>
+    <label><input type="radio" name="channel" value="sms"{{if eq .Data.Form.Channel "sms"}} checked{{end}}> SMS (au téléphone indiqué)</label>
+    <label><input type="radio" name="channel" value="email"{{if ne .Data.Form.Channel "sms"}} checked{{end}}> Email (recommandé, à l'adresse indiquée)</label>
+  </fieldset>
+
+  <fieldset>
+    <legend>Notifications</legend>
+    <label><input type="checkbox" name="sms_opt_in" value="on"{{if .Data.Form.SMSOptIn}} checked{{end}}> Je souhaite recevoir des SMS</label>
+    <label><input type="checkbox" name="email_opt_in" value="on"{{if .Data.Form.EmailOptIn}} checked{{end}}> Je souhaite recevoir des messages par email</label>
+  </fieldset>
+
+  <div class="hp" aria-hidden="true">
+    <label for="website">Ne pas remplir ce champ</label>
+    <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+  </div>
+
+  <label><input type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> J'accepte que mes coordonnées soient utilisées par le cabinet pour me proposer un créneau.</label>
+  <p><small>N'indiquez aucune information médicale. Seul le canal vérifié par le code (SMS ou email) servira à vous écrire.</small></p>
+  <button type="submit">Recevoir mon code</button>
+</form>
+{{end}}
