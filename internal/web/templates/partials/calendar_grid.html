@@ -32,7 +32,7 @@
 
   <div class="cal-grid cal-cols-{{len .V.Days}}" role="group" aria-label="Agenda, {{.V.Title}}">
     <div class="cal-head gr-1 gc-1"></div>
-    {{range .V.Days}}<div class="cal-head gr-1 gc-{{.Col}}{{if .Today}} is-today{{end}}"><span aria-hidden="true">{{.Label}}</span><span class="visually-hidden">{{.LongLabel}}</span></div>{{end}}
+    {{range .V.Days}}<div class="cal-head gr-1 gc-{{.Col}}{{if .Today}} is-today{{end}}"><span aria-hidden="true">{{.Label}}</span>{{if .Holiday}} <small class="cal-holiday">Férié</small>{{end}}<span class="visually-hidden">{{.LongLabel}}{{if .Holiday}}, férié{{end}}</span></div>{{end}}
     {{range .V.Hours}}
     <div class="cal-hour gr-{{.Row}} gs-4 gc-all" aria-hidden="true"></div>
     <div class="cal-hour-label gr-{{.Row}} gc-1" aria-hidden="true">{{.Label}}</div>

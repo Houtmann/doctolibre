@@ -40,3 +40,7 @@ UPDATE practice SET
     notify_signature = @notify_signature,
     updated_at = now()
 WHERE id = @id;
+
+-- name: SetPracticeHolidays :exec
+UPDATE practice SET close_on_holidays = @close_on_holidays, holidays_alsace_moselle = @holidays_alsace_moselle, updated_at = now()
+WHERE id = @id;

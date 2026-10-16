@@ -75,6 +75,9 @@ type SettingsInput struct {
 
 	HomeVisitOnline bool   // réservation en ligne des visites à domicile
 	HomeVisitZones  string // codes postaux ou communes, séparés par des virgules ou des retours à la ligne
+
+	CloseOnHolidays       bool // aucun créneau les jours fériés français
+	HolidaysAlsaceMoselle bool // + Vendredi saint et 26 décembre
 }
 
 // ReservedFirstSlug est le segment d'URL « premier créneau disponible » : interdit comme identifiant de praticien.
@@ -293,6 +296,11 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 		}); err != nil {
 			return fmt.Errorf("zones de visite à domicile: %w", err)
 		}
+		if err := q.SetPracticeHolidays(ctx, sqlcgen.SetPracticeHolidaysParams{
+			ID: pc.ID, CloseOnHolidays: in.CloseOnHolidays, HolidaysAlsaceMoselle: in.HolidaysAlsaceMoselle,
+		}); err != nil {
+			return fmt.Errorf("jours fériés: %w", err)
+		}
 		_, err = q.UpdatePractitioner(ctx, sqlcgen.UpdatePractitionerParams{
 			ID: pr.ID, PracticeID: a.PracticeID, FirstName: in.FirstName, LastName: in.LastName,
 			Slug: in.Slug, Title: in.Title, Bio: in.Bio, Color: pr.Color, Active: pr.Active,
@@ -335,18 +343,23 @@ func parseZones(s string) ([]string, string) {
 
 // location charge le fuseau du cabinet.
 func (s *Practice) location(ctx context.Context, practiceID uuid.UUID) (*time.Location, error) {
+	_, loc, err := s.practiceAndLocation(ctx, practiceID)
+	return loc, err
+}
+
+func (s *Practice) practiceAndLocation(ctx context.Context, practiceID uuid.UUID) (sqlcgen.Practice, *time.Location, error) {
 	pc, err := sqlcgen.New(s.Pool).GetPractice(ctx, practiceID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, domain.ErrNotFound
+		return sqlcgen.Practice{}, nil, domain.ErrNotFound
 	}
 	if err != nil {
-		return nil, fmt.Errorf("lecture cabinet: %w", err)
+		return sqlcgen.Practice{}, nil, fmt.Errorf("lecture cabinet: %w", err)
 	}
 	loc, err := time.LoadLocation(pc.Timezone)
 	if err != nil {
-		return nil, fmt.Errorf("fuseau %q: %w", pc.Timezone, err)
+		return sqlcgen.Practice{}, nil, fmt.Errorf("fuseau %q: %w", pc.Timezone, err)
 	}
-	return loc, nil
+	return pc, loc, nil
 }
 
 func tooLong(s string, limit int) bool { return utf8.RuneCountInString(s) > limit }

@@ -160,6 +160,7 @@ func settingsInputOf(s service.Settings) service.SettingsInput {
 		FirstName:          s.Practitioner.FirstName, LastName: s.Practitioner.LastName,
 		Title: s.Practitioner.Title, Bio: s.Practitioner.Bio, Slug: s.Practitioner.Slug,
 		HomeVisitOnline: s.Practice.HomeVisitOnline, HomeVisitZones: strings.Join(s.Practice.HomeVisitZones, "\n"),
+		CloseOnHolidays: s.Practice.CloseOnHolidays, HolidaysAlsaceMoselle: s.Practice.HolidaysAlsaceMoselle,
 	}
 }
 
@@ -186,6 +187,7 @@ func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) 
 		FirstName:          r.PostFormValue("first_name"), LastName: r.PostFormValue("last_name"),
 		Title: r.PostFormValue("title"), Bio: r.PostFormValue("bio"), Slug: r.PostFormValue("slug"),
 		HomeVisitOnline: r.PostFormValue("home_visit_online") == "1", HomeVisitZones: r.PostFormValue("home_visit_zones"),
+		CloseOnHolidays: r.PostFormValue("close_on_holidays") == "1", HolidaysAlsaceMoselle: r.PostFormValue("holidays_alsace_moselle") == "1",
 	}
 	err := h.svc.UpdateSettings(r.Context(), actorFrom(r), in)
 	if msgs := validation(err); msgs != nil {

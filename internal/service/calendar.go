@@ -118,6 +118,7 @@ type CalDay struct {
 	LongLabel string // « lundi 19 octobre »
 	Col       int    // colonne CSS (la 1re est la colonne des heures)
 	Today     bool
+	Holiday   bool // jour férié fermé
 	Appts     []CalAppt
 	Bands     []CalBand
 	Slots     []CalSlot
@@ -144,6 +145,7 @@ type CalendarView struct {
 	Practitioners []CalPractitioner
 	Multi         bool
 	Loc           *time.Location
+	holidays      map[string]bool // jours fériés (option active), "2006-01-02"
 }
 
 // CalPractitioner est un praticien affiché dans l'agenda.
@@ -164,6 +166,7 @@ type calSource struct {
 	appts []sqlcgen.ListCalendarAppointmentsRow
 	rules []sqlcgen.AvailabilityRule
 	excs  []sqlcgen.AvailabilityException
+	hol   []booking.Interval // fériés fermés (journées moins ouvertures explicites)
 }
 
 // CheckTarget vérifie que le praticien visé (a.Target) existe dans le cabinet et
@@ -225,7 +228,7 @@ func (c *Calendar) View(ctx context.Context, a Actor, in ViewInput) (CalendarVie
 	if err != nil {
 		return CalendarView{}, err
 	}
-	loc, err := c.practice().location(ctx, a.PracticeID)
+	pc, loc, err := c.practice().practiceAndLocation(ctx, a.PracticeID)
 	if err != nil {
 		return CalendarView{}, err
 	}
@@ -272,6 +275,12 @@ func (c *Calendar) View(ctx context.Context, a Actor, in ViewInput) (CalendarVie
 		if src.excs, err = q.ListAvailabilityExceptions(ctx, sqlcgen.ListAvailabilityExceptionsParams{PractitionerID: pr.ID, FromAt: first, ToAt: to}); err != nil {
 			return CalendarView{}, fmt.Errorf("liste des absences: %w", err)
 		}
+		if pc.CloseOnHolidays {
+			_, opens := splitExceptions(src.excs)
+			for _, x := range booking.HolidayClosures(loc, first, to, pc.HolidaysAlsaceMoselle, opens) {
+				src.hol = append(src.hol, booking.Interval{Start: x.Start, End: x.End})
+			}
+		}
 		total += len(src.appts)
 		srcs = append(srcs, src)
 	}
@@ -304,6 +313,12 @@ func (c *Calendar) View(ctx context.Context, a Actor, in ViewInput) (CalendarVie
 	if len(srcs) > 0 {
 		v.PractitionerID = srcs[0].pr.ID
 	}
+	if pc.CloseOnHolidays {
+		v.holidays = map[string]bool{}
+		for _, h := range booking.HolidaysBetween(loc, first, last, pc.HolidaysAlsaceMoselle) {
+			v.holidays[fmt.Sprintf("%04d-%02d-%02d", h.Year, int(h.Month), h.Day)] = true
+		}
+	}
 	for _, src := range srcs {
 		v.Practitioners = append(v.Practitioners, CalPractitioner{ID: src.pr.ID, Name: PractitionerName(src.pr), Color: src.pr.Color})
 	}
@@ -333,7 +348,15 @@ func (c *Calendar) View(ctx context.Context, a Actor, in ViewInput) (CalendarVie
 func buildColumn(src calSource, d time.Time, colIdx int, v CalendarView, loc *time.Location, now time.Time) CalDay {
 	h0, h1, rows := v.FromHour, v.ToHour, v.Rows
 	closed, open := splitExceptions(src.excs)
+	dayIv := booking.Interval{Start: time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, loc)}
+	dayIv.End = dayIv.Start.AddDate(0, 0, 1)
+	for _, h := range src.hol {
+		if h.Overlaps(dayIv) {
+			closed = append(closed, h)
+		}
+	}
 	key := d.Format("2006-01-02")
+	holiday := v.holidays[key]
 	var appts []CalAppt
 	for _, ap := range src.appts {
 		st, en := ap.StartsAt.In(loc), ap.EndsAt.In(loc)
@@ -352,7 +375,7 @@ func buildColumn(src calSource, d time.Time, colIdx int, v CalendarView, loc *ti
 	}
 	wd := (int(d.Weekday()) + 6) % 7
 	cd := CalDay{
-		Date: d, DateStr: key, Col: colIdx, Today: key == v.TodayDate, Appts: appts,
+		Date: d, DateStr: key, Col: colIdx, Today: key == v.TodayDate, Holiday: holiday, Appts: appts,
 		Label: fmt.Sprintf("%s. %d", weekdayNames[wd][:3], d.Day()), LongLabel: frenchDay(d),
 		PractitionerID: src.pr.ID,
 	}

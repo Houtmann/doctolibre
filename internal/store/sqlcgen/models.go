@@ -211,6 +211,8 @@ type Practice struct {
 	RetentionAuditDays        int32
 	PatientPurgeEnabled       bool
 	PrivacyContact            string
+	CloseOnHolidays           bool
+	HolidaysAlsaceMoselle     bool
 }
 
 type Practitioner struct {

@@ -390,3 +390,4 @@ dialog#appt-dialog article { margin: 0; }
 .callout p { margin-bottom: 0.25rem; }
 .callout ul { margin-bottom: 0; }
 .callout a { color: inherit; }
+.cal-holiday { display: block; font-weight: 400; }

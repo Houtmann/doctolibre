@@ -622,7 +622,7 @@ UPDATE practice SET
     retention_audit_days = $3, patient_purge_enabled = $4,
     privacy_contact = $5, updated_at = now()
 WHERE id = $6
-RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones, notify_confirmation_channel, notify_reminder_channel, notify_change_channel, reminder_day_before, reminder_day_before_hour, reminder_two_hours, reminder_series, notify_signature, retention_outbox_days, retention_patient_years, retention_audit_days, patient_purge_enabled, privacy_contact
+RETURNING id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones, notify_confirmation_channel, notify_reminder_channel, notify_change_channel, reminder_day_before, reminder_day_before_hour, reminder_two_hours, reminder_series, notify_signature, retention_outbox_days, retention_patient_years, retention_audit_days, patient_purge_enabled, privacy_contact, close_on_holidays, holidays_alsace_moselle
 `
 
 type SetPracticePrivacyParams struct {
@@ -671,6 +671,8 @@ func (q *Queries) SetPracticePrivacy(ctx context.Context, arg SetPracticePrivacy
 		&i.RetentionAuditDays,
 		&i.PatientPurgeEnabled,
 		&i.PrivacyContact,
+		&i.CloseOnHolidays,
+		&i.HolidaysAlsaceMoselle,
 	)
 	return i, err
 }

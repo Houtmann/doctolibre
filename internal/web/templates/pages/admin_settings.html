@@ -15,6 +15,9 @@
     <textarea id="address" name="address" rows="2" maxlength="300">{{.Address}}</textarea>
     <label for="phone">Téléphone</label>
     <input id="phone" name="phone" type="tel" value="{{.Phone}}" maxlength="30" autocomplete="tel">
+    <label><input type="checkbox" name="close_on_holidays" value="1"{{if .CloseOnHolidays}} checked{{end}} aria-describedby="holidays-help"> Fermer le cabinet les jours fériés français</label>
+    <label><input type="checkbox" name="holidays_alsace_moselle" value="1"{{if .HolidaysAlsaceMoselle}} checked{{end}}> Alsace-Moselle (ajoute le Vendredi saint et le 26 décembre)</label>
+    <small id="holidays-help">Aucun créneau n'est proposé ces jours-là. Les rendez-vous déjà pris ne sont pas modifiés, et une ouverture exceptionnelle rouvre la journée.</small>
   </fieldset>
   <fieldset>
     <legend>Réservation en ligne</legend>

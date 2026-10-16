@@ -268,6 +268,17 @@ func (s slotContext) slots(ctx context.Context, q *sqlcgen.Queries, now, from, t
 		}
 		ex = append(ex, booking.Exception{Start: e.During.Lower.Time, End: e.During.Upper.Time, Kind: kind})
 	}
+	if s.pc.CloseOnHolidays {
+		// Jours fériés : fermetures sur la journée entière du cabinet, sauf si
+		// une ouverture exceptionnelle explicite recoupe le jour (Closed l'emporterait).
+		var opens []booking.Interval
+		for _, x := range ex {
+			if x.Kind == booking.Open {
+				opens = append(opens, booking.Interval{Start: x.Start, End: x.End})
+			}
+		}
+		ex = append(ex, booking.HolidayClosures(s.loc, lo, hi, s.pc.HolidaysAlsaceMoselle, opens)...)
+	}
 	busy := make([]booking.Busy, 0, len(appts))
 	for _, a := range appts {
 		if a.ID == s.ignore {

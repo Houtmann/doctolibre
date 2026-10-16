@@ -20,10 +20,10 @@ Le cabinet peut fermer automatiquement les jours fériés français : le moteur 
 - Tests table-driven : Pâques 2024 (31/03), 2025 (20/04), 2026 (05/04), 2027 (28/03), 2038 (25/04) ; Ascension et Pentecôte dérivées ; Alsace-Moselle (Vendredi saint, 26/12) ; année de changement d'heure (31/03/2024 : dimanche de Pâques = jour du passage à l'heure d'été, vérifier le lundi 01/04) ; moteur : jour férié sans créneau, `open` explicite qui l'emporte, option désactivée = comportement inchangé.
 
 ## Critères d'acceptation
-- [ ] `FrenchHolidays` correcte pour les années testées, avec et sans Alsace-Moselle.
-- [ ] Avec l'option active, aucun créneau un jour férié (réservation en ligne et staff) ; une ouverture exceptionnelle le rouvre.
-- [ ] L'agenda affiche « Férié ».
-- [ ] Réglages enregistrables ; migration réversible.
+- [x] `FrenchHolidays` correcte pour les années testées, avec et sans Alsace-Moselle.
+- [x] Avec l'option active, aucun créneau un jour férié (réservation en ligne et staff) ; une ouverture exceptionnelle le rouvre.
+- [x] L'agenda affiche « Férié ».
+- [x] Réglages enregistrables ; migration réversible.
 
 ## Vérification
 ```bash
@@ -38,8 +38,8 @@ Calendriers d'autres pays, ponts, fermeture automatique des RDV déjà pris.
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-16 (sonnet)
+- **Fait** : `booking.FrenchHolidays` / `HolidaysBetween` / `HolidayClosures` (`internal/booking/holidays.go`) ; migration 00019 (`close_on_holidays`, `holidays_alsace_moselle`) ; requête `SetPracticeHolidays` ; `slotContext.slots` ajoute les fermetures fériées (point unique : réservation en ligne, CheckSlot, liste d'attente, séries, gestion patient) ; agenda : `CalDay.Holiday`, bandes grisées et « Férié » en en-tête ; cases dans `/admin/settings` ; tests booking, service, web.
+- **Reste à faire** : rien.
+- **Notes de reprise** : Closed l'emporte sur Open dans le moteur ; l'arbitrage est donc fait en amont dans `HolidayClosures` : le férié ferme la journée locale moins les intervalles `open` explicites (0 à n `Exception{Closed}` par jour). Le jour reste affiché « Férié » dans l'agenda (`CalendarView.holidays`) même partiellement rouvert ; les bandes grisées suivent les morceaux fermés. Test : `TestHolidayPartiallyReopened`. `TestCalendarWeekWith150AppointmentsIsFast` échoue sous forte charge machine, passe seul.
+- **Écarts avec la spécification** : aucun (migration 00019 car 00018 prise par T050).
