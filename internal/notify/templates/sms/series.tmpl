@@ -1,1 +1,1 @@
-{{.practice_name}} : {{.count}} séances planifiées, la 1re le {{.date_short}} à {{.time}}.{{if .practice_phone}} Tél. {{.practice_phone}}{{end}}
+{{if .series_url}}{{.practice_name}} : {{.count}} séances, la 1re le {{.date_short}} à {{.time}}. Détail : {{.series_url}}{{else}}{{.practice_name}} : {{.count}} séances planifiées, la 1re le {{.date_short}} à {{.time}}.{{if .practice_phone}} Tél. {{.practice_phone}}{{end}}{{end}}

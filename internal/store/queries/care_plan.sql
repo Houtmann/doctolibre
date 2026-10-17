@@ -50,3 +50,24 @@ RETURNING *;
 -- name: ReassignPatientCarePlans :execrows
 UPDATE care_plan SET patient_id = @into_id, updated_at = now()
 WHERE patient_id = @from_id AND practice_id = @practice_id;
+
+-- name: SetCarePlanToken :exec
+-- Lien de série (T055) : version et haché du jeton dérivé.
+UPDATE care_plan SET token_version = @version, token_hash = @token_hash
+WHERE id = @id AND practice_id = @practice_id;
+
+-- name: GetCarePlanByTokenHash :one
+-- Recherche par haché (index unique care_plan_token_hash_key).
+SELECT * FROM care_plan WHERE token_hash = @token_hash;
+
+-- name: RevokeCarePlanTokens :exec
+-- Fusion de fiches : les liens de série du doublon cessent de fonctionner.
+UPDATE care_plan SET token_version = token_version + 1, token_hash = NULL
+WHERE patient_id = @patient_id AND practice_id = @practice_id;
+
+-- name: ListCarePlanSessions :many
+-- Séances d une série avec leur jeton de gestion (page publique /s/, T055).
+-- Index appointment_care_plan_idx (care_plan_id, lower(during)).
+SELECT * FROM appointment
+WHERE care_plan_id = @care_plan_id AND practice_id = @practice_id
+ORDER BY lower(during), id;

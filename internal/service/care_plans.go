@@ -486,6 +486,10 @@ func (s *CarePlans) Create(ctx context.Context, a Actor, in CreateInput) (sqlcge
 		if plan, err = q.CreateCarePlan(ctx, cp); err != nil {
 			return fmt.Errorf("création de la série: %w", err)
 		}
+		planToken, err := s.ManageKey.ensurePlanToken(ctx, q, plan)
+		if err != nil {
+			return err
+		}
 		if ids, err = insertSessions(ctx, q, s.ManageKey, a, sc, p.patientID, plan.ID, p.address, lines); err != nil {
 			return err
 		}
@@ -501,7 +505,7 @@ func (s *CarePlans) Create(ctx context.Context, a Actor, in CreateInput) (sqlcge
 			}
 			appts = append(appts, ap)
 		}
-		return s.notifier().seriesBooked(ctx, tx, q, appts)
+		return s.notifier().seriesBooked(ctx, tx, q, appts, planToken)
 	})
 	if err != nil {
 		return sqlcgen.CarePlan{}, err

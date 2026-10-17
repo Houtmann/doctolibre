@@ -4,6 +4,7 @@
 <p style="margin:0 0 16px;">Bonjour {{.first_name}},</p>
 <p style="margin:0 0 16px;">{{.count}} séances ({{.type_name}}) avec {{.practitioner}} ont été planifiées pour vous :</p>
 <ul style="margin:0 0 16px;padding-left:20px;">{{range .sessions}}<li>{{.}}</li>{{end}}</ul>
+{{if .series_url}}<p style="margin:0 0 16px;"><a href="{{.series_url}}">Consulter mes séances, les gérer et les ajouter à mon agenda</a></p>{{end}}
 <p style="margin:0 0 16px;">{{.practice_name}}{{if .practice_address}}<br>{{.practice_address}}{{end}}</p>
 {{if .practice_phone}}<p style="margin:0 0 16px;font-size:14px;">Une question ou un empêchement ? Appelez le {{.practice_phone}}.</p>{{end}}
 <p style="margin:0;font-size:14px;">{{.signature}}</p>
