@@ -2,6 +2,7 @@ package web_test
 
 import (
 	"context"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -70,7 +71,7 @@ func TestPublicBookingBlockedByNoShows(t *testing.T) {
 	confirm.Set("challenge_id", m[1])
 	confirm.Set("code", e.otp.code("+33611111111"))
 	rec = c.do("POST", e.base()+"/book/confirm", confirm)
-	mustContain(t, rec, 403, "Cette réservation en ligne n&#39;est pas possible.", "01 23 45 67 89")
+	assertBookingBlocked(t, rec, "01 23 45 67 89", "tel:0123456789", e.base())
 	if strings.Contains(rec.Body.String(), "Le formulaire contient des erreurs") {
 		t.Error("le refus ne doit pas apparaître comme une erreur de formulaire")
 	}
@@ -82,5 +83,32 @@ func TestPublicBookingBlockedByNoShows(t *testing.T) {
 	}
 	if e.appointments(t) != before {
 		t.Error("rendez-vous créé malgré le refus")
+	}
+}
+
+// assertBookingBlocked vérifie la page de refus de la réservation en ligne : 403, titre
+// neutre, aucun code HTTP ni « Accès refusé » dans le corps, jamais d'absence évoquée.
+// phone vide : pas de lien tel:. backURL vide : pas de lien de retour.
+func assertBookingBlocked(t *testing.T, rec *httptest.ResponseRecorder, phone, tel, backURL string) {
+	t.Helper()
+	mustContain(t, rec, 403, "Réservation en ligne indisponible")
+	body := rec.Body.String()
+	for _, w := range []string{"403", "Accès refusé", "absence", "manqué", "no-show", "Le formulaire contient des erreurs"} {
+		if strings.Contains(strings.ToLower(body), strings.ToLower(w)) {
+			t.Errorf("le corps ne doit pas contenir %q", w)
+		}
+	}
+	if phone != "" {
+		mustContain(t, rec, 403, phone, `href="`+tel+`"`)
+	} else {
+		if strings.Contains(body, `href="tel:`) {
+			t.Error("lien tel: présent alors que le cabinet n'a pas de téléphone")
+		}
+		mustContain(t, rec, 403, "contacter le cabinet")
+	}
+	if backURL != "" {
+		mustContain(t, rec, 403, `href="`+backURL+`"`)
+	} else if strings.Contains(body, "Retour à la page") {
+		t.Error("lien de retour inattendu")
 	}
 }

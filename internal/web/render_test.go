@@ -123,6 +123,8 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = WaitlistFormData{}
 			case "public_waitlist_verify":
 				data = WaitlistVerifyData{}
+			case "public_booking_blocked":
+				data = BookingBlockedData{}
 			case "public_waitlist_offer":
 				data = OfferData{}
 			case "dev_styleguide":

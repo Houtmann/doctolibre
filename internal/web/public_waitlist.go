@@ -239,7 +239,7 @@ func (h *waitlistHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, service.ErrOTPWrong):
 		h.renderVerify(w, r, http.StatusUnprocessableEntity, t, v, challenge, []string{"Le code saisi est incorrect. Vérifiez-le et réessayez."})
 	case errors.Is(err, domain.ErrOnlineBookingBlocked):
-		h.rd.Error(w, r, http.StatusForbidden, onlineBookingBlockedMsg(t.Practice.Phone))
+		renderBookingBlocked(h.rd, w, r, t.Practice.Phone, basePath(r), "Retour à la page du praticien")
 	case errors.Is(err, service.ErrOTPExpired):
 		h.renderForm(w, r, http.StatusUnprocessableEntity, t, v,
 			[]string{"Ce code a expiré, a déjà servi ou le nombre d'essais est dépassé. Validez le formulaire pour recevoir un nouveau code."})
@@ -298,11 +298,12 @@ func (h *waitlistHandlers) claim(w http.ResponseWriter, r *http.Request) {
 		httpx.Redirect(w, r, manageURL(res.Token))
 		return
 	case errors.Is(err, domain.ErrOnlineBookingBlocked):
-		phone := ""
+		phone, back, backText := "", "", ""
 		if v, oerr := h.svc.Offer(r.Context(), token); oerr == nil {
 			phone = v.Practice.Phone
+			back, backText = practitionerView(v.Practice.Slug, v.Practitioner).URL, "Retour à la page du praticien"
 		}
-		h.rd.Error(w, r, http.StatusForbidden, onlineBookingBlockedMsg(phone))
+		renderBookingBlocked(h.rd, w, r, phone, back, backText)
 	case errors.Is(err, domain.ErrSlotTaken), errors.Is(err, service.ErrOfferExpired):
 		v, oerr := h.svc.Offer(r.Context(), token)
 		if oerr != nil {

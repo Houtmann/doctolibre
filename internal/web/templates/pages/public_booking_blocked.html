@@ -1,0 +1,16 @@
+{{define "title"}}Réservation en ligne indisponible{{end}}
+{{define "content"}}
+<section class="card bg-base-100 border border-base-300">
+  <div class="card-body gap-3">
+    <h1 class="card-title text-2xl">Réservation en ligne indisponible</h1>
+    <p>La réservation en ligne n'est pas possible pour cette demande.</p>
+    {{if .Data.Phone}}
+    <p>Merci d'appeler le cabinet au {{.Data.Phone}}.</p>
+    <div class="card-actions"><a class="btn btn-primary w-full sm:w-auto" href="tel:{{.Data.TelHref}}">Appeler le cabinet</a></div>
+    {{else}}
+    <p>Merci de contacter le cabinet.</p>
+    {{end}}
+    {{if .Data.BackURL}}<div class="card-actions"><a class="btn btn-ghost btn-sm" href="{{.Data.BackURL}}">{{.Data.BackText}}</a></div>{{end}}
+  </div>
+</section>
+{{end}}

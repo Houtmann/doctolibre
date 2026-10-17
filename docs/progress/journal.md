@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-17 — T092 page « réservation en ligne indisponible » (sonnet ; contrôle : opus)
+
+- **Tâches** : T092 créée → review (dépend de T088, encore en review : lancée à la demande de la session principale)
+- **Fait** : page `public_booking_blocked.html` (titre neutre, pas de code HTTP affiché, bouton `tel:` normalisé, retour vers la page du praticien) ; `renderBookingBlocked` (403, `no-store`) partagée par la réservation, l'inscription en liste d'attente et `/w/{token}` ; `onlineBookingBlockedMsg` supprimée ; tests des 3 parcours + cabinet sans téléphone
+- **Vérification** : `make check` ✅ relancé par l'orchestrateur ; navigateur (`doctolibre_demo`, port 8092 car 8090 occupé) : inscription en liste d'attente de « Test Navigateur » → 403, page conforme, `tel:0102030405`, retour `/p/cabinet-demo/claire-martin`, 1024 px clair et 360 px sombre ✅. Réservation et `Claim` non vus au navigateur (même fonction de rendu, couverts par tests).
+- **Reste** : relecture humaine ; le libellé du lien de retour est passé depuis le Go (même texte partout, pourrait vivre dans le template)
+- **Décisions** : aucune
+
 ## 2026-10-17 — Passage navigateur T050/T054, T088 corrections RDV (sonnet ; contrôle : opus)
 
 - **Tâches** : T050 review → done, T054 review → done (validées par l'humain après passage navigateur) ; T088 todo → review

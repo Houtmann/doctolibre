@@ -598,7 +598,7 @@ func (h *publicHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 		h.slotGone(w, r, t, "Ce créneau vient d'être pris. Choisissez-en un autre.")
 	case errors.Is(err, domain.ErrOnlineBookingBlocked):
 		// Refus définitif : alerte à part, pas le bloc « erreurs du formulaire » (réessayer ne servirait à rien).
-		h.rd.Error(w, r, http.StatusForbidden, onlineBookingBlockedMsg(t.Practice.Phone))
+		renderBookingBlocked(h.rd, w, r, t.Practice.Phone, basePath(r), "Retour à la page du praticien")
 	default:
 		if msgs := validation(err); msgs != nil {
 			h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f, msgs)
@@ -608,14 +608,32 @@ func (h *publicHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// onlineBookingBlockedMsg est le message neutre affiché quand le cabinet refuse la
-// réservation en ligne : il ne mentionne jamais la cause (absences).
-func onlineBookingBlockedMsg(phone string) string {
-	msg := "Cette réservation en ligne n'est pas possible."
-	if phone != "" {
-		return msg + " Merci d'appeler le cabinet au " + phone + "."
-	}
-	return msg + " Merci de contacter le cabinet."
+// BookingBlockedData est la donnée de la page « réservation en ligne indisponible ».
+type BookingBlockedData struct {
+	Phone    string // affiché tel quel ("" = cabinet sans téléphone)
+	TelHref  string // chiffres et "+" seulement, pour le lien tel:
+	BackURL  string // page du praticien ou du cabinet ("" = pas de lien)
+	BackText string
+}
+
+// telHref ne garde que les chiffres et le "+" d'un numéro.
+func telHref(phone string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '+' || (r >= '0' && r <= '9') {
+			return r
+		}
+		return -1
+	}, phone)
+}
+
+// renderBookingBlocked répond 403 avec la page neutre de refus de la réservation en
+// ligne (décision T054 : jamais de mention des absences). Partagée par la réservation,
+// l'inscription en liste d'attente et la prise d'un créneau proposé.
+func renderBookingBlocked(rd *Renderer, w http.ResponseWriter, r *http.Request, phone, backURL, backText string) {
+	w.Header().Set("Cache-Control", "no-store")
+	rd.PageStatus(w, r, http.StatusForbidden, "public_booking_blocked", BookingBlockedData{
+		Phone: phone, TelHref: telHref(phone), BackURL: backURL, BackText: backText,
+	})
 }
 
 // --- Page de confirmation et fichier .ics ---

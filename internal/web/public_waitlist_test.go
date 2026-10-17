@@ -15,6 +15,8 @@ import (
 
 	"doctolibre/internal/config"
 	"doctolibre/internal/service"
+	"doctolibre/internal/store"
+	"doctolibre/internal/store/sqlcgen"
 	"doctolibre/internal/web"
 )
 
@@ -226,12 +228,73 @@ func TestPublicWaitlistJoinBlockedByNoShows(t *testing.T) {
 	f.Set("challenge_id", m[1])
 	f.Set("code", e.otp.code("+33644444444"))
 	rec = c.do("POST", e.base()+"/waitlist/confirm", f)
-	mustContain(t, rec, 403, "Cette réservation en ligne n&#39;est pas possible.", "01 23 45 67 89")
+	assertBookingBlocked(t, rec, "01 23 45 67 89", "tel:0123456789", e.base())
 	if strings.Contains(rec.Body.String(), "Le formulaire contient des erreurs") {
 		t.Error("le refus ne doit pas apparaître comme une erreur de formulaire")
 	}
 	var n int
 	if err := e.db.QueryRow(ctx, "SELECT count(*) FROM waitlist_entry").Scan(&n); err != nil || n != 0 {
 		t.Errorf("inscriptions = %d, %v", n, err)
+	}
+}
+
+// Le patient proposé qui a atteint le seuil d'absences ne prend pas le créneau via
+// /w/{token} : page de refus (403) avec téléphone et retour vers le praticien, puis
+// sans téléphone si le cabinet n'en a pas ; aucun rendez-vous créé.
+func TestPublicWaitlistClaimBlockedByNoShows(t *testing.T) {
+	t.Parallel()
+	e := newPublicEnv(t)
+	wl := withWaitlist(t, e)
+	ctx := context.Background()
+	c := newClient(t, e.h, "192.0.2.63")
+
+	alice := bookOnline(t, e, "Alice", "06 11 11 11 11", "+33611111111")
+	actor := staffActor(t, e)
+	if _, err := wl.AddByStaff(ctx, actor, service.StaffAddInput{
+		Patient: service.PatientDetails{FirstName: "Bob", LastName: "Attente", Email: "bob@example.test", SMSOptIn: true, EmailOptIn: true},
+		Window:  service.WindowInput{TypeID: e.typ.ID, Earliest: "2026-10-15", Latest: "2026-10-31"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if rec := c.do("POST", alice+"/cancel", url.Values{}); rec.Code != 303 {
+		t.Fatalf("annulation: %d %s", rec.Code, rec.Body.String())
+	}
+	var link string
+	if err := e.db.QueryRow(ctx, "SELECT payload->>'offer_url' FROM outbox_message WHERE template = 'waitlist'").Scan(&link); err != nil {
+		t.Fatal(err)
+	}
+	m := offerLinkRe.FindStringSubmatch(link)
+	if m == nil {
+		t.Fatalf("lien = %q", link)
+	}
+	// Une absence récente pour le patient en attente, seuil à 1.
+	q := sqlcgen.New(e.db)
+	var patientID uuid.UUID
+	if err := e.db.QueryRow(ctx, "SELECT patient_id FROM waitlist_entry").Scan(&patientID); err != nil {
+		t.Fatal(err)
+	}
+	missed := time.Date(2026, 10, 5, 9, 0, 0, 0, time.UTC)
+	ap, err := store.CreateAppointment(ctx, q, store.NewAppointment{
+		ID: uuid.New(), PracticeID: e.pc.ID, PractitionerID: e.pr.ID, PatientID: patientID, AppointmentTypeID: e.typ.ID,
+		Start: missed, End: missed.Add(30 * time.Minute), Source: "staff",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.db.Exec(ctx, "UPDATE appointment SET status = 'no_show' WHERE id = $1", ap.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.db.Exec(ctx, "UPDATE practice SET phone = '01 23 45 67 89', no_show_block_threshold = 1 WHERE id = $1", e.pc.ID); err != nil {
+		t.Fatal(err)
+	}
+	before := e.appointments(t)
+
+	assertBookingBlocked(t, c.do("POST", "/w/"+m[1], url.Values{}), "01 23 45 67 89", "tel:0123456789", e.base())
+	if _, err := e.db.Exec(ctx, "UPDATE practice SET phone = '' WHERE id = $1", e.pc.ID); err != nil {
+		t.Fatal(err)
+	}
+	assertBookingBlocked(t, c.do("POST", "/w/"+m[1], url.Values{}), "", "", e.base())
+	if e.appointments(t) != before {
+		t.Error("rendez-vous créé malgré le refus")
 	}
 }
