@@ -7,7 +7,7 @@ Chaque fichier `Txxx-*.md` est une tâche **autonome, exécutable par un LLM en 
 
 **Mode normal : orchestré.** Dans une session Opus, lancer `/run-task` (ou `/run-task Txxx`) : Opus choisit et contrôle, le sous-agent Sonnet `task-implementer` implémente. Rôles détaillés dans [`AGENTS.md`](../AGENTS.md).
 
-Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043, T050, T051, T052, T053, T055, T059, T060, T067, T080, T083, T086, T087, T088, T089, T090.
+Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043, T050, T051, T052, T053, T055, T059, T060, T067, T080, T083, T086, T087, T088, T089, T090, T093, T097, T098.
 
 Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS.md) (début / pendant / fin). En résumé :
 
@@ -87,6 +87,12 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T090 | [Durcissement HTTP et notifications](T090-http-notify-hardening.md) | 5 | T087, T086 | todo |
 | T091 | [SQL : recherche patients indexée, filtres practice_id](T091-sql-search-tenant-hygiene.md) | 5 | T017, T088 | todo |
 | T092 | [Page patient « réservation en ligne indisponible »](T092-online-booking-blocked-page.md) | 5 | T088 | review |
+| T093 | [Correctifs du parcours patient (offres, déplacement, vie privée)](T093-patient-journey-fixes.md) | 5 | T088 | todo |
+| T094 | [Navigation de la prise de rendez-vous](T094-booking-navigation.md) | 5 | T081 | todo |
+| T095 | [Déplacement et annulation par le patient](T095-patient-reschedule-cancel.md) | 5 | T093 | todo |
+| T096 | [Écran de vérification et visites à domicile](T096-verify-screen-home-visits.md) | 5 | T094 | todo |
+| T097 | [Liste d'attente côté patient](T097-waitlist-patient-side.md) | 5 | T093, T091 | todo |
+| T098 | [Reprendre rendez-vous sans nouvelle vérification](T098-rebook-without-reverify.md) | 5 | T095, T097 | todo |
 
 ## Parallélisation possible
 

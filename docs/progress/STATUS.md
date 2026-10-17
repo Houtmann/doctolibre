@@ -3,7 +3,7 @@
 > Tableau de bord **réécrit à la fin de chaque session** (pas d'historique ici : voir [`journal.md`](journal.md)).
 > Le statut détaillé de chaque tâche est dans [`tasks/README.md`](../../tasks/README.md), seule source de vérité.
 
-**Mis à jour le** : 2026-10-17 (T050, T054 done ; T088 et T092 en review)
+**Mis à jour le** : 2026-10-17 (T050, T054 done ; T088 et T092 en review ; T093–T098 créées après l'audit UX des parcours patients)
 
 ## Où on en est
 
@@ -21,6 +21,7 @@ En `review` (relecture humaine) : **T088** (corrections RDV issues de l'audit : 
 
 ## Prochaine action
 
+0. **Audit UX des parcours patients du 2026-10-17** → T093 (3 bugs : offre de liste d'attente à un patient bloqué, déplacement sur le même créneau, consigne interne sur la page vie privée — prioritaire, après T088), T094 (navigation de la grille, après T081), T095 (déplacement/annulation, accusé d'annulation), T096 (écran OTP, zones domicile), T097 (liste d'attente : texte OTP, récapitulatif, désinscription ; migration 00025 → à séquencer avec T091), T098 (reprise sans OTP sous 30 jours). Décisions par défaut dans `docs/decisions.md`.
 1. **Migration front (daisyUI) terminée** : relire **T080** à **T084** et **T057** (en review). Relire **T085** et **T053** (passage navigateur de l'import) et vérifier au navigateur l'en-tête de colonne « Par praticien » après changement de couleur. T061 et T070–T073 (UI) en daisyUI.
 2. **T051 et T055 sont prêtes** (T050 `done`). Relire **T088** (débloque T091). Relire et passer en `done` T052, T058, T062. Relire T060 (revue renforcée faite par l'orchestrateur ; passage navigateur `/admin/appointment-types` à faire). Aucune autre tâche `todo` n'a ses dépendances `done` : il faut valider des tâches en review (T056, T058, T059, T072, T086, T087) pour débloquer la suite. T070 dès que T058 est `done` ; T071 après T055 ; T073 après la validation de T072 et T059.
 3. Passage navigateur restant (non vu en T081–T084) : parcours public confirmé / annulation / déplacement / liste d'attente, états avec données (liste d'attente, absences, invitations, pagination), dialogue d'agenda à 360 px, déplacer/annuler via le dialogue, JS désactivé. Vue jour à 4 praticiens à 1280 px (critère T033) vue en T083/T084.
@@ -62,4 +63,4 @@ En `review` (relecture humaine) : **T088** (corrections RDV issues de l'audit : 
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 35 (dont 1 remplacée) | 7 | 19 |
+| 5 — Retours terrain | 41 (dont 1 remplacée) | 7 | 19 |

@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-17 — Analyse de l'audit UX des parcours patients, tâches T093–T098 (sonnet ; contrôle : opus)
+
+- **Tâches** : T093 à T098 créées (todo)
+- **Fait** : constats de l'audit UX vérifiés dans le code par deux sous-agents Sonnet : presque tous confirmés, dont 3 bugs (offre de liste d'attente envoyée à un patient bloqué T054, déplacement sur le même créneau qui renvoie un email et annule les rappels, consigne interne visible sur la page vie privée) ; aucune tâche existante ne les couvrait ; découpage en 6 fiches
+- **Vérification** : aucune (documentaire)
+- **Reste** : lancer T093 (dépend de T088, en review) ; T094 est prête dès que T081 est validée
+- **Décisions** : 3 lignes du 2026-10-17 dans decisions.md (accusé d'annulation patient, reprise sans OTP sous 30 jours, redirection de `/` en mono-cabinet)
+
 ## 2026-10-17 — T092 page « réservation en ligne indisponible » (sonnet ; contrôle : opus)
 
 - **Tâches** : T092 créée → review (dépend de T088, encore en review : lancée à la demande de la session principale)
