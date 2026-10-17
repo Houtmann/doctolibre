@@ -3,7 +3,7 @@
 > Tableau de bord **réécrit à la fin de chaque session** (pas d'historique ici : voir [`journal.md`](journal.md)).
 > Le statut détaillé de chaque tâche est dans [`tasks/README.md`](../../tasks/README.md), seule source de vérité.
 
-**Mis à jour le** : 2026-10-17 (T056 et T087 en review)
+**Mis à jour le** : 2026-10-17 (T060 en review)
 
 ## Où on en est
 
@@ -13,20 +13,21 @@
 - **Notifications** : confirmations et rappels (T023) `done`.
 - **Kiné** : séries (T030), liste d'attente (T031), domicile (T032), multi-praticiens et rôles (T033) `done`.
 - **Exploitation** : sauvegardes (T041), flux ICS (T042), RGPD (T043), doc d'installation (T044), observabilité (T046) `done`.
-- Migrations : 00001, 00002, 00004–00022 (… 00019 fériés, 00020 seuil d'absences, 00021 délégations, 00022 auteur du statut, 00023 fournisseurs de notification par cabinet).
+- Migrations : 00001, 00002, 00004–00022 (… 00019 fériés, 00020 seuil d'absences, 00021 délégations, 00022 auteur du statut, 00023 fournisseurs de notification par cabinet, 00024 ressources partagées).
 
 ## En cours
 
-En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system), **T080** (outillage Tailwind + daisyUI, layouts ; pages non migrées volontairement sommaires jusqu’à T082–T084), **T081** (parcours patient public en daisyUI, vérifié dans le navigateur à 360/1280 px, clair et sombre), **T082** (back-office en daisyUI : 14 pages admin et 5 partials ; vérifié à 375 px sombre sur toutes les pages, erreurs de champ et focus clavier ; états avec données non vus : liste d'attente remplie, absences, invitations, pagination). **T083** (agenda EventCalendar : semaine / jour / par praticien, dialogue htmx, endpoint JSON borné à 42 jours, repli sans JS ; vérifié 1280 px clair/sombre, 360 px sombre, clavier ; non vu : JS désactivé dans un navigateur, déplacer/annuler via dialogue). **T084** (pages restantes en daisyUI, Pico, CSS `dl-*`/`--app-*`, `design/` et `poc/` supprimés ; `ui.css` seule feuille ; non vu à l'écran : parcours public confirmé/annulation/déplacement/liste d'attente, états avec données, dialogue d'agenda à 360 px). **T057** (couleurs du motif et du praticien dans l'agenda, via le JSON et le CSSOM, CSP inchangée ; l'écran manquant est T085). **T085** (couleur du praticien au profil et dans l'équipe, validée, tests ; non vu au navigateur). **T053** (import CSV des patients, aperçu puis import atomique ; non vu au navigateur ; fichier > 4 Mio → 403 CSRF générique). **T054** (blocage en ligne après N absences sur 6 mois), **T059** (remplaçant, délégation bornée en jours ; ICS non concerné), **T072** (« Ma journée » + pointage ; 360 px non vu, lien d'itinéraire OSM à vérifier) — aucune des trois vue au navigateur. **T086** (fournisseurs email/SMS par cabinet, désactivables ; migration 00023 ; non vue au navigateur). **T056** (« Mon profil » séparé des réglages du cabinet, admin seul pour cabinet / notifications / fournisseurs ; séries ouvertes au secrétariat ; non vue au navigateur). **T087** (rate limiting : `httpx.Limiter` partagé par parcours, limites admin dans `RequireUser`, quota de 30 réservations/h par praticien, 429 en fragment htmx ; non vue au navigateur). T063–T067 `done`. T068 `superseded` (absorbée par T084).
+En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours fériés), T058 (alarmes ICS), T062 (design system), **T080** (outillage Tailwind + daisyUI, layouts ; pages non migrées volontairement sommaires jusqu’à T082–T084), **T081** (parcours patient public en daisyUI, vérifié dans le navigateur à 360/1280 px, clair et sombre), **T082** (back-office en daisyUI : 14 pages admin et 5 partials ; vérifié à 375 px sombre sur toutes les pages, erreurs de champ et focus clavier ; états avec données non vus : liste d'attente remplie, absences, invitations, pagination). **T083** (agenda EventCalendar : semaine / jour / par praticien, dialogue htmx, endpoint JSON borné à 42 jours, repli sans JS ; vérifié 1280 px clair/sombre, 360 px sombre, clavier ; non vu : JS désactivé dans un navigateur, déplacer/annuler via dialogue). **T084** (pages restantes en daisyUI, Pico, CSS `dl-*`/`--app-*`, `design/` et `poc/` supprimés ; `ui.css` seule feuille ; non vu à l'écran : parcours public confirmé/annulation/déplacement/liste d'attente, états avec données, dialogue d'agenda à 360 px). **T057** (couleurs du motif et du praticien dans l'agenda, via le JSON et le CSSOM, CSP inchangée ; l'écran manquant est T085). **T085** (couleur du praticien au profil et dans l'équipe, validée, tests ; non vu au navigateur). **T053** (import CSV des patients, aperçu puis import atomique ; non vu au navigateur ; fichier > 4 Mio → 403 CSRF générique). **T054** (blocage en ligne après N absences sur 6 mois), **T059** (remplaçant, délégation bornée en jours ; ICS non concerné), **T072** (« Ma journée » + pointage ; 360 px non vu, lien d'itinéraire OSM à vérifier) — aucune des trois vue au navigateur. **T086** (fournisseurs email/SMS par cabinet, désactivables ; migration 00023 ; non vue au navigateur). **T056** (« Mon profil » séparé des réglages du cabinet, admin seul pour cabinet / notifications / fournisseurs ; séries ouvertes au secrétariat ; non vue au navigateur). **T087** (rate limiting : `httpx.Limiter` partagé par parcours, limites admin dans `RequireUser`, quota de 30 réservations/h par praticien, 429 en fragment htmx ; non vue au navigateur). **T060** (ressources partagées : trigger `appointment_sync_resource` + EXCLUDE par ressource, CRUD dans le panneau des motifs ; non vue au navigateur). T063–T067 `done`. T068 `superseded` (absorbée par T084).
 
 ## Prochaine action
 
 1. **Migration front (daisyUI) terminée** : relire **T080** à **T084** et **T057** (en review). Relire **T085** et **T053** (passage navigateur de l'import) et vérifier au navigateur l'en-tête de colonne « Par praticien » après changement de couleur. T061 et T070–T073 (UI) en daisyUI.
-2. Relire et passer en `done` T050 (débloque T051, T055), T052, T058, T062. Prête : T060 (attention aux numéros de migration : 00020 et suivants, un seul agent à la fois sur `sqlc`). T070 dès que T058 est `done` ; T071 après T055 ; T073 après la validation de T072 et T059.
+2. Relire et passer en `done` T050 (débloque T051, T055), T052, T058, T062. Relire T060 (revue renforcée faite par l'orchestrateur ; passage navigateur `/admin/appointment-types` à faire). Aucune autre tâche `todo` n'a ses dépendances `done` : il faut valider des tâches en review (T050, T054, T056, T058, T059, T072, T086, T087) pour débloquer la suite. T070 dès que T058 est `done` ; T071 après T055 ; T073 après la validation de T072 et T059.
 3. Passage navigateur restant (non vu en T081–T084) : parcours public confirmé / annulation / déplacement / liste d'attente, états avec données (liste d'attente, absences, invitations, pagination), dialogue d'agenda à 360 px, déplacer/annuler via le dialogue, JS désactivé. Vue jour à 4 praticiens à 1280 px (critère T033) vue en T083/T084.
-4. **T086** (fournisseurs email/SMS par cabinet, désactivables) en `review` : passage navigateur à faire (page `/admin/settings/notifications/transport`, pages publiques fermées, envoi de test vers Mailpit). Prochaine migration : 00024.
+4. **T086** (fournisseurs email/SMS par cabinet, désactivables) en `review` : passage navigateur à faire (page `/admin/settings/notifications/transport`, pages publiques fermées, envoi de test vers Mailpit). Prochaine migration : 00025.
 5. **T056** et **T087** en `review` : passage navigateur (profil / cabinet selon le rôle, formulaire de série côté secrétariat, alerte 429 htmx). Questions ouvertes : les motifs doivent-ils passer admin seul ? limiter aussi `GET /ics/{file}` et `/p/{practice}/privacy` ?
-6. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
+6. **Audit du 2026-10-17** (23 constats, 9 confirmés à corriger) → T088 (RDV : trajet domicile perdu au déplacement patient, garde-fou T054 contourné par la liste d'attente — prioritaire), T089 (séries d'un confrère modifiables — après T056), T090 (durcissement HTTP/notify — après T087), T091 (SQL, après T088 : un seul agent sur `sqlc`). T088 est indépendante de T056/T087.
+7. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
 
 ## Blocages et questions ouvertes pour l'humain
 
@@ -34,6 +35,7 @@ En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours 
 - Hébergement du dépôt : la CI et `release.yml` n'ont jamais tourné, faute de remote.
 - T061 (affiche QR) `blocked` : dépendance `rsc.io/qr` ou encodeur QR maison ? À trancher.
 - Questions de produit :
+  - Remplaçant (T059) : il peut aujourd'hui modifier les **horaires hebdomadaires** du titulaire (`ActionAvailabilityEdit`, voulu par `TestCanWithDelegation`) ; la spec T059 ne cite que les absences. Le garder ? (audit du 2026-10-17)
   - IP des connexions du personnel conservée dans `audit_log.meta` (documentée dans `docs/rgpd.md`) : la garder ?
   - Fusion de fiches patients ouverte aux 3 rôles : restreindre ?
   - Le motif « Séance à domicile » est `online_bookable=false` par défaut.
@@ -60,4 +62,4 @@ En `review` (relecture humaine) : T050 (jeton de gestion dérivé), T052 (jours 
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 30 (dont 1 remplacée) | 5 | 18 |
+| 5 — Retours terrain | 34 (dont 1 remplacée) | 5 | 19 |

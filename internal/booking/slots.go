@@ -91,6 +91,9 @@ type Request struct {
 	BufferAfter  time.Duration
 	Step         time.Duration // <= 0 : min(15 min, Duration)
 	TypeID       uuid.UUID
+	// ResourceBusy : occupations (during_blocked) de la ressource exigée par le motif
+	// (T060), tous praticiens confondus. Même règle que Busy ; vide = motif sans ressource.
+	ResourceBusy []Busy
 }
 
 // Slot est un créneau réservable [Start, End) pour le soin seul (hors buffers).
@@ -141,9 +144,12 @@ func Slots(req Request, rules []WeeklyRule, exc []Exception, busy []Busy) []Slot
 	closed = Union(closed)
 	avail := Subtract(open, closed)
 
-	blocked := make([]Interval, 0, len(busy)+len(closed))
+	blocked := make([]Interval, 0, len(busy)+len(req.ResourceBusy)+len(closed))
 	blocked = append(blocked, closed...)
 	for _, b := range busy {
+		blocked = append(blocked, Interval(b))
+	}
+	for _, b := range req.ResourceBusy {
 		blocked = append(blocked, Interval(b))
 	}
 	blocked = Union(blocked)

@@ -23,6 +23,7 @@ const (
 	pathProfile      = "/admin/profile"
 	pathNotify       = "/admin/settings/notifications"
 	pathTypes        = "/admin/appointment-types"
+	pathResources    = "/admin/resources"
 	pathAvailability = "/admin/availability"
 	pathAbsences     = "/admin/absences"
 )
@@ -51,6 +52,10 @@ func (d Deps) configRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	handle("POST "+pathTypes+"/{id}", h.typesUpdate)
 	handle("POST "+pathTypes+"/{id}/active", h.typesActive)
 	handle("POST "+pathTypes+"/{id}/move", h.typesMove)
+
+	handle("POST "+pathResources, h.resourcesCreate)
+	handle("POST "+pathResources+"/{id}", h.resourcesUpdate)
+	handle("POST "+pathResources+"/{id}/active", h.resourcesActive)
 
 	// Horaires et absences : le praticien visé (paramètre « practitioner ») est
 	// contrôlé par la matrice de permissions (un praticien ne règle que les siens).
@@ -326,16 +331,24 @@ type TypeRow struct {
 	Travel                  int
 	Online, AtHome, Active  bool
 	First, Last             bool
+	ResourceID, Resource    string // ressource exigée (T060)
+}
+
+// ResourceRow est une ressource partagée dans le panneau des motifs.
+type ResourceRow struct {
+	ID, Name string
+	Active   bool
 }
 
 // TypesPage est la donnée de la page admin_types et de son panneau htmx.
 type TypesPage struct {
-	CSRF   string
-	Rows   []TypeRow
-	Form   service.AppointmentTypeInput
-	EditID string // vide = formulaire de création
-	Errors []string
-	Notice string
+	CSRF      string
+	Rows      []TypeRow
+	Resources []ResourceRow
+	Form      service.AppointmentTypeInput
+	EditID    string // vide = formulaire de création
+	Errors    []string
+	Notice    string
 }
 
 func defaultTypeForm() service.AppointmentTypeInput {
@@ -350,12 +363,24 @@ func typeFormOf(t sqlcgen.AppointmentType) service.AppointmentTypeInput {
 	}
 }
 
+// withResource complète le formulaire d'édition d'un motif avec sa ressource.
+func (h *configHandlers) withResource(r *http.Request, in service.AppointmentTypeInput, typeID uuid.UUID) (service.AppointmentTypeInput, error) {
+	links, err := h.svc.TypeResources(r.Context(), actorFrom(r))
+	if err != nil {
+		return in, err
+	}
+	if rid, ok := links[typeID]; ok {
+		in.ResourceID = rid.String()
+	}
+	return in, nil
+}
+
 func typeFormFrom(r *http.Request) service.AppointmentTypeInput {
 	return service.AppointmentTypeInput{
 		Name: r.PostFormValue("name"), DurationMin: r.PostFormValue("duration"),
 		BufferBeforeMin: r.PostFormValue("buffer_before"), BufferAfterMin: r.PostFormValue("buffer_after"),
-		TravelBufferMin: r.PostFormValue("travel_buffer"),
-		Color:           r.PostFormValue("color"), OnlineBookable: r.PostFormValue("online_bookable") == "1", AtHome: r.PostFormValue("at_home") == "1",
+		TravelBufferMin: r.PostFormValue("travel_buffer"), ResourceID: r.PostFormValue("resource"),
+		Color: r.PostFormValue("color"), OnlineBookable: r.PostFormValue("online_bookable") == "1", AtHome: r.PostFormValue("at_home") == "1",
 	}
 }
 
@@ -365,12 +390,30 @@ func (h *configHandlers) typesPage(r *http.Request, form service.AppointmentType
 		return nil, err
 	}
 	p := &TypesPage{CSRF: httpx.CSRFToken(r.Context()), Form: form, EditID: editID, Errors: errs, Notice: notice}
+	rs, err := h.svc.Resources(r.Context(), actorFrom(r))
+	if err != nil {
+		return nil, err
+	}
+	links, err := h.svc.TypeResources(r.Context(), actorFrom(r))
+	if err != nil {
+		return nil, err
+	}
+	names := make(map[uuid.UUID]string, len(rs))
+	for _, x := range rs {
+		names[x.ID] = x.Name
+		p.Resources = append(p.Resources, ResourceRow{ID: x.ID.String(), Name: x.Name, Active: x.Active})
+	}
 	for i, t := range ts {
 		d, b, a := service.TypeMinutes(t)
-		p.Rows = append(p.Rows, TypeRow{
+		rid := links[t.ID]
+		row := TypeRow{
 			ID: t.ID.String(), Name: t.Name, Color: t.Color, Duration: d, Before: b, After: a, Travel: service.TravelMinutes(t),
 			Online: t.OnlineBookable, AtHome: t.AtHome, Active: t.Active, First: i == 0, Last: i == len(ts)-1,
-		})
+		}
+		if rid != uuid.Nil {
+			row.ResourceID, row.Resource = rid.String(), names[rid]
+		}
+		p.Rows = append(p.Rows, row)
 	}
 	return p, nil
 }
@@ -420,7 +463,12 @@ func (h *configHandlers) typesEdit(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, r, err)
 		return
 	}
-	h.typesShow(w, r, typeFormOf(t), id.String(), nil)
+	form, err := h.withResource(r, typeFormOf(t), id)
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.typesShow(w, r, form, id.String(), nil)
 }
 
 func (h *configHandlers) typesUpdate(w http.ResponseWriter, r *http.Request) {
@@ -475,6 +523,57 @@ func (h *configHandlers) typesMove(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.typesDone(w, r, "Ordre des motifs mis à jour.")
+}
+
+// --- Ressources partagées (T060) ---
+
+func (h *configHandlers) resourcesCreate(w http.ResponseWriter, r *http.Request) {
+	_, err := h.svc.CreateResource(r.Context(), actorFrom(r), r.PostFormValue("resource_name"))
+	if msgs := validation(err); msgs != nil {
+		h.typesShow(w, r, defaultTypeForm(), "", msgs)
+		return
+	}
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.typesDone(w, r, "Ressource créée.")
+}
+
+func (h *configHandlers) resourcesUpdate(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(r)
+	if !ok {
+		h.rd.Error(w, r, http.StatusNotFound, "")
+		return
+	}
+	err := h.svc.UpdateResource(r.Context(), actorFrom(r), id, r.PostFormValue("resource_name"), r.PostFormValue("active") != "0")
+	if msgs := validation(err); msgs != nil {
+		h.typesShow(w, r, defaultTypeForm(), "", msgs)
+		return
+	}
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.typesDone(w, r, "Ressource enregistrée.")
+}
+
+func (h *configHandlers) resourcesActive(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(r)
+	if !ok {
+		h.rd.Error(w, r, http.StatusNotFound, "")
+		return
+	}
+	active := r.PostFormValue("active") == "1"
+	if err := h.svc.SetResourceActive(r.Context(), actorFrom(r), id, active); err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	msg := "Ressource désactivée."
+	if active {
+		msg = "Ressource réactivée."
+	}
+	h.typesDone(w, r, msg)
 }
 
 // --- Disponibilités hebdomadaires ---

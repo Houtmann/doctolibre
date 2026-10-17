@@ -50,6 +50,13 @@ type Appointment struct {
 	StatusChangedAt    pgtype.Timestamptz
 }
 
+type AppointmentResource struct {
+	AppointmentID uuid.UUID
+	ResourceID    uuid.UUID
+	DuringBlocked pgtype.Range[pgtype.Timestamptz]
+	Active        bool
+}
+
 type AppointmentType struct {
 	ID             uuid.UUID
 	PracticeID     uuid.UUID
@@ -65,6 +72,11 @@ type AppointmentType struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	TravelBuffer   pgtype.Interval
+}
+
+type AppointmentTypeResource struct {
+	AppointmentTypeID uuid.UUID
+	ResourceID        uuid.UUID
 }
 
 type AuditLog struct {
@@ -255,6 +267,14 @@ type PractitionerDelegation struct {
 	Valid          pgtype.Range[pgtype.Date]
 	CreatedBy      pgtype.UUID
 	CreatedAt      time.Time
+}
+
+type Resource struct {
+	ID         uuid.UUID
+	PracticeID uuid.UUID
+	Name       string
+	Active     bool
+	CreatedAt  time.Time
 }
 
 type Session struct {

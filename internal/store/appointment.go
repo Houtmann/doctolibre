@@ -62,7 +62,7 @@ func CreateAppointment(ctx context.Context, q *sqlcgen.Queries, n NewAppointment
 		VerifiedChannel:   pgtype.Text{String: n.VerifiedChannel, Valid: n.VerifiedChannel != ""},
 	})
 	if err != nil {
-		if IsExclusionViolation(err) && constraintName(err) == "appointment_no_overlap" {
+		if isSlotConflict(err) {
 			return sqlcgen.Appointment{}, domain.ErrSlotTaken
 		}
 		return sqlcgen.Appointment{}, fmt.Errorf("create appointment: %w", err)

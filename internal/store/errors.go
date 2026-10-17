@@ -39,3 +39,17 @@ func constraintName(err error) string {
 	}
 	return ""
 }
+
+// isSlotConflict : violation de l'EXCLUDE des RDV du praticien (appointment_no_overlap) ou
+// de celle de la ressource partagée (appointment_resource_no_overlap, T060, levée par le
+// trigger appointment_sync_resource) ; les deux signifient « créneau pris ».
+func isSlotConflict(err error) bool {
+	if !IsExclusionViolation(err) {
+		return false
+	}
+	switch constraintName(err) {
+	case "appointment_no_overlap", "appointment_resource_no_overlap":
+		return true
+	}
+	return false
+}

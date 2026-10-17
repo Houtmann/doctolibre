@@ -24,6 +24,7 @@ type AppointmentTypeInput struct {
 	Color                           string
 	OnlineBookable, AtHome          bool
 	TravelBufferMin                 string // trajet (visite à domicile), en minutes, ajouté avant et après
+	ResourceID                      string // ressource exigée (T060) ; vide = aucune
 }
 
 type defaultType struct {
@@ -179,6 +180,9 @@ func (s *Practice) CreateAppointmentType(ctx context.Context, a Actor, in Appoin
 			return fmt.Errorf("trajet du motif: %w", err)
 		}
 		out.TravelBuffer = minutesInterval(v.travel)
+		if in.ResourceID != "" {
+			return setTypeResource(ctx, q, a.PracticeID, out.ID, in.ResourceID)
+		}
 		return nil
 	})
 	return out, err
@@ -212,7 +216,7 @@ func (s *Practice) UpdateAppointmentType(ctx context.Context, a Actor, id uuid.U
 		}); err != nil {
 			return fmt.Errorf("trajet du motif: %w", err)
 		}
-		return nil
+		return setTypeResource(ctx, q, a.PracticeID, id, in.ResourceID)
 	})
 }
 

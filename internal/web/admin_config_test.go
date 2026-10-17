@@ -281,6 +281,35 @@ func TestAppointmentTypesPage(t *testing.T) {
 	mustContain(t, rec, 200, `id="types-panel"`, "Motif créé.", "Autre")
 }
 
+func TestResourcesPanel(t *testing.T) {
+	t.Parallel()
+	_, c := newConfigAdmin(t, domain.RoleAdmin)
+
+	mustContain(t, c.do("GET", "/admin/appointment-types", nil), 200, "Ressources partagées", `name="resource"`, `for="type-resource"`)
+	mustContain(t, c.do("POST", "/admin/resources", url.Values{"resource_name": {""}}), 422, "Le nom de la ressource est requis.")
+	if rec := c.do("POST", "/admin/resources", url.Values{"resource_name": {"Box 1"}}); rec.Code != 303 {
+		t.Fatalf("création: %d", rec.Code)
+	}
+	rec := c.do("GET", "/admin/appointment-types", nil)
+	mustContain(t, rec, 200, "Ressource créée.", "Box 1")
+	rid := regexp.MustCompile(`<option value="([0-9a-f-]{36})"[^>]*>Box 1`).FindStringSubmatch(rec.Body.String())
+	tid := regexp.MustCompile(`/admin/appointment-types/([0-9a-f-]{36})"`).FindStringSubmatch(rec.Body.String())
+	if rid == nil || tid == nil {
+		t.Fatal("ressource ou motif introuvable")
+	}
+	// Liaison au motif, visible dans la liste et dans le formulaire d'édition.
+	if rec := c.do("POST", "/admin/appointment-types/"+tid[1], url.Values{"name": {"Bilan"}, "duration": {"40"}, "resource": {rid[1]}}); rec.Code != 303 {
+		t.Fatalf("liaison: %d", rec.Code)
+	}
+	mustContain(t, c.do("GET", "/admin/appointment-types/"+tid[1], nil), 200, `value="`+rid[1]+`" selected`)
+	if rec := c.do("POST", "/admin/resources/"+rid[1]+"/active", url.Values{"active": {"0"}}); rec.Code != 303 {
+		t.Fatalf("désactivation: %d", rec.Code)
+	}
+	mustContain(t, c.do("GET", "/admin/appointment-types", nil), 200, "(désactivée)", "Ressource désactivée.")
+	// Ressource inconnue : refusée.
+	mustContain(t, c.do("POST", "/admin/appointment-types/"+tid[1], url.Values{"name": {"Bilan"}, "duration": {"40"}, "resource": {"00000000-0000-0000-0000-000000000001"}}), 422, "Ressource inconnue.")
+}
+
 func TestAvailabilityPage(t *testing.T) {
 	t.Parallel()
 	_, c := newConfigAdmin(t, domain.RoleAdmin)

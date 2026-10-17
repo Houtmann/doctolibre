@@ -303,6 +303,19 @@ func (s slotContext) slots(ctx context.Context, q *sqlcgen.Queries, now, from, t
 		}
 		busy = append(busy, booking.Busy{Start: a.DuringBlocked.Lower.Time, End: a.DuringBlocked.Upper.Time})
 	}
+	// Ressource partagée du motif (T060) : occupée par n'importe quel praticien.
+	rbusy, err := q.ListResourceBusyForType(ctx, sqlcgen.ListResourceBusyForTypeParams{
+		PracticeID: s.pc.ID, AppointmentTypeID: s.typ.ID, FromAt: lo, ToAt: hi})
+	if err != nil {
+		return nil, fmt.Errorf("occupations de la ressource: %w", err)
+	}
+	resBusy := make([]booking.Busy, 0, len(rbusy))
+	for _, r := range rbusy {
+		if r.AppointmentID == s.ignore {
+			continue
+		}
+		resBusy = append(resBusy, booking.Busy{Start: r.DuringBlocked.Lower.Time, End: r.DuringBlocked.Upper.Time})
+	}
 	bb, ba := s.buffers()
 	return booking.Slots(booking.Request{
 		Loc: s.loc, From: from, To: to, Now: now,
@@ -312,6 +325,7 @@ func (s slotContext) slots(ctx context.Context, q *sqlcgen.Queries, now, from, t
 		BufferBefore: bb,
 		BufferAfter:  ba,
 		TypeID:       s.typ.ID,
+		ResourceBusy: resBusy,
 	}, wr, ex, busy), nil
 }
 

@@ -28,7 +28,7 @@ func MoveAppointment(ctx context.Context, q *sqlcgen.Queries, practiceID, id uui
 		return sqlcgen.Appointment{}, domain.ErrNotFound
 	}
 	if err != nil {
-		if IsExclusionViolation(err) && constraintName(err) == "appointment_no_overlap" {
+		if isSlotConflict(err) {
 			return sqlcgen.Appointment{}, domain.ErrSlotTaken
 		}
 		return sqlcgen.Appointment{}, fmt.Errorf("move appointment: %w", err)

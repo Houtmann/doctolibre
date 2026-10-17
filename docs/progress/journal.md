@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-17 — T060 ressources partagées (sonnet ; contrôle : opus)
+
+- **Tâches** : T060 todo → review
+- **Fait** : migration 00024 (`resource`, `appointment_type_resource`, `appointment_resource` + EXCLUDE GiST `WHERE (active)`, trigger `appointment_sync_resource`) ; moteur `booking` : `Request.ResourceBusy` ; `slotContext` charge les occupations de la ressource ; violation traduite en `ErrSlotTaken` (`store.isSlotConflict`) ; CRUD ressources et select « Ressource exigée » dans le panneau des motifs
+- **Vérification** : `make check` ✅ relancé par l'orchestrateur ; tests ressources (concurrence 2 praticiens, annulation, report, staff, inactive, tenancy, DST moteur) ✅ ; relus en entier : migration/trigger, requêtes, traduction d'erreur, moteur, service ; toutes les écritures d'`appointment` passent par `store.CreateAppointment` / `MoveAppointment`. EXPLAIN : index GiST de l'EXCLUDE, 0,3 ms sur 200 000 lignes. Navigateur **non vu**.
+- **Reste** : passage navigateur `/admin/appointment-types` (section ressources, select) ; `goose down` de 00024 non testé
+- **Décisions** : ligne T060 du 2026-10-17 dans decisions.md
+
 ## 2026-10-17 — T056 et T087 en parallèle (sonnet ×2 en worktrees ; contrôle : opus)
 
 - **Tâches** : T056, T087 todo → review

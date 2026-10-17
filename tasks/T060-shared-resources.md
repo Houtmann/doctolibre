@@ -22,11 +22,11 @@ Un motif peut exiger une ressource (box, appareil) : deux praticiens ne peuvent 
 - `EXPLAIN` des nouvelles requêtes d'occupation dans Suivi (index sur `during_blocked`).
 
 ## Critères d'acceptation
-- [ ] Deux RDV de praticiens différents ne peuvent pas occuper la même ressource en même temps (garanti par la base).
-- [ ] Les créneaux proposés excluent les plages où la ressource est prise.
-- [ ] Annulation et report libèrent la ressource.
-- [ ] CRUD des ressources et liaison motif fonctionnent ; accès réservé admin (+ praticien si cohérent avec les motifs).
-- [ ] Tests de concurrence et de DST ajoutés.
+- [x] Deux RDV de praticiens différents ne peuvent pas occuper la même ressource en même temps (garanti par la base).
+- [x] Les créneaux proposés excluent les plages où la ressource est prise.
+- [x] Annulation et report libèrent la ressource.
+- [x] CRUD des ressources et liaison motif fonctionnent ; accès réservé admin (+ praticien si cohérent avec les motifs).
+- [x] Tests de concurrence et de DST ajoutés.
 
 ## Vérification
 ```bash
@@ -39,10 +39,10 @@ Capacité N (plateau technique, nécessiterait un verrou par ressource), plusieu
 
 ## Suivi
 
-> Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
-
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-17 (sonnet).
+- **Fait** : migration 00024 (`resource`, `appointment_type_resource` PK sur le motif, `appointment_resource` + `EXCLUDE appointment_resource_no_overlap WHERE active`) ; trigger `appointment_sync_resource` (INSERT : réserve la ressource active du motif ; UPDATE de `during_blocked`/`status` : suit le déplacement et libère à l'annulation) ; `store.isSlotConflict` traduit les deux contraintes en `ErrSlotTaken` (création et déplacement) ; moteur : `booking.Request.ResourceBusy` ; `slotContext.slots` charge `ListResourceBusyForType` (ignore le RDV déplacé) ; service `resources.go` (CRUD, liaison motif, contrôle de cabinet) ; UI : section « Ressources partagées » et select « Ressource exigée » dans le panneau des motifs ; `ui.css` régénéré. Tests : `booking/slots_resource_test.go` (dont DST mars/octobre), `service/resources_test.go` (concurrence réelle 2 praticiens, créneaux masqués, annulation, report, création/déplacement staff, done garde la ressource, inactive / sans ressource, tenancy), `web` `TestResourcesPanel`.
+- **Reste à faire** : passage navigateur du panneau des motifs.
+- **Notes de reprise** : tous les chemins d'écriture (en ligne, staff, report, séries, liste d'attente, annulation, SetStatus) passent par le trigger : aucune duplication côté Go. `SetStatus` ne peut pas sortir de `cancelled` (refusé en amont) ; le trigger gère quand même la réactivation (conflit => 23P01 => ErrSlotTaken). `done`/`no_show` gardent la ressource occupée.
+- **Décisions** : ressource inactive = plus exigée pour les nouveaux RDV (lignes existantes conservées). Lier une ressource à un motif ne rétro-réserve pas les RDV futurs déjà pris de ce motif. Accès CRUD = celui des motifs (admin + praticien).
+- **EXPLAIN** (200 000 lignes `appointment_resource`, 5 ressources, fenêtre de 3 jours, requête `ListResourceBusyForType`) : `Bitmap Index Scan on appointment_resource_no_overlap` (resource_id, during_blocked) ; 130 lignes, 0,3 ms ; l'index GiST de l'EXCLUDE sert la requête, pas d'index supplémentaire.
+- **Écarts avec la spécification** : la synchronisation est faite par trigger SQL plutôt que par une fonction de service (garantie pour tous les chemins, y compris futurs).

@@ -5,7 +5,7 @@
   <table class="table">
     <caption class="sr-only">Motifs du cabinet</caption>
     <thead>
-      <tr><th scope="col">Motif</th><th scope="col">Durée</th><th scope="col" class="hidden md:table-cell">Marges</th><th scope="col" class="hidden md:table-cell">Options</th><th scope="col">Actions</th></tr>
+      <tr><th scope="col">Motif</th><th scope="col">Durée</th><th scope="col" class="hidden md:table-cell">Marges</th><th scope="col" class="hidden md:table-cell">Options</th><th scope="col" class="hidden md:table-cell">Ressource</th><th scope="col">Actions</th></tr>
     </thead>
     <tbody>
       {{range .Rows}}
@@ -14,6 +14,7 @@
         <td class="tabular-nums">{{.Duration}} min</td>
         <td class="tabular-nums hidden md:table-cell">{{.Before}} / {{.After}} min</td>
         <td class="hidden md:table-cell">{{if .Online}}Réservable en ligne{{else}}Cabinet uniquement{{end}}{{if .AtHome}}, à domicile{{end}}</td>
+        <td class="hidden md:table-cell">{{if .Resource}}{{.Resource}}{{else}}<span class="text-base-content/70">Aucune</span>{{end}}</td>
         <td><div class="flex flex-wrap items-center gap-2">
           <a class="btn btn-outline btn-sm" href="/admin/appointment-types/{{.ID}}" hx-get="/admin/appointment-types/{{.ID}}" hx-target="#types-panel" hx-swap="outerHTML">Modifier</a>
           {{if not .First}}
@@ -74,8 +75,46 @@
     </div>
     <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="online_bookable" value="1"{{if .OnlineBookable}} checked{{end}}> Réservable en ligne par les patients</label>
     <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="at_home" value="1"{{if .AtHome}} checked{{end}}> Séance à domicile</label>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="type-resource">Ressource exigée</label>
+      <select class="select w-full" id="type-resource" name="resource" aria-describedby="type-resource-help">
+        <option value=""{{if not .ResourceID}} selected{{end}}>Aucune</option>
+        {{range $.Resources}}<option value="{{.ID}}"{{if eq .ID $.Form.ResourceID}} selected{{end}}>{{.Name}}{{if not .Active}} (désactivée){{end}}</option>{{end}}
+      </select>
+      <p class="text-sm text-base-content/70" id="type-resource-help">Un box ou un appareil partagé : deux praticiens ne peuvent pas l'occuper en même temps. Une ressource désactivée n'est plus exigée.</p>
+    </div>
     {{end}}
     <button class="btn btn-primary" type="submit">{{if .EditID}}Enregistrer{{else}}Ajouter le motif{{end}}</button>
     {{if .EditID}}<a class="btn btn-outline btn-sm" href="/admin/appointment-types" hx-get="/admin/appointment-types" hx-target="#types-panel" hx-swap="outerHTML">Annuler</a>{{end}}
+  </form>
+
+  <h2 class="text-xl font-semibold pt-4">Ressources partagées</h2>
+  <p class="text-sm text-base-content/70">Box, appareils : un motif peut en exiger une, qui ne peut servir qu'à un rendez-vous à la fois, tous praticiens confondus.</p>
+  {{if .Resources}}
+  <ul class="space-y-2">
+    {{range .Resources}}
+    <li class="flex flex-wrap items-center gap-2">
+      <form class="flex flex-wrap items-center gap-2" method="post" action="/admin/resources/{{.ID}}" hx-post="/admin/resources/{{.ID}}" hx-target="#types-panel" hx-swap="outerHTML">
+        {{csrf $.CSRF}}<input type="hidden" name="active" value="{{if .Active}}1{{else}}0{{end}}">
+        <label class="sr-only" for="resource-{{.ID}}">Nom de la ressource</label>
+        <input class="input input-sm" id="resource-{{.ID}}" name="resource_name" value="{{.Name}}" maxlength="60" required>
+        <button class="btn btn-outline btn-sm" type="submit">Renommer</button>
+        {{if not .Active}}<span class="text-base-content/70">(désactivée)</span>{{end}}
+      </form>
+      <form method="post" action="/admin/resources/{{.ID}}/active" hx-post="/admin/resources/{{.ID}}/active" hx-target="#types-panel" hx-swap="outerHTML">
+        {{csrf $.CSRF}}<input type="hidden" name="active" value="{{if .Active}}0{{else}}1{{end}}">
+        <button class="btn btn-outline btn-sm" type="submit">{{if .Active}}Désactiver{{else}}Réactiver{{end}}</button>
+      </form>
+    </li>
+    {{end}}
+  </ul>
+  {{end}}
+  <form class="flex flex-wrap items-end gap-2 max-w-2xl" method="post" action="/admin/resources" hx-post="/admin/resources" hx-target="#types-panel" hx-swap="outerHTML">
+    {{csrf .CSRF}}
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="new-resource">Nouvelle ressource</label>
+      <input class="input" id="new-resource" name="resource_name" maxlength="60" required>
+    </div>
+    <button class="btn btn-primary" type="submit">Ajouter la ressource</button>
   </form>
 </div>
