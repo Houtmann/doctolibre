@@ -21,12 +21,12 @@ En une action, le praticien ferme une plage horaire et annule tous les RDV qui s
 - Le message d'annulation existant (`TemplateCancellation`) doit accepter un motif optionnel ; adapter les templates email/SMS.
 
 ## Critères d'acceptation
-- [ ] L'aperçu liste exactement les RDV non annulés de la plage, sans rien modifier.
-- [ ] La confirmation crée l'absence, annule les RDV, audite et enfile les messages dans une transaction ; un échec au milieu ne laisse rien.
-- [ ] Les messages contiennent le motif et le lien de T050.
-- [ ] Aucune offre de liste d'attente pour un créneau dans la plage fermée (test).
-- [ ] Accès refusé à un praticien sur l'agenda d'un autre.
-- [ ] Tests : service (aperçu, confirmation, atomicité, plage partielle avec heures, RDV déjà annulés ignorés), web (parcours).
+- [x] L'aperçu liste exactement les RDV non annulés de la plage, sans rien modifier.
+- [x] La confirmation crée l'absence, annule les RDV, audite et enfile les messages dans une transaction ; un échec au milieu ne laisse rien.
+- [x] Les messages contiennent le motif et le lien de T050.
+- [x] Aucune offre de liste d'attente pour un créneau dans la plage fermée (test).
+- [x] Accès refusé à un praticien sur l'agenda d'un autre.
+- [x] Tests : service (aperçu, confirmation, atomicité, plage partielle avec heures, RDV déjà annulés ignorés), web (parcours).
 
 ## Vérification
 ```bash
@@ -40,8 +40,19 @@ Replanification automatique des séances de série, proposition automatique d'un
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-17 (sonnet).
+- **Fait** :
+  - `internal/service/availability.go` : validation extraite en `Practice.closureRange` (partagée par `AddClosure` et l'annulation groupée).
+  - `internal/service/bulk_cancel.go` : `Calendar.CancelPreview` (lecture seule) et `Calendar.CancelRange` (une transaction `store.WithTx` : exception `closed` créée AVANT les annulations, puis `CancelAppointment`, `audit` par RDV (`meta.bulk=true`), message outbox via `notifier.cancelledFor` (motif + `manage_url` T050), ligne d'audit `availability.closure_cancel` sur l'exception ; événements émis après commit). Aucune nouvelle requête SQL ni migration (réutilise `ListAppointmentsForPractitioner`, `CancelAppointment`, `CreateAvailabilityException`).
+  - `slotFreed` : inchangé. Comme `offerTo` revalide via `slotContext.check` (moteur de créneaux qui lit les exceptions via le `q` de la transaction), l'exception créée avant voit la plage fermée ; couvert par un test (témoin + cas fermé).
+  - `internal/service/notifications.go` : `cancelledFor(..., reason)`, clé `reason` toujours présente dans `data`, motif tronqué à 20 caractères dans les SMS (`smsReasonMax`) ; `cancelled` délègue avec motif vide.
+  - Templates `cancellation` (email html/txt, SMS) avec motif optionnel ; golden files régénérés (`-update`) ; test `TestCancellationReasonIsOptional`.
+  - Web : `internal/web/admin_bulk_cancel.go` (GET `/admin/absences/cancel` = aperçu, POST = confirmation, 303 + flash ; erreurs de validation ré-affichées sur la page des absences en 422), page `admin_absences_cancel.html`, section « Absence imprévue » dans `absences_panel.html`, bouton « Absence imprévue » dans l'en-tête de l'agenda (absent pour le secrétariat). Routes sous `withTarget(ActionAvailabilityEdit)` : admin + praticien (remplaçant inclus via `Actor.Delegated`), pas le secrétariat. Sans JS (GET/POST classiques, pas de htmx).
+  - Tests : `internal/service/bulk_cancel_test.go` (aperçu exact et sans effet, plage partielle avec heures, déjà annulés ignorés, audit, message avec motif et lien, atomicité par trigger d'échec, liste d'attente, accès, validation), `internal/web/admin_bulk_cancel_test.go` (parcours, secrétariat, praticien sur l'agenda d'un autre).
+  - `ui.css` régénéré (`make tools` + `make css`). `make check` vert.
+- **Reste à faire** : passage navigateur (page `/admin/absences`, aperçu, confirmation, bouton de l'agenda, 360 px) : non vu.
+- **Notes de reprise** : RDV retenus = statut `booked`, soin intersectant `[from, to)` et début strictement après maintenant (un RDV déjà commencé n'est pas annulé ni notifié) ; plafond de 300 RDV (erreur de validation au-delà). Race théorique : un patient qui réserve entre l'aperçu et la confirmation sur un créneau de la plage n'est pas bloqué par une contrainte en base (la fermeture n'est pas un EXCLUDE) ; le RDV créé après la transaction n'est pas annulé.
+- **Écarts avec la spécification** :
+  - Le formulaire d'annulation groupée est distinct du formulaire d'ajout d'absence existant (champ « motif communiqué aux patients » ; le motif de l'absence simple reste « visible du cabinet uniquement »).
+  - Texte SMS avec motif : « … annulé (motif) : lien » (sans « Reprendre ») pour tenir en 1 segment GSM-7 ; motif tronqué à 20 caractères dans le SMS, complet dans l'email.
+  - `Calendar.Cancel` (annulation unitaire) n'envoie toujours pas de motif au patient (comportement inchangé).

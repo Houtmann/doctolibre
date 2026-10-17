@@ -30,7 +30,7 @@ const (
 
 // configRoutes enregistre les pages de paramétrage du cabinet (admin et praticien).
 func (d Deps) configRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
-	h := &configHandlers{svc: d.Practice, feed: d.Feed, baseURL: d.Config.BaseURL, rd: rd, logger: logger}
+	h := &configHandlers{svc: d.Practice, cal: d.Calendar, feed: d.Feed, baseURL: d.Config.BaseURL, rd: rd, logger: logger}
 	require := d.Auth.RequireUser(domain.RoleAdmin, domain.RolePractitioner)
 	handle := func(pattern string, f http.HandlerFunc) { mux.Handle(pattern, require(f)) }
 
@@ -68,10 +68,16 @@ func (d Deps) configRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	handleFor("GET "+pathAbsences, h.absencesPage)
 	handleFor("POST "+pathAbsences, h.absencesAdd)
 	handleFor("POST "+pathAbsences+"/{id}/delete", h.absencesDelete)
+	if d.Calendar != nil {
+		// Absence imprévue : aperçu (lecture seule) puis confirmation (admin et praticien, pas le secrétariat).
+		handleFor("GET "+pathBulkCancel, h.bulkPreview)
+		handleFor("POST "+pathBulkCancel, h.bulkConfirm)
+	}
 }
 
 type configHandlers struct {
 	svc     *service.Practice
+	cal     *service.Calendar     // optionnel : sans lui, pas d'annulation groupée
 	feed    *service.CalendarFeed // optionnel
 	baseURL string
 	rd      *Renderer
@@ -690,6 +696,11 @@ type AbsencesPage struct {
 	Form     service.ClosureInput
 	Errors   []string
 	Notice   string
+	// Annulation groupée (T051) : formulaire, erreurs, praticien visé ; CanBulk faux sans service d'agenda.
+	CanBulk    bool
+	Bulk       service.ClosureInput
+	BulkErrors []string
+	Target     string
 }
 
 func (h *configHandlers) absencesData(r *http.Request, form service.ClosureInput, errs []string, notice string) (*AbsencesPage, error) {
@@ -697,7 +708,10 @@ func (h *configHandlers) absencesData(r *http.Request, form service.ClosureInput
 	if err != nil {
 		return nil, err
 	}
-	p := &AbsencesPage{CSRF: httpx.CSRFToken(r.Context()), Closures: cs, Form: form, Errors: errs, Notice: notice}
+	p := &AbsencesPage{CSRF: httpx.CSRFToken(r.Context()), Closures: cs, Form: form, Errors: errs, Notice: notice, CanBulk: h.cal != nil}
+	if id := targetFrom(r.Context()); id != uuid.Nil {
+		p.Target = id.String()
+	}
 	if p.Switch, p.Q, err = h.practitionerSwitch(r, pathAbsences); err != nil {
 		return nil, err
 	}

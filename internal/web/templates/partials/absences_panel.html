@@ -56,4 +56,41 @@
     {{end}}
     <button class="btn btn-primary" type="submit">Ajouter l'absence</button>
   </form>
+
+  {{if .CanBulk}}
+  <h2 class="text-xl font-semibold pt-2" id="bulk-cancel">Absence imprévue : annuler les rendez-vous</h2>
+  <p class="text-sm text-base-content/70 max-w-2xl">Ferme la plage et annule les rendez-vous qui s'y trouvent. Vous voyez d'abord la liste des rendez-vous concernés, puis vous confirmez : chaque patient est alors prévenu avec le motif et un lien pour reprendre rendez-vous.</p>
+  {{template "form_errors.html" .BulkErrors}}
+  <form class="space-y-4 max-w-2xl" method="get" action="/admin/absences/cancel">
+    {{if .Target}}<input type="hidden" name="practitioner" value="{{.Target}}">{{end}}
+    {{with .Bulk}}
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="bulk-start-date">Du (date)</label>
+        <input class="input w-full" id="bulk-start-date" name="start_date" type="date" value="{{.StartDate}}" required>
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="bulk-end-date">Au (date, incluse)</label>
+        <input class="input w-full" id="bulk-end-date" name="end_date" type="date" value="{{.EndDate}}">
+      </div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="bulk-start-time">Heure de début</label>
+        <input class="input w-full" id="bulk-start-time" name="start_time" type="time" value="{{.StartTime}}" aria-describedby="bulk-time-help">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="bulk-end-time">Heure de fin</label>
+        <input class="input w-full" id="bulk-end-time" name="end_time" type="time" value="{{.EndTime}}" aria-describedby="bulk-time-help">
+      </div>
+    </div>
+    <p class="text-sm text-base-content/70" id="bulk-time-help">Laissez les heures vides pour des journées entières.</p>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="bulk-reason">Motif communiqué aux patients (facultatif)</label>
+      <input class="input w-full" id="bulk-reason" name="reason" value="{{.Reason}}" maxlength="200" placeholder="Praticien souffrant">
+    </div>
+    {{end}}
+    <button class="btn btn-warning" type="submit">Voir les rendez-vous concernés</button>
+  </form>
+  {{end}}
 </div>

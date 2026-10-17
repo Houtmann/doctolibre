@@ -108,6 +108,8 @@ type CalendarPage struct {
 	NextURL       string
 	TodayURL      string
 	NewURL        string
+	// BulkCancelURL : lien « absence imprévue » (T051) ; vide pour le secrétariat.
+	BulkCancelURL string
 	// Picker : sélecteur de praticiens (nil si un seul est accessible).
 	Picker *CalendarPicker
 }
@@ -208,8 +210,16 @@ func (h *calendarHandlers) calendar(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, r, err)
 		return
 	}
+	bulkURL := ""
+	if actorFrom(r).Role != domain.RoleSecretary {
+		bulkURL = pathAbsences + "#bulk-cancel"
+		if len(ag.Practitioners) == 1 {
+			bulkURL = pathAbsences + "?" + practitionerParam + "=" + ag.Practitioners[0].ID.String() + "#bulk-cancel"
+		}
+	}
 	p := CalendarPage{
-		CSRF: httpx.CSRFToken(r.Context()), A: ag, View: view, ResourcesJSON: string(resJSON),
+		BulkCancelURL: bulkURL,
+		CSRF:          httpx.CSRFToken(r.Context()), A: ag, View: view, ResourcesJSON: string(resJSON),
 		PrevURL:  calendarURL(mode, ag.PrevDate, link),
 		NextURL:  calendarURL(mode, ag.NextDate, link),
 		TodayURL: calendarURL(mode, ag.TodayDate, link),

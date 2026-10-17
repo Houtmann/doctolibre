@@ -282,11 +282,12 @@ func (s *Practice) Closures(ctx context.Context, a Actor) ([]ClosureView, error)
 
 func isMidnight(t time.Time) bool { return t.Hour() == 0 && t.Minute() == 0 && t.Second() == 0 }
 
-// AddClosure enregistre une absence (kind « closed »), dans le fuseau du cabinet.
-func (s *Practice) AddClosure(ctx context.Context, a Actor, in ClosureInput) error {
+// closureRange valide la saisie d'une absence et la convertit en plage [from, to)
+// dans le fuseau du cabinet. Partagée par AddClosure et l'annulation groupée.
+func (s *Practice) closureRange(ctx context.Context, a Actor, in ClosureInput) (from, to time.Time, reason string, err error) {
 	var errs domain.ValidationErrors
 	add := func(field, msg string) { errs = append(errs, domain.ErrValidation{Field: field, Msg: msg}) }
-	reason := strings.TrimSpace(in.Reason)
+	reason = strings.TrimSpace(in.Reason)
 	if tooLong(reason, 200) {
 		add("reason", "Le motif de l'absence est trop long (200 caractères maximum).")
 	}
@@ -314,16 +315,15 @@ func (s *Practice) AddClosure(ctx context.Context, a Actor, in ClosureInput) err
 		}
 	}
 	if len(errs) > 0 {
-		return errs
+		return time.Time{}, time.Time{}, "", errs
 	}
 	loc, err := s.location(ctx, a.PracticeID)
 	if err != nil {
-		return err
+		return time.Time{}, time.Time{}, "", err
 	}
 	at := func(d time.Time, sec int64) time.Time {
 		return time.Date(d.Year(), d.Month(), d.Day(), int(sec/3600), int(sec/60%60), 0, 0, loc)
 	}
-	var from, to time.Time
 	if hasS {
 		from, to = at(startDate, sMin), at(endDate, eMin)
 	} else {
@@ -331,9 +331,19 @@ func (s *Practice) AddClosure(ctx context.Context, a Actor, in ClosureInput) err
 	}
 	switch {
 	case !to.After(from):
-		return domain.ErrValidation{Field: "end_date", Msg: "La fin de l'absence doit être après son début."}
+		return time.Time{}, time.Time{}, "", domain.ErrValidation{Field: "end_date", Msg: "La fin de l'absence doit être après son début."}
 	case !to.After(s.Clock.Now()):
-		return domain.ErrValidation{Field: "start_date", Msg: "L'absence doit se terminer dans le futur."}
+		return time.Time{}, time.Time{}, "", domain.ErrValidation{Field: "start_date", Msg: "L'absence doit se terminer dans le futur."}
+	}
+	return from, to, reason, nil
+}
+
+// AddClosure enregistre une absence (kind « closed »), dans le fuseau du cabinet.
+// Elle n'annule aucun rendez-vous (voir Calendar.CancelRange).
+func (s *Practice) AddClosure(ctx context.Context, a Actor, in ClosureInput) error {
+	from, to, reason, err := s.closureRange(ctx, a, in)
+	if err != nil {
+		return err
 	}
 	pr, err := s.configPractitioner(ctx, a)
 	if err != nil {

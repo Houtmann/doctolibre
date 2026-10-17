@@ -3,7 +3,8 @@
 <h1 style="margin:0 0 16px;font-size:20px;">Rendez-vous annulé</h1>
 <p style="margin:0 0 16px;">Bonjour {{.first_name}},</p>
 <p style="margin:0 0 16px;">Votre rendez-vous ({{.type_name}}) du <strong>{{.date}} à {{.time}}</strong> avec {{.practitioner}} a été annulé par le cabinet.</p>
-{{if .manage_url}}<p style="margin:0 0 16px;"><a href="{{.manage_url}}">Consulter ce rendez-vous et en reprendre un autre</a></p>
+{{if .reason}}<p style="margin:0 0 16px;">Motif : {{.reason}}</p>
+{{end}}{{if .manage_url}}<p style="margin:0 0 16px;"><a href="{{.manage_url}}">Consulter ce rendez-vous et en reprendre un autre</a></p>
 {{end}}{{if .practice_phone}}<p style="margin:0 0 16px;">Pour en prendre un nouveau, appelez le {{.practice_phone}}.</p>{{end}}
 <p style="margin:0;font-size:14px;">{{.signature}}</p>
 {{end}}

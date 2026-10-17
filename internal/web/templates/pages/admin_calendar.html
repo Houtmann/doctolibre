@@ -10,7 +10,10 @@
      data-view="{{.View}}" data-date="{{.A.Date}}" data-resources="{{.ResourcesJSON}}">
   <div class="flex flex-wrap items-start justify-between gap-3">
     <h1 class="text-2xl font-semibold">Agenda</h1>
+    <div class="flex flex-wrap gap-2">
+    {{if .BulkCancelURL}}<a class="btn btn-outline btn-sm" href="{{.BulkCancelURL}}">Absence imprévue</a>{{end}}
     <a class="btn btn-primary btn-sm" href="{{.NewURL}}" hx-get="{{.NewURL}}" hx-target="#appt-dialog-body" hx-swap="innerHTML" hx-push-url="false">Nouveau rendez-vous</a>
+    </div>
   </div>
 
   {{with .Picker}}

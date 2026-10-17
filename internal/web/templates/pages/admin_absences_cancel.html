@@ -1,0 +1,47 @@
+{{/* layout: admin */}}
+{{define "title"}}Annuler les rendez-vous d'une absence{{end}}
+{{define "content"}}
+{{with .Data}}
+<h1 class="text-2xl font-semibold">Absence imprévue : confirmation</h1>
+<p>
+  {{.Preview.Practitioner}} : du <strong>{{localDate .Preview.From}} à {{localTime .Preview.From}}</strong>
+  au <strong>{{localDate .Preview.To}} à {{localTime .Preview.To}}</strong>{{if .Preview.Reason}}, motif communiqué aux patients : « {{.Preview.Reason}} »{{end}}.
+</p>
+
+{{if .Preview.Items}}
+<div class="alert alert-warning" role="status">
+  <span>{{if eq (len .Preview.Items) 1}}1 rendez-vous sera annulé et le patient sera prévenu{{else}}{{len .Preview.Items}} rendez-vous seront annulés et les patients seront prévenus{{end}} (selon leurs coordonnées et préférences de notification).</span>
+</div>
+<div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+  <table class="table">
+    <caption class="sr-only">Rendez-vous qui seront annulés</caption>
+    <thead><tr><th scope="col">Date</th><th scope="col">Heure</th><th scope="col">Patient</th><th scope="col" class="hidden sm:table-cell">Motif</th></tr></thead>
+    <tbody>
+      {{range .Preview.Items}}
+      <tr>
+        <td class="whitespace-nowrap">{{localDate .Start}}</td>
+        <td class="whitespace-nowrap"><time>{{localTime .Start}}</time>–<time>{{localTime .End}}</time></td>
+        <td>{{.Patient}}</td>
+        <td class="hidden sm:table-cell">{{.TypeName}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{else}}
+<div class="alert alert-info alert-soft" role="status">Aucun rendez-vous à venir dans cette plage : seule l'absence sera enregistrée.</div>
+{{end}}
+
+<form class="flex flex-wrap items-center gap-3" method="post" action="/admin/absences/cancel">
+  {{csrf .CSRF}}
+  {{if .Target}}<input type="hidden" name="practitioner" value="{{.Target}}">{{end}}
+  <input type="hidden" name="start_date" value="{{.Form.StartDate}}">
+  <input type="hidden" name="end_date" value="{{.Form.EndDate}}">
+  <input type="hidden" name="start_time" value="{{.Form.StartTime}}">
+  <input type="hidden" name="end_time" value="{{.Form.EndTime}}">
+  <input type="hidden" name="reason" value="{{.Form.Reason}}">
+  <button class="btn btn-error" type="submit">{{if .Preview.Items}}Confirmer : créer l'absence et annuler{{else}}Enregistrer l'absence{{end}}</button>
+  <a class="btn btn-ghost" href="/admin/absences{{.Q}}#bulk-cancel">Modifier la période</a>
+</form>
+{{end}}
+{{end}}

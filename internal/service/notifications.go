@@ -38,6 +38,9 @@ const (
 // smsNameMax borne le nom du cabinet dans un SMS (un segment GSM-7 visé).
 const smsNameMax = 30
 
+// smsReasonMax borne le motif d'annulation dans un SMS.
+const smsReasonMax = 20
+
 // minLeadBeforeStart : un rappel qui ne pourrait partir qu'à moins de 30 minutes
 // du rendez-vous (plage silencieuse SMS comprise) n'est pas envoyé.
 const minLeadBeforeStart = 30 * time.Minute
@@ -170,6 +173,7 @@ func (n notifier) data(v apptView, manageToken string) map[string]any {
 		"type_name": v.typ.Name, "date": frenchDay(start), "date_short": start.Format("02/01"), "time": clockText(start),
 		"manage_url": manage, "signature": signature,
 		"old_date": "", "old_date_short": "", "old_time": "",
+		"reason": "",
 	}
 }
 
@@ -194,6 +198,9 @@ func (n notifier) enqueue(ctx context.Context, tx pgx.Tx, v apptView, pref, temp
 		case ChannelSMS:
 			sd := maps.Clone(data)
 			sd["practice_name"] = truncate(v.practice.Name, smsNameMax)
+			if r, ok := sd["reason"].(string); ok {
+				sd["reason"] = truncate(r, smsReasonMax)
+			}
 			body, err := notify.RenderSMS(template, sd)
 			if err != nil {
 				return queued, fmt.Errorf("rédaction du SMS %s: %w", template, err)
@@ -269,6 +276,11 @@ func (n notifier) seriesBooked(ctx context.Context, tx pgx.Tx, q *sqlcgen.Querie
 // vient du cabinet, prévient le patient. Le créneau libéré est proposé à la liste
 // d'attente (T031).
 func (n notifier) cancelled(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, appt sqlcgen.Appointment, byStaff bool) error {
+	return n.cancelledFor(ctx, tx, q, appt, byStaff, "")
+}
+
+// cancelledFor est cancelled avec un motif facultatif repris dans le message au patient.
+func (n notifier) cancelledFor(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, appt sqlcgen.Appointment, byStaff bool, reason string) error {
 	if err := outbox.CancelForAppointment(ctx, tx, n.clock, appt.ID); err != nil {
 		return err
 	}
@@ -277,7 +289,9 @@ func (n notifier) cancelled(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, 
 		if err != nil {
 			return err
 		}
-		if _, err := n.enqueue(ctx, tx, v, v.practice.NotifyChangeChannel, TemplateCancellation, n.data(v, n.key.forAppointment(appt)), time.Time{}, TemplateCancellation, ""); err != nil {
+		data := n.data(v, n.key.forAppointment(appt))
+		data["reason"] = reason
+		if _, err := n.enqueue(ctx, tx, v, v.practice.NotifyChangeChannel, TemplateCancellation, data, time.Time{}, TemplateCancellation, ""); err != nil {
 			return err
 		}
 	}
