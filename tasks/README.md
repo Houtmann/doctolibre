@@ -7,7 +7,7 @@ Chaque fichier `Txxx-*.md` est une tâche **autonome, exécutable par un LLM en 
 
 **Mode normal : orchestré.** Dans une session Opus, lancer `/run-task` (ou `/run-task Txxx`) : Opus choisit et contrôle, le sous-agent Sonnet `task-implementer` implémente. Rôles détaillés dans [`AGENTS.md`](../AGENTS.md).
 
-Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043, T050, T051, T052, T053, T055, T059, T060, T067, T080, T083, T086, T087.
+Revue Opus **renforcée** (diff relu en entier, invariants vérifiés) : T010, T011, T013, T014, T020, T043, T050, T051, T052, T053, T055, T059, T060, T067, T080, T083, T086, T087, T088, T089, T090.
 
 Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS.md) (début / pendant / fin). En résumé :
 
@@ -82,6 +82,10 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T085 | [Choix de la couleur du praticien](T085-practitioner-color.md) | 5 | T057 | review |
 | T086 | [Fournisseurs email et SMS configurables par cabinet](T086-practice-notification-providers.md) | 5 | T023, T033 | review |
 | T087 | [Rate limiting du back-office et de la prise de RDV](T087-rate-limiting-admin-booking.md) | 5 | T014, T033, T046 | review |
+| T088 | [Corrections RDV : trajet, liste d'attente, statut concurrent](T088-booking-waitlist-fixes.md) | 5 | T032, T054, T031, T050 | todo |
+| T089 | [Contrôle d'accès : séries, praticien implicite, reset](T089-access-control-fixes.md) | 5 | T056, T059 | todo |
+| T090 | [Durcissement HTTP et notifications](T090-http-notify-hardening.md) | 5 | T087, T086 | todo |
+| T091 | [SQL : recherche patients indexée, filtres practice_id](T091-sql-search-tenant-hygiene.md) | 5 | T017, T088 | todo |
 
 ## Parallélisation possible
 
