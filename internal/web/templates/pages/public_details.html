@@ -42,8 +42,8 @@
 
   <fieldset class="card bg-base-100 border border-base-300"><div class="card-body gap-3">
     <legend class="font-semibold">Recevoir le code de vérification par</legend>
-    <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="channel" value="sms"{{if eq .Data.Form.Channel "sms"}} checked{{end}}> <span>SMS (au téléphone indiqué)</span></label>
-    <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="channel" value="email"{{if ne .Data.Form.Channel "sms"}} checked{{end}}> <span>Email (recommandé, à l'adresse indiquée)</span></label>
+    {{if .Data.Channels.SMS}}<label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="channel" value="sms"{{if eq .Data.Form.Channel "sms"}} checked{{end}}> <span>SMS (au téléphone indiqué)</span></label>{{end}}
+    {{if .Data.Channels.Email}}<label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="channel" value="email"{{if eq .Data.Form.Channel "email"}} checked{{end}}> <span>Email (recommandé, à l'adresse indiquée)</span></label>{{end}}
   </div></fieldset>
 
   <fieldset class="card bg-base-100 border border-base-300"><div class="card-body gap-3">

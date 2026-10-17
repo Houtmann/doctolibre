@@ -47,6 +47,8 @@ func (b *Booking) notifier() notifier {
 type PublicPractice struct {
 	Practice      sqlcgen.Practice
 	Practitioners []sqlcgen.Practitioner
+	// Channels : canaux de vérification actifs ; aucun => réservation en ligne fermée (T086).
+	Channels Channels
 }
 
 // PractitionerPage est la page publique d'un praticien et ses motifs réservables.
@@ -54,6 +56,8 @@ type PractitionerPage struct {
 	Practice     sqlcgen.Practice
 	Practitioner sqlcgen.Practitioner
 	Types        []sqlcgen.AppointmentType
+	// Channels : canaux de vérification actifs ; aucun => réservation en ligne fermée (T086).
+	Channels Channels
 }
 
 // Target est la cible validée d'une réservation : praticien actif, motif
@@ -65,6 +69,8 @@ type Target struct {
 	Loc          *time.Location
 	MinNotice    time.Duration
 	Horizon      time.Duration
+	// Channels : canaux de vérification actifs (au moins un, sinon Target échoue avec BookingClosedError).
+	Channels Channels
 }
 
 // Practice retourne le cabinet public (par slug) et ses praticiens actifs.
@@ -81,7 +87,11 @@ func (b *Booking) Practice(ctx context.Context, slug string) (PublicPractice, er
 	if err != nil {
 		return PublicPractice{}, fmt.Errorf("liste des praticiens: %w", err)
 	}
-	return PublicPractice{Practice: pc, Practitioners: prs}, nil
+	ch, err := channelsOf(ctx, q, pc.ID)
+	if err != nil {
+		return PublicPractice{}, err
+	}
+	return PublicPractice{Practice: pc, Practitioners: prs, Channels: ch}, nil
 }
 
 // Practitioner retourne la page publique d'un praticien. Un motif n'est listé
@@ -112,6 +122,9 @@ func (b *Booking) Practitioner(ctx context.Context, practiceSlug, practitionerSl
 		return PractitionerPage{}, fmt.Errorf("liste des plages: %w", err)
 	}
 	out := PractitionerPage{Practice: pc, Practitioner: pr}
+	if out.Channels, err = channelsOf(ctx, q, pc.ID); err != nil {
+		return PractitionerPage{}, err
+	}
 	for _, t := range types {
 		if t.AtHome && !homeVisitsOnline(pc) {
 			continue
@@ -154,10 +167,13 @@ func (b *Booking) Target(ctx context.Context, practiceSlug, practitionerSlug str
 	if err != nil {
 		return Target{}, fmt.Errorf("fuseau %q: %w", page.Practice.Timezone, err)
 	}
+	if !page.Channels.Any() {
+		return Target{}, BookingClosedError{Phone: page.Practice.Phone}
+	}
 	for _, t := range page.Types {
 		if t.ID == typeID {
 			return Target{
-				Practice: page.Practice, Practitioner: page.Practitioner, Type: t, Loc: loc,
+				Practice: page.Practice, Practitioner: page.Practitioner, Type: t, Loc: loc, Channels: page.Channels,
 				MinNotice: time.Duration(intervalMicros(page.Practice.MinBookingNotice)) * time.Microsecond,
 				Horizon:   time.Duration(intervalMicros(page.Practice.BookingHorizon)) * time.Microsecond,
 			}, nil
@@ -368,6 +384,9 @@ func (b *Booking) StartVerification(ctx context.Context, in VerifyInput) (Verifi
 		return Verification{}, err
 	}
 	if err := sc.checkAddress(d); err != nil {
+		return Verification{}, err
+	}
+	if err := checkOTPChannel(ctx, q, sc.pc, in.Channel); err != nil {
 		return Verification{}, err
 	}
 	if _, err := sc.check(ctx, q, now, in.Start); err != nil {

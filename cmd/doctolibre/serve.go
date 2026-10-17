@@ -13,6 +13,7 @@ import (
 	"doctolibre/internal/domain"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/metrics"
+	"doctolibre/internal/notify"
 	"doctolibre/internal/outbox"
 	"doctolibre/internal/service"
 	"doctolibre/internal/store"
@@ -31,6 +32,7 @@ func serve(ctx context.Context, logOut io.Writer) error {
 	logger := newLogger(cfg, logOut)
 	deps := web.Deps{Config: cfg, Logger: logger}
 	var pool *pgxpool.Pool
+	var transports *notify.Transports
 	if cfg.DatabaseURL != "" {
 		pool, err = store.Open(ctx, cfg.DatabaseURL)
 		if err != nil {
@@ -46,7 +48,11 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		deps.DB = pool
 		deps.Auth = &auth.Service{Pool: pool, Clock: domain.SystemClock{}, Logger: logger, Secure: cfg.IsProd()}
 		deps.Messages = outbox.Queue{Pool: pool, Clock: domain.SystemClock{}}
+		if transports, err = newTransports(cfg, pool, logger); err != nil {
+			return err
+		}
 		deps.Practice = &service.Practice{Pool: pool, Clock: domain.SystemClock{}}
+		deps.NotifyTransport = service.NewNotifyTransport(pool, domain.SystemClock{}, transports, logger)
 		deps.Privacy = &service.Privacy{Pool: pool, Clock: domain.SystemClock{}, Logger: logger}
 		deps.Audit = &service.Audit{Pool: pool, Clock: domain.SystemClock{}}
 		deps.Feed = &service.CalendarFeed{Pool: pool, Clock: domain.SystemClock{}}
@@ -75,6 +81,7 @@ func serve(ctx context.Context, logOut io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("notifications: %w", err)
 	}
+	dispatcher = perPractice(dispatcher, transports)
 	handler := web.Routes(deps)
 
 	// Le worker partage le contexte du serveur : un signal arrête les deux. On

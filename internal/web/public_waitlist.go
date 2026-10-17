@@ -48,6 +48,8 @@ func (h *waitlistHandlers) fail(w http.ResponseWriter, r *http.Request, err erro
 	switch {
 	case errors.Is(err, domain.ErrNotFound):
 		h.rd.Error(w, r, http.StatusNotFound, "")
+	case errors.Is(err, service.ErrBookingClosed):
+		h.rd.Error(w, r, http.StatusServiceUnavailable, bookingClosedMessage(err))
 	default:
 		httpx.LoggerFrom(r.Context()).Error("liste d'attente en échec", slog.String("err", err.Error()))
 		h.rd.Error(w, r, http.StatusInternalServerError, "")
@@ -63,6 +65,7 @@ type WaitlistValues struct {
 
 // WaitlistFormData est la donnée de la page public_waitlist.
 type WaitlistFormData struct {
+	Channels               service.Channels // canaux proposés pour recevoir le code (T086)
 	Practice, Practitioner string
 	TypeName               string
 	TypeID                 string
@@ -138,8 +141,9 @@ func (h *waitlistHandlers) target(w http.ResponseWriter, r *http.Request) (t ser
 func (h *waitlistHandlers) renderForm(w http.ResponseWriter, r *http.Request, status int, t service.Target, v WaitlistValues, errs []string) {
 	base := basePath(r)
 	w.Header().Set("Cache-Control", "no-store")
+	v.Channel = availableChannel(v.Channel, t.Channels)
 	h.rd.PageStatus(w, r, status, "public_waitlist", WaitlistFormData{
-		Practice: t.Practice.Name, Practitioner: practitionerView(t.Practice.Slug, t.Practitioner).Name,
+		Channels: t.Channels, Practice: t.Practice.Name, Practitioner: practitionerView(t.Practice.Slug, t.Practitioner).Name,
 		TypeName: t.Type.Name, TypeID: t.Type.ID.String(), Form: v, Weekdays: weekdayChoices(v.Weekdays),
 		Today:  h.booking.Now().In(t.Loc).Format("2006-01-02"),
 		Action: base + "/waitlist", BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}}.Encode(),
@@ -184,6 +188,7 @@ func (h *waitlistHandlers) submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	v := readWaitlistForm(r)
+	v.Channel = availableChannel(v.Channel, t.Channels)
 	if !v.Consent {
 		h.renderForm(w, r, http.StatusUnprocessableEntity, t, v, []string{"Vous devez accepter l'utilisation de vos coordonnées pour être prévenu(e) d'un créneau libéré."})
 		return

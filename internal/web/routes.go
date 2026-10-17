@@ -55,6 +55,8 @@ type Deps struct {
 	Status StatusSource
 	// Waitlist (liste d'attente) est optionnel : nil = pas de liste d'attente (ni /w/…, ni /admin/waitlist).
 	Waitlist *service.Waitlist
+	// NotifyTransport (fournisseurs d'email et de SMS par cabinet) est optionnel : nil = pas de /admin/settings/notifications/transport.
+	NotifyTransport *service.NotifyTransport
 }
 
 const pingTimeout = 2 * time.Second

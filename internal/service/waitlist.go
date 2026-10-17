@@ -224,6 +224,9 @@ func (w *Waitlist) StartVerification(ctx context.Context, in WaitlistVerifyInput
 	if err != nil {
 		return Verification{}, err
 	}
+	if err := checkOTPChannel(ctx, q, pc, in.Channel); err != nil {
+		return Verification{}, err
+	}
 	win, err := parseWindow(in.Window, now, loc)
 	if err != nil {
 		return Verification{}, err

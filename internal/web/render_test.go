@@ -63,6 +63,8 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = SettingsPage{}
 			case "admin_notifications":
 				data = NotifyPage{}
+			case "admin_transport":
+				data = TransportPage{}
 			case "admin_types":
 				data = &TypesPage{}
 			case "admin_availability":

@@ -135,6 +135,9 @@ func (s *Service) Team(ctx context.Context, actor User) (TeamView, error) {
 	return v, nil
 }
 
+// ErrEmailDisabled : l'email est désactivé pour le cabinet, on ne peut pas inviter (le lien part par email).
+var ErrEmailDisabled = domain.ErrValidation{Field: "email", Msg: "L'envoi d'emails est désactivé pour votre cabinet : activez l'email pour inviter un collègue."}
+
 // Invite enregistre une invitation (jeton haché sha256, usage unique, 48 h) et
 // met l'email d'activation dans l'outbox, dans la même transaction. baseURL est
 // l'URL publique. Le jeton n'est jamais journalisé.
@@ -161,6 +164,14 @@ func (s *Service) Invite(ctx context.Context, actor User, baseURL, email, role, 
 	pc, err := q.GetPractice(ctx, actor.PracticeID)
 	if err != nil {
 		return fmt.Errorf("lecture cabinet: %w", err)
+	}
+	// L'invitation part par email : refusée si le cabinet a désactivé ce canal (T086).
+	if tr, err := q.GetNotifyTransport(ctx, sqlcgen.GetNotifyTransportParams{PracticeID: actor.PracticeID, Kind: outbox.KindEmail}); err == nil {
+		if tr.Mode == "disabled" {
+			return ErrEmailDisabled
+		}
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return fmt.Errorf("lecture du fournisseur email: %w", err)
 	}
 	token, err := newToken()
 	if err != nil {

@@ -46,6 +46,10 @@ type Config struct {
 	WorkerEnabled bool
 	// Email : envoi des emails transactionnels (voir email.go).
 	Email EmailConfig
+	// NotifyAllowPrivateHosts autorise les fournisseurs propres aux cabinets (T086) à viser
+	// des adresses privées, de bouclage ou link-local, et le HTTP en clair
+	// (DOCTOLIBRE_NOTIFY_ALLOW_PRIVATE_HOSTS, défaut false).
+	NotifyAllowPrivateHosts bool
 }
 
 // IsProd indique si l'application tourne en production.
@@ -100,8 +104,9 @@ func LoadFrom(getenv func(string) string) (Config, error) {
 		Env:            get("DOCTOLIBRE_ENV", EnvDev),
 		Timezone:       get("DOCTOLIBRE_TIMEZONE", "Europe/Paris"),
 
-		MetricsToken: get("DOCTOLIBRE_METRICS_TOKEN", ""),
-		BackupDir:    get("DOCTOLIBRE_BACKUP_DIR", ""),
+		NotifyAllowPrivateHosts: isTrue(get("DOCTOLIBRE_NOTIFY_ALLOW_PRIVATE_HOSTS", "false")),
+		MetricsToken:            get("DOCTOLIBRE_METRICS_TOKEN", ""),
+		BackupDir:               get("DOCTOLIBRE_BACKUP_DIR", ""),
 	}
 	switch strings.ToLower(get("DOCTOLIBRE_WORKER", "on")) {
 	case "on":
@@ -153,7 +158,7 @@ func (c Config) Validate() error {
 	if err := c.SMS.Validate(); err != nil {
 		errs = append(errs, err)
 	}
-	if err := c.Email.validate(); err != nil {
+	if err := c.Email.Validate(); err != nil {
 		errs = append(errs, err)
 	}
 	if c.SecretKey == "" {

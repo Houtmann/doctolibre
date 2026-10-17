@@ -62,7 +62,8 @@ func loadEmail(get func(key, def string) string) (EmailConfig, error) {
 	return e, nil
 }
 
-func (e EmailConfig) validate() error {
+// Validate vérifie la configuration email (variables d'environnement ou réglage d'un cabinet, T086).
+func (e EmailConfig) Validate() error {
 	var errs []error
 	switch e.Driver {
 	case EmailDriverLog:

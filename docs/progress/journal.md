@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-17 — T086 fournisseurs email/SMS par cabinet (sonnet ; contrôle : opus)
+
+- **Tâches** : T086 créée (spec opus, demande humaine : par cabinet, désactivable) → in_progress → review
+- **Fait** : migration 00023 `practice_notify_transport` (modes `server` / `custom` / `disabled`), secrets AES-256-GCM (`internal/secretbox`), dispatcher par message avec cache par `updated_at` (sans redémarrage), garde-fou SSRF à la connexion (`notify/guard.go`, `DOCTOLIBRE_NOTIFY_ALLOW_PRIVATE_HOSTS`), page `/admin/settings/notifications/transport` avec envoi de test, canal désactivé → messages `cancelled`, code patient restreint aux canaux actifs, réservation en ligne et liste d'attente fermées sans canal, invitations refusées sans email ; docs install/sms/rgpd
+- **Vérification** : `make sqlc css check` ✅ relancé par l'orchestrateur ; relus : migration, secretbox, guard, transport, worker, senders custom, SendTest (hors transaction), booking. Navigateur **non vu**.
+- **Reste** : passage navigateur (page de réglage clair/sombre 360/1280 px, pages publiques fermées, test vers Mailpit)
+- **Décisions** : deux lignes T086 du 2026-10-17 dans decisions.md
+
 ## 2026-10-17 — T054, T059, T072 en parallèle (sonnet ×3 en worktrees ; contrôle : opus)
 
 - **Tâches** : T054, T059, T072 todo → review

@@ -218,6 +218,16 @@ type Practice struct {
 	NoShowBlockThreshold      pgtype.Int2
 }
 
+type PracticeNotifyTransport struct {
+	PracticeID uuid.UUID
+	Kind       string
+	Mode       string
+	Driver     pgtype.Text
+	Settings   []byte
+	Secrets    []byte
+	UpdatedAt  time.Time
+}
+
 type Practitioner struct {
 	ID         uuid.UUID
 	PracticeID uuid.UUID

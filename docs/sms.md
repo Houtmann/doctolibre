@@ -87,7 +87,7 @@ L'expéditeur (`DOCTOLIBRE_SMS_SENDER`) doit être déclaré dans l'espace clien
 | `DOCTOLIBRE_SMS_ANDROID_USER` | Identifiant affiché dans l'app |
 | `DOCTOLIBRE_SMS_ANDROID_PASSWORD` | Mot de passe affiché dans l'app |
 
-Le SMS part avec la SIM du téléphone (pas d'expéditeur personnalisé). En mode local, le serveur doit joindre le téléphone (même réseau ou VPN) ; ne pas exposer le port du téléphone sur Internet.
+Le SMS part avec la SIM du téléphone (pas d'expéditeur personnalisé). **Réglée par un cabinet dans l'administration** (et non par l'environnement), une passerelle sur un réseau privé n'est joignable que si l'administrateur du serveur met `DOCTOLIBRE_NOTIFY_ALLOW_PRIVATE_HOSTS=true` (voir [`install.md`](install.md)). En mode local, le serveur doit joindre le téléphone (même réseau ou VPN) ; ne pas exposer le port du téléphone sur Internet.
 
 ### `http` (webhook générique)
 
@@ -139,6 +139,10 @@ DOCTOLIBRE_SMS_SENDER=+33700000000
 ```
 
 Ces exemples n'ont pas été testés contre les API réelles (seulement contre un serveur de test local).
+
+## Fournisseur propre à un cabinet
+
+Chaque cabinet peut, dans `/admin/settings/notifications/transport`, utiliser son propre fournisseur (webhook HTTP, passerelle Android, OVH) à la place de celui du serveur, ou désactiver les SMS. Les identifiants sont chiffrés en base. Le webhook et la passerelle doivent être en `https` et ne peuvent pas viser une adresse privée, sauf `DOCTOLIBRE_NOTIFY_ALLOW_PRIVATE_HOSTS=true`. Désactivés, les SMS ne partent plus et le code de vérification de la réservation en ligne part par email.
 
 ## Règles d'enfilement (utilisées par T023)
 

@@ -59,6 +59,9 @@ func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger)
 	if d.Practice != nil {
 		d.configRoutes(mux, rd, logger)
 	}
+	if d.NotifyTransport != nil {
+		d.transportRoutes(mux, rd, logger)
+	}
 	if d.Calendar != nil {
 		d.calendarRoutes(mux, rd, logger)
 		d.todayRoutes(mux, rd, logger)
@@ -151,6 +154,8 @@ func (h *adminHandlers) logout(w http.ResponseWriter, r *http.Request) {
 type DashboardData struct {
 	// Booking est nil quand le service de configuration n'est pas branché.
 	Booking *DashboardBooking
+	// EmailDisabled, SMSDisabled : canal désactivé par le cabinet (T086) => bandeau d'avertissement.
+	EmailDisabled, SMSDisabled bool
 }
 
 // DashboardBooking décrit la page de réservation publique du cabinet.
@@ -197,6 +202,13 @@ func (h *adminHandlers) dashboard(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 		data.Booking = b
+		ch, err := h.practice.Channels(r.Context(), a)
+		if err != nil {
+			httpx.LoggerFrom(r.Context()).Error("canaux de notification en échec", slog.String("practice_id", a.PracticeID.String()), slog.String("err", err.Error()))
+			h.rd.Error(w, r, http.StatusInternalServerError, "")
+			return
+		}
+		data.EmailDisabled, data.SMSDisabled = !ch.Email, !ch.SMS
 	}
 	h.rd.Page(w, r, "admin_dashboard", data)
 }

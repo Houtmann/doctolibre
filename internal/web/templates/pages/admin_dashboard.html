@@ -3,6 +3,12 @@
 {{define "content"}}
 <h1 class="text-2xl font-semibold">Tableau de bord</h1>
 <p>Bienvenue dans l'espace du cabinet.</p>
+{{with .Data}}{{if or .EmailDisabled .SMSDisabled}}
+<aside class="alert alert-warning items-start" aria-label="Canal de notification désactivé"><div>
+  <p>{{if and .EmailDisabled .SMSDisabled}}L'email et le SMS sont désactivés : aucun message n'est envoyé aux patients et la réservation en ligne est fermée.{{else if .EmailDisabled}}L'email est désactivé : les patients ne reçoivent plus de message par email et vous ne pouvez plus inviter de collègue.{{else}}Le SMS est désactivé : les patients ne reçoivent plus de SMS.{{end}}
+    <a class="link" href="/admin/settings/notifications/transport">Régler les fournisseurs</a></p>
+</div></aside>
+{{end}}{{end}}
 {{with .Data}}{{with .Booking}}
 <section class="space-y-3" aria-labelledby="booking-page">
   <h2 class="text-xl font-semibold" id="booking-page">Votre page de réservation</h2>

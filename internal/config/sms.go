@@ -73,6 +73,14 @@ func loadSMS(get func(key, def string) string) (SMSConfig, error) {
 	return c, nil
 }
 
+func isTrue(s string) bool {
+	switch strings.ToLower(s) {
+	case "true", "1", "yes", "oui", "on":
+		return true
+	}
+	return false
+}
+
 func isFalse(s string) bool {
 	switch strings.ToLower(s) {
 	case "false", "0", "no", "non", "off":

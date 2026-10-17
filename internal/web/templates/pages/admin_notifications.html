@@ -4,6 +4,12 @@
 <h1 class="text-2xl font-semibold">Notifications aux patients</h1>
 <p><a class="link link-primary" href="/admin/settings">Retour aux paramètres du cabinet</a></p>
 {{template "form_errors.html" .Data.Errors}}
+{{if or (not .Data.Channels.Email) (not .Data.Channels.SMS)}}
+<aside class="alert alert-warning items-start max-w-2xl" aria-label="Canal désactivé"><div>
+  <p>{{if not .Data.Channels.Email}}L'email est désactivé pour votre cabinet.{{end}} {{if not .Data.Channels.SMS}}Le SMS est désactivé pour votre cabinet.{{end}}
+    Les canaux désactivés ne sont pas proposés ci-dessous. <a class="link" href="/admin/settings/notifications/transport">Fournisseurs d'email et de SMS</a></p>
+</div></aside>
+{{end}}
 <form class="space-y-4 max-w-2xl" method="post" action="/admin/settings/notifications">
   {{csrf .CSRF}}
   {{with .Data.Form}}
@@ -12,27 +18,27 @@
     <div class="space-y-1">
       <label class="block text-sm font-medium" for="confirmation_channel">Confirmation de rendez-vous</label>
       <select class="select w-full" id="confirmation_channel" name="confirmation_channel">
-      <option value="email"{{if eq .ConfirmationChannel "email"}} selected{{end}}>Email (SMS si le patient n'a pas d'email)</option>
-      <option value="sms"{{if eq .ConfirmationChannel "sms"}} selected{{end}}>SMS</option>
-      <option value="both"{{if eq .ConfirmationChannel "both"}} selected{{end}}>Email et SMS</option>
+      {{if $.Data.Channels.Email}}<option value="email"{{if eq .ConfirmationChannel "email"}} selected{{end}}>Email (SMS si le patient n'a pas d'email)</option>{{end}}
+      {{if $.Data.Channels.SMS}}<option value="sms"{{if eq .ConfirmationChannel "sms"}} selected{{end}}>SMS</option>{{end}}
+      {{if and $.Data.Channels.Email $.Data.Channels.SMS}}<option value="both"{{if eq .ConfirmationChannel "both"}} selected{{end}}>Email et SMS</option>{{end}}
       <option value="none"{{if eq .ConfirmationChannel "none"}} selected{{end}}>Aucun</option>
     </select>
     </div>
     <div class="space-y-1">
       <label class="block text-sm font-medium" for="reminder_channel">Rappels</label>
       <select class="select w-full" id="reminder_channel" name="reminder_channel">
-      <option value="sms"{{if eq .ReminderChannel "sms"}} selected{{end}}>SMS (email si le patient n'a pas de téléphone)</option>
-      <option value="email"{{if eq .ReminderChannel "email"}} selected{{end}}>Email (SMS si le patient n'a pas d'email)</option>
-      <option value="both"{{if eq .ReminderChannel "both"}} selected{{end}}>Email et SMS</option>
+      {{if $.Data.Channels.SMS}}<option value="sms"{{if eq .ReminderChannel "sms"}} selected{{end}}>SMS (email si le patient n'a pas de téléphone)</option>{{end}}
+      {{if $.Data.Channels.Email}}<option value="email"{{if eq .ReminderChannel "email"}} selected{{end}}>Email (SMS si le patient n'a pas d'email)</option>{{end}}
+      {{if and $.Data.Channels.Email $.Data.Channels.SMS}}<option value="both"{{if eq .ReminderChannel "both"}} selected{{end}}>Email et SMS</option>{{end}}
       <option value="none"{{if eq .ReminderChannel "none"}} selected{{end}}>Aucun</option>
     </select>
     </div>
     <div class="space-y-1">
       <label class="block text-sm font-medium" for="change_channel">Annulation ou déplacement par le cabinet</label>
       <select class="select w-full" id="change_channel" name="change_channel">
-      <option value="email"{{if eq .ChangeChannel "email"}} selected{{end}}>Email (SMS si le patient n'a pas d'email)</option>
-      <option value="sms"{{if eq .ChangeChannel "sms"}} selected{{end}}>SMS</option>
-      <option value="both"{{if eq .ChangeChannel "both"}} selected{{end}}>Email et SMS</option>
+      {{if $.Data.Channels.Email}}<option value="email"{{if eq .ChangeChannel "email"}} selected{{end}}>Email (SMS si le patient n'a pas d'email)</option>{{end}}
+      {{if $.Data.Channels.SMS}}<option value="sms"{{if eq .ChangeChannel "sms"}} selected{{end}}>SMS</option>{{end}}
+      {{if and $.Data.Channels.Email $.Data.Channels.SMS}}<option value="both"{{if eq .ChangeChannel "both"}} selected{{end}}>Email et SMS</option>{{end}}
       <option value="none"{{if eq .ChangeChannel "none"}} selected{{end}}>Aucun</option>
     </select>
     </div>

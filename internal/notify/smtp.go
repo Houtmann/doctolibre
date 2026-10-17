@@ -10,6 +10,7 @@ import (
 	"net/textproto"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"doctolibre/internal/config"
@@ -33,8 +34,10 @@ type SMTPConfig struct {
 	HelloName   string        // nom EHLO ; défaut "localhost"
 	DialTimeout time.Duration // défaut 10 s
 	Timeout     time.Duration // durée totale d'un envoi ; défaut 30 s
-	TLSConfig   *tls.Config   // tests : racines de confiance ; ServerName est forcé à Host
-	Now         func() time.Time
+	// Control est appelé à chaque connexion avec l'adresse IP résolue (garde-fou SSRF, voir Control).
+	Control   func(network, address string, c syscall.RawConn) error
+	TLSConfig *tls.Config // tests : racines de confiance ; ServerName est forcé à Host
+	Now       func() time.Time
 }
 
 // SMTPSender envoie via un serveur SMTP quelconque (net/smtp).
@@ -90,7 +93,7 @@ func (s *SMTPSender) Send(ctx context.Context, e Email) (string, error) {
 		return "", err
 	}
 	addr := net.JoinHostPort(s.cfg.Host, strconv.Itoa(s.cfg.Port))
-	d := net.Dialer{Timeout: s.cfg.DialTimeout}
+	d := net.Dialer{Timeout: s.cfg.DialTimeout, Control: s.cfg.Control}
 	conn, err := d.DialContext(ctx, "tcp", addr)
 	if err != nil {
 		return "", fmt.Errorf("smtp: connexion: %w", err)

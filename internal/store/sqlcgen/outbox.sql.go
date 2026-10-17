@@ -176,6 +176,33 @@ func (q *Queries) ListRecentOutboxMessages(ctx context.Context, arg ListRecentOu
 	return items, nil
 }
 
+const markOutboxCancelled = `-- name: MarkOutboxCancelled :execrows
+UPDATE outbox_message
+SET status = 'cancelled', last_error = $1, updated_at = $2
+WHERE id = $3 AND status = 'sending' AND attempts = $4
+`
+
+type MarkOutboxCancelledParams struct {
+	LastError pgtype.Text
+	Now       time.Time
+	ID        uuid.UUID
+	Attempts  int32
+}
+
+// Canal désactivé par le cabinet (T086) : pas de retente ; renvoi manuel possible.
+func (q *Queries) MarkOutboxCancelled(ctx context.Context, arg MarkOutboxCancelledParams) (int64, error) {
+	result, err := q.db.Exec(ctx, markOutboxCancelled,
+		arg.LastError,
+		arg.Now,
+		arg.ID,
+		arg.Attempts,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const markOutboxFailed = `-- name: MarkOutboxFailed :execrows
 UPDATE outbox_message
 SET status = 'failed', last_error = $1, updated_at = $2

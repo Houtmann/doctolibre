@@ -78,3 +78,9 @@ SELECT run_at FROM outbox_message WHERE status = 'pending' ORDER BY run_at LIMIT
 UPDATE outbox_message
 SET updated_at = @now
 WHERE id = @id AND status = 'sending' AND attempts = @attempts;
+
+-- name: MarkOutboxCancelled :execrows
+-- Canal désactivé par le cabinet (T086) : pas de retente ; renvoi manuel possible.
+UPDATE outbox_message
+SET status = 'cancelled', last_error = @last_error, updated_at = @now
+WHERE id = @id AND status = 'sending' AND attempts = @attempts;

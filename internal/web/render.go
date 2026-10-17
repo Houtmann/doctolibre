@@ -338,6 +338,8 @@ func (r *Renderer) Error(w http.ResponseWriter, req *http.Request, status int, m
 		d.Title = "Accès refusé"
 	case status == http.StatusTooManyRequests:
 		d.Title = "Trop de requêtes"
+	case status == http.StatusServiceUnavailable && msg != "":
+		d.Title = "Service indisponible" // message métier conservé (ex. réservation en ligne fermée)
 	case status >= 500:
 		d.Title, d.Message = "Une erreur est survenue", "Un problème est survenu de notre côté. Veuillez réessayer dans quelques instants."
 	}

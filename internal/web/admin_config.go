@@ -574,6 +574,8 @@ type NotifyPage struct {
 	Form     service.NotificationInput
 	Errors   []string
 	Estimate service.SMSEstimate
+	// Channels : canaux actifs (T086) ; un canal désactivé n'est pas proposé.
+	Channels service.Channels
 }
 
 func (h *configHandlers) notifyPage(w http.ResponseWriter, r *http.Request, status int, in service.NotificationInput, errs []string) {
@@ -582,7 +584,12 @@ func (h *configHandlers) notifyPage(w http.ResponseWriter, r *http.Request, stat
 		h.fail(w, r, err)
 		return
 	}
-	h.rd.PageStatus(w, r, status, "admin_notifications", NotifyPage{Form: in, Errors: errs, Estimate: est})
+	ch, err := h.svc.Channels(r.Context(), actorFrom(r))
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.PageStatus(w, r, status, "admin_notifications", NotifyPage{Form: in, Errors: errs, Estimate: est, Channels: ch})
 }
 
 func (h *configHandlers) notifyForm(w http.ResponseWriter, r *http.Request) {

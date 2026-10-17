@@ -55,3 +55,15 @@ func NewEmailSender(cfg config.EmailConfig, logger *slog.Logger) (EmailSender, e
 		return nil, fmt.Errorf("driver email %q inconnu", cfg.Driver)
 	}
 }
+
+// NewCustomEmailSender construit le sender SMTP d'un cabinet (T086) : la
+// connexion refuse les adresses internes sauf si allowPrivate.
+func NewCustomEmailSender(cfg config.EmailConfig, allowPrivate bool) (EmailSender, error) {
+	if cfg.Driver != config.EmailDriverSMTP {
+		return nil, fmt.Errorf("driver email %q non autorisé pour un cabinet", cfg.Driver)
+	}
+	return NewSMTPSender(SMTPConfig{
+		Host: cfg.SMTPHost, Port: cfg.SMTPPort, User: cfg.SMTPUser, Password: cfg.SMTPPassword,
+		From: cfg.SMTPFrom, TLS: cfg.SMTPTLS, Control: Control(allowPrivate),
+	})
+}

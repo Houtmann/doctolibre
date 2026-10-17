@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"time"
 
 	"doctolibre/internal/config"
@@ -108,4 +109,42 @@ func SMSRunAt(now time.Time, loc *time.Location, isOTP bool) time.Time {
 		day = t.AddDate(0, 0, 1)
 	}
 	return time.Date(day.Year(), day.Month(), day.Day(), quietEndHour, 0, 0, 0, loc).UTC()
+}
+
+// NewCustomSMSSender construit le driver SMS d'un cabinet (T086). Les appels
+// partent d'un client qui refuse les adresses internes à la connexion (sauf
+// allowPrivate), ne suit aucune redirection et ignore le proxy d'environnement.
+// Le HTTP en clair n'est accepté qu'avec allowPrivate.
+func NewCustomSMSSender(cfg config.SMSConfig, clock domain.Clock, allowPrivate bool) (SMSSender, error) {
+	client := GuardedHTTPClient(allowPrivate)
+	needHTTPS := func(raw string) error {
+		if allowPrivate || raw == "" {
+			return nil
+		}
+		if u, err := url.Parse(raw); err != nil || u.Scheme != "https" || u.Host == "" {
+			return errors.New("notify: l'URL du fournisseur doit être en https")
+		}
+		return nil
+	}
+	switch cfg.Driver {
+	case config.SMSDriverHTTP:
+		if err := needHTTPS(cfg.HTTP.URL); err != nil {
+			return nil, err
+		}
+		return httpgeneric.New(httpgeneric.Config{
+			Method: cfg.HTTP.Method, URL: cfg.HTTP.URL, Headers: cfg.HTTP.Headers, Body: cfg.HTTP.Body,
+			BasicUser: cfg.HTTP.BasicUser, BasicPass: cfg.HTTP.BasicPass, Bearer: cfg.HTTP.Bearer, Client: client,
+		})
+	case config.SMSDriverAndroid:
+		if err := needHTTPS(cfg.AndroidURL); err != nil {
+			return nil, err
+		}
+		return androidgateway.New(androidgateway.Config{URL: cfg.AndroidURL, User: cfg.AndroidUser, Pass: cfg.AndroidPass, Client: client})
+	case config.SMSDriverOVH:
+		return ovh.New(ovh.Config{
+			ServiceName: cfg.OVHService, AppKey: cfg.OVHAppKey, AppSecret: cfg.OVHAppSecret,
+			ConsumerKey: cfg.OVHConsumerKey, Clock: clock, Client: client,
+		})
+	}
+	return nil, fmt.Errorf("notify: driver SMS %q non autorisé pour un cabinet", cfg.Driver)
 }

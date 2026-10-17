@@ -11,6 +11,7 @@
 | Contenu des emails et SMS (prénom, date, lien de gestion) | `outbox_message` | Effacé après la durée de conservation (voir ci-dessous) |
 | Inscriptions en liste d'attente (fenêtre de dates, jours, plage horaire souhaités, statut) et propositions de créneaux | `waitlist_entry`, `waitlist_offer` | Donnée personnelle ; supprimées avec la fiche patient (suppression dure comme anonymisation), reprises dans l'export, réaffectées lors d'une fusion de fiches ; le lien de proposition est retiré du message dès son envoi |
 | Codes de vérification, jetons | `otp_challenge`, `session`, `password_reset` | Seuls des hachés sont stockés ; supprimés une fois expirés |
+| Identifiants des fournisseurs d'email / SMS propres à un cabinet (mot de passe SMTP, clés OVH, mot de passe de la passerelle Android) | `practice_notify_transport` | Chiffrés (AES-256-GCM, clé dérivée de `DOCTOLIBRE_SECRET_KEY`), jamais affichés ni journalisés ; **qui détient la base et la clé secrète peut les lire** : protégez-les ensemble comme des sauvegardes |
 | Journal d'accès | `audit_log` | Identifiants uniquement (jamais de nom, téléphone, email). L'adresse IP des connexions du personnel y figure |
 
 **Aucune donnée médicale** (pathologie, ordonnance, compte rendu) n'est collectée : le champ « note » est une note administrative, avec avertissement dans l'interface.

@@ -91,6 +91,11 @@ func runWorker(ctx context.Context, logOut io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("notifications: %w", err)
 	}
+	transports, err := newTransports(cfg, pool, logger)
+	if err != nil {
+		return err
+	}
+	dispatcher = perPractice(dispatcher, transports)
 	_, wait := startWorker(ctx, cfg, pool, dispatcher, logger)
 	wait()
 	return nil

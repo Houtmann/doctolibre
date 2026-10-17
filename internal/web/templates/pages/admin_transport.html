@@ -1,0 +1,201 @@
+{{/* layout: admin */}}
+{{define "title"}}Fournisseurs d'email et de SMS{{end}}
+{{define "content"}}
+<h1 class="text-2xl font-semibold">Fournisseurs d'email et de SMS</h1>
+<p><a class="link link-primary" href="/admin/settings/notifications">Retour aux réglages des notifications</a></p>
+<aside class="alert alert-info alert-soft items-start max-w-2xl" aria-label="Stockage des identifiants"><div>
+  <p>Pour chaque canal, vous utilisez le fournisseur du serveur, votre propre fournisseur, ou vous désactivez le canal.
+    Les identifiants de votre fournisseur sont enregistrés <strong>chiffrés</strong> dans la base de données et ne sont jamais réaffichés.
+    Quiconque détient la base <em>et</em> la clé secrète du serveur peut les lire. Un changement s'applique dès le prochain message.</p>
+</div></aside>
+
+<section class="space-y-3 max-w-2xl mt-4" aria-labelledby="email-title">
+  <h2 class="text-xl font-semibold" id="email-title">Email</h2>
+  {{if eq .Data.ErrorKind "email"}}{{template "form_errors.html" .Data.Errors}}{{end}}
+  {{with .Data.Email}}
+  {{if .Unreadable}}<div class="alert alert-warning" role="alert"><span>Identifiants illisibles (la clé secrète du serveur a changé) : ressaisissez-les.</span></div>{{end}}
+  <form class="space-y-4" method="post" action="/admin/settings/notifications/transport/email">
+    {{csrf $.CSRF}}
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">Fournisseur d'email</legend>
+      <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="mode" value="server"{{if eq .Mode "server"}} checked{{end}}> <span>Fournisseur du serveur (<code>{{.ServerDriver}}</code>)</span></label>
+      {{if .ServerLogInProd}}<p class="text-sm text-warning">Le fournisseur du serveur est « log » en production : aucun email réel n'est envoyé.</p>{{end}}
+      <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="mode" value="custom"{{if eq .Mode "custom"}} checked{{end}}> <span>Mon fournisseur (SMTP)</span></label>
+      <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="mode" value="disabled"{{if eq .Mode "disabled"}} checked{{end}}> <span>Désactivé (aucun email ; invitations d'équipe impossibles)</span></label>
+    </fieldset>
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">Mon serveur SMTP</legend>
+      <p class="text-sm text-base-content/70">Ces champs ne sont pris en compte que si « Mon fournisseur » est choisi.</p>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="email-host">Serveur SMTP</label>
+        <input class="input w-full" id="email-host" name="f_smtp_host" value="{{index .Settings "host"}}" maxlength="253" autocomplete="off" placeholder="smtp.exemple.fr">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="email-port">Port (vide = selon le chiffrement)</label>
+        <input class="input w-full" id="email-port" name="f_smtp_port" type="number" inputmode="numeric" min="1" max="65535" value="{{index .Settings "port"}}">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="email-tls">Chiffrement</label>
+        <select class="select w-full" id="email-tls" name="f_smtp_tls">
+          <option value="starttls"{{if or (eq (index .Settings "tls") "starttls") (eq (index .Settings "tls") "")}} selected{{end}}>STARTTLS (port 587)</option>
+          <option value="tls"{{if eq (index .Settings "tls") "tls"}} selected{{end}}>TLS direct (port 465)</option>
+          <option value="none"{{if eq (index .Settings "tls") "none"}} selected{{end}}>Aucun (port 25)</option>
+        </select>
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="email-from">Expéditeur</label>
+        <input class="input w-full" id="email-from" name="f_smtp_from" value="{{index .Settings "from"}}" maxlength="254" placeholder="Cabinet Dupont &lt;rdv@exemple.fr&gt;">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="email-user">Identifiant</label>
+        <input class="input w-full" id="email-user" name="f_smtp_user" value="{{index .Settings "user"}}" maxlength="254" autocomplete="off">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="email-password">Mot de passe {{if index .SecretSet "password"}}<span class="badge badge-success badge-soft">défini</span>{{end}}</label>
+        <input class="input w-full" id="email-password" name="x_smtp_password" type="password" autocomplete="new-password" maxlength="4000" aria-describedby="email-password-help">
+        <p class="text-sm text-base-content/70" id="email-password-help">{{if index .SecretSet "password"}}Laissez vide pour conserver la valeur actuelle.{{else}}Laissez vide si le serveur n'exige pas d'authentification.{{end}}</p>
+        {{if index .SecretSet "password"}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-sm mt-0.5" type="checkbox" name="c_smtp_password" value="1"> Effacer le mot de passe enregistré</label>{{end}}
+      </div>
+    </fieldset>
+    <button class="btn btn-primary" type="submit">Enregistrer l'email</button>
+  </form>
+  {{if ne .Mode "disabled"}}
+  <form class="flex items-end gap-3" method="post" action="/admin/settings/notifications/transport/email/test">
+    {{csrf $.CSRF}}
+    <button class="btn btn-outline" type="submit">Envoyer un test à mon adresse</button>
+    <p class="text-sm text-base-content/70">Utilise la configuration enregistrée (5 tests par heure).</p>
+  </form>
+  {{end}}
+  {{end}}
+</section>
+
+<section class="space-y-3 max-w-2xl mt-8" aria-labelledby="sms-title">
+  <h2 class="text-xl font-semibold" id="sms-title">SMS</h2>
+  {{if eq .Data.ErrorKind "sms"}}{{template "form_errors.html" .Data.Errors}}{{end}}
+  {{with .Data.SMS}}
+  {{if .Unreadable}}<div class="alert alert-warning" role="alert"><span>Identifiants illisibles (la clé secrète du serveur a changé) : ressaisissez-les.</span></div>{{end}}
+  <form class="space-y-4" method="post" action="/admin/settings/notifications/transport/sms">
+    {{csrf $.CSRF}}
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">Fournisseur de SMS</legend>
+      <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="mode" value="server"{{if eq .Mode "server"}} checked{{end}}> <span>Fournisseur du serveur (<code>{{.ServerDriver}}</code>)</span></label>
+      {{if .ServerLogInProd}}<p class="text-sm text-warning">Le fournisseur du serveur est « log » en production : aucun SMS réel n'est envoyé.</p>{{end}}
+      <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="mode" value="custom"{{if eq .Mode "custom"}} checked{{end}}> <span>Mon fournisseur</span></label>
+      <label class="flex items-start gap-3"><input class="radio radio-primary mt-0.5" type="radio" name="mode" value="disabled"{{if eq .Mode "disabled"}} checked{{end}}> <span>Désactivé (aucun SMS ; le code de vérification part par email)</span></label>
+    </fieldset>
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">Mon fournisseur de SMS</legend>
+      <p class="text-sm text-base-content/70">Ces champs ne sont pris en compte que si « Mon fournisseur » est choisi ; seul le bloc du fournisseur sélectionné ci-dessous est lu.</p>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-driver">Fournisseur</label>
+        <select class="select w-full" id="sms-driver" name="driver">
+          <option value="">Choisir…</option>
+          <option value="http"{{if eq .Driver "http"}} selected{{end}}>Webhook HTTP générique</option>
+          <option value="android"{{if eq .Driver "android"}} selected{{end}}>Passerelle Android (SMS Gateway for Android)</option>
+          <option value="ovh"{{if eq .Driver "ovh"}} selected{{end}}>OVH</option>
+        </select>
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-sender">Expéditeur (selon le fournisseur)</label>
+        <input class="input w-full" id="sms-sender" name="f_common_sender" value="{{index .Settings "sender"}}" maxlength="11">
+      </div>
+      <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="f_common_transliterate" value="true"{{if ne (index .Settings "transliterate") "false"}} checked{{end}}> Remplacer les accents (SMS plus courts)</label>
+    </fieldset>
+
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">Webhook HTTP</legend>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-http-method">Méthode</label>
+        <select class="select w-full" id="sms-http-method" name="f_http_method">
+          <option value="POST"{{if or (eq (index .Settings "method") "POST") (eq (index .Settings "method") "")}} selected{{end}}>POST</option>
+          <option value="PUT"{{if eq (index .Settings "method") "PUT"}} selected{{end}}>PUT</option>
+          <option value="PATCH"{{if eq (index .Settings "method") "PATCH"}} selected{{end}}>PATCH</option>
+          <option value="GET"{{if eq (index .Settings "method") "GET"}} selected{{end}}>GET</option>
+        </select>
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-http-url">URL (https)</label>
+        <input class="input w-full" id="sms-http-url" name="f_http_url" type="url" value="{{if eq .Driver "http"}}{{index .Settings "url"}}{{end}}" maxlength="2000" autocomplete="off">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-http-body">Corps de la requête</label>
+        <textarea class="textarea w-full font-mono" id="sms-http-body" name="f_http_body" rows="4" maxlength="4000" aria-describedby="sms-http-body-help">{{index .Settings "body"}}</textarea>
+        <p class="text-sm text-base-content/70" id="sms-http-body-help">Modèle avec <code>{{"{{.To}}"}}</code>, <code>{{"{{.Body}}"}}</code> et <code>{{"{{.Sender}}"}}</code> ; <code>{{"{{json .Body}}"}}</code> pour une chaîne JSON.</p>
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-http-basic-user">Identifiant (authentification basique)</label>
+        <input class="input w-full" id="sms-http-basic-user" name="f_http_basic_user" value="{{index .Settings "basic_user"}}" maxlength="254" autocomplete="off">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-http-basic-pass">Mot de passe (authentification basique) {{if index .SecretSet "basic_pass"}}<span class="badge badge-success badge-soft">défini</span>{{end}}</label>
+        <input class="input w-full" id="sms-http-basic-pass" name="x_http_basic_pass" type="password" autocomplete="new-password" maxlength="4000">
+        {{if index .SecretSet "basic_pass"}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-sm mt-0.5" type="checkbox" name="c_http_basic_pass" value="1"> Effacer</label>{{end}}
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-http-bearer">Jeton Bearer {{if index .SecretSet "bearer"}}<span class="badge badge-success badge-soft">défini</span>{{end}}</label>
+        <input class="input w-full" id="sms-http-bearer" name="x_http_bearer" type="password" autocomplete="new-password" maxlength="4000">
+        {{if index .SecretSet "bearer"}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-sm mt-0.5" type="checkbox" name="c_http_bearer" value="1"> Effacer</label>{{end}}
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-http-headers">En-têtes (objet JSON) {{if index .SecretSet "headers"}}<span class="badge badge-success badge-soft">défini</span>{{end}}</label>
+        <textarea class="textarea w-full font-mono" id="sms-http-headers" name="x_http_headers" rows="2" maxlength="4000" autocomplete="off" aria-describedby="sms-http-headers-help"></textarea>
+        <p class="text-sm text-base-content/70" id="sms-http-headers-help">Exemple : <code>{"Content-Type":"application/json"}</code>. Enregistré chiffré, jamais réaffiché ; vide = valeur conservée.</p>
+        {{if index .SecretSet "headers"}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-sm mt-0.5" type="checkbox" name="c_http_headers" value="1"> Effacer</label>{{end}}
+      </div>
+    </fieldset>
+
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">Passerelle Android</legend>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-android-url">URL de la passerelle (vide = cloud)</label>
+        <input class="input w-full" id="sms-android-url" name="f_android_url" type="url" value="{{if eq .Driver "android"}}{{index .Settings "url"}}{{end}}" maxlength="2000" autocomplete="off">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-android-user">Identifiant</label>
+        <input class="input w-full" id="sms-android-user" name="f_android_user" value="{{index .Settings "user"}}" maxlength="254" autocomplete="off">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-android-password">Mot de passe {{if index .SecretSet "password"}}<span class="badge badge-success badge-soft">défini</span>{{end}}</label>
+        <input class="input w-full" id="sms-android-password" name="x_android_password" type="password" autocomplete="new-password" maxlength="4000">
+        {{if index .SecretSet "password"}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-sm mt-0.5" type="checkbox" name="c_android_password" value="1"> Effacer</label>{{end}}
+      </div>
+      <p class="text-sm text-base-content/70">Une passerelle sur le réseau du cabinet exige que l'administrateur du serveur autorise les adresses privées (voir la documentation d'installation).</p>
+    </fieldset>
+
+    <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
+      <legend class="fieldset-legend">OVH</legend>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-ovh-service">Service SMS</label>
+        <input class="input w-full" id="sms-ovh-service" name="f_ovh_service" value="{{index .Settings "service"}}" maxlength="100" placeholder="sms-xx123456-1" autocomplete="off">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-ovh-app-key">Clé d'application</label>
+        <input class="input w-full" id="sms-ovh-app-key" name="f_ovh_app_key" value="{{index .Settings "app_key"}}" maxlength="100" autocomplete="off">
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-ovh-app-secret">Secret d'application {{if index .SecretSet "app_secret"}}<span class="badge badge-success badge-soft">défini</span>{{end}}</label>
+        <input class="input w-full" id="sms-ovh-app-secret" name="x_ovh_app_secret" type="password" autocomplete="new-password" maxlength="4000">
+        {{if index .SecretSet "app_secret"}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-sm mt-0.5" type="checkbox" name="c_ovh_app_secret" value="1"> Effacer</label>{{end}}
+      </div>
+      <div class="space-y-1">
+        <label class="block text-sm font-medium" for="sms-ovh-consumer-key">Clé consommateur {{if index .SecretSet "consumer_key"}}<span class="badge badge-success badge-soft">défini</span>{{end}}</label>
+        <input class="input w-full" id="sms-ovh-consumer-key" name="x_ovh_consumer_key" type="password" autocomplete="new-password" maxlength="4000">
+        {{if index .SecretSet "consumer_key"}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-sm mt-0.5" type="checkbox" name="c_ovh_consumer_key" value="1"> Effacer</label>{{end}}
+      </div>
+    </fieldset>
+    <button class="btn btn-primary" type="submit">Enregistrer le SMS</button>
+  </form>
+  {{if ne .Mode "disabled"}}
+  <form class="space-y-2" method="post" action="/admin/settings/notifications/transport/sms/test">
+    {{csrf $.CSRF}}
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="sms-test-phone">Numéro pour le test</label>
+      <input class="input w-full max-w-xs" id="sms-test-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="06 12 34 56 78" required>
+    </div>
+    <button class="btn btn-outline" type="submit">Envoyer un SMS de test</button>
+    <p class="text-sm text-base-content/70">Utilise la configuration enregistrée (5 tests par heure).</p>
+  </form>
+  {{end}}
+  {{end}}
+</section>
+{{end}}

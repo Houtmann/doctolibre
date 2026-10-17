@@ -65,6 +65,26 @@ func IsPermanent(err error) bool {
 	return errors.As(err, &p)
 }
 
+type cancelError struct{ err error }
+
+func (e cancelError) Error() string { return e.err.Error() }
+func (e cancelError) Unwrap() error { return e.err }
+
+// Cancel marque err comme « message à annuler » : le message passe en cancelled,
+// sans retente (canal désactivé par le cabinet). Un renvoi manuel reste possible.
+func Cancel(err error) error {
+	if err == nil {
+		return nil
+	}
+	return cancelError{err: err}
+}
+
+// IsCancelled indique si err (ou une erreur qu'elle enveloppe) demande l'annulation du message.
+func IsCancelled(err error) bool {
+	var c cancelError
+	return errors.As(err, &c)
+}
+
 // Worker consomme la file : claim en transaction courte, envoi hors
 // transaction, mise à jour du statut.
 type Worker struct {
@@ -279,6 +299,9 @@ func (w *Worker) deliver(ctx context.Context, row sqlcgen.OutboxMessage) {
 	case sendErr == nil:
 		outcome = "sent"
 		n, err = q.MarkOutboxSent(fctx, sqlcgen.MarkOutboxSentParams{ID: row.ID, Attempts: row.Attempts, Now: now, ProviderRef: textOf(ref)})
+	case IsCancelled(sendErr):
+		outcome = "cancelled"
+		n, err = q.MarkOutboxCancelled(fctx, sqlcgen.MarkOutboxCancelledParams{ID: row.ID, Attempts: row.Attempts, Now: now, LastError: textOf(truncate(sendErr.Error()))})
 	case IsPermanent(sendErr) || int(row.Attempts) > len(w.backoff()):
 		outcome = "failed"
 		n, err = q.MarkOutboxFailed(fctx, sqlcgen.MarkOutboxFailedParams{ID: row.ID, Attempts: row.Attempts, Now: now, LastError: textOf(truncate(sendErr.Error()))})

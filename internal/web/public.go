@@ -69,16 +69,30 @@ func (h *publicHandlers) fail(w http.ResponseWriter, r *http.Request, err error)
 	switch {
 	case errors.Is(err, domain.ErrNotFound):
 		h.rd.Error(w, r, http.StatusNotFound, "")
+	case errors.Is(err, service.ErrBookingClosed):
+		h.rd.Error(w, r, http.StatusServiceUnavailable, bookingClosedMessage(err))
 	default:
 		httpx.LoggerFrom(r.Context()).Error("réservation en ligne en échec", slog.String("err", err.Error()))
 		h.rd.Error(w, r, http.StatusInternalServerError, "")
 	}
 }
 
+// bookingClosedMessage : message neutre quand aucun canal ne peut envoyer le code de vérification (T086).
+func bookingClosedMessage(err error) string {
+	msg := "La réservation en ligne n'est pas disponible pour le moment. Merci de contacter le cabinet par téléphone"
+	var c service.BookingClosedError
+	if errors.As(err, &c) && c.Phone != "" {
+		msg += " au " + c.Phone
+	}
+	return msg + "."
+}
+
 // --- Vues ---
 
 // PublicPracticeData est la donnée de la page public_practice.
 type PublicPracticeData struct {
+	// Closed : aucun canal d'envoi du code actif, la réservation en ligne est fermée (T086).
+	Closed        bool
 	Practice      sqlcgen.Practice
 	Practitioners []PractitionerView
 	// FirstTypes : motifs proposés par « premier créneau disponible » (cabinet de plusieurs praticiens).
@@ -101,6 +115,7 @@ type TypeView struct {
 
 // PublicPractitionerData est la donnée de la page public_practitioner.
 type PublicPractitionerData struct {
+	Closed       bool // voir PublicPracticeData.Closed
 	Practice     sqlcgen.Practice
 	Practitioner PractitionerView
 	Types        []TypeView
@@ -152,14 +167,16 @@ type BookingForm struct {
 
 // DetailsData est la donnée de la page public_details.
 type DetailsData struct {
-	AtHome  bool // visite à domicile : l'adresse est demandée
-	Summary Summary
-	Form    BookingForm
-	TypeID  string
-	Start   string
-	Action  string
-	BackURL string
-	Errors  []string
+	// Channels : canaux proposés pour recevoir le code (T086).
+	Channels service.Channels
+	AtHome   bool // visite à domicile : l'adresse est demandée
+	Summary  Summary
+	Form     BookingForm
+	TypeID   string
+	Start    string
+	Action   string
+	BackURL  string
+	Errors   []string
 }
 
 // VerifyData est la donnée de la page public_verify.
@@ -221,13 +238,15 @@ func (h *publicHandlers) practice(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, r, err)
 		return
 	}
-	data := PublicPracticeData{Practice: p.Practice}
+	data := PublicPracticeData{Practice: p.Practice, Closed: !p.Channels.Any()}
 	for _, pr := range p.Practitioners {
 		data.Practitioners = append(data.Practitioners, practitionerView(p.Practice.Slug, pr))
 	}
-	if data.FirstTypes, err = h.firstTypes(r, p.Practice.Slug); err != nil {
-		h.fail(w, r, err)
-		return
+	if !data.Closed {
+		if data.FirstTypes, err = h.firstTypes(r, p.Practice.Slug); err != nil {
+			h.fail(w, r, err)
+			return
+		}
 	}
 	h.rd.Page(w, r, "public_practice", data)
 }
@@ -239,8 +258,11 @@ func (h *publicHandlers) practitioner(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pv := practitionerView(p.Practice.Slug, p.Practitioner)
-	data := PublicPractitionerData{Practice: p.Practice, Practitioner: pv}
+	data := PublicPractitionerData{Practice: p.Practice, Practitioner: pv, Closed: !p.Channels.Any()}
 	for _, t := range p.Types {
+		if data.Closed {
+			break
+		}
 		data.Types = append(data.Types, TypeView{
 			ID: t.ID.String(), Name: t.Name, Duration: typeDuration(t), AtHome: t.AtHome,
 			URL: pv.URL + "/book?type=" + t.ID.String(),
@@ -448,8 +470,9 @@ func (f BookingForm) patient() service.PatientDetails {
 func (h *publicHandlers) renderDetails(w http.ResponseWriter, r *http.Request, status int, t service.Target, start time.Time, f BookingForm, errs []string) {
 	base := basePath(r)
 	w.Header().Set("Cache-Control", "no-store")
+	f.Channel = availableChannel(f.Channel, t.Channels)
 	h.rd.PageStatus(w, r, status, "public_details", DetailsData{
-		AtHome: t.Type.AtHome, Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
+		Channels: t.Channels, AtHome: t.Type.AtHome, Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
 		Action:  base + "/book/details",
 		BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}, "week": {isoWeek(start.In(t.Loc))}}.Encode(),
 		Errors:  errs,
@@ -475,6 +498,20 @@ func (h *publicHandlers) renderVerify(w http.ResponseWriter, r *http.Request, st
 	})
 }
 
+// availableChannel ramène le canal du code à un canal actif (l'autre si celui choisi est désactivé).
+func availableChannel(channel string, ch service.Channels) string {
+	if ch.Has(channel) {
+		return channel
+	}
+	if ch.Email {
+		return "email"
+	}
+	if ch.SMS {
+		return "sms"
+	}
+	return channel
+}
+
 func (h *publicHandlers) detailsForm(w http.ResponseWriter, r *http.Request) {
 	t, start, ok := h.bookingTarget(w, r)
 	if !ok {
@@ -489,6 +526,7 @@ func (h *publicHandlers) detailsSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	f := readBookingForm(r)
+	f.Channel = availableChannel(f.Channel, t.Channels)
 	if !f.Consent {
 		h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f, []string{"Vous devez accepter l'utilisation de vos coordonnées pour gérer ce rendez-vous."})
 		return

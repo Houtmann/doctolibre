@@ -100,3 +100,13 @@ func TestParseEnvFile(t *testing.T) {
 		t.Fatalf("map inattendue: %v", m)
 	}
 }
+
+func TestLoadFromNotifyAllowPrivateHosts(t *testing.T) {
+	t.Parallel()
+	for val, want := range map[string]bool{"": false, "false": false, "true": true, "TRUE": true, "1": true, "0": false} {
+		c, err := LoadFrom(env(map[string]string{"DOCTOLIBRE_NOTIFY_ALLOW_PRIVATE_HOSTS": val}))
+		if err != nil || c.NotifyAllowPrivateHosts != want {
+			t.Errorf("DOCTOLIBRE_NOTIFY_ALLOW_PRIVATE_HOSTS=%q: %v, %v", val, c.NotifyAllowPrivateHosts, err)
+		}
+	}
+}

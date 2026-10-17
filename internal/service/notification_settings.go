@@ -85,6 +85,20 @@ func (s *Practice) UpdateNotifications(ctx context.Context, a Actor, in Notifica
 	if tooLong(in.Signature, 200) || strings.ContainsAny(in.Signature, "\r\n") {
 		add("signature", "La signature tient sur une ligne de 200 caractères maximum.")
 	}
+	if len(errs) == 0 {
+		// Un canal désactivé (T086) n'est pas proposé : le service le refuse aussi.
+		on, err := channelsOf(ctx, sqlcgen.New(s.Pool), a.PracticeID)
+		if err != nil {
+			return err
+		}
+		for _, c := range []struct{ field, v string }{
+			{"confirmation_channel", in.ConfirmationChannel}, {"reminder_channel", in.ReminderChannel}, {"change_channel", in.ChangeChannel},
+		} {
+			if normalizeChannel(c.v, on) != c.v {
+				add(c.field, "Ce canal est désactivé pour votre cabinet : choisissez un canal actif ou « Aucun ».")
+			}
+		}
+	}
 	if len(errs) > 0 {
 		return errs
 	}

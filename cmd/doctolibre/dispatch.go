@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"doctolibre/internal/config"
 	"doctolibre/internal/domain"
 	"doctolibre/internal/notify"
 	"doctolibre/internal/outbox"
+	"doctolibre/internal/secretbox"
 )
 
 // buildDispatcher construit les senders email et SMS depuis la configuration
@@ -71,4 +74,26 @@ func logDispatcher(logger *slog.Logger) outbox.Dispatcher {
 		logger.Info("outbox: envoi simulé (aucun driver configuré)", "message_id", m.ID, "kind", m.Kind)
 		return "", nil
 	})
+}
+
+// newTransports prépare la lecture des fournisseurs propres aux cabinets (T086) :
+// la clé de chiffrement est dérivée de DOCTOLIBRE_SECRET_KEY.
+func newTransports(cfg config.Config, pool *pgxpool.Pool, logger *slog.Logger) (*notify.Transports, error) {
+	box, err := secretbox.New(cfg.SecretKey)
+	if err != nil {
+		return nil, fmt.Errorf("fournisseurs par cabinet: %w", err)
+	}
+	return &notify.Transports{
+		Pool: pool, Box: box, Env: cfg, AllowPrivate: cfg.NotifyAllowPrivateHosts,
+		Clock: domain.SystemClock{}, Logger: logger,
+	}, nil
+}
+
+// perPractice route chaque message vers le fournisseur de son cabinet ; server
+// (le dispatcher construit depuis l'environnement) sert tant qu'aucun réglage n'existe.
+func perPractice(server outbox.Dispatcher, t *notify.Transports) outbox.Dispatcher {
+	if t == nil {
+		return server
+	}
+	return &notify.PracticeDispatcher{Server: server, Transports: t}
 }

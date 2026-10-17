@@ -3,6 +3,7 @@
 {{define "content"}}
 <h1 class="text-2xl font-semibold">Paramètres du cabinet</h1>
 <p><a class="link link-primary" href="/admin/settings/notifications">Réglages des notifications (confirmations, rappels, SMS)</a></p>
+<p><a class="link link-primary" href="/admin/settings/notifications/transport">Fournisseurs d'email et de SMS du cabinet</a></p>
 {{template "form_errors.html" .Data.Errors}}
 <form class="space-y-4 max-w-2xl" method="post" action="/admin/settings">
   {{csrf .CSRF}}
