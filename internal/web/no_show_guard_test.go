@@ -71,6 +71,9 @@ func TestPublicBookingBlockedByNoShows(t *testing.T) {
 	confirm.Set("code", e.otp.code("+33611111111"))
 	rec = c.do("POST", e.base()+"/book/confirm", confirm)
 	mustContain(t, rec, 403, "Cette réservation en ligne n&#39;est pas possible.", "01 23 45 67 89")
+	if strings.Contains(rec.Body.String(), "Le formulaire contient des erreurs") {
+		t.Error("le refus ne doit pas apparaître comme une erreur de formulaire")
+	}
 	body := strings.ToLower(rec.Body.String())
 	for _, w := range []string{"absence", "manqué", "no-show"} {
 		if strings.Contains(body, w) {

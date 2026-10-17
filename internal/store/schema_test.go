@@ -165,8 +165,10 @@ func TestAppointmentCancelledDoesNotBlock(t *testing.T) {
 	if _, err := e.book(e.pract.ID, at(10, 0), at(10, 30), 0); err != nil {
 		t.Fatalf("créneau annulé doit être libre: %v", err)
 	}
-	// Réactiver l'annulé alors que le créneau est repris : refusé.
-	if err := e.setStatus(a.ID, "booked"); !store.IsExclusionViolation(err) {
+	// Réactiver l'annulé alors que le créneau est repris : refusé (SQL direct : la
+	// requête applicative SetAppointmentStatus ne touche jamais un RDV annulé, T088).
+	_, err = e.db.Exec(context.Background(), "UPDATE appointment SET status = 'booked' WHERE id = $1", a.ID)
+	if !store.IsExclusionViolation(err) {
 		t.Fatalf("réactivation en conflit doit échouer en 23P01: %v", err)
 	}
 }

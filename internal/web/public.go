@@ -597,7 +597,8 @@ func (h *publicHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, domain.ErrSlotTaken):
 		h.slotGone(w, r, t, "Ce créneau vient d'être pris. Choisissez-en un autre.")
 	case errors.Is(err, domain.ErrOnlineBookingBlocked):
-		h.renderDetails(w, r, http.StatusForbidden, t, start, f, []string{onlineBookingBlockedMsg(t.Practice.Phone)})
+		// Refus définitif : alerte à part, pas le bloc « erreurs du formulaire » (réessayer ne servirait à rien).
+		h.rd.Error(w, r, http.StatusForbidden, onlineBookingBlockedMsg(t.Practice.Phone))
 	default:
 		if msgs := validation(err); msgs != nil {
 			h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f, msgs)

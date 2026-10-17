@@ -196,3 +196,42 @@ func bookOnline(t *testing.T, e *publicEnv, first, phone, e164 string) string {
 	}
 	return "/r/" + res.Token
 }
+
+// Un patient au-dessus du seuil d'absences ne s'inscrit pas en ligne : refus à part
+// (pas de « erreurs du formulaire »), avec le téléphone du cabinet, aucune inscription.
+func TestPublicWaitlistJoinBlockedByNoShows(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	e := newPublicEnv(t)
+	withWaitlist(t, e)
+	if _, err := e.db.Exec(ctx, "UPDATE practice SET phone = '01 23 45 67 89', no_show_block_threshold = 1 WHERE id = $1", e.pc.ID); err != nil {
+		t.Fatal(err)
+	}
+	bookOnline(t, e, "Dora", "06 44 44 44 44", "+33644444444")
+	if _, err := e.db.Exec(ctx, "UPDATE appointment SET status = 'no_show' WHERE practice_id = $1", e.pc.ID); err != nil {
+		t.Fatal(err)
+	}
+	c := newClient(t, e.h, "192.0.2.62")
+	tid := e.typ.ID.String()
+	c.do("GET", e.base()+"/waitlist?type="+tid, nil)
+	first := waitlistForm(tid)
+	first.Set("last_name", "Test")
+	rec := c.do("POST", e.base()+"/waitlist", first)
+	m := challengeRe.FindStringSubmatch(rec.Body.String())
+	if m == nil {
+		t.Fatalf("challenge_id absent: %d", rec.Code)
+	}
+	f := waitlistForm(tid)
+	f.Set("last_name", "Test") // même patient que la réservation précédente
+	f.Set("challenge_id", m[1])
+	f.Set("code", e.otp.code("+33644444444"))
+	rec = c.do("POST", e.base()+"/waitlist/confirm", f)
+	mustContain(t, rec, 403, "Cette réservation en ligne n&#39;est pas possible.", "01 23 45 67 89")
+	if strings.Contains(rec.Body.String(), "Le formulaire contient des erreurs") {
+		t.Error("le refus ne doit pas apparaître comme une erreur de formulaire")
+	}
+	var n int
+	if err := e.db.QueryRow(ctx, "SELECT count(*) FROM waitlist_entry").Scan(&n); err != nil || n != 0 {
+		t.Errorf("inscriptions = %d, %v", n, err)
+	}
+}

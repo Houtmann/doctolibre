@@ -62,7 +62,7 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		deps.CarePlans = &service.CarePlans{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
 		deps.Booking = &service.Booking{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
 		deps.Status = &service.Status{Pool: pool, Clock: domain.SystemClock{}, Version: version, StartedAt: domain.SystemClock{}.Now(), BackupDir: cfg.BackupDir}
-		deps.Waitlist = &service.Waitlist{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
+		deps.Waitlist = &service.Waitlist{Pool: pool, Clock: domain.SystemClock{}, OTP: service.OutboxOTPSender{}, BaseURL: cfg.BaseURL, ManageKey: manageKey, Events: service.NopSink{}}
 	} else {
 		logger.Warn("DOCTOLIBRE_DATABASE_URL vide : l'espace /admin est désactivé")
 	}
@@ -75,6 +75,7 @@ func serve(ctx context.Context, logOut io.Writer) error {
 			created := func(source string) { deps.Metrics.AppointmentsCreated.WithLabelValues(source).Inc() }
 			deps.Booking.OnCreated = created
 			deps.Calendar.OnCreated = created
+			deps.Waitlist.OnCreated = created
 		}
 	}
 	dispatcher, err := buildDispatcher(cfg, logger)

@@ -466,7 +466,7 @@ func (c *Calendar) Move(ctx context.Context, a Actor, id uuid.UUID, in MoveInput
 		}); err != nil {
 			return err
 		}
-		// Le jeton de gestion n'est pas connu du cabinet : le message n'a pas de lien.
+		// Jeton vide : le notifier dérive le lien de gestion (ManageKey), sinon message sans lien.
 		return c.notifier().rescheduled(ctx, tx, q, moved, from, "")
 	})
 	if err != nil {
@@ -550,7 +550,10 @@ func (c *Calendar) SetStatus(ctx context.Context, a Actor, id uuid.UUID, status 
 		if _, err := q.SetAppointmentStatus(ctx, sqlcgen.SetAppointmentStatusParams{ID: id, PracticeID: a.PracticeID, Status: status,
 			ChangedBy: pgtype.UUID{Bytes: a.UserID, Valid: a.UserID != uuid.Nil},
 			ChangedAt: pgtype.Timestamptz{Time: c.Clock.Now(), Valid: true},
-		}); err != nil {
+		}); errors.Is(err, pgx.ErrNoRows) {
+			// Annulé entre la lecture et l'écriture : la condition du WHERE l'a protégé.
+			return domain.ErrValidation{Field: "status", Msg: "Un rendez-vous annulé ne peut pas changer de statut."}
+		} else if err != nil {
 			return fmt.Errorf("changement de statut: %w", err)
 		}
 		if status != "booked" {

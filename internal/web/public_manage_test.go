@@ -3,6 +3,7 @@ package web_test
 import (
 	"context"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -53,6 +54,9 @@ func TestPatientCancelFlow(t *testing.T) {
 	}
 	rec = c.do("GET", manage, nil)
 	mustContain(t, rec, 200, "Rendez-vous annulé", "Votre rendez-vous est annulé.", "Reprendre rendez-vous", `href="`+e.base()+`"`)
+	if tm := regexp.MustCompile(`(?s)<title>(.*?)</title>`).FindStringSubmatch(rec.Body.String()); tm == nil || !strings.Contains(tm[1], "annulé") || strings.Contains(tm[1], "confirmé") {
+		t.Errorf("<title> d'un RDV annulé = %v", tm)
+	}
 	if strings.Contains(rec.Body.String(), "Annuler le rendez-vous") {
 		t.Error("un rendez-vous annulé ne propose plus d'action")
 	}

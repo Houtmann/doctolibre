@@ -205,15 +205,19 @@ func (q *Queries) GetWaitlistOfferByToken(ctx context.Context, tokenHash string)
 }
 
 const listWaitlistCandidates = `-- name: ListWaitlistCandidates :many
-SELECT w.id, w.practice_id, w.patient_id, w.practitioner_id, w.appointment_type_id, w.earliest, w.latest, w.weekdays, w.time_from, w.time_to, w.status, w.verified_channel, w.source, w.created_at FROM waitlist_entry w
-WHERE w.practice_id = $1 AND w.status = 'active'
+SELECT c.id, c.practice_id, c.patient_id, c.practitioner_id, c.appointment_type_id, c.earliest, c.latest, c.weekdays, c.time_from, c.time_to, c.status, c.verified_channel, c.source, c.created_at FROM (
+  SELECT DISTINCT ON (w.patient_id) w.id, w.practice_id, w.patient_id, w.practitioner_id, w.appointment_type_id, w.earliest, w.latest, w.weekdays, w.time_from, w.time_to, w.status, w.verified_channel, w.source, w.created_at FROM waitlist_entry w
+  WHERE w.practice_id = $1 AND w.status = 'active'
   AND (w.practitioner_id IS NULL OR w.practitioner_id = $2)
   AND $3::date BETWEEN w.earliest AND w.latest
   AND (cardinality(w.weekdays) = 0 OR $4::smallint = ANY (w.weekdays))
   AND (w.time_from IS NULL OR ($5::time >= w.time_from AND $5::time < w.time_to))
   AND w.patient_id <> $6
-  AND NOT EXISTS (SELECT 1 FROM waitlist_offer o WHERE o.entry_id = w.id AND o.practitioner_id = $2 AND o.slot_start = $7)
-ORDER BY w.created_at, w.id
+  AND NOT EXISTS (SELECT 1 FROM waitlist_offer o JOIN waitlist_entry e2 ON e2.id = o.entry_id
+                  WHERE e2.patient_id = w.patient_id AND o.practitioner_id = $2 AND o.slot_start = $7)
+  ORDER BY w.patient_id, w.created_at, w.id
+) c
+ORDER BY c.created_at, c.id
 LIMIT $8
 `
 
@@ -230,7 +234,8 @@ type ListWaitlistCandidatesParams struct {
 
 // Inscriptions actives compatibles avec un créneau libéré, par ordre d'inscription.
 // day/at : date et heure murales du cabinet ; weekday : 0 = lundi. Les inscriptions
-// ayant déjà reçu une proposition pour ce créneau sont écartées.
+// ayant déjà reçu une proposition pour ce créneau sont écartées. Une seule inscription
+// (la plus ancienne) par patient : jamais deux offres du même créneau au même patient.
 func (q *Queries) ListWaitlistCandidates(ctx context.Context, arg ListWaitlistCandidatesParams) ([]WaitlistEntry, error) {
 	rows, err := q.db.Query(ctx, listWaitlistCandidates,
 		arg.PracticeID,

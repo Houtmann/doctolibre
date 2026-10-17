@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-17 — Passage navigateur T050/T054, T088 corrections RDV (sonnet ; contrôle : opus)
+
+- **Tâches** : T050 review → done, T054 review → done (validées par l'humain après passage navigateur) ; T088 todo → review
+- **Fait** : passage navigateur sur `doctolibre_demo` (réservation, OTP, lien `/r/…`, annulation, seuil 2 absences, refus, badge fiche) ; T088 : trajet domicile conservé au déplacement patient, garde-fou T054 dans `Waitlist.Claim`/`Join`, une offre par patient, `SetStatus` ne réactive plus un RDV annulé, lien de gestion dans le déplacement par le cabinet, `<title>` du RDV annulé, refus T054 en page 403 à part
+- **Vérification** : `make check` ✅ relancé par l'orchestrateur ; diff SQL et transactions relus. Navigateur : titre du RDV annulé ✅, refus de réservation et d'inscription en liste d'attente ✅ (aucune inscription ni RDV créé) ; `Claim` via `/w/{token}` non vu (couvert par test service).
+- **Reste** : page de refus trop brutale pour un patient (grand « 403 Accès refusé », téléphone non cliquable, retour vers `/` et non vers le cabinet) → à reprendre dans une petite tâche ; EXPLAIN de `ListWaitlistCandidates` sur données réelles ; T091 débloquée par T088 une fois validée
+- **Décisions** : 2 lignes T088 du 2026-10-17 dans decisions.md
+
 ## 2026-10-17 — T060 ressources partagées (sonnet ; contrôle : opus)
 
 - **Tâches** : T060 todo → review

@@ -543,7 +543,7 @@ func (q *Queries) NotificationVolume(ctx context.Context, arg NotificationVolume
 const setAppointmentStatus = `-- name: SetAppointmentStatus :one
 UPDATE appointment SET status = $1, updated_at = now(),
     status_changed_by = $2, status_changed_at = $3
-WHERE id = $4 AND practice_id = $5
+WHERE id = $4 AND practice_id = $5 AND status <> 'cancelled'
 RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version, status_changed_by, status_changed_at
 `
 

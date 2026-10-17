@@ -238,6 +238,8 @@ func (h *waitlistHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 		httpx.Redirect(w, r, basePath(r))
 	case errors.Is(err, service.ErrOTPWrong):
 		h.renderVerify(w, r, http.StatusUnprocessableEntity, t, v, challenge, []string{"Le code saisi est incorrect. Vérifiez-le et réessayez."})
+	case errors.Is(err, domain.ErrOnlineBookingBlocked):
+		h.rd.Error(w, r, http.StatusForbidden, onlineBookingBlockedMsg(t.Practice.Phone))
 	case errors.Is(err, service.ErrOTPExpired):
 		h.renderForm(w, r, http.StatusUnprocessableEntity, t, v,
 			[]string{"Ce code a expiré, a déjà servi ou le nombre d'essais est dépassé. Validez le formulaire pour recevoir un nouveau code."})
@@ -295,6 +297,12 @@ func (h *waitlistHandlers) claim(w http.ResponseWriter, r *http.Request) {
 			slog.String("appointment_id", res.Appointment.ID.String()), slog.String("practice_id", res.Appointment.PracticeID.String()))
 		httpx.Redirect(w, r, manageURL(res.Token))
 		return
+	case errors.Is(err, domain.ErrOnlineBookingBlocked):
+		phone := ""
+		if v, oerr := h.svc.Offer(r.Context(), token); oerr == nil {
+			phone = v.Practice.Phone
+		}
+		h.rd.Error(w, r, http.StatusForbidden, onlineBookingBlockedMsg(phone))
 	case errors.Is(err, domain.ErrSlotTaken), errors.Is(err, service.ErrOfferExpired):
 		v, oerr := h.svc.Offer(r.Context(), token)
 		if oerr != nil {

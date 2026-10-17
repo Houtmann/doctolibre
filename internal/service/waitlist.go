@@ -49,6 +49,18 @@ type Waitlist struct {
 	Logger *slog.Logger
 	// Every : période de Run (défaut DefaultWaitlistEvery).
 	Every time.Duration
+	// Events reçoit les faits métier après commit (nil = NopSink).
+	Events EventSink
+	// OnCreated est appelé (source "online") après le commit d'un rendez-vous obtenu ; nil = rien.
+	OnCreated func(source string)
+}
+
+func (w *Waitlist) emit(ctx context.Context, e Event) {
+	if w.Events == nil {
+		return
+	}
+	e.At = w.Clock.Now()
+	w.Events.Emit(ctx, e)
 }
 
 func (w *Waitlist) notifier() notifier {
@@ -318,6 +330,13 @@ func (w *Waitlist) Join(ctx context.Context, in WaitlistJoinInput) (sqlcgen.Wait
 		if err != nil {
 			return err
 		}
+		if blocked, err := onlineBookingBlocked(ctx, q, pc, patient.ID, now); err != nil {
+			return err
+		} else if blocked {
+			slog.InfoContext(ctx, "inscription en liste d'attente refusée (absences répétées)",
+				slog.String("practice_id", pc.ID.String()), slog.String("patient_id", patient.ID.String()))
+			return domain.ErrOnlineBookingBlocked
+		}
 		entry, err = insertWaitlistEntry(ctx, q, pc.ID, patient.ID, win, in.Channel, "online", now)
 		return err
 	})
@@ -577,6 +596,13 @@ func (w *Waitlist) Claim(ctx context.Context, token string) (BookResult, error) 
 		if err != nil {
 			return err
 		}
+		if blocked, err := onlineBookingBlocked(ctx, q, sc.pc, e.PatientID, now); err != nil {
+			return err
+		} else if blocked {
+			slog.InfoContext(ctx, "créneau de la liste d'attente refusé (absences répétées)",
+				slog.String("practice_id", sc.pc.ID.String()), slog.String("patient_id", e.PatientID.String()))
+			return domain.ErrOnlineBookingBlocked
+		}
 		slot, err := sc.check(ctx, q, now, o.SlotStart)
 		if err != nil {
 			return err
@@ -601,6 +627,10 @@ func (w *Waitlist) Claim(ctx context.Context, token string) (BookResult, error) 
 	if err != nil {
 		return BookResult{}, err
 	}
+	if w.OnCreated != nil {
+		w.OnCreated("online")
+	}
+	w.emit(ctx, Event{Kind: EventAppointmentCreated, PracticeID: appt.PracticeID, AppointmentID: appt.ID})
 	return BookResult{Appointment: appt, Token: manage}, nil
 }
 

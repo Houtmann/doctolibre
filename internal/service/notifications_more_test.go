@@ -197,6 +197,8 @@ func TestStaffAppointmentNotifications(t *testing.T) {
 	}
 	if got := only(outMsgs(t, f.db, f.act.PracticeID), "reschedule"); len(got) != 1 || got[0].Kind != "email" {
 		t.Fatalf("déplacement : %+v", got)
+	} else if !strings.Contains(got[0].Payload, baseURL+"/r/") {
+		t.Errorf("pas de lien de gestion dans le message de déplacement du cabinet : %s", got[0].Payload)
 	}
 
 	// Annulation par le cabinet : message d'annulation, messages en attente annulés.

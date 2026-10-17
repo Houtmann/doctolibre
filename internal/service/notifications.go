@@ -295,6 +295,10 @@ func (n notifier) rescheduled(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries
 	if err != nil {
 		return err
 	}
+	if manageToken == "" {
+		// Déplacement par le cabinet : le jeton est dérivé (T050) ; "" pour un ancien jeton aléatoire.
+		manageToken = n.key.forAppointment(appt)
+	}
 	data := n.data(v, manageToken)
 	old := oldStart.In(v.loc)
 	data["old_date"], data["old_date_short"], data["old_time"] = frenchDay(old), old.Format("02/01"), clockText(old)

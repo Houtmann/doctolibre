@@ -42,7 +42,7 @@ LIMIT @page_size;
 -- name: SetAppointmentStatus :one
 UPDATE appointment SET status = @status, updated_at = now(),
     status_changed_by = @changed_by, status_changed_at = @changed_at
-WHERE id = @id AND practice_id = @practice_id
+WHERE id = @id AND practice_id = @practice_id AND status <> 'cancelled'
 RETURNING *;
 
 -- name: CancelAppointment :one

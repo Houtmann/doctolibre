@@ -133,8 +133,8 @@ func (b *Booking) RescheduleByPatient(ctx context.Context, token string, start t
 		if err != nil {
 			return err
 		}
-		appt, err = store.MoveAppointment(ctx, q, a.PracticeID, a.ID, slot.Start, slot.End,
-			microsToDuration(intervalMicros(sc.typ.BufferBefore)), microsToDuration(intervalMicros(sc.typ.BufferAfter)))
+		bb, ba := sc.buffers()
+		appt, err = store.MoveAppointment(ctx, q, a.PracticeID, a.ID, slot.Start, slot.End, bb, ba)
 		if err != nil {
 			return err
 		}

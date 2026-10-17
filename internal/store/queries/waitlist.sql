@@ -36,16 +36,21 @@ WHERE pc.id = w.practice_id AND w.status = 'active'
 -- name: ListWaitlistCandidates :many
 -- Inscriptions actives compatibles avec un créneau libéré, par ordre d'inscription.
 -- day/at : date et heure murales du cabinet ; weekday : 0 = lundi. Les inscriptions
--- ayant déjà reçu une proposition pour ce créneau sont écartées.
-SELECT w.* FROM waitlist_entry w
-WHERE w.practice_id = @practice_id AND w.status = 'active'
+-- ayant déjà reçu une proposition pour ce créneau sont écartées. Une seule inscription
+-- (la plus ancienne) par patient : jamais deux offres du même créneau au même patient.
+SELECT c.* FROM (
+  SELECT DISTINCT ON (w.patient_id) w.* FROM waitlist_entry w
+  WHERE w.practice_id = @practice_id AND w.status = 'active'
   AND (w.practitioner_id IS NULL OR w.practitioner_id = @practitioner_id)
   AND @day::date BETWEEN w.earliest AND w.latest
   AND (cardinality(w.weekdays) = 0 OR @weekday::smallint = ANY (w.weekdays))
   AND (w.time_from IS NULL OR (@at::time >= w.time_from AND @at::time < w.time_to))
   AND w.patient_id <> @exclude_patient
-  AND NOT EXISTS (SELECT 1 FROM waitlist_offer o WHERE o.entry_id = w.id AND o.practitioner_id = @practitioner_id AND o.slot_start = @slot_start)
-ORDER BY w.created_at, w.id
+  AND NOT EXISTS (SELECT 1 FROM waitlist_offer o JOIN waitlist_entry e2 ON e2.id = o.entry_id
+                  WHERE e2.patient_id = w.patient_id AND o.practitioner_id = @practitioner_id AND o.slot_start = @slot_start)
+  ORDER BY w.patient_id, w.created_at, w.id
+) c
+ORDER BY c.created_at, c.id
 LIMIT @max_rows;
 
 -- name: CreateWaitlistOffer :one
