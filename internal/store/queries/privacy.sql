@@ -78,7 +78,7 @@ UPDATE appointment SET address = NULL, cancel_reason = NULL, manage_token_hash =
 WHERE patient_id = ANY(@ids::uuid[]) AND practice_id = @practice_id;
 
 -- name: AnonymizeCarePlanLabels :exec
-UPDATE care_plan SET label = '', updated_at = @now::timestamptz
+UPDATE care_plan SET label = '', token_version = token_version + 1, token_hash = NULL, updated_at = @now::timestamptz
 WHERE patient_id = ANY(@ids::uuid[]) AND practice_id = @practice_id;
 
 -- name: ScrubOutboxForPatients :execrows

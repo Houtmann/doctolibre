@@ -20,11 +20,11 @@ T050 (dérivation du jeton), `migrations/00013_care_plan.sql`, `internal/service
 - Aucune donnée médicale affichée (libellé de série = texte du cabinet : l'afficher tel quel est acceptable seulement s'il existe déjà côté patient, sinon le motif du RDV).
 
 ## Critères d'acceptation
-- [ ] `/s/{token}` valide affiche les séances ; jeton falsifié/révoqué → 404.
-- [ ] Les liens de gestion des séances à venir fonctionnent ; les séances passées/annulées n'en ont pas.
-- [ ] L'ICS de série contient exactement les séances à venir non annulées.
-- [ ] La confirmation de série contient le lien ; aucun doublon de message.
-- [ ] Révocation testée (fusion, effacement) ; rate limiting appliqué.
+- [x] `/s/{token}` valide affiche les séances ; jeton falsifié/révoqué → 404.
+- [x] Les liens de gestion des séances à venir fonctionnent ; les séances passées/annulées n'en ont pas.
+- [x] L'ICS de série contient exactement les séances à venir non annulées.
+- [x] La confirmation de série contient le lien ; aucun doublon de message.
+- [x] Révocation testée (fusion, effacement) ; rate limiting appliqué.
 
 ## Vérification
 ```bash
@@ -39,8 +39,8 @@ Réservation des séances restantes par le patient, PDF, modification de la sér
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-17 (sonnet).
+- **Fait** : migration 00025 (`care_plan.token_version`, `token_hash UNIQUE`) ; jeton dérivé `HMAC(HMAC(ManageKey, "care-plan-token/v1"), id:version)` via `DeriveManageToken` (`service/care_plan_link.go`) ; `Booking.CarePlanByToken` ; routes `GET /s/{token}` et `/s/{token}/ics` (seau `manage` partagé avec `/r/`, no-store, no-referrer, 404 neutre) ; page `public_series.html` ; lien de série dans la confirmation unique de série (email html/txt, SMS raccourci pour rester en 1 segment), clé `series_url` ajoutée aux secrets effacés par `MarkOutboxSent` ; révocation dans `Patients.Merge` (plans du doublon) et `Erase` (via `AnonymizeCarePlanLabels`) ; tests service, web, golden notify ; `make css` + `make check` verts.
+- **Reste à faire** : rien d'obligatoire. Aucun écran du cabinet ne montre/renvoie le lien de série (hors scope) ; passage navigateur de `/s/` non fait.
+- **Notes de reprise** : EXPLAIN (base vide, seqscan off) : `GetCarePlanByTokenHash` utilise `care_plan_token_hash_key` ; `ListCarePlanSessions` même forme que `ListCarePlanAppointments` (index `appointment_care_plan_idx`, à confirmer sur données réelles). Génération paresseuse : `ensurePlanToken` n'est appelée qu'à la création de série (aucun autre point de génération n'existe aujourd'hui) ; `export_test.go` l'expose au test.
+- **Écarts avec la spécification** : le label `care-plan-token/v1` dérive une sous-clé de `ManageKey` (déjà dérivée de la clé secrète) au lieu de la clé secrète brute, pour ne pas ajouter de câblage ; série d'une seule séance : confirmation ordinaire inchangée (sans lien de série) ; fusion : seuls les liens des séries du doublon sont révoqués.

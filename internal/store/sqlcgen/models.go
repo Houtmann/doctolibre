@@ -136,6 +136,8 @@ type CarePlan struct {
 	Status             string
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
+	TokenVersion       int32
+	TokenHash          pgtype.Text
 }
 
 type OtpChallenge struct {

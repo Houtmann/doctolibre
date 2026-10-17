@@ -172,7 +172,7 @@ func (n notifier) data(v apptView, manageToken string) map[string]any {
 		"first_name": v.to.FirstName, "practitioner": strings.TrimSpace(v.practitioner.FirstName + " " + v.practitioner.LastName),
 		"type_name": v.typ.Name, "date": frenchDay(start), "date_short": start.Format("02/01"), "time": clockText(start),
 		"manage_url": manage, "signature": signature,
-		"old_date": "", "old_date_short": "", "old_time": "",
+		"old_date": "", "old_date_short": "", "old_time": "", "series_url": "",
 		"reason": "",
 	}
 }
@@ -247,9 +247,9 @@ func (n notifier) booked(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, app
 
 // seriesBooked enfile UNE confirmation pour toute une série de séances créée d'un
 // coup (pas N messages). Un seul rendez-vous : confirmation ordinaire. Le message
-// est rattaché à la première séance. Pas de lien de gestion dans ce message (lien
-// de série : T055) ; chaque séance a pourtant son jeton, repris dans ses rappels.
-func (n notifier) seriesBooked(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, appts []sqlcgen.Appointment) error {
+// est rattaché à la première séance. Il porte le lien de série /s/{jeton} (planToken,
+// T055), sans lien par séance : chacune a son jeton, repris dans ses rappels.
+func (n notifier) seriesBooked(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, appts []sqlcgen.Appointment, planToken string) error {
 	switch len(appts) {
 	case 0:
 		return nil
@@ -268,6 +268,7 @@ func (n notifier) seriesBooked(ctx context.Context, tx pgx.Tx, q *sqlcgen.Querie
 		sessions[i] = frenchDay(t) + " à " + clockText(t)
 	}
 	data["count"], data["sessions"] = len(appts), sessions
+	data["series_url"] = planURL(n.baseURL, planToken)
 	_, err = n.enqueue(ctx, tx, v, v.practice.NotifyConfirmationChannel, TemplateSeries, data, time.Time{}, "series-confirmation", "")
 	return err
 }

@@ -259,7 +259,7 @@ func (q *Queries) MarkOutboxRetry(ctx context.Context, arg MarkOutboxRetryParams
 
 const markOutboxSent = `-- name: MarkOutboxSent :execrows
 UPDATE outbox_message
-SET payload = payload - 'manage_url' - 'reset_url' - 'code' - 'body' - 'offer_url' - 'accept_url', status = 'sent', sent_at = $1::timestamptz, provider_ref = $2, last_error = NULL, updated_at = $1
+SET payload = payload - 'manage_url' - 'reset_url' - 'code' - 'body' - 'offer_url' - 'accept_url' - 'series_url', status = 'sent', sent_at = $1::timestamptz, provider_ref = $2, last_error = NULL, updated_at = $1
 WHERE id = $3 AND status = 'sending' AND attempts = $4
 `
 

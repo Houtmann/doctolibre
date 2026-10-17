@@ -302,6 +302,10 @@ func (s *Patients) Merge(ctx context.Context, a Actor, from, into uuid.UUID) (in
 		if err != nil {
 			return fmt.Errorf("réassignation des rendez-vous: %w", err)
 		}
+		// Les liens de série du doublon sont révoqués avant le transfert (T055).
+		if err := q.RevokeCarePlanTokens(ctx, sqlcgen.RevokeCarePlanTokensParams{PatientID: from, PracticeID: a.PracticeID}); err != nil {
+			return fmt.Errorf("révocation des liens de série: %w", err)
+		}
 		if _, err := q.ReassignPatientCarePlans(ctx, sqlcgen.ReassignPatientCarePlansParams{IntoID: into, FromID: from, PracticeID: a.PracticeID}); err != nil {
 			return fmt.Errorf("réassignation des séries: %w", err)
 		}

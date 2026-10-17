@@ -53,6 +53,9 @@ func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	// La grille de déplacement calcule des créneaux : elle partage le seau « search ».
 	mux.Handle("GET /r/{token}", httpx.Chain(http.HandlerFunc(h.confirmed), manage))
 	mux.Handle("GET /r/{token}/ics", httpx.Chain(http.HandlerFunc(h.calendarFile), manage))
+	// Lien de série (T055) : même limiteur que /r/.
+	mux.Handle("GET /s/{token}", httpx.Chain(http.HandlerFunc(h.series), manage))
+	mux.Handle("GET /s/{token}/ics", httpx.Chain(http.HandlerFunc(h.seriesCalendar), manage))
 	mux.Handle("GET /r/{token}/cancel", httpx.Chain(http.HandlerFunc(h.cancelForm), manage))
 	mux.Handle("POST /r/{token}/cancel", httpx.Chain(http.HandlerFunc(h.cancelSubmit), manage))
 	mux.Handle("GET /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleGrid), search))

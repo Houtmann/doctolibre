@@ -1,0 +1,50 @@
+{{define "title"}}Vos séances{{end}}
+{{define "content"}}
+<h1 class="text-2xl font-semibold">Vos séances</h1>
+<article class="card bg-base-100 border border-base-300">
+  <div class="card-body gap-4">
+    <h2 class="card-title">{{.Data.Type}}</h2>
+    <p>{{.Data.FirstName}}, voici les séances de votre série{{if .Data.Prescribed}} ({{.Data.Prescribed}} prescrites){{end}}.</p>
+    <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+      <dt class="text-base-content/70">Cabinet</dt><dd>{{.Data.Practice}}{{if .Data.Address}}<br>{{.Data.Address}}{{end}}{{if .Data.Phone}}<br>Téléphone : <a class="link link-primary" href="tel:{{.Data.Phone}}">{{.Data.Phone}}</a>{{end}}</dd>
+      <dt class="text-base-content/70">Praticien</dt><dd>{{.Data.Practitioner}}</dd>
+    </dl>
+    {{if .Data.ICSURL}}
+    <div class="card-actions">
+      <a class="btn btn-outline btn-sm w-full sm:w-auto" href="{{.Data.ICSURL}}">Ajouter les séances à venir à mon agenda</a>
+    </div>
+    {{end}}
+  </div>
+</article>
+
+<section aria-labelledby="series-upcoming" class="space-y-2">
+  <h2 id="series-upcoming" class="text-lg font-semibold">À venir</h2>
+  {{if .Data.Upcoming}}
+  <ul class="bg-base-100 border border-base-300 rounded-box divide-y divide-base-300">
+    {{range .Data.Upcoming}}
+    <li class="flex flex-col items-start gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <time datetime="{{.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Start}} à {{localTime .Start}}</time>
+      {{if .ManageURL}}<a class="btn btn-outline btn-sm" href="{{.ManageURL}}">Voir, déplacer ou annuler</a>{{end}}
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="text-sm text-base-content/70">Aucune séance à venir.</p>
+  {{end}}
+</section>
+
+{{if .Data.Past}}
+<section aria-labelledby="series-past" class="space-y-2">
+  <h2 id="series-past" class="text-lg font-semibold">Passées et annulées</h2>
+  <ul class="bg-base-100 border border-base-300 rounded-box divide-y divide-base-300">
+    {{range .Data.Past}}
+    <li class="flex items-center justify-between gap-2 p-3">
+      <time datetime="{{.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Start}} à {{localTime .Start}}</time>
+      <span class="badge badge-soft {{if eq .Status "cancelled"}}badge-error{{else if eq .Status "done"}}badge-success{{else}}badge-neutral{{end}}">{{.StatusLabel}}</span>
+    </li>
+    {{end}}
+  </ul>
+</section>
+{{end}}
+<p class="text-sm text-base-content/70">Conservez l'adresse de cette page : elle vous permet de retrouver vos séances. Ne la partagez pas.</p>
+{{end}}

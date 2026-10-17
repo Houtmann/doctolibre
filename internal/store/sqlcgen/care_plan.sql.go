@@ -39,7 +39,7 @@ INSERT INTO care_plan (
     $6, $7, $8,
     $9, $10, $11
 )
-RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at
+RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash
 `
 
 type CreateCarePlanParams struct {
@@ -87,12 +87,14 @@ func (q *Queries) CreateCarePlan(ctx context.Context, arg CreateCarePlanParams) 
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TokenVersion,
+		&i.TokenHash,
 	)
 	return i, err
 }
 
 const getCarePlan = `-- name: GetCarePlan :one
-SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at FROM care_plan WHERE id = $1 AND practice_id = $2
+SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash FROM care_plan WHERE id = $1 AND practice_id = $2
 `
 
 type GetCarePlanParams struct {
@@ -119,6 +121,38 @@ func (q *Queries) GetCarePlan(ctx context.Context, arg GetCarePlanParams) (CareP
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TokenVersion,
+		&i.TokenHash,
+	)
+	return i, err
+}
+
+const getCarePlanByTokenHash = `-- name: GetCarePlanByTokenHash :one
+SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash FROM care_plan WHERE token_hash = $1
+`
+
+// Recherche par haché (index unique care_plan_token_hash_key).
+func (q *Queries) GetCarePlanByTokenHash(ctx context.Context, tokenHash pgtype.Text) (CarePlan, error) {
+	row := q.db.QueryRow(ctx, getCarePlanByTokenHash, tokenHash)
+	var i CarePlan
+	err := row.Scan(
+		&i.ID,
+		&i.PracticeID,
+		&i.PatientID,
+		&i.PractitionerID,
+		&i.AppointmentTypeID,
+		&i.Label,
+		&i.SessionsPrescribed,
+		&i.FrequencyPerWeek,
+		&i.PreferredWeekdays,
+		&i.PreferredTimeStart,
+		&i.PreferredTimeEnd,
+		&i.StartDate,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.TokenVersion,
+		&i.TokenHash,
 	)
 	return i, err
 }
@@ -168,8 +202,65 @@ func (q *Queries) ListCarePlanAppointments(ctx context.Context, arg ListCarePlan
 	return items, nil
 }
 
+const listCarePlanSessions = `-- name: ListCarePlanSessions :many
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version, status_changed_by, status_changed_at FROM appointment
+WHERE care_plan_id = $1 AND practice_id = $2
+ORDER BY lower(during), id
+`
+
+type ListCarePlanSessionsParams struct {
+	CarePlanID pgtype.UUID
+	PracticeID uuid.UUID
+}
+
+// Séances d une série avec leur jeton de gestion (page publique /s/, T055).
+// Index appointment_care_plan_idx (care_plan_id, lower(during)).
+func (q *Queries) ListCarePlanSessions(ctx context.Context, arg ListCarePlanSessionsParams) ([]Appointment, error) {
+	rows, err := q.db.Query(ctx, listCarePlanSessions, arg.CarePlanID, arg.PracticeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Appointment
+	for rows.Next() {
+		var i Appointment
+		if err := rows.Scan(
+			&i.ID,
+			&i.PracticeID,
+			&i.PractitionerID,
+			&i.PatientID,
+			&i.AppointmentTypeID,
+			&i.During,
+			&i.BufferBefore,
+			&i.BufferAfter,
+			&i.DuringBlocked,
+			&i.Status,
+			&i.Source,
+			&i.CarePlanID,
+			&i.CancelledAt,
+			&i.CancelledBy,
+			&i.CancelReason,
+			&i.ManageTokenHash,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Address,
+			&i.VerifiedChannel,
+			&i.ManageTokenVersion,
+			&i.StatusChangedBy,
+			&i.StatusChangedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCarePlansForPatient = `-- name: ListCarePlansForPatient :many
-SELECT cp.id, cp.practice_id, cp.patient_id, cp.practitioner_id, cp.appointment_type_id, cp.label, cp.sessions_prescribed, cp.frequency_per_week, cp.preferred_weekdays, cp.preferred_time_start, cp.preferred_time_end, cp.start_date, cp.status, cp.created_at, cp.updated_at, t.name AS type_name
+SELECT cp.id, cp.practice_id, cp.patient_id, cp.practitioner_id, cp.appointment_type_id, cp.label, cp.sessions_prescribed, cp.frequency_per_week, cp.preferred_weekdays, cp.preferred_time_start, cp.preferred_time_end, cp.start_date, cp.status, cp.created_at, cp.updated_at, cp.token_version, cp.token_hash, t.name AS type_name
 FROM care_plan cp
 JOIN appointment_type t ON t.id = cp.appointment_type_id
 WHERE cp.practice_id = $1 AND cp.patient_id = $2
@@ -198,6 +289,8 @@ type ListCarePlansForPatientRow struct {
 	Status             string
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
+	TokenVersion       int32
+	TokenHash          pgtype.Text
 	TypeName           string
 }
 
@@ -226,6 +319,8 @@ func (q *Queries) ListCarePlansForPatient(ctx context.Context, arg ListCarePlans
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.TokenVersion,
+			&i.TokenHash,
 			&i.TypeName,
 		); err != nil {
 			return nil, err
@@ -284,7 +379,7 @@ func (q *Queries) ListPatientCarePlanAppointments(ctx context.Context, arg ListP
 }
 
 const lockCarePlan = `-- name: LockCarePlan :one
-SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at FROM care_plan WHERE id = $1 AND practice_id = $2 FOR UPDATE
+SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash FROM care_plan WHERE id = $1 AND practice_id = $2 FOR UPDATE
 `
 
 type LockCarePlanParams struct {
@@ -311,6 +406,8 @@ func (q *Queries) LockCarePlan(ctx context.Context, arg LockCarePlanParams) (Car
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TokenVersion,
+		&i.TokenHash,
 	)
 	return i, err
 }
@@ -334,10 +431,26 @@ func (q *Queries) ReassignPatientCarePlans(ctx context.Context, arg ReassignPati
 	return result.RowsAffected(), nil
 }
 
+const revokeCarePlanTokens = `-- name: RevokeCarePlanTokens :exec
+UPDATE care_plan SET token_version = token_version + 1, token_hash = NULL
+WHERE patient_id = $1 AND practice_id = $2
+`
+
+type RevokeCarePlanTokensParams struct {
+	PatientID  uuid.UUID
+	PracticeID uuid.UUID
+}
+
+// Fusion de fiches : les liens de série du doublon cessent de fonctionner.
+func (q *Queries) RevokeCarePlanTokens(ctx context.Context, arg RevokeCarePlanTokensParams) error {
+	_, err := q.db.Exec(ctx, revokeCarePlanTokens, arg.PatientID, arg.PracticeID)
+	return err
+}
+
 const setCarePlanStatus = `-- name: SetCarePlanStatus :one
 UPDATE care_plan SET status = $1, updated_at = now()
 WHERE id = $2 AND practice_id = $3
-RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at
+RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash
 `
 
 type SetCarePlanStatusParams struct {
@@ -365,6 +478,31 @@ func (q *Queries) SetCarePlanStatus(ctx context.Context, arg SetCarePlanStatusPa
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.TokenVersion,
+		&i.TokenHash,
 	)
 	return i, err
+}
+
+const setCarePlanToken = `-- name: SetCarePlanToken :exec
+UPDATE care_plan SET token_version = $1, token_hash = $2
+WHERE id = $3 AND practice_id = $4
+`
+
+type SetCarePlanTokenParams struct {
+	Version    int32
+	TokenHash  pgtype.Text
+	ID         uuid.UUID
+	PracticeID uuid.UUID
+}
+
+// Lien de série (T055) : version et haché du jeton dérivé.
+func (q *Queries) SetCarePlanToken(ctx context.Context, arg SetCarePlanTokenParams) error {
+	_, err := q.db.Exec(ctx, setCarePlanToken,
+		arg.Version,
+		arg.TokenHash,
+		arg.ID,
+		arg.PracticeID,
+	)
+	return err
 }

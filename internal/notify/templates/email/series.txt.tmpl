@@ -4,6 +4,10 @@ Bonjour {{.first_name}},
 {{range .sessions}}
   - {{.}}{{end}}
 
+{{if .series_url}}
+Consulter mes séances, les gérer et les ajouter à mon agenda :
+{{.series_url}}
+{{end}}
   {{.practice_name}}{{if .practice_address}}
   {{.practice_address}}{{end}}
 {{if .practice_phone}}

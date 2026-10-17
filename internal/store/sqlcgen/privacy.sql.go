@@ -14,7 +14,7 @@ import (
 )
 
 const anonymizeCarePlanLabels = `-- name: AnonymizeCarePlanLabels :exec
-UPDATE care_plan SET label = '', updated_at = $1::timestamptz
+UPDATE care_plan SET label = '', token_version = token_version + 1, token_hash = NULL, updated_at = $1::timestamptz
 WHERE patient_id = ANY($2::uuid[]) AND practice_id = $3
 `
 
