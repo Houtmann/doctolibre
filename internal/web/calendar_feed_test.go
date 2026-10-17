@@ -23,7 +23,7 @@ func TestCalendarFeedFlow(t *testing.T) {
 		}
 	}
 	// Réglages : abonnement proposé mais inactif.
-	mustContain(t, e.c.do("GET", "/admin/settings", nil), 200, `Activer l'abonnement`)
+	mustContain(t, e.c.do("GET", "/admin/profile", nil), 200, `Activer l'abonnement`)
 
 	rec := e.c.do("POST", "/admin/settings/feed", url.Values{})
 	m := feedURLRe.FindStringSubmatch(rec.Body.String())
@@ -32,7 +32,7 @@ func TestCalendarFeedFlow(t *testing.T) {
 	}
 	feedPath := m[1]
 	// Le jeton n'est plus affiché ensuite.
-	if rec := e.c.do("GET", "/admin/settings", nil); strings.Contains(rec.Body.String(), feedPath) {
+	if rec := e.c.do("GET", "/admin/profile", nil); strings.Contains(rec.Body.String(), feedPath) {
 		t.Error("jeton réaffiché")
 	}
 

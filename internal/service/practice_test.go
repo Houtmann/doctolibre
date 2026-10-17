@@ -135,6 +135,11 @@ func validSettings() service.SettingsInput {
 	return service.SettingsInput{
 		Name: "Cabinet Étoile", Address: "1 rue de la Paix, Paris", Phone: "01 23 45 67 89",
 		BookingNoticeHours: "4", CancelNoticeHours: "48", HorizonDays: "90",
+	}
+}
+
+func validProfile() service.ProfileInput {
+	return service.ProfileInput{
 		FirstName: "Camille", LastName: "Martin", Title: "Masseur-kinésithérapeute", Bio: "Bio", Slug: "camille-martin", Color: "#aa3366",
 	}
 }
@@ -155,8 +160,6 @@ func TestUpdateSettings(t *testing.T) {
 		{"délai négatif", func(in *service.SettingsInput) { in.CancelNoticeHours = "-1" }, "délai minimal d'annulation"},
 		{"horizon nul", func(in *service.SettingsInput) { in.HorizonDays = "0" }, "horizon"},
 		{"téléphone invalide", func(in *service.SettingsInput) { in.Phone = "abc" }, "téléphone"},
-		{"slug invalide", func(in *service.SettingsInput) { in.Slug = "Pas Valide" }, "identifiant d'URL"},
-		{"prénom vide", func(in *service.SettingsInput) { in.FirstName = "" }, "prénom"},
 		{"seuil d'absences nul", func(in *service.SettingsInput) { in.NoShowBlockThreshold = "0" }, "seuil d'absences"},
 		{"seuil d'absences texte", func(in *service.SettingsInput) { in.NoShowBlockThreshold = "abc" }, "seuil d'absences"},
 		{"seuil d'absences valide", func(in *service.SettingsInput) { in.NoShowBlockThreshold = "3" }, ""},
@@ -183,9 +186,72 @@ func TestUpdateSettings(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if s.Practice.Name != "Cabinet Étoile" || s.BookingNoticeHour != 4 || s.CancelNoticeHour != 48 || s.HorizonDays != 90 ||
-		s.Practitioner.Slug != "camille-martin" || s.Practitioner.FirstName != "Camille" {
+	if s.Practice.Name != "Cabinet Étoile" || s.BookingNoticeHour != 4 || s.CancelNoticeHour != 48 || s.HorizonDays != 90 {
 		t.Errorf("paramètres relus: %+v", s)
+	}
+}
+
+// Les réglages du cabinet sont réservés à l'administrateur (T056) ; le profil reste
+// accessible au praticien, jamais au secrétariat.
+func TestSettingsAdminOnlyProfileForPractitioner(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	as := func(role string) service.Actor { a := f.act; a.Role = role; return a }
+
+	for _, role := range []string{domain.RolePractitioner, domain.RoleSecretary} {
+		if err := f.svc.UpdateSettings(ctx, as(role), validSettings()); !errors.Is(err, domain.ErrForbidden) {
+			t.Errorf("UpdateSettings %s: %v, attendu ErrForbidden", role, err)
+		}
+		if _, err := f.svc.Settings(ctx, as(role)); !errors.Is(err, domain.ErrForbidden) {
+			t.Errorf("Settings %s: %v, attendu ErrForbidden", role, err)
+		}
+		if _, err := f.svc.Notifications(ctx, as(role)); !errors.Is(err, domain.ErrForbidden) {
+			t.Errorf("Notifications %s: %v, attendu ErrForbidden", role, err)
+		}
+		if err := f.svc.UpdateNotifications(ctx, as(role), service.NotificationInput{}); !errors.Is(err, domain.ErrForbidden) {
+			t.Errorf("UpdateNotifications %s: %v, attendu ErrForbidden", role, err)
+		}
+	}
+	if err := f.svc.UpdateSettings(ctx, as(domain.RoleAdmin), validSettings()); err != nil {
+		t.Errorf("UpdateSettings admin: %v", err)
+	}
+	if err := f.svc.UpdateProfile(ctx, as(domain.RolePractitioner), validProfile()); err != nil {
+		t.Errorf("UpdateProfile praticien: %v", err)
+	}
+	if err := f.svc.UpdateProfile(ctx, as(domain.RoleSecretary), validProfile()); !errors.Is(err, domain.ErrForbidden) {
+		t.Errorf("UpdateProfile secrétaire: %v, attendu ErrForbidden", err)
+	}
+	// Le profil n'a pas touché au cabinet, et inversement.
+	pr, err := f.svc.Practitioner(ctx, f.act)
+	if err != nil || pr.Slug != "camille-martin" || pr.FirstName != "Camille" || pr.Color != "#aa3366" {
+		t.Errorf("profil relu: %+v (%v)", pr, err)
+	}
+}
+
+func TestUpdateProfileValidation(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	tests := []struct {
+		name   string
+		mutate func(*service.ProfileInput)
+		want   string
+	}{
+		{"slug invalide", func(in *service.ProfileInput) { in.Slug = "Pas Valide" }, "identifiant d'URL"},
+		{"slug réservé", func(in *service.ProfileInput) { in.Slug = service.ReservedFirstSlug }, "identifiant d'URL"},
+		{"prénom vide", func(in *service.ProfileInput) { in.FirstName = "" }, "prénom"},
+		{"nom vide", func(in *service.ProfileInput) { in.LastName = " " }, "nom du praticien"},
+		{"couleur invalide", func(in *service.ProfileInput) { in.Color = "rouge" }, "couleur"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			in := validProfile()
+			tt.mutate(&in)
+			if err := f.svc.UpdateProfile(ctx, f.act, in); !strings.Contains(messages(err), tt.want) {
+				t.Fatalf("messages %q, attendu %q (err=%v)", messages(err), tt.want, err)
+			}
+		})
 	}
 }
 
@@ -198,9 +264,9 @@ func TestUpdateSettingsSlugTaken(t *testing.T) {
 	if err != nil || len(other) == 0 {
 		t.Fatal(err)
 	}
-	in := validSettings()
+	in := validProfile()
 	in.Slug = other[0].Slug
-	err = f.svc.UpdateSettings(ctx, f.act, in)
+	err = f.svc.UpdateProfile(ctx, f.act, in)
 	if !strings.Contains(messages(err), "déjà utilisé") {
 		t.Fatalf("slug en doublon: %v", err)
 	}
@@ -500,7 +566,7 @@ func TestClosureSpringForward(t *testing.T) {
 	}
 }
 
-func TestUpdateSettingsColor(t *testing.T) {
+func TestUpdateProfileColor(t *testing.T) {
 	t.Parallel()
 	f := newFixture(t)
 	ctx := context.Background()
@@ -516,9 +582,9 @@ func TestUpdateSettingsColor(t *testing.T) {
 		}
 		return pc.Name, pr.Slug, pr.Color
 	}
-	in := validSettings()
+	in := validProfile()
 	in.Color = " #aa3366 "
-	if err := f.svc.UpdateSettings(ctx, f.act, in); err != nil {
+	if err := f.svc.UpdateProfile(ctx, f.act, in); err != nil {
 		t.Fatal(err)
 	}
 	name, slug, color := read()
@@ -526,9 +592,9 @@ func TestUpdateSettingsColor(t *testing.T) {
 		t.Fatalf("couleur = %q", color)
 	}
 	for _, bad := range []string{"rouge", "#12345", "url(x)", ""} {
-		in := validSettings()
-		in.Name, in.Slug, in.Color = "Autre nom", "autre-slug", bad
-		err := f.svc.UpdateSettings(ctx, f.act, in)
+		in := validProfile()
+		in.Slug, in.Color = "autre-slug", bad
+		err := f.svc.UpdateProfile(ctx, f.act, in)
 		fe := domain.FieldErrors(err)
 		if len(fe) != 1 || fe[0].Field != "color" {
 			t.Errorf("couleur %q: %v", bad, err)

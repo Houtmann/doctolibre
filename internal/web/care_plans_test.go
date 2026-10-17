@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -208,11 +209,167 @@ func TestCarePlanConflictRendersAllOrNothing(t *testing.T) {
 	}
 }
 
-func TestCarePlanSecretaryForbidden(t *testing.T) {
+// secretaryPlanEnv : un cabinet avec un admin (dont le profil praticien porte les
+// horaires), un secrétaire connecté, un patient, et un praticien d'un autre cabinet.
+type secretaryPlanEnv struct {
+	c        *client // secrétaire
+	db       *pgxpool.Pool
+	patient  sqlcgen.Patient
+	typeID   string
+	pracID   uuid.UUID
+	foreign  uuid.UUID
+	pracName string
+}
+
+func newSecretaryPlanEnv(t *testing.T) secretaryPlanEnv {
+	t.Helper()
+	db := testutil.DB(t)
+	ctx := context.Background()
+	adm, err := auth.CreateUser(ctx, db, auth.CreateUserParams{Email: "admin@example.test", Role: domain.RoleAdmin, PracticeName: "Cabinet test", Password: pw})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := auth.CreateUser(ctx, db, auth.CreateUserParams{Email: userEmail, Role: domain.RoleSecretary, PracticeName: "Cabinet test", Password: pw}); err != nil {
+		t.Fatal(err)
+	}
+	clock := testutil.NewFixedClock(time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC))
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	practice := &service.Practice{Pool: db, Clock: clock}
+	h := web.Routes(web.Deps{
+		Config: config.Config{Env: config.EnvDev}, Logger: logger, DB: db,
+		Auth:     &auth.Service{Pool: db, Clock: clock, Logger: logger},
+		Practice: practice, Calendar: &service.Calendar{Pool: db, Clock: clock, Events: service.NopSink{}, ManageKey: service.NewManageKey(testutil.ManageSecret)},
+		Patients: &service.Patients{Pool: db, Clock: clock}, CarePlans: &service.CarePlans{Pool: db, Clock: clock, Events: service.NopSink{}, ManageKey: service.NewManageKey(testutil.ManageSecret)},
+	})
+	c := newClient(t, h, "192.0.2.41")
+	if rec := c.login(userEmail, pw, "/admin"); rec.Code != 303 {
+		t.Fatalf("login: %d", rec.Code)
+	}
+	actor := service.Actor{UserID: adm.ID, PracticeID: adm.PracticeID}
+	ts, err := practice.AppointmentTypes(ctx, actor)
+	if err != nil || len(ts) == 0 {
+		t.Fatalf("motifs : %v", err)
+	}
+	var ids []string
+	for _, ty := range ts {
+		ids = append(ids, ty.ID.String())
+	}
+	if err := practice.AddRules(ctx, actor, service.RuleInput{Weekdays: []string{"0", "1", "2", "3", "4"}, Start: "08:00", End: "12:00", TypeIDs: ids}); err != nil {
+		t.Fatal(err)
+	}
+	pr, err := practice.Practitioner(ctx, actor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := sqlcgen.New(db).CreatePatient(ctx, sqlcgen.CreatePatientParams{
+		PracticeID: adm.PracticeID, FirstName: "Paul", LastName: "Martin",
+		Phone: pgtype.Text{String: "+33612345678", Valid: true}, SmsOptIn: true, EmailOptIn: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := testutil.NewPractice(t, db)
+	return secretaryPlanEnv{
+		c: c, db: db, patient: p, typeID: ts[0].ID.String(), pracID: pr.ID, pracName: service.PractitionerName(pr),
+		foreign: testutil.NewPractitioner(t, db, other.ID).ID,
+	}
+}
+
+func (e secretaryPlanEnv) count(t *testing.T, query string, args ...any) int {
+	t.Helper()
+	var n int
+	if err := e.db.QueryRow(context.Background(), query, args...).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	return n
+}
+
+// Le secrétariat crée, ajuste et change le statut d'une série, en choisissant le
+// praticien visé ; il ne peut pas viser un praticien d'un autre cabinet.
+func TestCarePlanSecretaryFlow(t *testing.T) {
 	t.Parallel()
-	e := newPlanEnv(t, domain.RoleSecretary)
-	rec := e.c.do("GET", "/admin/patients/"+e.patient.ID.String()+"/care-plans/new", nil)
-	if rec.Code != 403 {
-		t.Errorf("secrétariat : %d, attendu 403", rec.Code)
+	e := newSecretaryPlanEnv(t)
+	base := "/admin/patients/" + e.patient.ID.String()
+	criteria := func(practitioner string) url.Values {
+		v := url.Values{
+			"type_id": {e.typeID}, "label": {"Rééducation"}, "prescribed": {"10"}, "per_week": {"2"},
+			"start_date": {"2026-10-19"}, "weekdays": {"0", "3"},
+		}
+		if practitioner != "" {
+			v.Set("practitioner", practitioner)
+		}
+		return v
+	}
+
+	// Le formulaire propose le choix du praticien.
+	mustContain(t, e.c.do("GET", base+"/care-plans/new", nil), 200, `name="practitioner"`, e.pracName, "Choisir…")
+	// Sans praticien : message de validation, rien d'écrit.
+	rec := e.c.do("POST", base+"/care-plans/propose", criteria(""))
+	mustContain(t, rec, 422, "Choisissez le praticien des séances.")
+
+	// Proposition puis ajustement d'une séance (09:00) et validation.
+	rec = e.c.do("POST", base+"/care-plans/propose", criteria(e.pracID.String()))
+	mustContain(t, rec, 200, "Valider la série", `<option value="`+e.pracID.String()+`" selected>`)
+	lines := linesOf(t, rec.Body.String())
+	if len(lines["line_date"]) != 10 {
+		t.Fatalf("lignes proposées : %v", lines)
+	}
+	form := criteria(e.pracID.String())
+	for k, vs := range lines {
+		form[k] = vs
+	}
+	form["line_time"][2] = "09:00"
+	if rec := e.c.do("POST", base+"/care-plans", form); rec.Code != 303 || rec.Header().Get("Location") != base {
+		t.Fatalf("create : %d %s", rec.Code, rec.Header().Get("Location"))
+	}
+	if n := e.count(t, "SELECT count(*) FROM care_plan WHERE practitioner_id = $1", e.pracID); n != 1 {
+		t.Fatalf("%d série(s) pour le praticien choisi", n)
+	}
+	if n := e.count(t, "SELECT count(*) FROM appointment WHERE care_plan_id IS NOT NULL AND practitioner_id = $1", e.pracID); n != 10 {
+		t.Errorf("%d séances planifiées, attendu 10", n)
+	}
+	page := e.c.do("GET", base, nil).Body.String()
+	for _, want := range []string{"Rééducation", "10/10 séances", "09h00"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("fiche patient sans %q", want)
+		}
+	}
+
+	// Changement de statut par le secrétariat.
+	m := regexp.MustCompile(`/admin/care-plans/([0-9a-f-]{36})/status`).FindStringSubmatch(page)
+	if m == nil {
+		t.Fatal("formulaire de statut absent")
+	}
+	for _, status := range []string{"completed", "active"} {
+		if rec := e.c.do("POST", "/admin/care-plans/"+m[1]+"/status", url.Values{"status": {status}}); rec.Code != 303 {
+			t.Fatalf("statut %s : %d", status, rec.Code)
+		}
+		if n := e.count(t, "SELECT count(*) FROM care_plan WHERE id = $1 AND status = $2", m[1], status); n != 1 {
+			t.Errorf("statut %s non enregistré", status)
+		}
+	}
+}
+
+func TestCarePlanSecretaryCannotTargetOtherPractice(t *testing.T) {
+	t.Parallel()
+	e := newSecretaryPlanEnv(t)
+	base := "/admin/patients/" + e.patient.ID.String()
+	form := url.Values{
+		"type_id": {e.typeID}, "prescribed": {"2"}, "per_week": {"2"}, "start_date": {"2026-10-19"},
+		"practitioner": {e.foreign.String()}, "line_date": {"2026-10-19", "2026-10-22"}, "line_time": {"08:00", "08:00"},
+	}
+	for _, p := range []string{base + "/care-plans/propose", base + "/care-plans"} {
+		if rec := e.c.do("POST", p, form); rec.Code != 404 {
+			t.Errorf("POST %s vers un praticien d'un autre cabinet : %d, attendu 404", p, rec.Code)
+		}
+	}
+	if rec := e.c.do("POST", base+"/care-plans/propose", func() url.Values { form.Set("practitioner", "pas-un-uuid"); return form }()); rec.Code != 404 {
+		t.Errorf("identifiant invalide : %d, attendu 404", rec.Code)
+	}
+	if n := e.count(t, "SELECT count(*) FROM care_plan"); n != 0 {
+		t.Errorf("%d série(s) créée(s)", n)
+	}
+	if n := e.count(t, "SELECT count(*) FROM appointment WHERE care_plan_id IS NOT NULL"); n != 0 {
+		t.Errorf("%d séance(s) créée(s)", n)
 	}
 }

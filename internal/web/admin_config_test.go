@@ -110,7 +110,7 @@ func TestConfigPostRequiresCSRF(t *testing.T) {
 func TestConfigSecretaryForbidden(t *testing.T) {
 	t.Parallel()
 	_, c := newConfigAdmin(t, domain.RoleSecretary)
-	for _, p := range []string{"/admin/settings", "/admin/appointment-types", "/admin/availability", "/admin/absences"} {
+	for _, p := range []string{"/admin/settings", "/admin/profile", "/admin/appointment-types", "/admin/availability", "/admin/absences"} {
 		if rec := c.do("GET", p, nil); rec.Code != 403 {
 			t.Errorf("GET %s secrétaire: %d", p, rec.Code)
 		}
@@ -121,35 +121,112 @@ func TestSettingsPage(t *testing.T) {
 	t.Parallel()
 	_, c := newConfigAdmin(t, domain.RoleAdmin)
 
-	mustContain(t, c.do("GET", "/admin/settings", nil), 200, `value="Cabinet test"`, `name="booking_notice_hours" type="number" inputmode="numeric" min="0" max="720" value="2"`, `name="slug"`, `for="first_name"`)
+	rec := c.do("GET", "/admin/settings", nil)
+	mustContain(t, rec, 200, `value="Cabinet test"`, `name="booking_notice_hours" type="number" inputmode="numeric" min="0" max="720" value="2"`)
+	for _, f := range []string{`name="slug"`, `name="first_name"`, `name="color"`, `/admin/settings/feed`} {
+		if strings.Contains(rec.Body.String(), f) {
+			t.Errorf("le champ du profil %s est sur la page du cabinet", f)
+		}
+	}
 
 	// Invalide : statut 422, erreurs affichées, saisie conservée.
-	rec := c.do("POST", "/admin/settings", url.Values{
-		"name": {""}, "booking_notice_hours": {"abc"}, "cancel_notice_hours": {"24"}, "horizon_days": {"60"},
-		"first_name": {"Camille"}, "last_name": {"Martin"}, "slug": {"camille"}, "phone": {"0102030405"},
+	rec = c.do("POST", "/admin/settings", url.Values{
+		"name": {""}, "booking_notice_hours": {"abc"}, "cancel_notice_hours": {"24"}, "horizon_days": {"60"}, "phone": {"0102030405"},
 	})
-	mustContain(t, rec, 422, "Le nom du cabinet est requis.", "délai minimal de réservation", `value="Camille"`, `role="alert"`)
+	mustContain(t, rec, 422, "Le nom du cabinet est requis.", "délai minimal de réservation", `value="0102030405"`, `role="alert"`)
 
 	// Valide : redirection 303 puis valeurs relues.
 	rec = c.do("POST", "/admin/settings", url.Values{
 		"name": {"Cabinet Étoile"}, "address": {"1 rue de la Paix"}, "phone": {"01 02 03 04 05"},
 		"booking_notice_hours": {"6"}, "cancel_notice_hours": {"48"}, "horizon_days": {"45"},
-		"first_name": {"Camille"}, "last_name": {"Martin"}, "title": {"Kiné"}, "bio": {"Bio"}, "slug": {"camille-martin"}, "color": {"#aa3366"},
 	})
 	if rec.Code != 303 || rec.Header().Get("Location") != "/admin/settings" {
 		t.Fatalf("POST valide: %d %q", rec.Code, rec.Header().Get("Location"))
 	}
-	mustContain(t, c.do("GET", "/admin/settings", nil), 200, "Paramètres enregistrés.", `value="Cabinet Étoile"`, `value="45"`, `value="camille-martin"`, `name="color" type="color" value="#aa3366"`, `for="color"`)
+	mustContain(t, c.do("GET", "/admin/settings", nil), 200, "Paramètres du cabinet enregistrés.", `value="Cabinet Étoile"`, `value="45"`)
+}
 
-	// Couleur invalide (champ du profil) : 422 et rien n'est écrit, autres champs compris.
+func TestProfilePage(t *testing.T) {
+	t.Parallel()
+	_, c := newConfigAdmin(t, domain.RoleAdmin)
+
+	rec := c.do("GET", "/admin/profile", nil)
+	mustContain(t, rec, 200, `name="slug"`, `for="first_name"`, `for="color"`)
+	for _, f := range []string{`name="name"`, `name="booking_notice_hours"`, `name="home_visit_zones"`} {
+		if strings.Contains(rec.Body.String(), f) {
+			t.Errorf("le champ du cabinet %s est sur la page du profil", f)
+		}
+	}
+
+	rec = c.do("POST", "/admin/profile", url.Values{"first_name": {"Camille"}, "last_name": {""}, "slug": {"camille"}, "color": {"#aa3366"}})
+	mustContain(t, rec, 422, "Le nom du praticien est requis.", `value="Camille"`, `role="alert"`)
+
+	rec = c.do("POST", "/admin/profile", url.Values{
+		"first_name": {"Camille"}, "last_name": {"Martin"}, "title": {"Kiné"}, "bio": {"Bio"}, "slug": {"camille-martin"}, "color": {"#aa3366"},
+	})
+	if rec.Code != 303 || rec.Header().Get("Location") != "/admin/profile" {
+		t.Fatalf("POST valide: %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+	mustContain(t, c.do("GET", "/admin/profile", nil), 200, "Profil enregistré.", `value="camille-martin"`, `name="color" type="color" value="#aa3366"`, `for="color"`)
+
+	// Couleur invalide : 422 et rien n'est écrit.
 	for _, bad := range []string{"rouge", "#12345", "url(x)", ""} {
-		rec = c.do("POST", "/admin/settings", url.Values{
-			"name": {"Autre nom"}, "booking_notice_hours": {"6"}, "cancel_notice_hours": {"48"}, "horizon_days": {"45"},
-			"first_name": {"Camille"}, "last_name": {"Martin"}, "slug": {"autre-slug"}, "color": {bad},
+		rec = c.do("POST", "/admin/profile", url.Values{
+			"first_name": {"Autre"}, "last_name": {"Martin"}, "slug": {"autre-slug"}, "color": {bad},
 		})
 		mustContain(t, rec, 422, "La couleur doit être au format #rrggbb.")
 	}
-	mustContain(t, c.do("GET", "/admin/settings", nil), 200, `value="Cabinet Étoile"`, `value="camille-martin"`, `value="#aa3366"`)
+	mustContain(t, c.do("GET", "/admin/profile", nil), 200, `value="Camille"`, `value="camille-martin"`, `value="#aa3366"`)
+}
+
+// Un praticien non admin règle son profil, jamais le cabinet : tout champ du cabinet
+// posté est refusé (403), rien n'est écrit, et l'ancien lien mène au profil.
+func TestPractitionerProfileNotPracticeSettings(t *testing.T) {
+	t.Parallel()
+	_, c := newConfigAdmin(t, domain.RolePractitioner)
+
+	profile := c.do("GET", "/admin/profile", nil)
+	mustContain(t, profile, 200, `name="slug"`, `<a href="/admin/profile"`)
+	if strings.Contains(profile.Body.String(), `href="/admin/settings"`) {
+		t.Error("lien vers les réglages du cabinet proposé à un praticien")
+	}
+	rec := c.do("GET", "/admin/settings", nil)
+	if rec.Code != 303 || rec.Header().Get("Location") != "/admin/profile" {
+		t.Errorf("GET /admin/settings praticien: %d %q, attendu redirection vers le profil", rec.Code, rec.Header().Get("Location"))
+	}
+
+	ok := url.Values{"first_name": {"Léa"}, "last_name": {"Durand"}, "slug": {"lea-durand"}, "color": {"#112233"}}
+	if rec := c.do("POST", "/admin/profile", ok); rec.Code != 303 {
+		t.Fatalf("profil: %d", rec.Code)
+	}
+	// Champ du cabinet posté sur le profil.
+	bad := url.Values{"first_name": {"Léa"}, "last_name": {"Durand"}, "slug": {"lea-durand"}, "color": {"#112233"}, "name": {"Piraté"}}
+	if rec := c.do("POST", "/admin/profile", bad); rec.Code != 403 {
+		t.Errorf("champ cabinet sur le profil: %d, attendu 403", rec.Code)
+	}
+	// Réglages du cabinet, notifications et fournisseurs : tous refusés.
+	cabinet := url.Values{"name": {"Piraté"}, "booking_notice_hours": {"1"}, "cancel_notice_hours": {"1"}, "horizon_days": {"10"}}
+	for _, p := range []string{"/admin/settings", "/admin/settings/notifications"} {
+		if rec := c.do("POST", p, cabinet); rec.Code != 403 {
+			t.Errorf("POST %s praticien: %d, attendu 403", p, rec.Code)
+		}
+	}
+	for _, p := range []string{"/admin/settings/notifications"} {
+		if rec := c.do("GET", p, nil); rec.Code != 403 {
+			t.Errorf("GET %s praticien: %d, attendu 403", p, rec.Code)
+		}
+	}
+}
+
+func TestSecretaryProfileForbidden(t *testing.T) {
+	t.Parallel()
+	_, c := newConfigAdmin(t, domain.RoleSecretary)
+	if rec := c.do("GET", "/admin/profile", nil); rec.Code != 403 {
+		t.Errorf("GET /admin/profile secrétaire: %d", rec.Code)
+	}
+	if rec := c.do("POST", "/admin/profile", url.Values{"first_name": {"A"}, "last_name": {"B"}, "slug": {"ab"}, "color": {"#112233"}}); rec.Code != 403 {
+		t.Errorf("POST /admin/profile secrétaire: %d", rec.Code)
+	}
 }
 
 func TestAppointmentTypesPage(t *testing.T) {
@@ -278,7 +355,7 @@ func TestAdminNavMarksCurrentPage(t *testing.T) {
 	_, c := newConfigAdmin(t, domain.RoleAdmin)
 
 	rec := c.do("GET", "/admin/settings", nil)
-	mustContain(t, rec, 200, `<a href="/admin/settings" class="menu-active" aria-current="page">Paramètres</a>`, `class="menu w-full`, `drawer-side`, `data-theme-toggle`)
+	mustContain(t, rec, 200, `<a href="/admin/settings" class="menu-active" aria-current="page">Paramètres du cabinet</a>`, `<a href="/admin/profile">Mon profil</a>`, `class="menu w-full`, `drawer-side`, `data-theme-toggle`)
 	if n := strings.Count(rec.Body.String(), `aria-current="page"`); n != 1 {
 		t.Fatalf("aria-current=page: %d occurrences, attendu 1", n)
 	}

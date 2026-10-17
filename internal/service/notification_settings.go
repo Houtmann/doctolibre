@@ -48,6 +48,9 @@ func notificationInputOf(pc sqlcgen.Practice) NotificationInput {
 
 // Notifications retourne les réglages de notification du cabinet.
 func (s *Practice) Notifications(ctx context.Context, a Actor) (NotificationInput, error) {
+	if err := requireAdmin(a); err != nil {
+		return NotificationInput{}, err
+	}
 	pc, err := sqlcgen.New(s.Pool).GetPractice(ctx, a.PracticeID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return NotificationInput{}, domain.ErrNotFound
@@ -68,6 +71,9 @@ func validChannel(c string) bool {
 
 // UpdateNotifications valide puis enregistre les réglages de notification.
 func (s *Practice) UpdateNotifications(ctx context.Context, a Actor, in NotificationInput) error {
+	if err := requireAdmin(a); err != nil {
+		return err
+	}
 	var errs domain.ValidationErrors
 	add := func(field, msg string) { errs = append(errs, domain.ErrValidation{Field: field, Msg: msg}) }
 	in.Signature = strings.TrimSpace(in.Signature)
@@ -137,6 +143,9 @@ func smsFor(pref string, capable, smsOnly int64) int64 {
 // rendez-vous des 4 dernières semaines (hors annulations et déplacements, rares).
 // C'est une estimation : elle ignore les canaux non vérifiés des réservations en ligne.
 func (s *Practice) EstimateSMS(ctx context.Context, a Actor, in NotificationInput) (SMSEstimate, error) {
+	if err := requireAdmin(a); err != nil {
+		return SMSEstimate{}, err
+	}
 	now := s.Clock.Now()
 	vol, err := sqlcgen.New(s.Pool).NotificationVolume(ctx, sqlcgen.NotificationVolumeParams{
 		PracticeID: a.PracticeID, FromAt: now.Add(-4 * 7 * 24 * time.Hour), ToAt: now,

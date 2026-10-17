@@ -67,6 +67,8 @@ func navCurrent(path string) string {
 		{"/admin/availability", "/admin/availability"},
 		{"/admin/absences", "/admin/absences"},
 		{"/admin/appointment-types", "/admin/appointment-types"},
+		{"/admin/profile", "/admin/profile"},
+		{"/admin/settings/feed", "/admin/profile"},
 		{"/admin/settings", "/admin/settings"},
 		{"/admin/privacy", "/admin/privacy"},
 		{"/admin/team", "/admin/team"},

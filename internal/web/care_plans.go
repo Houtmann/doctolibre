@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"doctolibre/internal/auth"
 	"doctolibre/internal/domain"
 	"doctolibre/internal/httpx"
 	"doctolibre/internal/service"
@@ -17,16 +18,19 @@ import (
 // Chemins des séries de séances.
 const pathCarePlans = "/admin/care-plans"
 
-// carePlanRoutes enregistre les séries de séances (admin et praticien : la
-// planification se fait dans l'agenda du praticien connecté).
+// carePlanRoutes enregistre les séries de séances. Admin et praticien planifient
+// dans l'agenda du praticien connecté ; le secrétariat (T056) choisit le praticien
+// visé (paramètre « practitioner », contrôlé par la matrice de permissions).
 func (d Deps) carePlanRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
 	h := &carePlanHandlers{svc: d.CarePlans, rd: rd, logger: logger}
-	require := d.Auth.RequireUser(domain.RoleAdmin, domain.RolePractitioner)
+	require := d.Auth.RequireUser(domain.RoleAdmin, domain.RolePractitioner, domain.RoleSecretary)
 	handle := func(pattern string, f http.HandlerFunc) { mux.Handle(pattern, require(f)) }
+	target := withTarget(rd, auth.ActionCarePlanManage)
+	handleFor := func(pattern string, f http.HandlerFunc) { mux.Handle(pattern, require(target(f))) }
 
-	handle("GET "+pathPatients+"/{id}/care-plans/new", h.newForm)
-	handle("POST "+pathPatients+"/{id}/care-plans/propose", h.propose)
-	handle("POST "+pathPatients+"/{id}/care-plans", h.create)
+	handleFor("GET "+pathPatients+"/{id}/care-plans/new", h.newForm)
+	handleFor("POST "+pathPatients+"/{id}/care-plans/propose", h.propose)
+	handleFor("POST "+pathPatients+"/{id}/care-plans", h.create)
 	handle("POST "+pathCarePlans+"/{id}/status", h.status)
 	handle("POST "+pathCarePlans+"/{id}/replace", h.replace)
 }
@@ -54,6 +58,7 @@ func (h *carePlanHandlers) fail(w http.ResponseWriter, r *http.Request, err erro
 // CarePlanValues est la saisie conservée d'un formulaire de série.
 type CarePlanValues struct {
 	TypeID, Label, Prescribed, PerWeek, StartDate string
+	Practitioner                                  string // praticien choisi par le secrétariat
 	WindowStart, WindowEnd, Address               string
 	Weekdays                                      []string
 }
@@ -71,6 +76,7 @@ type CarePlanPage struct {
 	PatientID, PatientName string
 	Values                 CarePlanValues
 	Types                  []TypeChoice
+	Practitioners          []PractitionerOption // choix du praticien (secrétariat) ; vide = le sien
 	Weekdays               []WeekdayChoice
 	Lines                  []service.ProposalLine
 	Found                  int
@@ -83,7 +89,7 @@ type CarePlanPage struct {
 func readPlanValues(r *http.Request) CarePlanValues {
 	v := func(k string) string { return strings.TrimSpace(r.PostFormValue(k)) }
 	return CarePlanValues{
-		TypeID: v("type_id"), Label: v("label"), Prescribed: v("prescribed"), PerWeek: v("per_week"), StartDate: v("start_date"),
+		Practitioner: v(practitionerParam), TypeID: v("type_id"), Label: v("label"), Prescribed: v("prescribed"), PerWeek: v("per_week"), StartDate: v("start_date"),
 		WindowStart: v("window_start"), WindowEnd: v("window_end"), Address: v("address"), Weekdays: r.PostForm["weekdays"],
 	}
 }
@@ -125,6 +131,9 @@ func (h *carePlanHandlers) page(r *http.Request, patientID uuid.UUID, v CarePlan
 			p.AtHome = t.AtHome
 		}
 	}
+	for _, pr := range f.Practitioners {
+		p.Practitioners = append(p.Practitioners, PractitionerOption{ID: pr.ID.String(), Name: service.PractitionerName(pr), Selected: pr.ID.String() == v.Practitioner})
+	}
 	chosen := map[string]bool{}
 	for _, w := range v.Weekdays {
 		chosen[w] = true
@@ -153,7 +162,7 @@ func (h *carePlanHandlers) newForm(w http.ResponseWriter, r *http.Request) {
 		h.rd.Error(w, r, http.StatusNotFound, "")
 		return
 	}
-	p, err := h.page(r, id, CarePlanValues{Prescribed: "10", PerWeek: "2"}, nil, nil)
+	p, err := h.page(r, id, CarePlanValues{Prescribed: "10", PerWeek: "2", Practitioner: strings.TrimSpace(r.URL.Query().Get(practitionerParam))}, nil, nil)
 	if err != nil {
 		h.fail(w, r, err)
 		return

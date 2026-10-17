@@ -33,9 +33,10 @@
           <li><a href="/admin/availability"{{if eq .Current "/admin/availability"}} class="menu-active" aria-current="page"{{end}}>Horaires</a></li>
           <li><a href="/admin/absences"{{if eq .Current "/admin/absences"}} class="menu-active" aria-current="page"{{end}}>Absences</a></li>
           <li><a href="/admin/appointment-types"{{if eq .Current "/admin/appointment-types"}} class="menu-active" aria-current="page"{{end}}>Motifs</a></li>
-          <li><a href="/admin/settings"{{if eq .Current "/admin/settings"}} class="menu-active" aria-current="page"{{end}}>Paramètres</a></li>
+          <li><a href="/admin/profile"{{if eq .Current "/admin/profile"}} class="menu-active" aria-current="page"{{end}}>Mon profil</a></li>
           {{end}}
           {{if eq .Role "admin"}}
+          <li><a href="/admin/settings"{{if eq .Current "/admin/settings"}} class="menu-active" aria-current="page"{{end}}>Paramètres du cabinet</a></li>
           <li><a href="/admin/privacy"{{if eq .Current "/admin/privacy"}} class="menu-active" aria-current="page"{{end}}>Confidentialité</a></li>
           <li><a href="/admin/team"{{if eq .Current "/admin/team"}} class="menu-active" aria-current="page"{{end}}>Équipe</a></li>
           {{end}}

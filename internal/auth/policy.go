@@ -20,9 +20,12 @@ const (
 	ActionPatientsManage Action = "patients.manage"
 	// ActionAvailabilityEdit : horaires hebdomadaires et absences d'un praticien.
 	ActionAvailabilityEdit Action = "availability.edit"
-	// ActionPracticeConfig : paramètres du cabinet, profil, motifs, notifications.
-	ActionPracticeConfig Action = "practice.config"
-	// ActionCarePlanManage : séries de séances (T030).
+	// ActionPracticeSettings : tout ce qui engage le cabinet (nom, délais, domicile,
+	// fériés, notifications, fournisseurs d'email et de SMS) : administrateur seul (T056).
+	ActionPracticeSettings Action = "practice.settings"
+	// ActionProfileEdit : le profil public que le praticien règle sur lui-même (T056).
+	ActionProfileEdit Action = "profile.edit"
+	// ActionCarePlanManage : séries de séances (T030) ; ouvertes au secrétariat (T056).
 	ActionCarePlanManage Action = "careplan.manage"
 	// ActionTeamManage : inviter, changer le rôle, désactiver un membre.
 	ActionTeamManage Action = "team.manage"
@@ -55,10 +58,14 @@ func Can(u User, a Action, res Resource) bool {
 	case ActionAvailabilityEdit:
 		// Le secrétariat ne règle pas les horaires ; un praticien règle les siens.
 		return u.Role != domain.RoleSecretary && domain.MayAccessPractitioner(u.Role, own, u.Delegated, res.PractitionerID)
-	case ActionPracticeConfig, ActionCarePlanManage:
-		return u.Role == domain.RoleAdmin || u.Role == domain.RolePractitioner
-	case ActionTeamManage:
+	case ActionPracticeSettings, ActionTeamManage:
 		return u.Role == domain.RoleAdmin
+	case ActionProfileEdit:
+		return u.Role == domain.RoleAdmin || u.Role == domain.RolePractitioner
+	case ActionCarePlanManage:
+		// Même règle que l'agenda : admin et secrétariat visent n'importe quel
+		// praticien du cabinet, un praticien le sien et ceux qui lui sont délégués.
+		return domain.MayAccessPractitioner(u.Role, own, u.Delegated, res.PractitionerID)
 	case ActionMessagesView:
 		return domain.ValidRole(u.Role)
 	}

@@ -104,13 +104,25 @@ Le mot de passe est demandé au clavier (sans affichage), 12 caractères minimum
 Ensuite, dans le navigateur :
 
 1. Connectez-vous sur `https://<votre domaine>/admin/login`.
-2. **Paramètres du cabinet** (`/admin/settings`) : nom, adresse, téléphone ; délai minimal avant un rendez-vous, délai minimal pour annuler, nombre de jours de réservation à l'avance ; les visites à domicile et leurs zones ; votre profil de praticien (prénom, nom, titre, présentation) et l'**identifiant dans l'adresse de réservation**.
+2. **Paramètres du cabinet** (`/admin/settings`, administrateur) : nom, adresse, téléphone ; délai minimal avant un rendez-vous, délai minimal pour annuler, nombre de jours de réservation à l'avance ; les visites à domicile et leurs zones ; jours fériés ; seuil d'absences. **Mon profil** (`/admin/profile`, tout praticien) : prénom, nom, titre, présentation, couleur dans l'agenda, abonnement d'agenda, et l'**identifiant dans l'adresse de réservation**.
 3. **Motifs de rendez-vous** (`/admin/appointment-types`) : durée, temps avant/après, réservable en ligne ou non.
 4. **Disponibilités** (`/admin/availability`) : vos plages hebdomadaires ; **absences** (`/admin/absences`) pour les congés.
 5. **Notifications** (`/admin/settings/notifications`) : canal (email ou SMS) de la confirmation, des rappels et des changements, rappel la veille (et l'heure d'envoi), rappel 2 h avant, rappel pour les séances d'une série, signature des emails. La page estime le nombre de SMS envoyés.
 6. Testez comme un patient : la page publique de réservation est `https://<votre domaine>/p/<identifiant-du-cabinet>`.
 
 Les écrans sont décrits ici mais pas illustrés : les captures seront ajoutées quand l'interface sera stabilisée.
+
+### Rôles
+
+| | Administrateur | Praticien | Secrétariat |
+|---|---|---|---|
+| Réglages du cabinet (`/admin/settings`), notifications, fournisseurs email / SMS, équipe, confidentialité | oui | non (403) | non (403) |
+| Mon profil (`/admin/profile`) : présentation, identifiant, couleur, abonnement d'agenda | oui | oui, le sien | non (403) |
+| Horaires et absences | tous les praticiens | les siens (et ceux qui lui sont délégués) | non |
+| Agenda, rendez-vous, fiches patients | tous | les siens (délégation possible) ; patients du cabinet | tous |
+| Séries de séances | tous les praticiens | les siennes | tous : il **choisit le praticien** au moment de créer la série |
+
+Un praticien qui envoie un champ du cabinet (nom, délais, domicile…) reçoit une erreur 403, jamais une prise en compte silencieuse. L'ancien lien `/admin/settings` renvoie un praticien vers son profil.
 
 Rappel de bon usage : le champ libre côté cabinet est une **note administrative**, n'y écrivez pas d'information médicale.
 
@@ -119,7 +131,7 @@ Rappel de bon usage : le champ libre côté cabinet est une **note administrativ
 - **Email** (indispensable : confirmations, code de vérification, mot de passe oublié) : [`email.md`](email.md). Renseignez `DOCTOLIBRE_SMTP_HOST`, `_PORT`, `_USER`, `_PASSWORD`, `_FROM` (une adresse sur votre propre domaine) et `_TLS` (`starttls` par défaut) dans `.env`. Des exemples (OVH, Brevo, Gmail) sont dans ce document. `DOCTOLIBRE_EMAIL_DRIVER=log` n'envoie rien : à réserver aux essais.
 - **SMS** (rappels) : [`sms.md`](sms.md). Par défaut le driver est `log` et **aucun SMS ne part**. Choisissez `DOCTOLIBRE_SMS_DRIVER=ovh`, `android` ou `http` et remplissez les variables correspondantes. La stratégie d'envoi (rappel de la veille seul par SMS) pèse plus sur la facture que le fournisseur.
 
-**Fournisseurs par cabinet.** Dans l'administration (`/admin/settings/notifications/transport`, administrateur ou praticien), chaque cabinet choisit pour l'email et pour le SMS : le fournisseur du serveur (les variables ci-dessus, comportement par défaut), **son propre fournisseur** (SMTP, ou OVH / passerelle Android / webhook HTTP), ou **désactivé**. Le réglage du cabinet passe devant l'environnement pour ce cabinet, s'applique au message suivant sans redémarrage, et un bouton envoie un message de test (5 par heure).
+**Fournisseurs par cabinet.** Dans l'administration (`/admin/settings/notifications/transport`, administrateur), chaque cabinet choisit pour l'email et pour le SMS : le fournisseur du serveur (les variables ci-dessus, comportement par défaut), **son propre fournisseur** (SMTP, ou OVH / passerelle Android / webhook HTTP), ou **désactivé**. Le réglage du cabinet passe devant l'environnement pour ce cabinet, s'applique au message suivant sans redémarrage, et un bouton envoie un message de test (5 par heure).
 
 - Les identifiants du fournisseur d'un cabinet sont enregistrés **chiffrés** (AES-256-GCM, clé dérivée de `DOCTOLIBRE_SECRET_KEY`). **Changer `DOCTOLIBRE_SECRET_KEY` les rend illisibles** : l'administration l'indique (« identifiants illisibles ») et il faut les ressaisir ; en attendant, les messages de ce cabinet échouent (retentés puis `failed`).
 - `DOCTOLIBRE_NOTIFY_ALLOW_PRIVATE_HOSTS` (défaut `false`). Un fournisseur propre à un cabinet fait appeler par le serveur un hôte saisi dans l'administration : par défaut, les adresses de bouclage, privées, link-local et non routables sont refusées **à la connexion** (contrôle de l'IP réellement résolue), les redirections HTTP ne sont pas suivies et le webhook / la passerelle doivent être en `https`. Mettez `true` si une passerelle Android est sur le réseau du cabinet (`http://192.168.x.x:8080`) ; à n'activer que si les utilisateurs de l'administration sont de confiance.

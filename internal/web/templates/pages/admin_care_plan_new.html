@@ -7,6 +7,15 @@
 
 <form class="space-y-4 max-w-2xl" method="post" action="/admin/patients/{{.Data.PatientID}}/care-plans/propose">
   {{csrf .CSRF}}
+  {{if .Data.Practitioners}}
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="cp-practitioner">Praticien</label>
+    <select class="select w-full" id="cp-practitioner" name="practitioner" required>
+      <option value="">Choisir…</option>
+      {{range .Data.Practitioners}}<option value="{{.ID}}"{{if .Selected}} selected{{end}}>{{.Name}}</option>{{end}}
+    </select>
+  </div>
+  {{end}}
   <div class="space-y-1">
     <label class="block text-sm font-medium" for="cp-type">Motif des séances</label>
     <select class="select w-full" id="cp-type" name="type_id" required>

@@ -26,7 +26,7 @@ func TestCan(t *testing.T) {
 
 	allActions := []auth.Action{
 		auth.ActionCalendarView, auth.ActionAppointmentManage, auth.ActionPatientsManage, auth.ActionAvailabilityEdit,
-		auth.ActionPracticeConfig, auth.ActionCarePlanManage, auth.ActionTeamManage, auth.ActionMessagesView,
+		auth.ActionPracticeSettings, auth.ActionProfileEdit, auth.ActionCarePlanManage, auth.ActionTeamManage, auth.ActionMessagesView,
 	}
 	tests := []struct {
 		name string
@@ -39,16 +39,20 @@ func TestCan(t *testing.T) {
 		{"admin agenda d'un autre", admin, auth.ActionCalendarView, auth.Resource{PractitionerID: theirs}, true},
 		{"admin horaires d'un autre", admin, auth.ActionAvailabilityEdit, auth.Resource{PractitionerID: theirs}, true},
 		{"admin équipe", admin, auth.ActionTeamManage, auth.Resource{}, true},
-		{"admin réglages", admin, auth.ActionPracticeConfig, auth.Resource{}, true},
+		{"admin réglages du cabinet", admin, auth.ActionPracticeSettings, auth.Resource{}, true},
+		{"admin profil", admin, auth.ActionProfileEdit, auth.Resource{}, true},
+		{"admin séries d'un autre", admin, auth.ActionCarePlanManage, auth.Resource{PractitionerID: theirs}, true},
 		// secrétariat : agendas et patients de tous, pas les réglages.
 		{"secrétaire agenda d'un autre", secretary, auth.ActionCalendarView, auth.Resource{PractitionerID: theirs}, true},
 		{"secrétaire gère les RDV d'un autre", secretary, auth.ActionAppointmentManage, auth.Resource{PractitionerID: theirs}, true},
 		{"secrétaire patients", secretary, auth.ActionPatientsManage, auth.Resource{}, true},
 		{"secrétaire horaires", secretary, auth.ActionAvailabilityEdit, auth.Resource{PractitionerID: theirs}, false},
 		{"secrétaire horaires sans cible", secretary, auth.ActionAvailabilityEdit, auth.Resource{}, false},
-		{"secrétaire réglages", secretary, auth.ActionPracticeConfig, auth.Resource{}, false},
+		{"secrétaire réglages du cabinet", secretary, auth.ActionPracticeSettings, auth.Resource{}, false},
+		{"secrétaire profil", secretary, auth.ActionProfileEdit, auth.Resource{}, false},
 		{"secrétaire équipe", secretary, auth.ActionTeamManage, auth.Resource{}, false},
-		{"secrétaire séries", secretary, auth.ActionCarePlanManage, auth.Resource{}, false},
+		{"secrétaire séries d'un praticien", secretary, auth.ActionCarePlanManage, auth.Resource{PractitionerID: theirs}, true},
+		{"secrétaire séries sans cible", secretary, auth.ActionCarePlanManage, auth.Resource{}, true},
 		// praticien : son agenda, ses horaires, les patients du cabinet.
 		{"praticien son agenda", practitioner, auth.ActionCalendarView, auth.Resource{PractitionerID: mine}, true},
 		{"praticien agenda implicite", practitioner, auth.ActionCalendarView, auth.Resource{}, true},
@@ -58,6 +62,11 @@ func TestCan(t *testing.T) {
 		{"praticien horaires d'un autre", practitioner, auth.ActionAvailabilityEdit, auth.Resource{PractitionerID: theirs}, false},
 		{"praticien patients", practitioner, auth.ActionPatientsManage, auth.Resource{}, true},
 		{"praticien équipe", practitioner, auth.ActionTeamManage, auth.Resource{}, false},
+		{"praticien réglages du cabinet", practitioner, auth.ActionPracticeSettings, auth.Resource{}, false},
+		{"praticien profil", practitioner, auth.ActionProfileEdit, auth.Resource{}, true},
+		{"praticien ses séries", practitioner, auth.ActionCarePlanManage, auth.Resource{PractitionerID: mine}, true},
+		{"praticien séries implicites", practitioner, auth.ActionCarePlanManage, auth.Resource{}, true},
+		{"praticien séries d'un autre", practitioner, auth.ActionCarePlanManage, auth.Resource{PractitionerID: theirs}, false},
 		{"praticien sans profil, cible explicite", unlinked, auth.ActionCalendarView, auth.Resource{PractitionerID: theirs}, false},
 		{"praticien sans profil, agenda implicite", unlinked, auth.ActionCalendarView, auth.Resource{}, true},
 		// cabinet différent.
@@ -109,6 +118,9 @@ func TestCanWithDelegation(t *testing.T) {
 	}
 	if auth.Can(u, auth.ActionTeamManage, auth.Resource{PracticeID: practice}) {
 		t.Error("la délégation ouvre la gestion d'équipe")
+	}
+	if auth.Can(u, auth.ActionPracticeSettings, auth.Resource{PracticeID: practice}) {
+		t.Error("la délégation ouvre les réglages du cabinet")
 	}
 	u.Delegated = nil
 	if auth.Can(u, auth.ActionCalendarView, auth.Resource{PracticeID: practice, PractitionerID: lent}) {

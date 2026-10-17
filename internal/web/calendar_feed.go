@@ -67,9 +67,9 @@ func etagMatches(header, etag string) bool {
 	return false
 }
 
-// --- Réglages de l'abonnement (dans /admin/settings) ---
+// --- Réglages de l'abonnement (page « Mon profil » ; chemins conservés sous /admin/settings/feed) ---
 
-// FeedPanel est la part « abonnement agenda » de la page de réglages.
+// FeedPanel est la part « abonnement agenda » de la page du profil.
 type FeedPanel struct {
 	Enabled   bool
 	FullNames bool
@@ -94,14 +94,14 @@ func (h *configHandlers) feedGenerate(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, r, err)
 		return
 	}
-	s, err := h.svc.Settings(r.Context(), actorFrom(r))
+	pr, err := h.svc.Practitioner(r.Context(), actorFrom(r))
 	if err != nil {
 		h.fail(w, r, err)
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	h.rd.Page(w, r, "admin_settings", SettingsPage{
-		Form: settingsInputOf(s),
+	h.rd.Page(w, r, "admin_profile", ProfilePage{
+		Form: profileInputOf(pr),
 		Feed: &FeedPanel{
 			Enabled: true, FullNames: full,
 			URL: strings.TrimRight(h.baseURL, "/") + "/ics/" + url.PathEscape(token) + feedSuffix,
@@ -116,7 +116,7 @@ func (h *configHandlers) feedOptions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.rd.SetFlash(w, "success", "Option enregistrée.")
-	httpx.Redirect(w, r, pathSettings)
+	httpx.Redirect(w, r, pathProfile)
 }
 
 func (h *configHandlers) feedRevoke(w http.ResponseWriter, r *http.Request) {
@@ -125,5 +125,5 @@ func (h *configHandlers) feedRevoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.rd.SetFlash(w, "success", "Abonnement révoqué : l'ancien lien ne fonctionne plus.")
-	httpx.Redirect(w, r, pathSettings)
+	httpx.Redirect(w, r, pathProfile)
 }

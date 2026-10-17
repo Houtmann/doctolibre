@@ -597,9 +597,8 @@ func TestFirstAvailablePractitioner(t *testing.T) {
 		t.Errorf("sans motif: %d %q", rec.Code, rec.Header().Get("Location"))
 	}
 	// Le segment est réservé : un praticien ne peut pas prendre ce slug.
-	err := e.svc.UpdateSettings(ctx, service.Actor{UserID: e.pracUser[0].ID, PracticeID: e.practice.ID, Role: domain.RolePractitioner, PractitionerID: e.pracIDs[0]}, service.SettingsInput{
-		Name: "Cabinet", BookingNoticeHours: "2", CancelNoticeHours: "24", HorizonDays: "60",
-		FirstName: "A", LastName: "B", Slug: service.ReservedFirstSlug,
+	err := e.svc.UpdateProfile(ctx, service.Actor{UserID: e.pracUser[0].ID, PracticeID: e.practice.ID, Role: domain.RolePractitioner, PractitionerID: e.pracIDs[0]}, service.ProfileInput{
+		FirstName: "A", LastName: "B", Slug: service.ReservedFirstSlug, Color: "#2563eb",
 	})
 	if len(domain.FieldErrors(err)) == 0 {
 		t.Errorf("slug réservé accepté: %v", err)

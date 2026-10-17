@@ -52,6 +52,15 @@ func (s *CarePlans) notifier() notifier {
 
 func (s *CarePlans) practice() *Practice { return &Practice{Pool: s.Pool, Clock: s.Clock} }
 
+// planPractitioner est le praticien dont on planifie la série : celui visé (a.Target),
+// sinon le sien. Le secrétariat n'en a pas : il doit choisir (erreur de validation).
+func (s *CarePlans) planPractitioner(ctx context.Context, a Actor) (sqlcgen.Practitioner, error) {
+	if a.Role == domain.RoleSecretary && a.Target == uuid.Nil {
+		return sqlcgen.Practitioner{}, domain.ErrValidation{Field: "practitioner", Msg: "Choisissez le praticien des séances."}
+	}
+	return s.practice().Practitioner(ctx, a)
+}
+
 func (s *CarePlans) emit(ctx context.Context, e Event) {
 	e.At = s.Clock.Now()
 	if s.Events != nil {
@@ -226,7 +235,9 @@ type Proposal struct {
 type FormData struct {
 	Patient sqlcgen.Patient
 	Types   []sqlcgen.AppointmentType
-	Today   string // date du jour dans le fuseau du cabinet (AAAA-MM-JJ)
+	// Practitioners : praticiens que l'acteur peut viser (rempli pour le secrétariat, qui choisit).
+	Practitioners []sqlcgen.Practitioner
+	Today         string // date du jour dans le fuseau du cabinet (AAAA-MM-JJ)
 }
 
 // Form retourne le patient et les motifs actifs pour le formulaire.
@@ -252,6 +263,11 @@ func (s *CarePlans) Form(ctx context.Context, a Actor, patientID uuid.UUID) (For
 			out.Types = append(out.Types, t)
 		}
 	}
+	if a.Role == domain.RoleSecretary {
+		if out.Practitioners, err = s.practice().TeamPractitioners(ctx, a); err != nil {
+			return FormData{}, err
+		}
+	}
 	return out, nil
 }
 
@@ -270,7 +286,7 @@ func (s *CarePlans) Propose(ctx context.Context, a Actor, in PlanInput) (Proposa
 	if err != nil {
 		return Proposal{}, fmt.Errorf("lecture patient: %w", err)
 	}
-	pr, err := s.practice().Practitioner(ctx, a)
+	pr, err := s.planPractitioner(ctx, a)
 	if err != nil {
 		return Proposal{}, err
 	}
@@ -425,7 +441,7 @@ func (s *CarePlans) Create(ctx context.Context, a Actor, in CreateInput) (sqlcge
 	if err != nil {
 		return sqlcgen.CarePlan{}, err
 	}
-	pr, err := s.practice().Practitioner(ctx, a)
+	pr, err := s.planPractitioner(ctx, a)
 	if err != nil {
 		return sqlcgen.CarePlan{}, err
 	}

@@ -20,6 +20,7 @@ import (
 // Chemins de l'administration du cabinet.
 const (
 	pathSettings     = "/admin/settings"
+	pathProfile      = "/admin/profile"
 	pathNotify       = "/admin/settings/notifications"
 	pathTypes        = "/admin/appointment-types"
 	pathAvailability = "/admin/availability"
@@ -34,6 +35,8 @@ func (d Deps) configRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 
 	handle("GET "+pathSettings, h.settingsForm)
 	handle("POST "+pathSettings, h.settingsSubmit)
+	handle("GET "+pathProfile, h.profileForm)
+	handle("POST "+pathProfile, h.profileSubmit)
 	handle("GET "+pathNotify, h.notifyForm)
 	handle("POST "+pathNotify, h.notifySubmit)
 	if d.Feed != nil {
@@ -157,11 +160,30 @@ func (h *configHandlers) succeed(w http.ResponseWriter, r *http.Request, path, m
 	httpx.Redirect(w, r, path)
 }
 
-// --- Paramètres du cabinet et profil ---
+// --- Réglages du cabinet (admin) et profil du praticien ---
 
-// SettingsPage est la donnée de la page admin_settings.
+// allow vérifie dans la matrice de permissions que l'utilisateur peut effectuer
+// action ; sinon répond 403 et retourne false.
+func (h *configHandlers) allow(w http.ResponseWriter, r *http.Request, action auth.Action) bool {
+	u, _ := auth.UserFrom(r.Context())
+	if auth.Can(u, action, auth.Resource{PracticeID: u.PracticeID}) {
+		return true
+	}
+	httpx.LoggerFrom(r.Context()).Warn("accès refusé par la matrice de permissions",
+		slog.String("user_id", u.ID.String()), slog.String("action", string(action)))
+	h.rd.Error(w, r, http.StatusForbidden, "Accès refusé.")
+	return false
+}
+
+// SettingsPage est la donnée de la page admin_settings (réglages du cabinet).
 type SettingsPage struct {
 	Form   service.SettingsInput
+	Errors []string
+}
+
+// ProfilePage est la donnée de la page admin_profile (« Mon profil »).
+type ProfilePage struct {
+	Form   service.ProfileInput
 	Errors []string
 	Feed   *FeedPanel // nil = abonnement agenda non proposé
 }
@@ -179,17 +201,77 @@ func settingsInputOf(s service.Settings) service.SettingsInput {
 		BookingNoticeHours: strconv.Itoa(s.BookingNoticeHour),
 		CancelNoticeHours:  strconv.Itoa(s.CancelNoticeHour),
 		HorizonDays:        strconv.Itoa(s.HorizonDays),
-		FirstName:          s.Practitioner.FirstName, LastName: s.Practitioner.LastName,
-		Title: s.Practitioner.Title, Bio: s.Practitioner.Bio, Slug: s.Practitioner.Slug,
-		Color:           domain.ColorOrDefault(s.Practitioner.Color),
-		HomeVisitOnline: s.Practice.HomeVisitOnline, HomeVisitZones: strings.Join(s.Practice.HomeVisitZones, "\n"),
+		HomeVisitOnline:    s.Practice.HomeVisitOnline, HomeVisitZones: strings.Join(s.Practice.HomeVisitZones, "\n"),
 		CloseOnHolidays: s.Practice.CloseOnHolidays, HolidaysAlsaceMoselle: s.Practice.HolidaysAlsaceMoselle,
 		NoShowBlockThreshold: noShowThresholdText(s.Practice.NoShowBlockThreshold),
 	}
 }
 
+func profileInputOf(p sqlcgen.Practitioner) service.ProfileInput {
+	return service.ProfileInput{
+		FirstName: p.FirstName, LastName: p.LastName, Title: p.Title, Bio: p.Bio, Slug: p.Slug,
+		Color: domain.ColorOrDefault(p.Color),
+	}
+}
+
+// settingsForm affiche les réglages du cabinet (admin). Un praticien qui arrive
+// sur l'ancien lien est renvoyé vers son profil.
 func (h *configHandlers) settingsForm(w http.ResponseWriter, r *http.Request) {
+	u, _ := auth.UserFrom(r.Context())
+	if !auth.Can(u, auth.ActionPracticeSettings, auth.Resource{PracticeID: u.PracticeID}) {
+		if auth.Can(u, auth.ActionProfileEdit, auth.Resource{PracticeID: u.PracticeID}) {
+			httpx.Redirect(w, r, pathProfile)
+			return
+		}
+		h.allow(w, r, auth.ActionPracticeSettings)
+		return
+	}
 	s, err := h.svc.Settings(r.Context(), actorFrom(r))
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.Page(w, r, "admin_settings", SettingsPage{Form: settingsInputOf(s)})
+}
+
+func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, auth.ActionPracticeSettings) {
+		return
+	}
+	in := service.SettingsInput{
+		Name: r.PostFormValue("name"), Address: r.PostFormValue("address"), Phone: r.PostFormValue("phone"),
+		BookingNoticeHours: r.PostFormValue("booking_notice_hours"),
+		CancelNoticeHours:  r.PostFormValue("cancel_notice_hours"),
+		HorizonDays:        r.PostFormValue("horizon_days"),
+		HomeVisitOnline:    r.PostFormValue("home_visit_online") == "1", HomeVisitZones: r.PostFormValue("home_visit_zones"),
+		CloseOnHolidays: r.PostFormValue("close_on_holidays") == "1", HolidaysAlsaceMoselle: r.PostFormValue("holidays_alsace_moselle") == "1",
+		NoShowBlockThreshold: r.PostFormValue("no_show_block_threshold"),
+	}
+	err := h.svc.UpdateSettings(r.Context(), actorFrom(r), in)
+	if msgs := validation(err); msgs != nil {
+		h.rd.PageStatus(w, r, http.StatusUnprocessableEntity, "admin_settings", SettingsPage{Form: in, Errors: msgs})
+		return
+	}
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.SetFlash(w, "success", "Paramètres du cabinet enregistrés.")
+	httpx.Redirect(w, r, pathSettings)
+}
+
+// cabinetFields sont les champs du formulaire des réglages du cabinet : les poster
+// sur la page du profil est refusé (403), jamais ignoré en silence.
+var cabinetFields = [...]string{
+	"name", "address", "phone", "booking_notice_hours", "cancel_notice_hours", "horizon_days",
+	"home_visit_online", "home_visit_zones", "close_on_holidays", "holidays_alsace_moselle", "no_show_block_threshold",
+}
+
+func (h *configHandlers) profileForm(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, auth.ActionProfileEdit) {
+		return
+	}
+	pr, err := h.svc.Practitioner(r.Context(), actorFrom(r))
 	if err != nil {
 		h.fail(w, r, err)
 		return
@@ -199,33 +281,39 @@ func (h *configHandlers) settingsForm(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, r, err)
 		return
 	}
-	h.rd.Page(w, r, "admin_settings", SettingsPage{Form: settingsInputOf(s), Feed: fp})
+	h.rd.Page(w, r, "admin_profile", ProfilePage{Form: profileInputOf(pr), Feed: fp})
 }
 
-func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) {
-	in := service.SettingsInput{
-		Name: r.PostFormValue("name"), Address: r.PostFormValue("address"), Phone: r.PostFormValue("phone"),
-		BookingNoticeHours: r.PostFormValue("booking_notice_hours"),
-		CancelNoticeHours:  r.PostFormValue("cancel_notice_hours"),
-		HorizonDays:        r.PostFormValue("horizon_days"),
-		FirstName:          r.PostFormValue("first_name"), LastName: r.PostFormValue("last_name"),
-		Title: r.PostFormValue("title"), Bio: r.PostFormValue("bio"), Slug: r.PostFormValue("slug"), Color: r.PostFormValue("color"),
-		HomeVisitOnline: r.PostFormValue("home_visit_online") == "1", HomeVisitZones: r.PostFormValue("home_visit_zones"),
-		CloseOnHolidays: r.PostFormValue("close_on_holidays") == "1", HolidaysAlsaceMoselle: r.PostFormValue("holidays_alsace_moselle") == "1",
-		NoShowBlockThreshold: r.PostFormValue("no_show_block_threshold"),
+func (h *configHandlers) profileSubmit(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, auth.ActionProfileEdit) {
+		return
 	}
-	err := h.svc.UpdateSettings(r.Context(), actorFrom(r), in)
+	_ = r.ParseForm()
+	for _, f := range cabinetFields {
+		if _, ok := r.PostForm[f]; ok {
+			u, _ := auth.UserFrom(r.Context())
+			httpx.LoggerFrom(r.Context()).Warn("champ du cabinet posté sur le profil",
+				slog.String("user_id", u.ID.String()), slog.String("field", f))
+			h.rd.Error(w, r, http.StatusForbidden, "Ce champ engage le cabinet : seul l'administrateur peut le modifier.")
+			return
+		}
+	}
+	in := service.ProfileInput{
+		FirstName: r.PostFormValue("first_name"), LastName: r.PostFormValue("last_name"),
+		Title: r.PostFormValue("title"), Bio: r.PostFormValue("bio"), Slug: r.PostFormValue("slug"), Color: r.PostFormValue("color"),
+	}
+	err := h.svc.UpdateProfile(r.Context(), actorFrom(r), in)
 	if msgs := validation(err); msgs != nil {
 		fp, _ := h.feedPanel(r)
-		h.rd.PageStatus(w, r, http.StatusUnprocessableEntity, "admin_settings", SettingsPage{Form: in, Errors: msgs, Feed: fp})
+		h.rd.PageStatus(w, r, http.StatusUnprocessableEntity, "admin_profile", ProfilePage{Form: in, Errors: msgs, Feed: fp})
 		return
 	}
 	if err != nil {
 		h.fail(w, r, err)
 		return
 	}
-	h.rd.SetFlash(w, "success", "Paramètres enregistrés.")
-	httpx.Redirect(w, r, pathSettings)
+	h.rd.SetFlash(w, "success", "Profil enregistré.")
+	httpx.Redirect(w, r, pathProfile)
 }
 
 // --- Motifs ---
@@ -593,6 +681,9 @@ func (h *configHandlers) notifyPage(w http.ResponseWriter, r *http.Request, stat
 }
 
 func (h *configHandlers) notifyForm(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, auth.ActionPracticeSettings) {
+		return
+	}
 	in, err := h.svc.Notifications(r.Context(), actorFrom(r))
 	if err != nil {
 		h.fail(w, r, err)
@@ -602,6 +693,9 @@ func (h *configHandlers) notifyForm(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *configHandlers) notifySubmit(w http.ResponseWriter, r *http.Request) {
+	if !h.allow(w, r, auth.ActionPracticeSettings) {
+		return
+	}
 	in := service.NotificationInput{
 		ConfirmationChannel: r.PostFormValue("confirmation_channel"), ReminderChannel: r.PostFormValue("reminder_channel"),
 		ChangeChannel: r.PostFormValue("change_channel"), ReminderDayBefore: r.PostFormValue("reminder_day_before") == "1",

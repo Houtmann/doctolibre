@@ -142,12 +142,15 @@ func TestTransportDisableUpdatesDashboardAndSettings(t *testing.T) {
 
 func TestTransportPermissions(t *testing.T) {
 	t.Parallel()
-	c, _, _ := newTransportAdmin(t, domain.RoleSecretary)
-	for _, req := range []struct{ method, path string }{
-		{"GET", transportPath}, {"POST", transportPath + "/email"}, {"POST", transportPath + "/sms/test"},
-	} {
-		if rec := c.do(req.method, req.path, url.Values{"mode": {"disabled"}}); rec.Code != http.StatusForbidden {
-			t.Errorf("%s %s : %d", req.method, req.path, rec.Code)
+	// Les fournisseurs engagent le cabinet : ni le secrétariat ni un praticien (T056).
+	for _, role := range []string{domain.RoleSecretary, domain.RolePractitioner} {
+		c, _, _ := newTransportAdmin(t, role)
+		for _, req := range []struct{ method, path string }{
+			{"GET", transportPath}, {"POST", transportPath + "/email"}, {"POST", transportPath + "/sms/test"},
+		} {
+			if rec := c.do(req.method, req.path, url.Values{"mode": {"disabled"}}); rec.Code != http.StatusForbidden {
+				t.Errorf("%s %s %s : %d", role, req.method, req.path, rec.Code)
+			}
 		}
 	}
 	a, _, _ := newTransportAdmin(t, domain.RoleAdmin)

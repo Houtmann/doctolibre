@@ -139,12 +139,10 @@ func (s *NotifyTransport) logger() *slog.Logger {
 	return slog.Default()
 }
 
-// requireTransportRole : mêmes rôles que les réglages de notification (admin, praticien).
+// requireTransportRole : les fournisseurs engagent le cabinet, comme ses réglages de
+// notification : administrateur uniquement (T056).
 func requireTransportRole(a Actor) error {
-	if a.Role != "" && a.Role != domain.RoleAdmin && a.Role != domain.RolePractitioner {
-		return domain.ErrForbidden
-	}
-	return nil
+	return requireAdmin(a)
 }
 
 // TransportView est l'état d'un canal affiché dans l'administration. Aucun secret :

@@ -56,25 +56,22 @@ func (a Actor) mayAccessPractitioner(id uuid.UUID) bool {
 	return domain.MayAccessPractitioner(a.Role, a.PractitionerID, a.Delegated, id)
 }
 
-// Settings est la vue des paramètres du cabinet et du profil du praticien.
+// Settings est la vue des réglages du cabinet (administrateur uniquement).
 type Settings struct {
 	Practice          sqlcgen.Practice
-	Practitioner      sqlcgen.Practitioner
 	BookingNoticeHour int
 	CancelNoticeHour  int
 	HorizonDays       int
 }
 
-// SettingsInput est la saisie du formulaire (les nombres arrivent en texte pour
-// pouvoir réafficher une saisie invalide).
+// SettingsInput est la saisie du formulaire des réglages du cabinet (les nombres
+// arrivent en texte pour pouvoir réafficher une saisie invalide). Le profil du
+// praticien a sa propre saisie : ProfileInput.
 type SettingsInput struct {
 	Name, Address, Phone string
 	BookingNoticeHours   string
 	CancelNoticeHours    string
 	HorizonDays          string
-
-	FirstName, LastName, Title, Bio, Slug string
-	Color                                 string // couleur d'agenda du praticien (#rrggbb)
 
 	HomeVisitOnline bool   // réservation en ligne des visites à domicile
 	HomeVisitZones  string // codes postaux ou communes, séparés par des virgules ou des retours à la ligne
@@ -85,6 +82,21 @@ type SettingsInput struct {
 	// NoShowBlockThreshold : nombre d'absences sur 6 mois à partir duquel la
 	// réservation en ligne est refusée au patient ; vide = désactivé.
 	NoShowBlockThreshold string
+}
+
+// ProfileInput est la saisie du profil que le praticien règle sur lui-même.
+type ProfileInput struct {
+	FirstName, LastName, Title, Bio, Slug string
+	Color                                 string // couleur d'agenda du praticien (#rrggbb)
+}
+
+// requireAdmin refuse les réglages qui engagent le cabinet à tout rôle autre que
+// l'administrateur (Role vide = appel interne sans restriction).
+func requireAdmin(a Actor) error {
+	if a.Role != "" && a.Role != domain.RoleAdmin {
+		return domain.ErrForbidden
+	}
+	return nil
 }
 
 // ReservedFirstSlug est le segment d'URL « premier créneau disponible » : interdit comme identifiant de praticien.
@@ -196,10 +208,9 @@ func ensurePractitioner(ctx context.Context, q *sqlcgen.Queries, a Actor) (sqlcg
 	return p, nil
 }
 
-// Settings retourne les paramètres du cabinet et le profil du praticien connecté.
+// Settings retourne les réglages du cabinet (administrateur uniquement).
 func (s *Practice) Settings(ctx context.Context, a Actor) (Settings, error) {
-	pr, err := s.Practitioner(ctx, a)
-	if err != nil {
+	if err := requireAdmin(a); err != nil {
 		return Settings{}, err
 	}
 	q := sqlcgen.New(s.Pool)
@@ -211,22 +222,23 @@ func (s *Practice) Settings(ctx context.Context, a Actor) (Settings, error) {
 		return Settings{}, fmt.Errorf("lecture cabinet: %w", err)
 	}
 	return Settings{
-		Practice: pc, Practitioner: pr,
+		Practice:          pc,
 		BookingNoticeHour: intervalHours(pc.MinBookingNotice),
 		CancelNoticeHour:  intervalHours(pc.MinCancelNotice),
 		HorizonDays:       intervalDays(pc.BookingHorizon),
 	}, nil
 }
 
-// UpdateSettings valide puis enregistre les paramètres du cabinet et le profil.
+// UpdateSettings valide puis enregistre les réglages du cabinet (administrateur
+// uniquement ; les autres rôles reçoivent ErrForbidden avant toute validation).
 func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput) error {
+	if err := requireAdmin(a); err != nil {
+		return err
+	}
 	var errs domain.ValidationErrors
 	add := func(field, msg string) { errs = append(errs, domain.ErrValidation{Field: field, Msg: msg}) }
 
 	in.Name, in.Address, in.Phone = strings.TrimSpace(in.Name), strings.TrimSpace(in.Address), strings.TrimSpace(in.Phone)
-	in.FirstName, in.LastName = strings.TrimSpace(in.FirstName), strings.TrimSpace(in.LastName)
-	in.Title, in.Bio, in.Slug = strings.TrimSpace(in.Title), strings.TrimSpace(in.Bio), strings.TrimSpace(in.Slug)
-	in.Color = strings.TrimSpace(in.Color)
 
 	if in.Name == "" {
 		add("name", "Le nom du cabinet est requis.")
@@ -251,28 +263,6 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 	if !ok3 {
 		add("horizon_days", "L'horizon de réservation doit être un nombre de jours entre 1 et 730.")
 	}
-	if in.FirstName == "" {
-		add("first_name", "Le prénom du praticien est requis.")
-	} else if tooLong(in.FirstName, 80) {
-		add("first_name", "Le prénom est trop long (80 caractères maximum).")
-	}
-	if in.LastName == "" {
-		add("last_name", "Le nom du praticien est requis.")
-	} else if tooLong(in.LastName, 80) {
-		add("last_name", "Le nom est trop long (80 caractères maximum).")
-	}
-	if tooLong(in.Title, 80) {
-		add("title", "Le titre est trop long (80 caractères maximum).")
-	}
-	if tooLong(in.Bio, 2000) {
-		add("bio", "La présentation est trop longue (2000 caractères maximum).")
-	}
-	if len(in.Slug) > 60 || !slugRe.MatchString(in.Slug) || in.Slug == ReservedFirstSlug {
-		add("slug", "L'identifiant d'URL ne peut contenir que des lettres minuscules, chiffres et tirets (60 caractères maximum).")
-	}
-	if !domain.ValidColor(in.Color) {
-		add("color", "La couleur doit être au format #rrggbb.")
-	}
 	zones, zerr := parseZones(in.HomeVisitZones)
 	if zerr != "" {
 		add("home_visit_zones", zerr)
@@ -292,10 +282,6 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 	}
 
 	err := store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
-		pr, err := ensurePractitioner(ctx, q, a)
-		if err != nil {
-			return err
-		}
 		pc, err := q.GetPractice(ctx, a.PracticeID)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.ErrNotFound
@@ -325,6 +311,54 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 		}); err != nil {
 			return fmt.Errorf("seuil d'absences: %w", err)
 		}
+		return nil
+	})
+	return err
+}
+
+// UpdateProfile valide puis enregistre le profil du praticien connecté (admin ou
+// praticien ; le secrétariat n'en a pas : ErrForbidden). Il ne touche jamais au cabinet.
+func (s *Practice) UpdateProfile(ctx context.Context, a Actor, in ProfileInput) error {
+	var errs domain.ValidationErrors
+	add := func(field, msg string) { errs = append(errs, domain.ErrValidation{Field: field, Msg: msg}) }
+
+	in.FirstName, in.LastName = strings.TrimSpace(in.FirstName), strings.TrimSpace(in.LastName)
+	in.Title, in.Bio, in.Slug = strings.TrimSpace(in.Title), strings.TrimSpace(in.Bio), strings.TrimSpace(in.Slug)
+	in.Color = strings.TrimSpace(in.Color)
+
+	if a.Role == domain.RoleSecretary {
+		return domain.ErrForbidden
+	}
+	if in.FirstName == "" {
+		add("first_name", "Le prénom du praticien est requis.")
+	} else if tooLong(in.FirstName, 80) {
+		add("first_name", "Le prénom est trop long (80 caractères maximum).")
+	}
+	if in.LastName == "" {
+		add("last_name", "Le nom du praticien est requis.")
+	} else if tooLong(in.LastName, 80) {
+		add("last_name", "Le nom est trop long (80 caractères maximum).")
+	}
+	if tooLong(in.Title, 80) {
+		add("title", "Le titre est trop long (80 caractères maximum).")
+	}
+	if tooLong(in.Bio, 2000) {
+		add("bio", "La présentation est trop longue (2000 caractères maximum).")
+	}
+	if len(in.Slug) > 60 || !slugRe.MatchString(in.Slug) || in.Slug == ReservedFirstSlug {
+		add("slug", "L'identifiant d'URL ne peut contenir que des lettres minuscules, chiffres et tirets (60 caractères maximum).")
+	}
+	if !domain.ValidColor(in.Color) {
+		add("color", "La couleur doit être au format #rrggbb.")
+	}
+	if len(errs) > 0 {
+		return errs
+	}
+	return store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+		pr, err := ensurePractitioner(ctx, q, a)
+		if err != nil {
+			return err
+		}
 		_, err = q.UpdatePractitioner(ctx, sqlcgen.UpdatePractitionerParams{
 			ID: pr.ID, PracticeID: a.PracticeID, FirstName: in.FirstName, LastName: in.LastName,
 			Slug: in.Slug, Title: in.Title, Bio: in.Bio, Color: in.Color, Active: pr.Active,
@@ -337,7 +371,6 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 		}
 		return nil
 	})
-	return err
 }
 
 // maxZones borne la liste des zones desservies.
