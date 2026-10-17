@@ -37,6 +37,11 @@
   });
 })();
 
+// Limitation de débit : htmx n'insère pas les réponses 4xx ; on laisse passer l'alerte du 429.
+document.addEventListener("htmx:beforeSwap", function (e) {
+  if (e.detail && e.detail.xhr && e.detail.xhr.status === 429) e.detail.shouldSwap = true;
+});
+
 // Agenda : le contenu chargé par htmx dans la boîte de dialogue l'ouvre.
 // Sans JavaScript, les liens mènent à des pages complètes équivalentes.
 document.addEventListener("htmx:afterSwap", function (e) {

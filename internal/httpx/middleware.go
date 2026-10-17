@@ -13,10 +13,7 @@ import (
 	"net/netip"
 	"runtime/debug"
 	"strings"
-	"sync"
 	"time"
-
-	"golang.org/x/time/rate"
 )
 
 // Middleware est un décorateur de handler.
@@ -322,58 +319,4 @@ func resolveClientIP(r *http.Request, trusted []netip.Prefix) string {
 		}
 	}
 	return hops[0].String()
-}
-
-type visitor struct {
-	lim  *rate.Limiter
-	seen time.Time
-}
-
-const (
-	sweepEvery  = time.Minute
-	visitorIdle = 10 * time.Minute
-)
-
-// RateLimit limite par clé (ex. ClientIP) à `r` requêtes/s avec rafale `burst`,
-// en mémoire ; les clés inactives sont évincées périodiquement. Dépassement → 429.
-func RateLimit(key func(*http.Request) string, r rate.Limit, burst int) Middleware {
-	return rateLimit(key, r, burst, time.Now)
-}
-
-func rateLimit(key func(*http.Request) string, r rate.Limit, burst int, now func() time.Time) Middleware {
-	var (
-		mu        sync.Mutex
-		visitors  = map[string]*visitor{}
-		lastSweep = now()
-	)
-	allow := func(k string) bool {
-		mu.Lock()
-		defer mu.Unlock()
-		t := now()
-		if t.Sub(lastSweep) > sweepEvery {
-			for kk, v := range visitors {
-				if t.Sub(v.seen) > visitorIdle {
-					delete(visitors, kk)
-				}
-			}
-			lastSweep = t
-		}
-		v, ok := visitors[k]
-		if !ok {
-			v = &visitor{lim: rate.NewLimiter(r, burst)}
-			visitors[k] = v
-		}
-		v.seen = t
-		return v.lim.AllowN(t, 1)
-	}
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			if !allow(key(req)) {
-				w.Header().Set("Retry-After", "1")
-				Error(w, req, http.StatusTooManyRequests, "trop de requêtes")
-				return
-			}
-			next.ServeHTTP(w, req)
-		})
-	}
 }

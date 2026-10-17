@@ -332,6 +332,10 @@ type ErrorData struct {
 
 // Error rend la page d'erreur stylée (signature compatible avec httpx.RecoverWith).
 func (r *Renderer) Error(w http.ResponseWriter, req *http.Request, status int, msg string) {
+	if status == http.StatusTooManyRequests && req != nil && httpx.IsHTMX(req) {
+		httpx.Error(w, req, status, msg) // fragment d'alerte, pas une page complète
+		return
+	}
 	d := ErrorData{Status: status, Title: http.StatusText(status), Message: msg}
 	switch {
 	case status == http.StatusNotFound:

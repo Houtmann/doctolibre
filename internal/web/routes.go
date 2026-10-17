@@ -57,6 +57,12 @@ type Deps struct {
 	Waitlist *service.Waitlist
 	// NotifyTransport (fournisseurs d'email et de SMS par cabinet) est optionnel : nil = pas de /admin/settings/notifications/transport.
 	NotifyTransport *service.NotifyTransport
+
+	// LimiterNow est l'horloge des limiteurs de débit (tests) ; nil = time.Now.
+	LimiterNow func() time.Time
+
+	// pub : limiteurs partagés de la réservation en ligne (posé par publicRoutes, T087).
+	pub *publicLimits
 }
 
 const pingTimeout = 2 * time.Second

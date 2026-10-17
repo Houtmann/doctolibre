@@ -26,6 +26,7 @@ type Metrics struct {
 	// AppointmentsCreated est à incrémenter par le service de réservation
 	// (label source : "online" ou "staff").
 	AppointmentsCreated *prometheus.CounterVec
+	rateLimited         *prometheus.CounterVec
 	requests            *prometheus.HistogramVec
 }
 
@@ -37,6 +38,10 @@ func New() *Metrics {
 			Name: "doctolibre_appointments_created_total",
 			Help: "Rendez-vous créés, par source.",
 		}, []string{"source"}),
+		rateLimited: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "doctolibre_rate_limited_total",
+			Help: "Requêtes refusées (429) par limiteur.",
+		}, []string{"limiter"}),
 		requests: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "doctolibre_http_request_duration_seconds",
 			Help:    "Durée des requêtes HTTP par pattern de route.",
@@ -46,10 +51,13 @@ func New() *Metrics {
 	m.reg.MustRegister(
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-		m.AppointmentsCreated, m.requests,
+		m.AppointmentsCreated, m.rateLimited, m.requests,
 	)
 	return m
 }
+
+// RateLimited compte un refus du limiteur `limiter` (nom fixe : ni IP ni clé en label).
+func (m *Metrics) RateLimited(limiter string) { m.rateLimited.WithLabelValues(limiter).Inc() }
 
 // Register ajoute un collecteur personnalisé au registre.
 func (m *Metrics) Register(c prometheus.Collector) error { return m.reg.Register(c) }

@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 )
 
 func ok(w http.ResponseWriter, _ *http.Request) { _, _ = io.WriteString(w, "ok") }
@@ -152,35 +151,6 @@ func TestCSRF(t *testing.T) {
 		r.Body = io.NopCloser(strings.NewReader(url.Values{CSRFFormField: {token}}.Encode()))
 	}); c != http.StatusOK {
 		t.Errorf("POST champ de formulaire valide: %d", c)
-	}
-}
-
-func TestRateLimit(t *testing.T) {
-	t.Parallel()
-	now := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
-	clock := func() time.Time { return now }
-	h := rateLimit(func(r *http.Request) string { return r.Header.Get("X-Key") }, 1, 2, clock)(http.HandlerFunc(ok))
-
-	call := func(key string) int {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
-		req.Header.Set("X-Key", key)
-		rec := httptest.NewRecorder()
-		h.ServeHTTP(rec, req)
-		return rec.Code
-	}
-	first, second := call("a"), call("a")
-	if first != 200 || second != 200 {
-		t.Fatal("la rafale de 2 devrait passer")
-	}
-	if c := call("a"); c != http.StatusTooManyRequests {
-		t.Errorf("3e requête: %d, attendu 429", c)
-	}
-	if call("b") != 200 {
-		t.Error("une autre clé ne doit pas être limitée")
-	}
-	now = now.Add(2 * time.Second)
-	if call("a") != 200 {
-		t.Error("le jeton doit se régénérer")
 	}
 }
 

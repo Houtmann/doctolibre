@@ -94,6 +94,19 @@ type Service struct {
 	Secure bool          // cookie Secure + préfixe __Host- (prod)
 	TTL    time.Duration // 0 = DefaultTTL
 	MaxAge time.Duration // 0 = DefaultMaxAge
+
+	// preAuth et postAuth : limiteurs de RequireUser (voir WithLimits).
+	preAuth, postAuth httpx.Middleware
+}
+
+// WithLimits retourne une copie du service dont RequireUser applique `pre` avant
+// l'authentification (limite par IP : sondage de jetons, flood non authentifié) et
+// `post` juste après (limite par utilisateur, UserFrom disponible). Nil = aucun.
+// Toutes les routes protégées héritent ainsi des limites sans les lister une à une.
+func (s *Service) WithLimits(pre, post httpx.Middleware) *Service {
+	c := *s
+	c.preAuth, c.postAuth = pre, post
+	return &c
 }
 
 func (s *Service) ttl() time.Duration {
@@ -372,7 +385,7 @@ const LoginPath = "/admin/login"
 // Charge l'utilisateur dans le contexte (auth.UserFrom).
 func (s *Service) RequireUser(roles ...string) httpx.Middleware {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var h http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Cache-Control", "no-store")
 			token := s.TokenFrom(r)
 			sess, err := s.Authenticate(r.Context(), token)
@@ -392,16 +405,26 @@ func (s *Service) RequireUser(roles ...string) httpx.Middleware {
 				httpx.Error(w, r, http.StatusInternalServerError, "erreur interne")
 				return
 			}
-			if len(roles) > 0 && !hasRole(roles, sess.User.Role) {
-				httpx.LoggerFrom(r.Context()).Warn("rôle insuffisant", slog.String("user_id", sess.User.ID.String()))
-				httpx.Error(w, r, http.StatusForbidden, "accès refusé")
-				return
+			var authed http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if len(roles) > 0 && !hasRole(roles, sess.User.Role) {
+					httpx.LoggerFrom(r.Context()).Warn("rôle insuffisant", slog.String("user_id", sess.User.ID.String()))
+					httpx.Error(w, r, http.StatusForbidden, "accès refusé")
+					return
+				}
+				if sess.Refreshed {
+					s.SetCookie(w, token, sess.ExpiresAt)
+				}
+				next.ServeHTTP(w, r)
+			})
+			if s.postAuth != nil {
+				authed = s.postAuth(authed)
 			}
-			if sess.Refreshed {
-				s.SetCookie(w, token, sess.ExpiresAt)
-			}
-			next.ServeHTTP(w, r.WithContext(WithUser(r.Context(), sess.User)))
+			authed.ServeHTTP(w, r.WithContext(WithUser(r.Context(), sess.User)))
 		})
+		if s.preAuth != nil {
+			h = s.preAuth(h)
+		}
+		return h
 	}
 }
 

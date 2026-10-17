@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/time/rate"
 
 	"doctolibre/internal/domain"
 	"doctolibre/internal/httpx"
@@ -32,14 +31,11 @@ type waitlistHandlers struct {
 // est un secret de 256 bits, mais pas de sondage gratuit : limité par IP.
 func (d Deps) waitlistRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
 	h := &waitlistHandlers{svc: d.Waitlist, booking: d.Booking, rd: rd, logger: logger}
-	limit := func() httpx.Middleware {
-		return httpx.RateLimit(httpx.ClientIP, rate.Every(publicInterval), publicBurst)
-	}
+	search, book, offer := d.pub.search.Middleware(), d.pub.book.Middleware(), d.pub.offer.Middleware()
 	const base = "/p/{practice}/{practitioner}/waitlist"
-	mux.Handle("GET "+base, httpx.Chain(http.HandlerFunc(h.form), limit()))
-	mux.Handle("POST "+base, httpx.Chain(http.HandlerFunc(h.submit), limit()))
-	mux.Handle("POST "+base+"/confirm", httpx.Chain(http.HandlerFunc(h.confirm), limit()))
-	offer := limit()
+	mux.Handle("GET "+base, httpx.Chain(http.HandlerFunc(h.form), search))
+	mux.Handle("POST "+base, httpx.Chain(http.HandlerFunc(h.submit), book))
+	mux.Handle("POST "+base+"/confirm", httpx.Chain(http.HandlerFunc(h.confirm), book))
 	mux.Handle("GET /w/{token}", httpx.Chain(http.HandlerFunc(h.offer), offer))
 	mux.Handle("POST /w/{token}", httpx.Chain(http.HandlerFunc(h.claim), offer))
 }

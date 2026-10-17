@@ -35,16 +35,11 @@ type LoginData struct {
 }
 
 func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
+	d = d.withAdminLimits(rd, logger) // d.Auth.RequireUser applique désormais admin-ip / admin-user / admin-heavy
 	a := d.Auth
 	perWindow := rate.Every(loginWindow / loginAttempts)
-	byIP := httpx.RateLimit(httpx.ClientIP, perWindow, loginAttempts)
-	byEmail := httpx.RateLimit(func(r *http.Request) string {
-		k := strings.ToLower(strings.TrimSpace(r.PostFormValue("email")))
-		if len(k) > maxEmailKeyLen {
-			k = k[:maxEmailKeyLen]
-		}
-		return k
-	}, perWindow, loginAttempts)
+	byIP := d.newLimiter(rd, logger, "login-ip", httpx.IPKey, perWindow, loginAttempts).Middleware()
+	byEmail := d.newLimiter(rd, logger, "login-email", emailKey, perWindow, loginAttempts).Middleware()
 
 	h := &adminHandlers{a: a, rd: rd, logger: logger, practice: d.Practice, baseURL: d.Config.BaseURL}
 	mux.HandleFunc("GET "+auth.LoginPath, h.loginForm)

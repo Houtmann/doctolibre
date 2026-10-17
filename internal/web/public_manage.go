@@ -235,7 +235,15 @@ func (h *publicHandlers) rescheduleSubmit(w http.ResponseWriter, r *http.Request
 		httpx.Redirect(w, r, manageURL(token)+"/reschedule")
 		return
 	}
+	quota, ok := h.reservePractitioner(w, r, service.Target{Practice: c.Practice, Practitioner: c.Practitioner}, func(msg string) {
+		h.rd.SetFlash(w, "error", msg)
+		httpx.Redirect(w, r, manageURL(token))
+	})
+	if !ok {
+		return
+	}
 	if err := h.svc.RescheduleByPatient(r.Context(), token, start.UTC()); err != nil {
+		quota.Cancel()
 		h.rescheduleError(w, r, token, c, err)
 		return
 	}

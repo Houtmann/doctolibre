@@ -2,6 +2,7 @@ package web_test
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -91,6 +92,8 @@ func newPublicEnv(t *testing.T) *publicEnv {
 		Logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
 		DB:      db,
 		Booking: svc,
+		// Horloge des limiteurs figée : aucun jeton ne se régénère pendant le test (déterministe).
+		LimiterNow: frozenNow,
 	})
 	return &publicEnv{h: h, db: db, otp: otp, pc: pc, pr: pr, typ: typ, svc: svc, clock: clock}
 }
@@ -222,7 +225,6 @@ func TestPublicBookingFullJourney(t *testing.T) {
 func TestPublicBookingForgedSlotRefused(t *testing.T) {
 	t.Parallel()
 	e := newPublicEnv(t)
-	c := newClient(t, e.h, "192.0.2.51")
 	tid := e.typ.ID.String()
 	forged := []string{
 		"2026-10-20T07:07:00Z", // hors grille
@@ -233,7 +235,9 @@ func TestPublicBookingForgedSlotRefused(t *testing.T) {
 		"2027-10-19T07:00:00Z", // au-delà de l'horizon
 		"n'importe quoi",
 	}
-	for _, start := range forged {
+	for i, start := range forged {
+		// Une IP par créneau forgé : les POST partagent désormais un seau par IP (T087).
+		c := newClient(t, e.h, fmt.Sprintf("192.0.2.%d", 100+i))
 		q := "?type=" + tid + "&start=" + url.QueryEscape(start)
 		if rec := c.do("GET", e.base()+"/book/details"+q, nil); rec.Code != 303 {
 			t.Errorf("GET details %q : %d, redirection attendue", start, rec.Code)
@@ -254,6 +258,7 @@ func TestPublicBookingForgedSlotRefused(t *testing.T) {
 	if e.appointments(t) != 0 {
 		t.Error("un rendez-vous a été créé sur un créneau forgé")
 	}
+	c := newClient(t, e.h, "192.0.2.51")
 	// Motif inconnu ou d'un autre cabinet : 404 ; sans motif : retour à la page du praticien.
 	if rec := c.do("GET", e.base()+"/book?type="+uuid.NewString(), nil); rec.Code != 404 {
 		t.Errorf("motif inconnu: %d", rec.Code)

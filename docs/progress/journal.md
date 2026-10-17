@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-17 — T056 et T087 en parallèle (sonnet ×2 en worktrees ; contrôle : opus)
+
+- **Tâches** : T056, T087 todo → review
+- **Fait** : T056 « Mon profil » (`/admin/profile`) séparé des réglages du cabinet (admin seul, notifications et fournisseurs compris), 403 sur champ cabinet posté au profil, séries de séances ouvertes au secrétariat avec choix du praticien, doc des rôles dans `docs/install.md` ; T087 `httpx.Limiter` (seaux partagés par parcours, IPv6 /64, map bornée, `Retry-After` calculé, fragment htmx en 429, métrique `doctolibre_rate_limited_total{limiter}`), limites admin-ip / admin-user / admin-heavy dans `RequireUser`, seaux publics browse / search / book / manage / offer, quota de 30 réservations/h par praticien
+- **Vérification** : `make check` ✅ dans chaque worktree puis sur main après fusion par patchs ; `go test -race ./internal/httpx` ✅ ; T087 relue en entier (revue renforcée) ; T056 : policy, service et handlers relus. Navigateur **non vu**.
+- **Reste** : passage navigateur (profil / cabinet selon le rôle, formulaire de série côté secrétariat, alerte 429 htmx) ; non limités : `GET /ics/{file}`, `/p/{practice}/privacy`
+- **Décisions** : trois lignes du 2026-10-17 (T056 ×2, T087) dans decisions.md
+
 ## 2026-10-17 — T086 fournisseurs email/SMS par cabinet (sonnet ; contrôle : opus)
 
 - **Tâches** : T086 créée (spec opus, demande humaine : par cabinet, désactivable) → in_progress → review

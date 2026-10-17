@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/time/rate"
 
 	"doctolibre/internal/domain"
 	"doctolibre/internal/httpx"
@@ -19,7 +18,7 @@ import (
 	"doctolibre/internal/store/sqlcgen"
 )
 
-// Limites de la réservation en ligne : 10 requêtes par minute et par IP.
+// Limites de la réservation en ligne : 10 requêtes par minute et par IP et par parcours (limits.go).
 const (
 	publicBurst    = 10
 	publicInterval = 6 * time.Second
@@ -33,31 +32,31 @@ type publicHandlers struct {
 	logger *slog.Logger
 	// waitlist : la liste d'attente est activée (lien sous la grille de créneaux).
 	waitlist bool
+	lim      *publicLimits
 }
 
 // publicRoutes enregistre la réservation en ligne (sans compte) et le lien du patient.
 func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
-	h := &publicHandlers{svc: d.Booking, rd: rd, logger: logger, waitlist: d.Waitlist != nil}
-	limit := func() httpx.Middleware {
-		return httpx.RateLimit(httpx.ClientIP, rate.Every(publicInterval), publicBurst)
-	}
-	search := limit() // grille et formulaire : un calcul de créneaux à chaque requête
+	d.pub = d.newPublicLimits(rd, logger)
+	h := &publicHandlers{svc: d.Booking, rd: rd, logger: logger, waitlist: d.Waitlist != nil, lim: d.pub}
+	browse, search, book, manage := d.pub.browse.Middleware(), d.pub.search.Middleware(), d.pub.book.Middleware(), d.pub.manage.Middleware()
 	const base = "/p/{practice}/{practitioner}/book"
-	mux.HandleFunc("GET /p/{practice}", h.practice)
-	mux.HandleFunc("GET /p/{practice}/{practitioner}", h.practitioner)
+	mux.Handle("GET /p/{practice}", httpx.Chain(http.HandlerFunc(h.practice), browse))
+	mux.Handle("GET /p/{practice}/{practitioner}", httpx.Chain(http.HandlerFunc(h.practitioner), browse))
 	mux.Handle("GET "+firstPath, httpx.Chain(http.HandlerFunc(h.firstAvailable), search))
 	mux.Handle("GET "+base, httpx.Chain(http.HandlerFunc(h.grid), search))
 	mux.Handle("GET "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsForm), search))
-	mux.Handle("POST "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsSubmit), limit()))
-	mux.Handle("POST "+base+"/confirm", httpx.Chain(http.HandlerFunc(h.confirm), limit()))
+	// details et confirm partagent le seau « book » ; confirm est en plus limité par praticien (dans le handler).
+	mux.Handle("POST "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsSubmit), book))
+	mux.Handle("POST "+base+"/confirm", httpx.Chain(http.HandlerFunc(h.confirm), book))
 	// Lien de gestion : limité par IP (le jeton est un secret de 256 bits, mais pas de sondage gratuit).
-	manage := limit()
+	// La grille de déplacement calcule des créneaux : elle partage le seau « search ».
 	mux.Handle("GET /r/{token}", httpx.Chain(http.HandlerFunc(h.confirmed), manage))
 	mux.Handle("GET /r/{token}/ics", httpx.Chain(http.HandlerFunc(h.calendarFile), manage))
 	mux.Handle("GET /r/{token}/cancel", httpx.Chain(http.HandlerFunc(h.cancelForm), manage))
 	mux.Handle("POST /r/{token}/cancel", httpx.Chain(http.HandlerFunc(h.cancelSubmit), manage))
-	mux.Handle("GET /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleGrid), manage))
-	mux.Handle("GET /r/{token}/reschedule/confirm", httpx.Chain(http.HandlerFunc(h.rescheduleConfirm), manage))
+	mux.Handle("GET /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleGrid), search))
+	mux.Handle("GET /r/{token}/reschedule/confirm", httpx.Chain(http.HandlerFunc(h.rescheduleConfirm), search))
 	mux.Handle("POST /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleSubmit), manage))
 	if d.Waitlist != nil {
 		d.waitlistRoutes(mux, rd, logger)
@@ -569,6 +568,12 @@ func (h *publicHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 		h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f, []string{"La vérification a expiré. Validez le formulaire pour recevoir un nouveau code."})
 		return
 	}
+	quota, ok := h.reservePractitioner(w, r, t, func(msg string) {
+		h.renderDetails(w, r, http.StatusTooManyRequests, t, start, f, []string{msg})
+	})
+	if !ok {
+		return
+	}
 	res, err := h.svc.Book(r.Context(), service.BookInput{
 		VerifyInput: service.VerifyInput{
 			PractitionerID: t.Practitioner.ID, TypeID: t.Type.ID, Start: start, Patient: f.patient(), Channel: f.Channel,
@@ -576,6 +581,9 @@ func (h *publicHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 		ChallengeID: challenge,
 		Code:        strings.Join(strings.Fields(r.PostFormValue("code")), ""),
 	})
+	if err != nil {
+		quota.Cancel() // seules les réservations abouties comptent (OTP faux, validation, créneau pris : non)
+	}
 	switch {
 	case err == nil:
 		httpx.LoggerFrom(r.Context()).Info("rendez-vous réservé en ligne",

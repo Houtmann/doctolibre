@@ -40,6 +40,8 @@ func newAdmin(t *testing.T) (http.Handler, *testutil.FixedClock) {
 		Logger: logger,
 		DB:     db,
 		Auth:   &auth.Service{Pool: db, Clock: clock, Logger: logger},
+		// Horloge des limiteurs figée : les quotas ne se régénèrent pas pendant le test.
+		LimiterNow: frozenNow,
 	})
 	return h, clock
 }

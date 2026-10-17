@@ -33,7 +33,7 @@ func (d Deps) teamRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) 
 	handle("POST "+pathTeam+"/delegations/{id}/revoke", h.revokeDelegation)
 
 	perWindow := rate.Every(loginWindow / loginAttempts)
-	byIP := httpx.RateLimit(httpx.ClientIP, perWindow, loginAttempts)
+	byIP := d.newLimiter(rd, logger, "invite-ip", httpx.IPKey, perWindow, loginAttempts).Middleware()
 	mux.Handle("GET "+auth.AcceptPath, httpx.Chain(http.HandlerFunc(h.acceptForm), byIP))
 	mux.Handle("POST "+auth.AcceptPath, httpx.Chain(http.HandlerFunc(h.acceptSubmit), byIP))
 }

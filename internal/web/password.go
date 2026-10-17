@@ -4,7 +4,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"golang.org/x/time/rate"
 
@@ -38,14 +37,8 @@ type passwordHandlers struct {
 func (d Deps) passwordRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) {
 	h := &passwordHandlers{a: d.Auth, rd: rd, logger: logger, baseURL: d.Config.BaseURL}
 	perWindow := rate.Every(loginWindow / loginAttempts)
-	byIP := httpx.RateLimit(httpx.ClientIP, perWindow, loginAttempts)
-	byEmail := httpx.RateLimit(func(r *http.Request) string {
-		k := strings.ToLower(strings.TrimSpace(r.PostFormValue("email")))
-		if len(k) > maxEmailKeyLen {
-			k = k[:maxEmailKeyLen]
-		}
-		return k
-	}, perWindow, loginAttempts)
+	byIP := d.newLimiter(rd, logger, "password-ip", httpx.IPKey, perWindow, loginAttempts).Middleware()
+	byEmail := d.newLimiter(rd, logger, "password-email", emailKey, perWindow, loginAttempts).Middleware()
 
 	mux.HandleFunc("GET "+auth.ForgotPath, h.forgotForm)
 	mux.Handle("POST "+auth.ForgotPath, httpx.Chain(http.HandlerFunc(h.forgotSubmit), byIP, byEmail))
