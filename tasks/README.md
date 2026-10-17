@@ -52,11 +52,11 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T045 | [Observabilité légère](T045-observability.md) | 4 | T003 | done |
 | T046 | [Observabilité : branchements et /admin/status](T046-observability-wiring.md) | 4 | T045, T014, T020, T041 | done |
 | T050 | [Jeton de gestion dérivé (HMAC)](T050-derived-manage-token.md) | 5 | T023, T030 | done |
-| T051 | [Absence imprévue : annulation groupée](T051-sick-day-bulk-cancel.md) | 5 | T050 | todo |
+| T051 | [Absence imprévue : annulation groupée](T051-sick-day-bulk-cancel.md) | 5 | T050 | review |
 | T052 | [Jours fériés français automatiques](T052-public-holidays.md) | 5 | T013 | review |
 | T053 | [Import CSV des patients](T053-patient-csv-import.md) | 5 | T017 | review |
 | T054 | [Garde-fou absences répétées](T054-no-show-guard.md) | 5 | T014, T017 | done |
-| T055 | [Lien de série pour le patient](T055-care-plan-patient-link.md) | 5 | T050 | todo |
+| T055 | [Lien de série pour le patient](T055-care-plan-patient-link.md) | 5 | T050 | review |
 | T056 | [Réglages : profil vs cabinet, séries au secrétariat](T056-settings-split-and-secretary-plans.md) | 5 | T033, T030 | review |
 | T057 | [Couleurs dans l'agenda compatibles CSP](T057-calendar-colors.md) | 5 | T016, T083 | review |
 | T058 | [Alarmes dans les fichiers ICS patient](T058-ics-valarm.md) | 5 | T042 | review |

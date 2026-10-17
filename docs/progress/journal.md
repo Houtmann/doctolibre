@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-17 — T051 annulation groupée et T055 lien de série, en parallèle (sonnet ; contrôle : opus)
+
+- **Tâches** : T051 todo → review, T055 todo → review (deux `task-implementer` en worktree)
+- **Fait** : T051 : aperçu puis confirmation en une transaction (absence `closed` créée avant les annulations, audit, outbox avec motif + `/r/`), validation partagée `closureRange`, motif optionnel dans `TemplateCancellation` (tronqué à 20 car. en SMS), plafond 300 RDV. T055 : migration 00025 (`care_plan.token_version`, `token_hash`), `/s/{token}` et `/s/{token}/ics` (seau `manage`, `no-store`, `no-referrer`, 404 neutre), lien dans la confirmation unique de série, `series_url` effacé à l'envoi, révocation à la fusion et à l'effacement
+- **Vérification** : `make check` ✅ relancé par l'orchestrateur sur chaque branche et sur la fusion des deux (branche `trial-merge-t051-t055`, un conflit d'une ligne dans `notifier.data` résolu, `ui.css` régénéré). Non vu au navigateur : `/admin/absences` (aperçu, confirmation, bouton de l'agenda, 360 px), `/s/{token}`
+- **Reste** : relecture humaine, fusion dans `main` ; EXPLAIN de `ListCarePlanSessions` sur données réelles ; T071 débloquée quand T055 sera `done`
+- **Décisions** : 4 lignes du 2026-10-17 (T051 ×2, T055 ×2)
+
 ## 2026-10-17 — Analyse de l'audit UX des parcours patients, tâches T093–T098 (sonnet ; contrôle : opus)
 
 - **Tâches** : T093 à T098 créées (todo)
