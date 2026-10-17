@@ -1,0 +1,56 @@
+{{/* layout: admin */}}
+{{define "title"}}Ma journée{{end}}
+{{define "content"}}
+{{with .Data}}
+<div class="space-y-4 max-w-2xl">
+  <div>
+    <h1 class="text-2xl font-semibold">Ma journée</h1>
+    <p class="text-base-content/70">{{.V.Title}}{{if .V.Practitioner.Name}} · {{.V.Practitioner.Name}}{{end}}</p>
+  </div>
+
+  {{if .Picker}}
+  <form method="get" action="/admin/today" class="flex flex-wrap items-end gap-2" aria-label="Choisir un praticien">
+    <input type="hidden" name="date" value="{{.V.Date}}">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="today-practitioner">Praticien</label>
+      <select class="select select-sm" id="today-practitioner" name="practitioner">
+        {{if not .V.Practitioner.Name}}<option value="" selected>Choisir…</option>{{end}}
+        {{range .V.Choices}}<option value="{{.ID}}"{{if eq .Name $.Data.V.Practitioner.Name}} selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+    </div>
+    <button class="btn btn-outline btn-sm" type="submit">Afficher</button>
+  </form>
+  {{end}}
+
+  <nav class="join" aria-label="Navigation par jour">
+    <a class="btn btn-sm join-item" href="{{.PrevURL}}">Jour précédent</a>
+    <a class="btn btn-sm join-item" href="{{.TodayURL}}"{{if .V.IsToday}} aria-current="date"{{end}}>Aujourd'hui</a>
+    <a class="btn btn-sm join-item" href="{{.NextURL}}">Jour suivant</a>
+  </nav>
+
+  {{if .V.Summary.HomeVisits}}
+  <p class="text-sm">
+    {{.V.Summary.HomeVisits}} visite{{if gt .V.Summary.HomeVisits 1}}s{{end}} à domicile
+    {{if .RouteURL}}· <a class="link link-primary" href="{{.RouteURL}}" rel="noopener noreferrer" target="_blank">Itinéraire de la journée (OpenStreetMap)</a>{{end}}
+  </p>
+  {{end}}
+
+  {{if .Cards}}
+  <div class="space-y-3">
+    {{range .Cards}}{{template "day_card.html" .}}{{end}}
+  </div>
+  {{else if .V.Practitioner.Name}}
+  <p class="alert alert-info alert-soft" role="status">Aucun rendez-vous ce jour.</p>
+  {{else}}
+  <p class="alert alert-info alert-soft" role="status">Choisissez un praticien pour afficher sa journée.</p>
+  {{end}}
+
+  {{if .V.Practitioner.Name}}
+  <section aria-labelledby="day-summary-title" class="space-y-2">
+    <h2 id="day-summary-title" class="font-semibold">Récapitulatif</h2>
+    <div id="day-summary">{{template "day_summary.html" .V.Summary}}</div>
+  </section>
+  {{end}}
+</div>
+{{end}}
+{{end}}

@@ -20,11 +20,11 @@ Un admin donne à un utilisateur (remplaçant) l'accès à l'agenda d'un pratici
 - `audit_log` : les actions du remplaçant gardent son `user_id` ; création/révocation de délégation auditées.
 
 ## Critères d'acceptation
-- [ ] Avant la période : 403 ; pendant : accès ; après : 403 (horloge fixe).
-- [ ] Frontière de jour en `Europe/Paris` (23:59 / 00:00 locaux, jour de changement d'heure) testée.
-- [ ] Révocation immédiate : l'accès tombe à la requête suivante.
-- [ ] Un praticien non admin ne peut pas créer de délégation ; autre cabinet refusé.
-- [ ] Audit : action du remplaçant = son user_id.
+- [x] Avant la période : 403 ; pendant : accès ; après : 403 (horloge fixe).
+- [x] Frontière de jour en `Europe/Paris` (23:59 / 00:00 locaux, jour de changement d'heure) testée.
+- [x] Révocation immédiate : l'accès tombe à la requête suivante.
+- [x] Un praticien non admin ne peut pas créer de délégation ; autre cabinet refusé.
+- [x] Audit : action du remplaçant = son user_id.
 
 ## Vérification
 ```bash
@@ -39,8 +39,8 @@ Facturation, rétrocession, délégation des réglages du cabinet.
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-17 (sonnet)
+- **Fait** : migration `00021_practitioner_delegation.sql` (daterange + CHECK + EXCLUDE gist, index user) ; `queries/delegation.sql` (jour local calculé en SQL : `timezone(practice.timezone, now)::date`, `now` = `Clock` injecté) ; `auth.User.Delegated` et `service.Actor.Delegated`, rechargés par `Authenticate` à chaque requête (rien dans la session/cookie) ; `domain.MayAccessPractitioner(role, own, delegated, target)` reste la règle unique (appelée par `auth.Can` et `Actor.mayAccessPractitioner`, donc agenda, JSON, détail/déplacement/annulation/statut de RDV, absences, horaires) ; `auth/delegation.go` (Delegations, CreateDelegation, RevokeDelegation, audit `delegation_created` / `delegation_revoked`, meta = IDs et dates seulement) ; routes `POST /admin/team/delegations` et `/{id}/revoke` + section « Remplaçants » dans `admin_team.html` ; `make css` fait. Tests : `auth/delegation_test.go`, `auth/policy_test.go`, `web/delegation_test.go` (champ `clock` ajouté à `groupEnv`).
+- **Reste à faire** : vérification visuelle de la section « Remplaçants » au navigateur (non faite).
+- **Notes de reprise** : appelants de `MayAccessPractitioner` : `auth.Can` (2 sites), `Actor.mayAccessPractitioner` (TeamPractitioners, selectPractitioners, Move, Cancel, SetStatus, DeleteRule/absence l. ~627, targetPractitioner). L'ICS n'est pas concerné : le flux est celui du compte (`GetFeedTokenByUser`), jamais d'un autre praticien, et ne passe pas par `Target`. Un remplaçant ne reçoit donc pas l'agenda délégué dans son flux ICS.
+- **Écarts avec la spécification** : (1) délégation réservée à un compte existant, actif, de rôle praticien (admin et secrétariat voient déjà tous les agendas, refusé avec message) ; pas de délégation sur invitation en attente (l'invité active d'abord son compte). (2) Durée limitée à 366 jours, fin déjà passée refusée, début dans le passé accepté. (3) Révocation = suppression de la ligne (l'historique est dans `audit_log`). (4) Un praticien désactivé n'est plus délégué (jointure `active`).

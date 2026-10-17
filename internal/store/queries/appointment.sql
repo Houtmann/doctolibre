@@ -40,7 +40,8 @@ ORDER BY lower(during) DESC, id
 LIMIT @page_size;
 
 -- name: SetAppointmentStatus :one
-UPDATE appointment SET status = @status, updated_at = now()
+UPDATE appointment SET status = @status, updated_at = now(),
+    status_changed_by = @changed_by, status_changed_at = @changed_at
 WHERE id = @id AND practice_id = @practice_id
 RETURNING *;
 

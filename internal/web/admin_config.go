@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"doctolibre/internal/auth"
 	"doctolibre/internal/domain"
@@ -71,7 +72,7 @@ type configHandlers struct {
 
 func actorFrom(r *http.Request) service.Actor {
 	u, _ := auth.UserFrom(r.Context())
-	a := service.Actor{UserID: u.ID, PracticeID: u.PracticeID, Role: u.Role, Target: targetFrom(r.Context())}
+	a := service.Actor{UserID: u.ID, PracticeID: u.PracticeID, Role: u.Role, Delegated: u.Delegated, Target: targetFrom(r.Context())}
 	if u.PractitionerID.Valid {
 		a.PractitionerID = u.PractitionerID.UUID
 	}
@@ -165,6 +166,13 @@ type SettingsPage struct {
 	Feed   *FeedPanel // nil = abonnement agenda non proposé
 }
 
+func noShowThresholdText(v pgtype.Int2) string {
+	if !v.Valid {
+		return ""
+	}
+	return strconv.Itoa(int(v.Int16))
+}
+
 func settingsInputOf(s service.Settings) service.SettingsInput {
 	return service.SettingsInput{
 		Name: s.Practice.Name, Address: s.Practice.Address, Phone: s.Practice.Phone,
@@ -176,6 +184,7 @@ func settingsInputOf(s service.Settings) service.SettingsInput {
 		Color:           domain.ColorOrDefault(s.Practitioner.Color),
 		HomeVisitOnline: s.Practice.HomeVisitOnline, HomeVisitZones: strings.Join(s.Practice.HomeVisitZones, "\n"),
 		CloseOnHolidays: s.Practice.CloseOnHolidays, HolidaysAlsaceMoselle: s.Practice.HolidaysAlsaceMoselle,
+		NoShowBlockThreshold: noShowThresholdText(s.Practice.NoShowBlockThreshold),
 	}
 }
 
@@ -203,6 +212,7 @@ func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) 
 		Title: r.PostFormValue("title"), Bio: r.PostFormValue("bio"), Slug: r.PostFormValue("slug"), Color: r.PostFormValue("color"),
 		HomeVisitOnline: r.PostFormValue("home_visit_online") == "1", HomeVisitZones: r.PostFormValue("home_visit_zones"),
 		CloseOnHolidays: r.PostFormValue("close_on_holidays") == "1", HolidaysAlsaceMoselle: r.PostFormValue("holidays_alsace_moselle") == "1",
+		NoShowBlockThreshold: r.PostFormValue("no_show_block_threshold"),
 	}
 	err := h.svc.UpdateSettings(r.Context(), actorFrom(r), in)
 	if msgs := validation(err); msgs != nil {

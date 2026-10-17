@@ -97,3 +97,9 @@ SELECT @practice_id::uuid, r.j->>'first', r.j->>'last', nullif(r.j->>'birth', ''
        nullif(r.j->>'phone', ''), nullif(r.j->>'email', '')::citext, nullif(r.j->>'address', ''),
        (@opt_in::boolean AND r.j->>'phone' <> ''), (@opt_in::boolean AND r.j->>'email' <> '')
 FROM jsonb_array_elements(@rows::jsonb) AS r(j);
+
+-- name: CountPatientNoShowsSince :one
+-- Absences (no_show) d'un patient dont le début est >= @since (borne incluse).
+SELECT count(*)::int FROM appointment
+WHERE patient_id = @patient_id AND practice_id = @practice_id
+  AND status = 'no_show' AND lower(during) >= @since::timestamptz;

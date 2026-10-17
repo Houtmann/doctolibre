@@ -547,7 +547,10 @@ func (c *Calendar) SetStatus(ctx context.Context, a Actor, id uuid.UUID, status 
 		if ap.Status == "cancelled" {
 			return domain.ErrValidation{Field: "status", Msg: "Un rendez-vous annulé ne peut pas changer de statut."}
 		}
-		if _, err := q.SetAppointmentStatus(ctx, sqlcgen.SetAppointmentStatusParams{ID: id, PracticeID: a.PracticeID, Status: status}); err != nil {
+		if _, err := q.SetAppointmentStatus(ctx, sqlcgen.SetAppointmentStatusParams{ID: id, PracticeID: a.PracticeID, Status: status,
+			ChangedBy: pgtype.UUID{Bytes: a.UserID, Valid: a.UserID != uuid.Nil},
+			ChangedAt: pgtype.Timestamptz{Time: c.Clock.Now(), Valid: true},
+		}); err != nil {
 			return fmt.Errorf("changement de statut: %w", err)
 		}
 		if status != "booked" {

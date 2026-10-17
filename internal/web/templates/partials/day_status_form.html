@@ -1,0 +1,7 @@
+<form method="post" action="/admin/today/appointments/{{.C.A.ID}}/status" hx-post="/admin/today/appointments/{{.C.A.ID}}/status" hx-target="#day-card-{{.C.A.ID}}" hx-swap="outerHTML">
+  {{csrf .C.CSRF}}
+  <input type="hidden" name="status" value="{{.Status}}">
+  <input type="hidden" name="date" value="{{.C.Date}}">
+  <input type="hidden" name="practitioner" value="{{.C.Practitioner}}">
+  <button class="btn btn-sm {{.Class}}" type="submit">{{.Label}}</button>
+</form>

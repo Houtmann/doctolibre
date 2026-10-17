@@ -48,6 +48,10 @@
 
 Les durées se règlent dans `/admin/privacy` (administrateur).
 
+### Blocage de la réservation en ligne après absences répétées
+
+Traitement automatisé optionnel (désactivé par défaut, réglage « Absences avant blocage » dans `/admin/settings`). **Finalité** : limiter les créneaux perdus par des rendez-vous manqués. **Données** : le nombre de rendez-vous marqués « absent » du patient sur les **6 derniers mois** (fenêtre fixe, borne incluse), pas d'autre donnée. **Effet** : une fois le code de vérification validé, la réservation en ligne est refusée avec un message neutre invitant à appeler le cabinet ; la cause n'est pas indiquée au patient. **Intervention humaine** : le cabinet peut toujours réserver pour le patient depuis l'agenda, et la fiche patient affiche le badge « Réservation en ligne bloquée ». Le refus est journalisé avec les seuls identifiants (cabinet, patient).
+
 ## Données de santé et hébergement (HDS)
 
 - Si **un tiers héberge** l'application pour le compte du praticien, ce tiers doit être **certifié HDS** (hébergeur de données de santé).

@@ -44,3 +44,7 @@ WHERE id = @id;
 -- name: SetPracticeHolidays :exec
 UPDATE practice SET close_on_holidays = @close_on_holidays, holidays_alsace_moselle = @holidays_alsace_moselle, updated_at = now()
 WHERE id = @id;
+
+-- name: SetPracticeNoShowThreshold :exec
+UPDATE practice SET no_show_block_threshold = @no_show_block_threshold, updated_at = now()
+WHERE id = @id;

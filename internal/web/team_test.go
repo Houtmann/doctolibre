@@ -41,6 +41,7 @@ type groupEnv struct {
 	pracUser [4]auth.User
 	appts    [4]uuid.UUID // un RDV à 9 h le 15/10/2026 pour chacun
 	typeID   uuid.UUID
+	clock    *testutil.FixedClock
 }
 
 func (e groupEnv) adminActor() service.Actor {
@@ -76,7 +77,7 @@ func newGroupEnv(t *testing.T) groupEnv {
 		Practice: svc, Calendar: cal, Feed: &service.CalendarFeed{Pool: db, Clock: clock},
 		Booking: &service.Booking{Pool: db, Clock: clock, ManageKey: service.NewManageKey(testutil.ManageSecret)},
 	})
-	e := groupEnv{h: h, db: db, cal: cal, svc: svc}
+	e := groupEnv{h: h, db: db, cal: cal, svc: svc, clock: clock}
 	e.practice = mustPractice(t, db, adminU.PracticeID)
 
 	login := func(addr, email string) *client {

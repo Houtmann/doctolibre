@@ -61,6 +61,7 @@ func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger)
 	}
 	if d.Calendar != nil {
 		d.calendarRoutes(mux, rd, logger)
+		d.todayRoutes(mux, rd, logger)
 	}
 	if d.Privacy != nil {
 		d.privacyRoutes(mux, rd, logger)

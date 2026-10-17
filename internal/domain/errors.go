@@ -13,6 +13,9 @@ var (
 	ErrNotFound = errors.New("not found")
 	// ErrForbidden : action interdite pour l'utilisateur courant.
 	ErrForbidden = errors.New("forbidden")
+	// ErrOnlineBookingBlocked : la réservation en ligne est refusée à ce patient
+	// (absences répétées). Ne jamais en révéler la cause au patient.
+	ErrOnlineBookingBlocked = errors.New("online booking blocked")
 )
 
 // ErrValidation signale une donnée invalide sur un champ.

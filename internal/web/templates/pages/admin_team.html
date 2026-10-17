@@ -75,6 +75,52 @@
 </ul>
 {{end}}
 
+<h2 class="text-xl font-semibold pt-2">Remplaçants</h2>
+<p class="text-sm text-base-content/70">Donne à un compte praticien l'accès à l'agenda d'un autre praticien pour une période (jours inclus, heure du cabinet). L'accès cesse seul à la fin ; ses propres droits ne changent pas.</p>
+{{if .Data.Delegations}}
+<ul class="space-y-2">
+  {{range .Data.Delegations}}
+  <li class="flex flex-wrap items-center gap-2">
+    <span>{{.Email}} : agenda de {{.Practitioner}}, du {{formatDate .From}} au {{formatDate .To}}</span>
+    <form method="post" action="/admin/team/delegations/{{.ID}}/revoke">
+      {{csrf $.CSRF}}
+      <button class="btn btn-outline btn-sm" type="submit" aria-label="Révoquer la délégation de {{.Email}}">Révoquer</button>
+    </form>
+  </li>
+  {{end}}
+</ul>
+{{else}}
+<p>Aucune délégation en cours ou à venir.</p>
+{{end}}
+<form class="space-y-4 max-w-2xl" method="post" action="/admin/team/delegations">
+  {{csrf .CSRF}}
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="deleg-user">Remplaçant</label>
+    <select class="select w-full" id="deleg-user" name="user" required>
+      <option value="">Choisir…</option>
+      {{range .Data.DelegUsers}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
+    </select>
+  </div>
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="deleg-practitioner">Agenda du praticien remplacé</label>
+    <select class="select w-full" id="deleg-practitioner" name="practitioner" required>
+      <option value="">Choisir…</option>
+      {{range .Data.DelegAgendas}}<option value="{{.Value}}"{{if .Selected}} selected{{end}}>{{.Label}}</option>{{end}}
+    </select>
+  </div>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="deleg-from">Du</label>
+      <input class="input w-full" id="deleg-from" name="from" type="date" value="{{.Data.DelegationVal.From}}" required>
+    </div>
+    <div class="space-y-1">
+      <label class="block text-sm font-medium" for="deleg-to">Au (inclus)</label>
+      <input class="input w-full" id="deleg-to" name="to" type="date" value="{{.Data.DelegationVal.To}}" required>
+    </div>
+  </div>
+  <button class="btn btn-primary" type="submit">Enregistrer la délégation</button>
+</form>
+
 <h2 class="text-xl font-semibold pt-2">Inviter un membre</h2>
 <form class="space-y-4 max-w-2xl" method="post" action="/admin/team/invite">
   {{csrf .CSRF}}

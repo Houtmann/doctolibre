@@ -178,17 +178,18 @@ func (h *patientHandlers) create(w http.ResponseWriter, r *http.Request) {
 
 // PatientPage est la donnée de la page admin_patient.
 type PatientPage struct {
-	ID         string
-	Name       string
-	Form       PatientForm
-	Errors     []string
-	Upcoming   []service.PatientAppt
-	History    []service.PatientAppt
-	NoShows    int
-	Plans      []service.PlanView
-	MergeQuery string
-	Candidates []PatientRowView
-	CanManage  bool // export et suppression (administrateur, praticien)
+	ID            string
+	Name          string
+	Form          PatientForm
+	Errors        []string
+	Upcoming      []service.PatientAppt
+	History       []service.PatientAppt
+	NoShows       int
+	OnlineBlocked bool
+	Plans         []service.PlanView
+	MergeQuery    string
+	Candidates    []PatientRowView
+	CanManage     bool // export et suppression (administrateur, praticien)
 }
 
 func (h *patientHandlers) page(r *http.Request, id uuid.UUID, form *PatientForm, errs []string) (PatientPage, error) {
@@ -201,7 +202,7 @@ func (h *patientHandlers) page(r *http.Request, id uuid.UUID, form *PatientForm,
 	p := PatientPage{
 		CanManage: u.Role != domain.RoleSecretary,
 		ID:        d.Patient.ID.String(), Name: d.Patient.FirstName + " " + d.Patient.LastName,
-		Form: formOf(d.Patient), Errors: errs, Upcoming: d.Upcoming, History: d.History, NoShows: d.NoShows,
+		Form: formOf(d.Patient), Errors: errs, Upcoming: d.Upcoming, History: d.History, NoShows: d.NoShows, OnlineBlocked: d.OnlineBlocked,
 	}
 	if h.plans != nil {
 		if p.Plans, err = h.plans.ForPatient(r.Context(), a, id); err != nil {

@@ -26,11 +26,11 @@ Sur son téléphone, le praticien ouvre une page « Ma journée » : la liste ch
 - Accès : mêmes règles que l'agenda (`MayAccessPractitioner`, délégations T059 si mergée) ; autre praticien non autorisé → 403.
 
 ## Critères d'acceptation
-- [ ] La page liste les RDV du jour du praticien connecté dans l'ordre, sans les annulés ; navigation jour précédent/suivant.
-- [ ] Jour courant correct à 00:30 heure de Paris (horloge fixe), et le jour du changement d'heure.
-- [ ] Pointage « Fait » / « Absent » en htmx (partial seul) et sans JS (redirect) ; `status_changed_by` = utilisateur connecté.
-- [ ] Domicile : adresse, liens `geo:` / OSM, lien d'itinéraire avec les adresses dans l'ordre.
-- [ ] Secrétariat : sélecteur de praticien ; praticien sans droit → 403.
+- [x] La page liste les RDV du jour du praticien connecté dans l'ordre, sans les annulés ; navigation jour précédent/suivant.
+- [x] Jour courant correct à 00:30 heure de Paris (horloge fixe), et le jour du changement d'heure.
+- [x] Pointage « Fait » / « Absent » en htmx (partial seul) et sans JS (redirect) ; `status_changed_by` = utilisateur connecté.
+- [x] Domicile : adresse, liens `geo:` / OSM, lien d'itinéraire avec les adresses dans l'ordre.
+- [x] Secrétariat : sélecteur de praticien ; praticien sans droit → 403.
 - [ ] Rendu 360 px vérifié dans `/dev/styleguide` ou capture.
 
 ## Vérification
@@ -46,8 +46,8 @@ Optimisation de l'ordre de tournée, géocodage, carte embarquée, mode hors lig
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-17 (sonnet).
+- **Fait** : migration 00022 (`status_changed_by`, `status_changed_at`) ; `SetAppointmentStatus` les renseigne (utilisateur de l'`Actor`, `Clock`) ; requête `ListDayAppointments` (téléphone, adresse, rang `n/N` dans la série, trajet) ; service `Calendar.Day` (fichier `internal/service/calendar_day.go`, types `MyDay*`) ; handlers `internal/web/today.go` (`GET /admin/today`, `POST /admin/today/appointments/{id}/status` qui appelle `Calendar.SetStatus`) ; templates `admin_today`, partials `day_card`, `day_status_form`, `day_summary`, `day_card_update` (carte + récapitulatif hors-bande) ; lien « Ma journée » en tête du menu ; tests service (DST 25/10/2026 et 28/03/2027, 00:30 Paris, tri, annulés exclus, status_changed_by, 403) et web (page, htmx, redirect, 403/400/404, CSRF) ; `make css`.
+- **Reste à faire** : vérification visuelle à 375 px dans un navigateur (non faite) ; l'URL d'itinéraire OSM `directions?route=adr1;adr2` : à confirmer que OSM géocode bien des adresses textuelles.
+- **Notes de reprise** : lien visible pour les trois rôles ; le secrétariat voit un sélecteur si plusieurs praticiens (sinon l'unique praticien). « Annuler le pointage » = `SetStatus(booked)`, autorisé par `SetStatus`.
+- **Écarts avec la spécification** : nouvelle requête nécessaire (`View`/`AgendaDay` n'a ni téléphone, ni adresse, ni rang de série) ; méthode nommée `Day` avec types `MyDay*` (`DayView` existait déjà) ; critère « rendu 360 px » non coché.

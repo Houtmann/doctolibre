@@ -58,6 +58,7 @@ type View struct {
 func navCurrent(path string) string {
 	// L'ordre compte : le premier préfixe qui correspond gagne.
 	for _, n := range [...]struct{ prefix, link string }{
+		{"/admin/today", "/admin/today"},
 		{"/admin/calendar", "/admin/calendar"},
 		{"/admin/appointments", "/admin/calendar"},
 		{"/admin/patients", "/admin/patients"},

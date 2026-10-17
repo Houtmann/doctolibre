@@ -46,6 +46,8 @@ type Appointment struct {
 	Address            pgtype.Text
 	VerifiedChannel    pgtype.Text
 	ManageTokenVersion int32
+	StatusChangedBy    pgtype.UUID
+	StatusChangedAt    pgtype.Timestamptz
 }
 
 type AppointmentType struct {
@@ -213,6 +215,7 @@ type Practice struct {
 	PrivacyContact            string
 	CloseOnHolidays           bool
 	HolidaysAlsaceMoselle     bool
+	NoShowBlockThreshold      pgtype.Int2
 }
 
 type Practitioner struct {
@@ -232,6 +235,16 @@ type Practitioner struct {
 type PractitionerAppointmentType struct {
 	PractitionerID    uuid.UUID
 	AppointmentTypeID uuid.UUID
+}
+
+type PractitionerDelegation struct {
+	ID             uuid.UUID
+	PracticeID     uuid.UUID
+	UserID         uuid.UUID
+	PractitionerID uuid.UUID
+	Valid          pgtype.Range[pgtype.Date]
+	CreatedBy      pgtype.UUID
+	CreatedAt      time.Time
 }
 
 type Session struct {

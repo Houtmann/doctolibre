@@ -67,6 +67,10 @@ type User struct {
 	PractitionerID uuid.NullUUID
 	Email          string // ne jamais journaliser
 	Role           string
+	// Delegated : praticiens dont l'agenda est délégué à l'utilisateur au jour
+	// courant du cabinet (T059). Rechargé à chaque requête par Authenticate,
+	// jamais stocké dans la session.
+	Delegated []uuid.UUID
 }
 
 type ctxKey struct{}
@@ -300,7 +304,13 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Session, erro
 		}
 		exp, refreshed = want, true
 	}
-	return Session{User: userFromRow(row), ExpiresAt: exp, Refreshed: refreshed}, nil
+	user := userFromRow(row)
+	if user.Delegated, err = q.ListActiveDelegatedPractitioners(ctx, sqlcgen.ListActiveDelegatedPractitionersParams{
+		UserID: row.ID, PracticeID: row.PracticeID, Now: now,
+	}); err != nil {
+		return Session{}, fmt.Errorf("lecture des délégations: %w", err)
+	}
+	return Session{User: user, ExpiresAt: exp, Refreshed: refreshed}, nil
 }
 
 func minTime(a, b time.Time) time.Time {

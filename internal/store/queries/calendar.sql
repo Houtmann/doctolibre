@@ -57,3 +57,31 @@ SELECT at, actor, action, meta FROM audit_log
 WHERE entity = @entity AND entity_id = @entity_id
 ORDER BY at, id
 LIMIT @page_size;
+
+-- name: ListDayAppointments :many
+-- « Ma journée » (T072) : RDV non annulés d'un praticien dont le soin commence
+-- dans [from_at, to_at). Utilise appointment_no_overlap (practitioner_id, during_blocked).
+-- series_ordinal : rang de la séance dans sa série (done/booked uniquement, 0 sinon).
+SELECT a.id, a.status, a.address, a.care_plan_id,
+       lower(a.during)::timestamptz AS starts_at,
+       upper(a.during)::timestamptz AS ends_at,
+       lower(a.during_blocked)::timestamptz AS blocked_start,
+       upper(a.during_blocked)::timestamptz AS blocked_end,
+       p.first_name, p.last_name, p.phone,
+       t.name AS type_name, t.at_home AS type_at_home,
+       COALESCE(cp.sessions_prescribed, 0)::int AS series_prescribed,
+       CASE WHEN a.care_plan_id IS NOT NULL AND a.status IN ('done', 'booked') THEN
+           (SELECT count(*) FROM appointment s
+             WHERE s.care_plan_id = a.care_plan_id AND s.status IN ('done', 'booked')
+               AND (lower(s.during), s.id) <= (lower(a.during), a.id))::int
+       ELSE 0 END AS series_ordinal
+FROM appointment a
+JOIN patient p ON p.id = a.patient_id
+JOIN appointment_type t ON t.id = a.appointment_type_id
+LEFT JOIN care_plan cp ON cp.id = a.care_plan_id
+WHERE a.practice_id = @practice_id
+  AND a.practitioner_id = @practitioner_id
+  AND a.status <> 'cancelled'
+  AND a.during_blocked && tstzrange(@from_at::timestamptz, @to_at::timestamptz, '[)')
+  AND lower(a.during) >= @from_at::timestamptz AND lower(a.during) < @to_at::timestamptz
+ORDER BY lower(a.during), a.id;

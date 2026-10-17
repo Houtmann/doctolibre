@@ -550,6 +550,8 @@ func (h *publicHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 			[]string{"Ce code a expiré, a déjà servi ou le nombre d'essais est dépassé. Validez le formulaire pour recevoir un nouveau code."})
 	case errors.Is(err, domain.ErrSlotTaken):
 		h.slotGone(w, r, t, "Ce créneau vient d'être pris. Choisissez-en un autre.")
+	case errors.Is(err, domain.ErrOnlineBookingBlocked):
+		h.renderDetails(w, r, http.StatusForbidden, t, start, f, []string{onlineBookingBlockedMsg(t.Practice.Phone)})
 	default:
 		if msgs := validation(err); msgs != nil {
 			h.renderDetails(w, r, http.StatusUnprocessableEntity, t, start, f, msgs)
@@ -557,6 +559,16 @@ func (h *publicHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 		}
 		h.fail(w, r, err)
 	}
+}
+
+// onlineBookingBlockedMsg est le message neutre affiché quand le cabinet refuse la
+// réservation en ligne : il ne mentionne jamais la cause (absences).
+func onlineBookingBlockedMsg(phone string) string {
+	msg := "Cette réservation en ligne n'est pas possible."
+	if phone != "" {
+		return msg + " Merci d'appeler le cabinet au " + phone + "."
+	}
+	return msg + " Merci de contacter le cabinet."
 }
 
 // --- Page de confirmation et fichier .ics ---

@@ -21,11 +21,11 @@ Un cabinet peut refuser la réservation en ligne aux patients ayant trop de rend
 - Pas de nom, téléphone ni email dans les logs : logguer les IDs.
 
 ## Critères d'acceptation
-- [ ] Seuil NULL : comportement inchangé.
-- [ ] Patient à seuil−1 no-shows : réservation passe ; à seuil : refus neutre avec téléphone du cabinet.
-- [ ] No-shows plus vieux que 6 mois ignorés (test avec horloge fixe, frontière incluse/exclue documentée).
-- [ ] Badge sur la fiche patient ; la réservation staff reste possible.
-- [ ] `docs/rgpd.md` à jour ; `EXPLAIN` dans Suivi.
+- [x] Seuil NULL : comportement inchangé.
+- [x] Patient à seuil−1 no-shows : réservation passe ; à seuil : refus neutre avec téléphone du cabinet.
+- [x] No-shows plus vieux que 6 mois ignorés (test avec horloge fixe, frontière incluse/exclue documentée).
+- [x] Badge sur la fiche patient ; la réservation staff reste possible.
+- [x] `docs/rgpd.md` à jour ; `EXPLAIN` dans Suivi.
 
 ## Vérification
 ```bash
@@ -40,8 +40,9 @@ Re-confirmation J-2, libération automatique de créneau (écartées), seuil par
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-10-17 (sonnet).
+- **Fait** : migration 00020 (`practice.no_show_block_threshold smallint NULL`, CHECK >= 1) ; requêtes `CountPatientNoShowsSince` et `SetPracticeNoShowThreshold` ; `domain.ErrOnlineBookingBlocked` ; contrôle dans `Booking.Book` après OTP et rapprochement du patient (dans la transaction : l'OTP n'est pas consommé en cas de refus) ; champ « Absences avant blocage » dans `/admin/settings` (1..99, vide = désactivé) ; badge sur la fiche patient (`PatientDetail.OnlineBlocked`) ; message neutre + téléphone du cabinet (`onlineBookingBlockedMsg`, statut 403, un seul endroit dans `public.go`) ; paragraphe dans `docs/rgpd.md` ; tests service (seuil NULL, seuil-1, seuil, frontière incluse/exclue), validation des réglages, test handler public, test badge ; `make css` fait.
+- **Reste à faire** : rien. Non vu au navigateur : champ de réglage et badge.
+- **Notes de reprise** : fenêtre = `now.AddDate(0,-6,0)`, borne incluse (`lower(during) >= since`). Refus loggé en INFO avec practice_id et patient_id seulement. La réservation staff ne passe pas par `Book` : non concernée. `StartVerification` ne bloque pas (envoi du code) : le refus intervient après vérification du code, comme demandé.
+- **EXPLAIN** (base de dev, `enable_seqscan=off` car table vide) : `Aggregate -> Index Scan using appointment_patient_idx on appointment`, `Index Cond: patient_id = ...`, `Filter: practice_id, status = 'no_show', lower(during) >= ...`. Couverte par l'index existant `appointment_patient_idx` (quelques dizaines de RDV par patient) ; pas de nouvel index.
+- **Écarts avec la spécification** : aucun (comparaison `>=` seuil ; refus en HTTP 403).

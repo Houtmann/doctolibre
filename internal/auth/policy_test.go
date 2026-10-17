@@ -85,3 +85,33 @@ func TestCan(t *testing.T) {
 		}
 	}
 }
+
+// Une délégation n'ouvre que les agendas visés, pour les actions d'agenda ; jamais
+// les réglages du cabinet ni un autre cabinet.
+func TestCanWithDelegation(t *testing.T) {
+	t.Parallel()
+	practice := uuid.New()
+	mine, lent, other := uuid.New(), uuid.New(), uuid.New()
+	u := auth.User{
+		ID: uuid.New(), PracticeID: practice, Role: domain.RolePractitioner,
+		PractitionerID: uuid.NullUUID{UUID: mine, Valid: true}, Delegated: []uuid.UUID{lent},
+	}
+	for _, a := range []auth.Action{auth.ActionCalendarView, auth.ActionAppointmentManage, auth.ActionAvailabilityEdit} {
+		if !auth.Can(u, a, auth.Resource{PracticeID: practice, PractitionerID: lent}) {
+			t.Errorf("%s sur l'agenda délégué refusé", a)
+		}
+		if auth.Can(u, a, auth.Resource{PracticeID: practice, PractitionerID: other}) {
+			t.Errorf("%s sur un agenda non délégué accepté", a)
+		}
+		if auth.Can(u, a, auth.Resource{PracticeID: uuid.New(), PractitionerID: lent}) {
+			t.Errorf("%s sur un autre cabinet accepté", a)
+		}
+	}
+	if auth.Can(u, auth.ActionTeamManage, auth.Resource{PracticeID: practice}) {
+		t.Error("la délégation ouvre la gestion d'équipe")
+	}
+	u.Delegated = nil
+	if auth.Can(u, auth.ActionCalendarView, auth.Resource{PracticeID: practice, PractitionerID: lent}) {
+		t.Error("accès sans délégation")
+	}
+}

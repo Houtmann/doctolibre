@@ -43,7 +43,7 @@
 {{else}}<p class="text-base-content/70">Aucune série de séances.</p>{{end}}
 
 <h2 class="text-xl font-semibold pt-2">Historique</h2>
-<p>Absences : <strong>{{.Data.NoShows}}</strong></p>
+<p>Absences : <strong>{{.Data.NoShows}}</strong>{{if .Data.OnlineBlocked}} <span class="badge badge-warning">Réservation en ligne bloquée</span>{{end}}</p>
 {{if .Data.History}}
 <ul class="list-disc pl-5 space-y-1">
   {{range .Data.History}}<li><a class="link link-primary" href="/admin/appointments/{{.ID}}">{{localDate .Start}} à {{localTime .Start}}</a> — {{.TypeName}} ({{.StatusLabel}})</li>{{end}}

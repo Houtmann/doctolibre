@@ -215,13 +215,108 @@ func (q *Queries) ListCalendarAppointments(ctx context.Context, arg ListCalendar
 	return items, nil
 }
 
+const listDayAppointments = `-- name: ListDayAppointments :many
+SELECT a.id, a.status, a.address, a.care_plan_id,
+       lower(a.during)::timestamptz AS starts_at,
+       upper(a.during)::timestamptz AS ends_at,
+       lower(a.during_blocked)::timestamptz AS blocked_start,
+       upper(a.during_blocked)::timestamptz AS blocked_end,
+       p.first_name, p.last_name, p.phone,
+       t.name AS type_name, t.at_home AS type_at_home,
+       COALESCE(cp.sessions_prescribed, 0)::int AS series_prescribed,
+       CASE WHEN a.care_plan_id IS NOT NULL AND a.status IN ('done', 'booked') THEN
+           (SELECT count(*) FROM appointment s
+             WHERE s.care_plan_id = a.care_plan_id AND s.status IN ('done', 'booked')
+               AND (lower(s.during), s.id) <= (lower(a.during), a.id))::int
+       ELSE 0 END AS series_ordinal
+FROM appointment a
+JOIN patient p ON p.id = a.patient_id
+JOIN appointment_type t ON t.id = a.appointment_type_id
+LEFT JOIN care_plan cp ON cp.id = a.care_plan_id
+WHERE a.practice_id = $1
+  AND a.practitioner_id = $2
+  AND a.status <> 'cancelled'
+  AND a.during_blocked && tstzrange($3::timestamptz, $4::timestamptz, '[)')
+  AND lower(a.during) >= $3::timestamptz AND lower(a.during) < $4::timestamptz
+ORDER BY lower(a.during), a.id
+`
+
+type ListDayAppointmentsParams struct {
+	PracticeID     uuid.UUID
+	PractitionerID uuid.UUID
+	FromAt         time.Time
+	ToAt           time.Time
+}
+
+type ListDayAppointmentsRow struct {
+	ID               uuid.UUID
+	Status           string
+	Address          pgtype.Text
+	CarePlanID       pgtype.UUID
+	StartsAt         time.Time
+	EndsAt           time.Time
+	BlockedStart     time.Time
+	BlockedEnd       time.Time
+	FirstName        string
+	LastName         string
+	Phone            pgtype.Text
+	TypeName         string
+	TypeAtHome       bool
+	SeriesPrescribed int32
+	SeriesOrdinal    int32
+}
+
+// « Ma journée » (T072) : RDV non annulés d'un praticien dont le soin commence
+// dans [from_at, to_at). Utilise appointment_no_overlap (practitioner_id, during_blocked).
+// series_ordinal : rang de la séance dans sa série (done/booked uniquement, 0 sinon).
+func (q *Queries) ListDayAppointments(ctx context.Context, arg ListDayAppointmentsParams) ([]ListDayAppointmentsRow, error) {
+	rows, err := q.db.Query(ctx, listDayAppointments,
+		arg.PracticeID,
+		arg.PractitionerID,
+		arg.FromAt,
+		arg.ToAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDayAppointmentsRow
+	for rows.Next() {
+		var i ListDayAppointmentsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Status,
+			&i.Address,
+			&i.CarePlanID,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.BlockedStart,
+			&i.BlockedEnd,
+			&i.FirstName,
+			&i.LastName,
+			&i.Phone,
+			&i.TypeName,
+			&i.TypeAtHome,
+			&i.SeriesPrescribed,
+			&i.SeriesOrdinal,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const moveAppointment = `-- name: MoveAppointment :one
 UPDATE appointment SET
     during = tstzrange($1::timestamptz, $2::timestamptz, '[)'),
     during_blocked = tstzrange($3::timestamptz, $4::timestamptz, '[)'),
     updated_at = now()
 WHERE id = $5 AND practice_id = $6 AND status = 'booked'
-RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version
+RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version, status_changed_by, status_changed_at
 `
 
 type MoveAppointmentParams struct {
@@ -265,6 +360,8 @@ func (q *Queries) MoveAppointment(ctx context.Context, arg MoveAppointmentParams
 		&i.Address,
 		&i.VerifiedChannel,
 		&i.ManageTokenVersion,
+		&i.StatusChangedBy,
+		&i.StatusChangedAt,
 	)
 	return i, err
 }

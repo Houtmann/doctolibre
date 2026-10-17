@@ -42,6 +42,8 @@ type Actor struct {
 	// Role vide = appel interne sans restriction par praticien ; la couche web le renseigne toujours.
 	Role           string
 	PractitionerID uuid.UUID
+	// Delegated : praticiens dont l'agenda est délégué à l'utilisateur aujourd'hui (T059).
+	Delegated []uuid.UUID
 	// Target désigne le praticien visé quand ce n'est pas le sien (uuid.Nil = le sien).
 	Target uuid.UUID
 }
@@ -51,7 +53,7 @@ func (a Actor) mayAccessPractitioner(id uuid.UUID) bool {
 	if a.Role == "" {
 		return true
 	}
-	return domain.MayAccessPractitioner(a.Role, a.PractitionerID, id)
+	return domain.MayAccessPractitioner(a.Role, a.PractitionerID, a.Delegated, id)
 }
 
 // Settings est la vue des paramètres du cabinet et du profil du praticien.
@@ -79,6 +81,10 @@ type SettingsInput struct {
 
 	CloseOnHolidays       bool // aucun créneau les jours fériés français
 	HolidaysAlsaceMoselle bool // + Vendredi saint et 26 décembre
+
+	// NoShowBlockThreshold : nombre d'absences sur 6 mois à partir duquel la
+	// réservation en ligne est refusée au patient ; vide = désactivé.
+	NoShowBlockThreshold string
 }
 
 // ReservedFirstSlug est le segment d'URL « premier créneau disponible » : interdit comme identifiant de praticien.
@@ -273,6 +279,14 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 	} else if in.HomeVisitOnline && len(zones) == 0 {
 		add("home_visit_zones", "Indiquez au moins une commune ou un code postal pour ouvrir les visites à domicile à la réservation en ligne.")
 	}
+	var threshold pgtype.Int2
+	if t := strings.TrimSpace(in.NoShowBlockThreshold); t != "" {
+		n, ok := parseIntRange(t, 1, 99)
+		if !ok {
+			add("no_show_block_threshold", "Le seuil d'absences doit être un nombre entre 1 et 99, ou vide pour désactiver.")
+		}
+		threshold = pgtype.Int2{Int16: int16(n), Valid: ok} //nolint:gosec // borné à 99
+	}
 	if len(errs) > 0 {
 		return errs
 	}
@@ -305,6 +319,11 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 			ID: pc.ID, CloseOnHolidays: in.CloseOnHolidays, HolidaysAlsaceMoselle: in.HolidaysAlsaceMoselle,
 		}); err != nil {
 			return fmt.Errorf("jours fériés: %w", err)
+		}
+		if err := q.SetPracticeNoShowThreshold(ctx, sqlcgen.SetPracticeNoShowThresholdParams{
+			ID: pc.ID, NoShowBlockThreshold: threshold,
+		}); err != nil {
+			return fmt.Errorf("seuil d'absences: %w", err)
 		}
 		_, err = q.UpdatePractitioner(ctx, sqlcgen.UpdatePractitionerParams{
 			ID: pr.ID, PracticeID: a.PracticeID, FirstName: in.FirstName, LastName: in.LastName,

@@ -157,6 +157,9 @@ func TestUpdateSettings(t *testing.T) {
 		{"téléphone invalide", func(in *service.SettingsInput) { in.Phone = "abc" }, "téléphone"},
 		{"slug invalide", func(in *service.SettingsInput) { in.Slug = "Pas Valide" }, "identifiant d'URL"},
 		{"prénom vide", func(in *service.SettingsInput) { in.FirstName = "" }, "prénom"},
+		{"seuil d'absences nul", func(in *service.SettingsInput) { in.NoShowBlockThreshold = "0" }, "seuil d'absences"},
+		{"seuil d'absences texte", func(in *service.SettingsInput) { in.NoShowBlockThreshold = "abc" }, "seuil d'absences"},
+		{"seuil d'absences valide", func(in *service.SettingsInput) { in.NoShowBlockThreshold = "3" }, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

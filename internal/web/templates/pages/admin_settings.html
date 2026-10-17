@@ -28,6 +28,11 @@
   <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
     <legend class="fieldset-legend">Réservation en ligne</legend>
     <div class="space-y-1">
+      <label class="block text-sm font-medium" for="no_show_block_threshold">Absences avant blocage de la réservation en ligne</label>
+      <input class="input w-full" id="no_show_block_threshold" name="no_show_block_threshold" type="number" inputmode="numeric" min="1" max="99" value="{{.NoShowBlockThreshold}}" aria-describedby="no-show-help">
+      <p class="text-sm text-base-content/70" id="no-show-help">Laissez vide pour ne rien bloquer. À partir de ce nombre de rendez-vous manqués sur les 6 derniers mois, le patient ne peut plus réserver en ligne et est invité à appeler le cabinet. Vous pouvez toujours réserver pour lui depuis l'agenda.</p>
+    </div>
+    <div class="space-y-1">
       <label class="block text-sm font-medium" for="booking_notice_hours">Délai minimal avant un rendez-vous (heures)</label>
       <input class="input w-full" id="booking_notice_hours" name="booking_notice_hours" type="number" inputmode="numeric" min="0" max="720" value="{{.BookingNoticeHours}}" required>
     </div>

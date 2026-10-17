@@ -122,6 +122,8 @@ type PatientDetail struct {
 	Upcoming []PatientAppt // du plus proche au plus lointain
 	History  []PatientAppt // du plus récent au plus ancien
 	NoShows  int
+	// OnlineBlocked : le seuil d'absences du cabinet est atteint (badge « Réservation en ligne bloquée »).
+	OnlineBlocked bool
 }
 
 // Detail retourne la fiche (ErrNotFound si absente ou hors du cabinet).
@@ -154,6 +156,13 @@ func (s *Patients) Detail(ctx context.Context, a Actor, id uuid.UUID) (PatientDe
 		} else {
 			d.History = append(d.History, ap)
 		}
+	}
+	pc, err := q.GetPractice(ctx, a.PracticeID)
+	if err != nil {
+		return PatientDetail{}, fmt.Errorf("lecture cabinet: %w", err)
+	}
+	if d.OnlineBlocked, err = onlineBookingBlocked(ctx, q, pc, id, now); err != nil {
+		return PatientDetail{}, err
 	}
 	return d, nil
 }

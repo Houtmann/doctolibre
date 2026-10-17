@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -491,6 +492,13 @@ func (b *Booking) Book(ctx context.Context, in BookInput) (BookResult, error) {
 		if err != nil {
 			return err
 		}
+		if blocked, err := onlineBookingBlocked(ctx, q, sc.pc, patient.ID, now); err != nil {
+			return err
+		} else if blocked {
+			slog.InfoContext(ctx, "réservation en ligne refusée (absences répétées)",
+				slog.String("practice_id", sc.pc.ID.String()), slog.String("patient_id", patient.ID.String()))
+			return domain.ErrOnlineBookingBlocked
+		}
 		bb, ba := sc.buffers()
 		appt, err = store.CreateAppointment(ctx, q, store.NewAppointment{
 			ID: apptID, PracticeID: sc.pc.ID, PractitionerID: sc.pr.ID, PatientID: patient.ID, AppointmentTypeID: sc.typ.ID,
@@ -595,3 +603,25 @@ func (b *Booking) Confirmation(ctx context.Context, token string) (Confirmation,
 
 // Now retourne l'instant courant de l'horloge du service (pour les handlers).
 func (b *Booking) Now() time.Time { return b.Clock.Now() }
+
+// NoShowWindowMonths est la fenêtre fixe de comptage des absences.
+const NoShowWindowMonths = 6
+
+// noShowSince est le début de la fenêtre : un RDV manqué commençant exactement à
+// cet instant compte (borne incluse), un plus ancien est ignoré.
+func noShowSince(now time.Time) time.Time { return now.AddDate(0, -NoShowWindowMonths, 0) }
+
+// onlineBookingBlocked indique si le patient a atteint le seuil d'absences du
+// cabinet (seuil NULL = jamais bloqué).
+func onlineBookingBlocked(ctx context.Context, q *sqlcgen.Queries, pc sqlcgen.Practice, patientID uuid.UUID, now time.Time) (bool, error) {
+	if !pc.NoShowBlockThreshold.Valid {
+		return false, nil
+	}
+	n, err := q.CountPatientNoShowsSince(ctx, sqlcgen.CountPatientNoShowsSinceParams{
+		PatientID: patientID, PracticeID: pc.ID, Since: noShowSince(now),
+	})
+	if err != nil {
+		return false, fmt.Errorf("comptage des absences: %w", err)
+	}
+	return n >= int32(pc.NoShowBlockThreshold.Int16), nil
+}

@@ -29,6 +29,8 @@ func (d Deps) teamRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger) 
 	handle("POST "+pathTeam+"/{id}/role", h.role)
 	handle("POST "+pathTeam+"/{id}/active", h.active)
 	handle("POST "+pathTeam+"/practitioners/{id}/color", h.color)
+	handle("POST "+pathTeam+"/delegations", h.delegate)
+	handle("POST "+pathTeam+"/delegations/{id}/revoke", h.revokeDelegation)
 
 	perWindow := rate.Every(loginWindow / loginAttempts)
 	byIP := httpx.RateLimit(httpx.ClientIP, perWindow, loginAttempts)
@@ -80,8 +82,30 @@ type InvitationRow struct {
 	ExpiresAt            time.Time
 }
 
+// DelegationRow est une délégation d'agenda en cours ou à venir.
+type DelegationRow struct {
+	ID, Email, Practitioner string
+	From, To                time.Time
+}
+
+// DelegationOption est un choix des sélecteurs du formulaire de délégation.
+type DelegationOption struct {
+	Value, Label string
+	Selected     bool
+}
+
+// DelegationForm est la saisie (réaffichée en cas d'erreur).
+type DelegationForm struct {
+	User, Practitioner, From, To string
+}
+
 // TeamPage est la donnée de la page admin_team.
 type TeamPage struct {
+	Delegations   []DelegationRow
+	DelegUsers    []DelegationOption
+	DelegAgendas  []DelegationOption
+	DelegationVal DelegationForm
+
 	CSRF        string
 	Members     []TeamRow
 	Invitations []InvitationRow
@@ -99,13 +123,37 @@ func roleOptions(selected string) []RoleOption {
 }
 
 func (h *teamHandlers) render(w http.ResponseWriter, r *http.Request, status int, email, role string, errs []string) {
+	h.renderWith(w, r, status, email, role, DelegationForm{}, errs)
+}
+
+func (h *teamHandlers) renderWith(w http.ResponseWriter, r *http.Request, status int, email, role string, df DelegationForm, errs []string) {
 	u, _ := auth.UserFrom(r.Context())
 	t, err := h.a.Team(r.Context(), u)
 	if err != nil {
 		h.fail(w, r, err)
 		return
 	}
-	p := TeamPage{CSRF: httpx.CSRFToken(r.Context()), Email: email, Roles: roleOptions(role), Errors: errs}
+	ds, err := h.a.Delegations(r.Context(), u)
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	p := TeamPage{CSRF: httpx.CSRFToken(r.Context()), Email: email, Roles: roleOptions(role), Errors: errs, DelegationVal: df}
+	for _, d := range ds {
+		p.Delegations = append(p.Delegations, DelegationRow{ID: d.ID.String(), Email: d.Email, Practitioner: d.PractitionerName, From: d.From, To: d.To})
+	}
+	for _, m := range t.Members {
+		if m.Active && m.Role == domain.RolePractitioner {
+			p.DelegUsers = append(p.DelegUsers, DelegationOption{Value: m.ID.String(), Label: m.Email, Selected: m.ID.String() == df.User})
+		}
+		if m.PractitionerID != uuid.Nil {
+			label := m.Name
+			if label == "" {
+				label = m.Email
+			}
+			p.DelegAgendas = append(p.DelegAgendas, DelegationOption{Value: m.PractitionerID.String(), Label: label, Selected: m.PractitionerID.String() == df.Practitioner})
+		}
+	}
 	for _, m := range t.Members {
 		p.Members = append(p.Members, TeamRow{
 			ID: m.ID.String(), Email: m.Email, Name: m.Name, Role: m.Role, RoleLabel: auth.RoleLabel(m.Role),
@@ -139,6 +187,46 @@ func (h *teamHandlers) invite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.rd.SetFlash(w, "success", "Invitation envoyée. Le lien d'activation est valable 48 heures.")
+	httpx.Redirect(w, r, pathTeam)
+}
+
+func (h *teamHandlers) delegate(w http.ResponseWriter, r *http.Request) {
+	u, _ := auth.UserFrom(r.Context())
+	df := DelegationForm{
+		User: r.PostFormValue("user"), Practitioner: r.PostFormValue("practitioner"),
+		From: r.PostFormValue("from"), To: r.PostFormValue("to"),
+	}
+	userID, err1 := uuid.Parse(df.User)
+	practID, err2 := uuid.Parse(df.Practitioner)
+	if err1 != nil || err2 != nil {
+		h.renderWith(w, r, http.StatusUnprocessableEntity, "", domain.RolePractitioner, df, []string{"Choisissez le remplaçant et l'agenda."})
+		return
+	}
+	err := h.a.CreateDelegation(r.Context(), u, auth.DelegationInput{UserID: userID, PractitionerID: practID, From: df.From, To: df.To})
+	if msgs := validation(err); msgs != nil {
+		h.renderWith(w, r, http.StatusUnprocessableEntity, "", domain.RolePractitioner, df, msgs)
+		return
+	}
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.SetFlash(w, "success", "Délégation enregistrée.")
+	httpx.Redirect(w, r, pathTeam)
+}
+
+func (h *teamHandlers) revokeDelegation(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(r)
+	if !ok {
+		h.rd.Error(w, r, http.StatusNotFound, "")
+		return
+	}
+	u, _ := auth.UserFrom(r.Context())
+	if err := h.a.RevokeDelegation(r.Context(), u, id); err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	h.rd.SetFlash(w, "success", "Délégation révoquée.")
 	httpx.Redirect(w, r, pathTeam)
 }
 

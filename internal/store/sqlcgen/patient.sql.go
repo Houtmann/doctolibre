@@ -30,6 +30,26 @@ func (q *Queries) AbsorbPatient(ctx context.Context, arg AbsorbPatientParams) er
 	return err
 }
 
+const countPatientNoShowsSince = `-- name: CountPatientNoShowsSince :one
+SELECT count(*)::int FROM appointment
+WHERE patient_id = $1 AND practice_id = $2
+  AND status = 'no_show' AND lower(during) >= $3::timestamptz
+`
+
+type CountPatientNoShowsSinceParams struct {
+	PatientID  uuid.UUID
+	PracticeID uuid.UUID
+	Since      time.Time
+}
+
+// Absences (no_show) d'un patient dont le début est >= @since (borne incluse).
+func (q *Queries) CountPatientNoShowsSince(ctx context.Context, arg CountPatientNoShowsSinceParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countPatientNoShowsSince, arg.PatientID, arg.PracticeID, arg.Since)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createPatient = `-- name: CreatePatient :one
 INSERT INTO patient (practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, address)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)

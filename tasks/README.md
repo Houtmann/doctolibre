@@ -55,12 +55,12 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T051 | [Absence imprévue : annulation groupée](T051-sick-day-bulk-cancel.md) | 5 | T050 | todo |
 | T052 | [Jours fériés français automatiques](T052-public-holidays.md) | 5 | T013 | review |
 | T053 | [Import CSV des patients](T053-patient-csv-import.md) | 5 | T017 | review |
-| T054 | [Garde-fou absences répétées](T054-no-show-guard.md) | 5 | T014, T017 | todo |
+| T054 | [Garde-fou absences répétées](T054-no-show-guard.md) | 5 | T014, T017 | review |
 | T055 | [Lien de série pour le patient](T055-care-plan-patient-link.md) | 5 | T050 | todo |
 | T056 | [Réglages : profil vs cabinet, séries au secrétariat](T056-settings-split-and-secretary-plans.md) | 5 | T033, T030 | todo |
 | T057 | [Couleurs dans l'agenda compatibles CSP](T057-calendar-colors.md) | 5 | T016, T083 | review |
 | T058 | [Alarmes dans les fichiers ICS patient](T058-ics-valarm.md) | 5 | T042 | review |
-| T059 | [Remplaçant : accès borné dans le temps](T059-locum-delegation.md) | 5 | T033 | todo |
+| T059 | [Remplaçant : accès borné dans le temps](T059-locum-delegation.md) | 5 | T033 | review |
 | T060 | [Ressources partagées (box, appareils)](T060-shared-resources.md) | 5 | T013, T014, T016 | todo |
 | T061 | [Affiche imprimable avec QR code](T061-qr-poster.md) | 5 | T014 | blocked |
 | T062 | [Design system léger : tokens, catalogue, styleguide](T062-design-system.md) | 5 | T004, T016 | review |
@@ -72,7 +72,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T068 | [Design v2 : retrait de Pico et de l'ancien CSS](T068-design-v2-cleanup.md) | 5 | T065, T066, T067 | superseded |
 | T070 | [Consignes par motif et prérequis à la réservation](T070-appointment-type-instructions.md) | 5 | T014, T023, T058 | todo |
 | T071 | [Auto-planification de la série par le patient](T071-care-plan-self-scheduling.md) | 5 | T055, T030, T014 | todo |
-| T072 | [« Ma journée » : tournée domicile et pointage en un clic](T072-my-day-check-in.md) | 5 | T016, T032, T033 | todo |
+| T072 | [« Ma journée » : tournée domicile et pointage en un clic](T072-my-day-check-in.md) | 5 | T016, T032, T033 | review |
 | T073 | [Statistiques de séances et export pour rétrocession](T073-session-stats.md) | 5 | T072, T059 | todo |
 | T080 | [Outillage Tailwind + daisyUI, thème, layouts et partials](T080-daisyui-foundation.md) | 5 | — | review |
 | T081 | [Parcours patient public en daisyUI](T081-daisyui-public.md) | 5 | T080 | review |

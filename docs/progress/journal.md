@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-17 — T054, T059, T072 en parallèle (sonnet ×3 en worktrees ; contrôle : opus)
+
+- **Tâches** : T054, T059, T072 todo → review
+- **Fait** : T054 blocage de la réservation en ligne au-delà d'un seuil d'absences sur 6 mois (migration 00020, badge fiche patient) ; T059 délégation d'agenda à un remplaçant bornée en jours locaux, relue à chaque requête (00021, section « Remplaçants » de l'équipe) ; T072 page « Ma journée » mobile avec pointage Fait/Absent en un clic et `status_changed_by/at` (00022)
+- **Vérification** : `make check` ✅ dans chaque worktree puis sur main après fusion par patchs (sqlcgen et `ui.css` régénérés) ; T059 relue en entier (revue renforcée), SQL et transactions relus pour T054 et T072. Navigateur **non vu** pour les trois.
+- **Reste** : passage navigateur (réglage du seuil et badge ; section Remplaçants ; « Ma journée » à 360 px, critère non coché) ; vérifier que le lien d'itinéraire OpenStreetMap (`directions?route=adr1;adr2`) géocode bien des adresses texte ; ICS du remplaçant hors scope
+- **Décisions** : trois lignes du 2026-10-17 dans decisions.md
+
 ## 2026-10-16 — T053 import CSV des patients (sonnet ; contrôle : opus)
 
 - **Tâches** : T053 todo → review (spec précisée par l'orchestrateur : limite multipart du CSRF)

@@ -1,0 +1,35 @@
+<article id="day-card-{{.A.ID}}" class="card card-border bg-base-100" aria-label="{{localTime .A.Start}} {{.A.Patient}}">
+  <div class="card-body gap-3 p-4">
+    <div class="flex flex-wrap items-start justify-between gap-2">
+      <div>
+        <p class="text-lg font-semibold"><time>{{localTime .A.Start}}</time> <span class="text-base-content/70 text-sm font-normal">à {{localTime .A.End}}</span></p>
+        <p class="font-medium">{{.A.Patient}}</p>
+      </div>
+      <span class="badge {{if eq .A.Status "done"}}badge-success badge-soft{{else if eq .A.Status "no_show"}}badge-warning badge-soft{{else}}badge-primary badge-soft{{end}}">{{.A.StatusName}}</span>
+    </div>
+    <p class="text-sm">
+      {{.A.TypeName}}
+      {{if .A.InSeries}}<span class="badge badge-outline badge-sm ml-1">{{if .A.SeriesOrdinal}}Séance {{.A.SeriesOrdinal}}/{{.A.SeriesTotal}}{{else}}Série{{end}}</span>{{end}}
+      {{if .A.AtHome}}<span class="badge badge-info badge-soft badge-sm ml-1">Domicile</span>{{end}}
+    </p>
+    {{if .A.AtHome}}
+    <p class="text-sm">
+      {{if .A.Address}}{{.A.Address}}<br>
+      <a class="link link-primary" href="{{geoURL .A.Address}}">Ouvrir dans l'application de cartes</a>
+      · <a class="link link-primary" href="{{osmURL .A.Address}}" rel="noopener noreferrer" target="_blank">OpenStreetMap</a>
+      {{else}}<span class="text-base-content/70">Adresse non renseignée.</span>{{end}}
+      {{if .A.Travel}}<br><span class="text-base-content/70">Trajet réservé : {{formatDuration .A.Travel}}</span>{{end}}
+    </p>
+    {{end}}
+    {{if .A.Phone}}<p><a class="btn btn-outline btn-sm" href="tel:{{.A.Phone}}">Appeler {{.A.Phone}}</a></p>{{end}}
+    <div class="card-actions items-center">
+      {{if eq .A.Status "booked"}}
+      {{template "day_status_form.html" (dict "C" . "Status" "done" "Label" "Fait" "Class" "btn-success")}}
+      {{template "day_status_form.html" (dict "C" . "Status" "no_show" "Label" "Absent" "Class" "btn-warning")}}
+      {{else}}
+      {{template "day_status_form.html" (dict "C" . "Status" "booked" "Label" "Annuler le pointage" "Class" "btn-outline")}}
+      {{end}}
+      <a class="btn btn-ghost btn-sm" href="/admin/appointments/{{.A.ID}}">Détail</a>
+    </div>
+  </div>
+</article>

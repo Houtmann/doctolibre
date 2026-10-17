@@ -25,6 +25,7 @@
       <nav aria-label="Navigation du cabinet">
         <ul class="menu w-full px-3 gap-1">
           {{block "admin_nav" .}}
+          <li><a href="/admin/today"{{if eq .Current "/admin/today"}} class="menu-active" aria-current="page"{{end}}>Ma journée</a></li>
           <li><a href="/admin/calendar"{{if eq .Current "/admin/calendar"}} class="menu-active" aria-current="page"{{end}}>Agenda</a></li>
           <li><a href="/admin/patients"{{if eq .Current "/admin/patients"}} class="menu-active" aria-current="page"{{end}}>Patients</a></li>
           <li><a href="/admin/waitlist"{{if eq .Current "/admin/waitlist"}} class="menu-active" aria-current="page"{{end}}>Liste d'attente</a></li>

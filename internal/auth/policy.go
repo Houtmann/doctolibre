@@ -49,12 +49,12 @@ func Can(u User, a Action, res Resource) bool {
 	}
 	switch a {
 	case ActionCalendarView, ActionAppointmentManage:
-		return domain.MayAccessPractitioner(u.Role, own, res.PractitionerID)
+		return domain.MayAccessPractitioner(u.Role, own, u.Delegated, res.PractitionerID)
 	case ActionPatientsManage:
 		return domain.ValidRole(u.Role)
 	case ActionAvailabilityEdit:
 		// Le secrétariat ne règle pas les horaires ; un praticien règle les siens.
-		return u.Role != domain.RoleSecretary && domain.MayAccessPractitioner(u.Role, own, res.PractitionerID)
+		return u.Role != domain.RoleSecretary && domain.MayAccessPractitioner(u.Role, own, u.Delegated, res.PractitionerID)
 	case ActionPracticeConfig, ActionCarePlanManage:
 		return u.Role == domain.RoleAdmin || u.Role == domain.RolePractitioner
 	case ActionTeamManage:
