@@ -32,8 +32,8 @@ En `review` (relecture humaine) : **T051** (annulation groupée sur absence impr
 
 ## Blocages et questions ouvertes pour l'humain
 
-- Nom de l'organisation et du module Go : `doctolibre` provisoirement (image `ghcr.io/doctolibre/doctolibre` provisoire, `<URL-DU-DEPOT>` dans la doc).
-- Hébergement du dépôt : la CI et `release.yml` n'ont jamais tourné, faute de remote.
+- Organisation et dépôt : https://github.com/Houtmann/doctolibre (créé le 2026-10-18), image `ghcr.io/houtmann/doctolibre` ; module Go toujours `doctolibre`.
+- CI et `release.yml` : n'ont jamais tourné ; elles tourneront pour la première fois au push vers le dépôt GitHub.
 - T061 (affiche QR) `blocked` : dépendance `rsc.io/qr` ou encodeur QR maison ? À trancher.
 - Questions de produit :
   - Remplaçant (T059) : il peut aujourd'hui modifier les **horaires hebdomadaires** du titulaire (`ActionAvailabilityEdit`, voulu par `TestCanWithDelegation`) ; la spec T059 ne cite que les absences. Le garder ? (audit du 2026-10-17)

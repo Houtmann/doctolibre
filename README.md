@@ -196,4 +196,4 @@ Index complet : [`docs/README.md`](docs/README.md).
 
 [AGPL-3.0](LICENSE) : un hébergeur qui modifie le logiciel doit en publier les sources.
 Les composants tiers gardent leur licence : voir [`THIRD_PARTY.md`](THIRD_PARTY.md).
-Dépôt : `<URL-DU-DEPOT>`.
+Dépôt : <https://github.com/Houtmann/doctolibre>.

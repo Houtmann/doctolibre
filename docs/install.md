@@ -46,7 +46,7 @@ docker compose version                      # doit répondre
 **Récupérer le projet** :
 
 ```bash
-git clone <URL-DU-DEPOT> doctolibre         # l'URL officielle sera indiquée ici une fois le dépôt publié
+git clone https://github.com/Houtmann/doctolibre.git doctolibre
 cd doctolibre/deploy
 cp .env.example .env
 ```
@@ -72,7 +72,7 @@ Variables utiles, toutes préfixées `DOCTOLIBRE_` :
 | `AUTO_MIGRATE` | `true` | Applique les migrations de base de données au démarrage |
 | `WORKER` | `on` | Envoi des emails et SMS dans le même processus. `off` : ne rien envoyer depuis ce processus |
 | `METRICS_TOKEN` | vide | Jeton (16 caractères minimum) qui active `/metrics` pour Prometheus ; vide = désactivé |
-| `IMAGE` | `ghcr.io/doctolibre/doctolibre:latest` | Image utilisée. Pour figer une version : `ghcr.io/doctolibre/doctolibre:v0.1.0` |
+| `IMAGE` | `ghcr.io/houtmann/doctolibre:latest` | Image utilisée. Pour figer une version : `ghcr.io/houtmann/doctolibre:v0.1.0` |
 
 Fixées par `docker-compose.yml`, ne les définissez pas dans `.env` : `ENV=prod`, `HTTP_ADDR`, `BASE_URL` (déduite de `DOMAIN`), `DATABASE_URL`, `TRUSTED_PROXIES` (le sous-réseau Docker `172.30.0.0/24`, pour que le limiteur de débit voie l'IP réelle des visiteurs derrière Caddy).
 

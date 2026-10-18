@@ -6,7 +6,7 @@ services:
   app:
     # Image publiée sur GHCR par la release ; pour construire localement :
     #   docker compose up -d --build
-    image: ${DOCTOLIBRE_IMAGE:-ghcr.io/doctolibre/doctolibre:latest}
+    image: ${DOCTOLIBRE_IMAGE:-ghcr.io/houtmann/doctolibre:latest}
     build:
       context: ..
       dockerfile: deploy/Dockerfile
