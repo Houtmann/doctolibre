@@ -50,7 +50,7 @@ func DB(t *testing.T) *pgxpool.Pool {
 	}
 	t.Cleanup(admin.Close)
 
-	// Extensions créées une fois dans public ; la migration 00001 devient un no-op.
+	// Extensions créées une fois dans public ; les migrations 00001 et 00009 deviennent des no-op.
 	extOnce.Do(func() {
 		// Verrou advisory transactionnel : sync.Once ne protège pas entre les
 		// process (un par package go test), CREATE EXTENSION concurrent peut échouer en 23505.
@@ -64,7 +64,7 @@ func DB(t *testing.T) *pgxpool.Pool {
 			extErr = err
 			return
 		}
-		for _, e := range []string{"btree_gist", "citext"} {
+		for _, e := range []string{"btree_gist", "citext", "unaccent", "pg_trgm"} {
 			if _, err := tx.Exec(ctx, "CREATE EXTENSION IF NOT EXISTS "+e+" WITH SCHEMA public"); err != nil {
 				extErr = err
 				return
