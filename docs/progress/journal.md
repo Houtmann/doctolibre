@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-18 — T099 agenda : praticiens non chargés au changement de vue (sonnet ; contrôle : opus)
+
+- **Tâches** : T099 todo → review
+- **Fait** : cause 100 % JS : « Jour » et « Par praticien » ont la même plage, EventCalendar ne relance ni la requête ni `datesSet` ; `viewDidMount` recharge si la liste de praticiens voulue change, `wantedIds()` honore `practitioner=` de l'URL (dont `all`), `syncView()` met la vue à jour dans l'URL
+- **Vérification** : `make check` ✅ (rapport de l'exécutant), vu au navigateur sur base de démo à 5 praticiens ; diff relu par l'orchestrateur. Pas de test Go (serveur correct)
+- **Reste** : relecture humaine ; en semaine/jour avec `practitioner=all`, les RDV de tous les praticiens se superposent dans une seule colonne (voulu ?)
+- **Décisions** : aucune
+
 ## 2026-10-17 — T051 annulation groupée et T055 lien de série, en parallèle (sonnet ; contrôle : opus)
 
 - **Tâches** : T051 todo → review, T055 todo → review (deux `task-implementer` en worktree)

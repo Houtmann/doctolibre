@@ -52,12 +52,24 @@
     return ec ? ec.getOption("view") : initialView();
   }
 
-  // Un seul praticien en vue semaine ou jour (le premier) ; tous en vue « par praticien ».
+  // Tous les praticiens affichés en vue « par praticien » ou quand la page porte une sélection explicite
+  // (« practitioner=all » ou « practitioner=<id> » dans l'URL : resources est alors exactement cette sélection) ;
+  // sinon un seul (le premier) en vue semaine ou jour.
+  function hasSelection() {
+    try {
+      return new URLSearchParams(window.location.search).has("practitioner");
+    } catch (e) {
+      return false;
+    }
+  }
   function wantedIds() {
     if (!resources.length) return [];
-    if (currentView() === "resourceTimeGridDay") return resources.map(function (r) { return r.id; });
+    if (currentView() === "resourceTimeGridDay" || hasSelection()) return resources.map(function (r) { return r.id; });
     return [resources[0].id];
   }
+  // Les praticiens de la dernière requête : jour et « par praticien » partagent la même plage, EventCalendar
+  // ne relance donc pas la requête (et n'appelle pas datesSet) au changement de vue : voir viewDidMount.
+  var fetchedKey = "";
 
   function toEvents(list) {
     var out = [];
@@ -83,7 +95,9 @@
     var q = new URLSearchParams();
     q.set("start", info.startStr);
     q.set("end", info.endStr);
-    wantedIds().forEach(function (id) { q.append("practitioner", id); });
+    var ids = wantedIds();
+    fetchedKey = ids.join(",");
+    ids.forEach(function (id) { q.append("practitioner", id); });
     return fetch(root.dataset.eventsUrl + "?" + q.toString(), { credentials: "same-origin", headers: { Accept: "application/json" } })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
@@ -135,6 +149,19 @@
       if (v) v.value = view;
       if (dt) dt.value = day;
     }
+  }
+
+  // Jour et « par praticien » ont la même plage : datesSet ne passe pas, on reporte la vue seule dans l'URL.
+  function syncView() {
+    var view = EC_TO_VIEW[currentView()] || "week";
+    var params = new URLSearchParams(window.location.search);
+    params.set("view", view);
+    try {
+      history.replaceState(null, "", window.location.pathname + "?" + params.toString());
+    } catch (e) {}
+    var picker = document.getElementById("agenda-picker");
+    var v = picker && picker.querySelector('input[name="view"]');
+    if (v) v.value = view;
   }
 
   function box(cls, text) {
@@ -219,6 +246,11 @@
     },
     dateClick: function (info) {
       openNew(info.dateStr, info.resource ? info.resource.id : "");
+    },
+    viewDidMount: function () {
+      // L'option « view » est à jour ici : si la vue change la liste des praticiens voulus, on recharge.
+      if (ec && wantedIds().join(",") !== fetchedKey) ec.refetchEvents();
+      syncView();
     },
     datesSet: function (info) {
       syncURL(info);

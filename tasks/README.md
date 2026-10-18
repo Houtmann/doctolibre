@@ -93,6 +93,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T096 | [Écran de vérification et visites à domicile](T096-verify-screen-home-visits.md) | 5 | T094 | todo |
 | T097 | [Liste d'attente côté patient](T097-waitlist-patient-side.md) | 5 | T093, T091 | todo |
 | T098 | [Reprendre rendez-vous sans nouvelle vérification](T098-rebook-without-reverify.md) | 5 | T095, T097 | todo |
+| T099 | [Agenda : praticiens non chargés au changement de vue](T099-agenda-view-switch-sources.md) | 5 | T083, T057 | review |
 
 ## Parallélisation possible
 
