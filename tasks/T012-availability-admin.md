@@ -47,7 +47,7 @@ Calcul des créneaux (T013), multi-praticiens (T033).
   - Tests : `internal/service/practice_test.go` (validation, chevauchement, contrainte base, DST 25 h / 23 h, isolation cabinet), `internal/web/admin_config_test.go` (POST valide/invalide, CSRF, htmx, secrétaire 403, login requis).
 - **Reste à faire** : rien dans le périmètre.
 - **Notes de reprise** (pièges, état intermédiaire, commandes utiles) :
-  - `DOCTOLIBRE_TEST_DATABASE_URL=postgres://hadrien@localhost:5432/doctolibre_test?sslmode=disable make check`.
+  - `DOCTOLIBRE_TEST_DATABASE_URL=postgres://doctolibre:doctolibre@127.0.0.1:5432/doctolibre_test?sslmode=disable make check`.
   - Dépendance de packages : `auth → service → store` (auth appelle le seed) ; `service` n'importe pas `auth` (il reçoit un `service.Actor`). `domain.Slugify` remplace le code de `auth.Slugify` (qui délègue).
   - Les durées sont saisies en minutes entières (5–480), marges 0–120.
   - Le praticien n'est PAS lié aux motifs via `practitioner_appointment_type` : `availability_rule.appointment_type_ids` (NULL = tous) suffit pour l'instant.

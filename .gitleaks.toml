@@ -1,0 +1,6 @@
+# Étend les règles par défaut ; ignore les dossiers locaux non suivis par git.
+[extend]
+useDefault = true
+
+[allowlist]
+paths = ['''^bin/''', '''^tmp/''', '''^\.claude/worktrees/''']

@@ -9,3 +9,13 @@ a77422093d8f2281cfc92ee71180e7c2953bfef825250559b8587f92a9dbc6b0  event-calendar
 
 Mise à jour : télécharger les deux fichiers à l'URL ci-dessus (version épinglée), vérifier les empreintes,
 mettre ce fichier à jour, puis `make css`. Chargé uniquement par la page agenda (admin_calendar).
+
+---
+
+htmx 2.0.4, licence Zero-Clause BSD (LICENSE-htmx)
+Source : https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js
+Dépôt  : https://github.com/bigskysoftware/htmx (tag v2.0.4)
+Fichier : internal/web/static/htmx.min.js (hors de vendor/, référencé par le template de base)
+
+sha256
+e209dda5c8235479f3166defc7750e1dbcd5a5c1808b7792fc2e6733768fb447  ../htmx.min.js

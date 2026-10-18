@@ -55,7 +55,7 @@ Annulation/déplacement (T015), envoi réel SMS/email (T021–T023), domicile (T
   - Flux : `StartVerification` (valide saisie + créneau, envoie le code dans une transaction avec l'outbox) puis `Book` (compte l'essai hors transaction, vérifie le `binding_hash`, puis transaction : consomme le code, revalide le créneau, trouve/crée le patient, `store.CreateAppointment`). Si la transaction échoue (`ErrSlotTaken`), la consommation du code est annulée avec elle.
   - Les données saisies voyagent en champs cachés entre « détails », « vérification » et « confirmation » ; `binding_hash` (créneau + canal + coordonnées + consentements) empêche de les modifier après l'envoi du code. Rien de personnel n'est stocké dans `otp_challenge`.
   - Rate limit 3 codes/heure/destinataire en base (verrou advisory sur le haché du destinataire) ; 10 requêtes/min/IP en mémoire (burst 10) sur la grille, le formulaire, l'envoi du code et la confirmation.
-  - Tests : `DOCTOLIBRE_TEST_DATABASE_URL=postgres://hadrien@localhost:5432/doctolibre_test?sslmode=disable make check`.
+  - Tests : `DOCTOLIBRE_TEST_DATABASE_URL=postgres://doctolibre:doctolibre@127.0.0.1:5432/doctolibre_test?sslmode=disable make check`.
   - html/template échappe `+` et `'` dans le texte (`&#43;`, `&#39;`) : en tenir compte dans les assertions.
 - **Écarts avec la spécification** (et pourquoi) :
   - Patient retrouvé par (téléphone, prénom, nom) ou (email, prénom, nom), et non par le téléphone seul : une famille partage un numéro, et un contact non vérifié (le canal choisi pour le code est seul vérifié) ne doit pas rattacher un rendez-vous à la fiche d'un tiers. Une fiche existante n'est jamais modifiée par une réservation en ligne.

@@ -30,6 +30,12 @@ Chaque document a **un seul rôle** : ne pas dupliquer une information, mettre u
 | [`backup.md`](backup.md) | Sauvegardes chiffrées (age), restauration, envoi S3 | Agent (T041) | Quand le dispositif change |
 | [`rgpd.md`](rgpd.md) | Registre de traitement, durées de conservation, HDS, recommandations | Agent (T043) | Quand le traitement des données change |
 | `email.md`, `install.md`, `cost.md` | Docs d'exploitation | Créés par T021, T044 | — |
+| [`vibe-coding.md`](vibe-coding.md) | Le processus de développement piloté par LLM : rôles, mémoire, garde-fous, chiffres, limites | Humain / orchestrateur | Quand le processus change |
+| [`screenshots/`](screenshots/README.md) | Captures d'écran de la vitrine (données fictives), légendes dans son README | Humain / agent | Quand l'interface change nettement |
+| [`../THIRD_PARTY.md`](../THIRD_PARTY.md) | Composants tiers (htmx, EventCalendar, daisyUI, Tailwind, dépendances Go) et licences | Humain / agent | Quand une dépendance change |
+| [`vibe-coding.md`](vibe-coding.md) | Le processus de développement piloté par LLM : rôles, mémoire, garde-fous, chiffres, limites | Humain / orchestrateur | Quand le processus change |
+| [`screenshots/`](screenshots/README.md) | Captures d'écran de la vitrine (données fictives), légendes dans son README | Humain / agent | Quand l'interface change nettement |
+| [`../THIRD_PARTY.md`](../THIRD_PARTY.md) | Composants tiers (htmx, EventCalendar, daisyUI, Tailwind, dépendances Go) et licences | Humain / agent | Quand une dépendance change |
 
 ## Règles d'écriture
 

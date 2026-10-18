@@ -51,7 +51,7 @@ Drag & drop (plus tard, éventuellement), multi-praticiens côte à côte (T033)
   - EXPLAIN (base jetable, ~40 000 RDV, 5 praticiens, semaine de 80 RDV du praticien) : `Bitmap Index Scan on appointment_no_overlap` (GiST `practitioner_id, during_blocked`), 0,146 ms d'exécution ; aucun nouvel index ni migration nécessaire (pas de `migrations/00009`).
 - **Reste à faire** : rien d'obligatoire. Vérification visuelle dans un navigateur non faite (pas de rendu réel, seulement des tests de HTML).
 - **Notes de reprise** (pièges, état intermédiaire, commandes utiles) :
-  - Tests DB : l'URL `localhost` échoue (auth par mot de passe sur `::1`), utiliser `DOCTOLIBRE_TEST_DATABASE_URL='postgres://hadrien@127.0.0.1:5432/doctolibre_test?sslmode=disable'`. Postgres.app n'était pas démarré : lancé avec `pg_ctl -D "$HOME/Library/Application Support/Postgres/var-17" start`.
+  - Tests DB : l'URL `localhost` échoue (auth par mot de passe sur `::1`), utiliser `DOCTOLIBRE_TEST_DATABASE_URL='postgres://doctolibre:doctolibre@127.0.0.1:5432/doctolibre_test?sslmode=disable'`. Postgres.app n'était pas démarré : lancé avec `pg_ctl -D "$HOME/Library/Application Support/Postgres/var-17" start`.
   - CSP : pas de `style=""`. Position des RDV par classes générées `.gr-N`/`.gs-N`/`.gc-N` (fin de `app.css`, 98 lignes, 96 spans, 8 colonnes) ; si la grille dépassait 96 lignes (24 h), il faudrait en générer plus.
   - Les lignes de la grille sont indexées sur l'heure murale (pas sur le temps écoulé) : un jour de changement d'heure, 09:00 tombe sur la même ligne que les autres jours.
   - `normalizePhoneTmp` (service/calendar.go) est un helper temporaire : `TODO(orchestrateur): remplacer par domain.NormalizePhone (T014)`.

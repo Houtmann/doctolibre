@@ -7,3 +7,13 @@
 *.out
 .claude/worktrees/
 .idea/
+.env.*
+!.env.example
+.claude/settings.local.json
+.claude/launch.json
+*.pem
+*.key
+*.age
+*.dump
+*.sql.gz
+.vscode/
