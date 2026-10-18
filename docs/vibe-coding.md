@@ -94,7 +94,25 @@ Une tâche est conçue pour tenir en une session (environ une PR, moins de 800 l
 
 Soit 36 `done`, 21 `review`, 12 `todo`, 1 `blocked` et 1 `superseded`. 124 commits, sur trois jours calendaires (2026-10-15 à 2026-10-17), avec plusieurs sessions parallèles.
 
-## 8. Limites et leçons
+## 8. Moyens et rythme
+
+**Objectif assumé : aucun budget d'API.** Le projet est construit et entretenu uniquement avec des abonnements grand public personnels, sans API payante à l'usage :
+
+- un abonnement Claude personnel, utilisé via Claude Code (Opus en orchestrateur, Sonnet en exécutant, voir section 2) ;
+- Gemini dans Antigravity, pour des **revues croisées** : relecture de code ou d'interface par un autre modèle que celui qui l'a écrit, en complément de la relecture humaine.
+
+**Rythme hebdomadaire.** Le projet avance par itérations calées sur les limites d'usage des abonnements, pas sur un calendrier de livraison. Chaque semaine :
+
+1. choisir dans [`../tasks/README.md`](../tasks/README.md) un lot de tâches qui tient dans le quota ;
+2. les faire exécuter (`/run-task`, éventuellement en parallèle, voir section 5) ;
+3. les faire relire : revue croisée par Gemini, puis relecture humaine avant `done` ;
+4. mettre à jour le suivi (`STATUS.md`, journal, sections Suivi des tâches).
+
+Ce qui ne tient pas dans le quota passe à la semaine suivante. Quand une limite interrompt une session en cours de tâche, le suivi écrit dans le dépôt (`STATUS.md`, section Suivi de la tâche, notes de reprise) permet de reprendre plus tard sans perte, même avec une session neuve.
+
+**Conséquence sur l'organisation.** La répartition Opus / Sonnet n'est pas seulement une question de qualité : elle économise le quota. Le modèle le plus cher raisonne, précise les spécifications et contrôle ; le moins cher écrit le code et les tests, qui constituent l'essentiel du volume.
+
+## 9. Limites et leçons
 
 - **La relecture humaine est le goulot.** 21 tâches attendent en `review` ; les agents produisent plus vite qu'un humain ne relit. Une tâche `review` n'est pas une tâche éprouvée, et la suite reste bloquée tant que ses dépendances ne sont pas `done`.
 - **Vérifications manuelles non faites.** Aucune installation sur une machine neuve, aucun `docker build` ni test HTTPS réels, aucun envoi réel d'email ou de SMS, aucun import ICS dans un vrai client, aucun `EXPLAIN` sur des volumes réels. La liste tenue à jour est dans `STATUS.md`. Les tests automatisés ne remplacent pas cela.
@@ -106,7 +124,7 @@ Soit 36 `done`, 21 `review`, 12 `todo`, 1 `blocked` et 1 `superseded`. 124 commi
 - **Les décisions s'accumulent vite.** Le registre est utile mais devient long ; il doit être relu pour repérer celles qui en remplacent d'autres.
 - **Pas de CI exécutée.** La CI décrite dans le dépôt n'a jamais tourné, faute de dépôt distant jusqu'ici.
 
-## 9. Reproduire le processus sur votre projet
+## 10. Reproduire le processus sur votre projet
 
 1. Écrivez un `PLAN.md` court : objectifs, hors scope, architecture, modèle de données, invariants, phases.
 2. Écrivez un `AGENTS.md` de conventions **vérifiables** (ce qu'un linter ou un test peut contrôler) et le workflow de session.

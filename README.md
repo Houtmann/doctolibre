@@ -174,6 +174,14 @@ relit. Le dépôt est conçu pour qu'un agent sans mémoire puisse reprendre le 
 - le contrôle ne se fie pas aux rapports : l'orchestrateur relance `make check`, lit les diffs à risque et vérifie les critères ; des audits de code et d'ergonomie génèrent de nouvelles tâches ;
 - une relecture humaine reste la porte vers le statut `done`, et elle prend du retard : beaucoup de tâches attendent en `review`.
 
+**Moyens et rythme.** Le projet est construit et entretenu uniquement avec des abonnements
+grand public personnels, sans API payante à l'usage : un abonnement Claude (Claude Code, avec
+Opus en orchestrateur et Sonnet en exécutant) et Gemini dans Antigravity, utilisé pour des
+revues croisées (code et interface relus par un autre modèle que celui qui les a écrits). Le
+travail avance par itérations hebdomadaires calées sur les limites d'usage : chaque semaine, un
+lot de tâches qui tient dans le quota est exécuté, relu (Gemini puis humain) et suivi ; le reste
+passe à la semaine suivante. La répartition Opus / Sonnet sert aussi à économiser ce quota.
+
 Le détail, les chiffres, les limites et la façon de reproduire le processus sont dans
 [`docs/vibe-coding.md`](docs/vibe-coding.md).
 
