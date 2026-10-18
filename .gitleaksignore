@@ -1,10 +1,10 @@
 # Faux positifs : constantes de test / fixtures (generic-api-key)
-47dabc8568f7c028efee8c58bc4cb137457cf49f:internal/httpx/middleware_test.go:generic-api-key:19
-49970998ff22fd361972fbd2efac0a9524226d72:cmd/doctolibre/metrics_wiring_test.go:generic-api-key:28
-49970998ff22fd361972fbd2efac0a9524226d72:internal/web/observability_test.go:generic-api-key:45
-637b6740eb8423c0d4b826ca05c7d60941103c5e:internal/testutil/fixtures.go:generic-api-key:92
+695bfcacb4d3627a1fd68e0ec7cafbda70b6be72:internal/httpx/middleware_test.go:generic-api-key:19
+cf8c9938458cb20132897773f40b290864369f22:cmd/doctolibre/metrics_wiring_test.go:generic-api-key:28
+cf8c9938458cb20132897773f40b290864369f22:internal/web/observability_test.go:generic-api-key:45
+439d0bb150c5a8c75297b2c88827a073b6c05b47:internal/testutil/fixtures.go:generic-api-key:92
 cmd/doctolibre/metrics_wiring_test.go:generic-api-key:28
-e183eededfa001fb745c25d149523449aa54eb25:internal/httpx/middleware_test.go:generic-api-key:209
+3018bc9202905332bb2fa0198fea54b4897a4a4c:internal/httpx/middleware_test.go:generic-api-key:209
 internal/httpx/middleware_test.go:generic-api-key:179
 internal/httpx/middleware_test.go:generic-api-key:19
 internal/testutil/fixtures.go:generic-api-key:92
