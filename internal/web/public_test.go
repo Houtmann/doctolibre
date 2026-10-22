@@ -70,7 +70,10 @@ type publicEnv struct {
 func (e *publicEnv) base() string { return "/p/" + e.pc.Slug + "/" + e.pr.Slug }
 
 // newPublicEnv monte le site public : mardi 9 h–12 h (Paris), horloge au jeudi 15/10/2026.
-func newPublicEnv(t *testing.T) *publicEnv {
+func newPublicEnv(t *testing.T) *publicEnv { return newPublicEnvWith(t, false) }
+
+// newPublicEnvWith active en plus la page vie privée publique (T043) si privacy.
+func newPublicEnvWith(t *testing.T, privacy bool) *publicEnv {
 	t.Helper()
 	db := testutil.DB(t)
 	pc := testutil.NewPractice(t, db)
@@ -87,7 +90,12 @@ func newPublicEnv(t *testing.T) *publicEnv {
 	otp := &otpCapture{}
 	clock := testutil.NewFixedClock(time.Date(2026, 10, 15, 9, 0, 0, 0, time.UTC))
 	svc := &service.Booking{Pool: db, Clock: clock, OTP: otp, ManageKey: service.NewManageKey(testutil.ManageSecret)}
+	var priv *service.Privacy
+	if privacy {
+		priv = &service.Privacy{Pool: db, Clock: clock}
+	}
 	h := web.Routes(web.Deps{
+		Privacy: priv,
 		Config:  config.Config{Env: config.EnvDev},
 		Logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
 		DB:      db,

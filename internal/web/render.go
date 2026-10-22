@@ -52,6 +52,9 @@ type View struct {
 	// Current est le lien du menu d'administration correspondant à la page
 	// affichée ("" si aucun) : il porte aria-current="page".
 	Current string
+	// PrivacyURL est la page vie privée publique du cabinet de la page affichée
+	// ("" si la route est inactive ou si la page n'est pas dans /p/{practice}).
+	PrivacyURL string
 }
 
 // navCurrent retourne l'entrée du menu d'administration pour un chemin.
@@ -99,6 +102,8 @@ type RendererOptions struct {
 	Location  *time.Location // fuseau d'affichage des dates (UTC si nil)
 	Reload    bool           // dev : relit les templates à chaque rendu (depuis le disque si disponible)
 	Secure    bool           // cookie flash Secure (prod)
+	// PrivacyPublic : la page vie privée publique /p/{practice}/privacy est servie.
+	PrivacyPublic bool
 }
 
 // Renderer rend les pages HTML et sert les fichiers statiques embarqués.
@@ -282,6 +287,9 @@ func (r *Renderer) PageStatus(w http.ResponseWriter, req *http.Request, status i
 		return
 	}
 	v := View{CSRF: httpx.CSRFToken(req.Context()), Flash: r.takeFlash(w, req), Data: data, Role: roleOf(req), Current: navCurrent(req.URL.Path)}
+	if slug := req.PathValue("practice"); r.opts.PrivacyPublic && slug != "" {
+		v.PrivacyURL = "/p/" + url.PathEscape(slug) + "/privacy"
+	}
 	r.write(w, req, status, t, "base.html", v)
 
 }

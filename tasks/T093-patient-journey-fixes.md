@@ -24,12 +24,12 @@ Origine : audit UX des parcours patients du 2026-10-17.
 5. **Délai trop court** — le flash `tooLate` affiche le téléphone en texte brut : rediriger vers `/r/{token}` (qui affiche déjà le lien `tel:`) ou rendre le lien `tel:` cliquable.
 
 ## Critères d'acceptation
-- [ ] Patient au seuil d'absences : aucune offre ; l'entrée suivante reçoit l'offre (test service DB).
-- [ ] Déplacement vers le créneau actuel : absent de la grille ; POST forcé → aucune écriture, aucun message enfilé, rappels conservés (tests service + handler).
-- [ ] Page vie privée publique sans consigne interne ; lien présent dans la case de consentement et le pied quand la route est active, absent sinon (tests handler).
-- [ ] `BackURL` de la confirmation contient `week=` (test handler).
-- [ ] Message de délai dépassé avec numéro cliquable (`href="tel:…"`) (test handler).
-- [ ] `make check` vert (dont `css-check` si un template change).
+- [x] Patient au seuil d'absences : aucune offre ; l'entrée suivante reçoit l'offre (test service DB).
+- [x] Déplacement vers le créneau actuel : absent de la grille ; POST forcé → aucune écriture, aucun message enfilé, rappels conservés (tests service + handler).
+- [x] Page vie privée publique sans consigne interne ; lien présent dans la case de consentement et le pied quand la route est active, absent sinon (tests handler).
+- [x] `BackURL` de la confirmation contient `week=` (test handler).
+- [x] Message de délai dépassé avec numéro cliquable (`href="tel:…"`) (test handler).
+- [x] `make check` vert (dont `css-check` si un template change).
 
 ## Vérification
 ```bash
@@ -43,8 +43,8 @@ make css && make check
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** :
-- **Fait** :
-- **Reste à faire** :
-- **Notes de reprise** :
-- **Écarts avec la spécification** :
+- **Sessions** : 2026-10-22 (sonnet)
+- **Fait** : §1 garde-fou T054 dans `offerTo` (même horloge) ; §2 créneau actuel exclu de `RescheduleSlots` (donc grille et confirmation) et no-op dans `RescheduleByPatient` (comparaison `Equal`, ni écriture, ni outbox, ni événement) ; §3 consigne interne retirée de la page publique, `View.PrivacyURL` (lien dans consentement détails/liste d'attente et pied) actif seulement si `Deps.Privacy != nil` ; §4 `BackURL` avec `?week=` ; §5 la page du RDV (lien `tel:`) remplace le téléphone en texte brut du flash. Tests service et handler ajoutés ; `make css` fait.
+- **Reste à faire** : rien.
+- **Notes de reprise** : le lien vie privée n'apparaît que sur les pages `/p/{practice}/…` (le slug vient de la route) ; pas sur `/r/{token}` ni `/w/{token}`.
+- **Écarts avec la spécification** : le test existant `TestRescheduleByPatient` affirmait que l'horaire actuel restait proposé : inversé. Le lien vie privée est absent des pages `/r/` et `/w/` (pas de slug dans la route).

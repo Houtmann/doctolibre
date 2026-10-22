@@ -54,7 +54,8 @@ func phoneHint(c service.Confirmation) string {
 // tooLate renvoie vers la page du rendez-vous avec le message de refus (téléphone du cabinet).
 func (h *publicHandlers) tooLate(w http.ResponseWriter, r *http.Request, token string, c service.Confirmation) {
 	msg := fmt.Sprintf("Ce rendez-vous ne peut plus être modifié en ligne (délai de %d h avant le rendez-vous).", int(c.MinCancel.Hours()))
-	h.rd.SetFlash(w, "error", msg+phoneHint(c))
+	// Le numéro cliquable (tel:) est affiché par la page du rendez-vous.
+	h.rd.SetFlash(w, "error", msg)
 	httpx.Redirect(w, r, manageURL(token))
 }
 
@@ -206,7 +207,7 @@ func (h *publicHandlers) rescheduleConfirm(w http.ResponseWriter, r *http.Reques
 	noStore(w)
 	h.rd.Page(w, r, "public_reschedule_confirm", RescheduleConfirmData{
 		Summary: summaryOf(c, start), Previous: c.Start, Start: start.Format(time.RFC3339),
-		Action: manageURL(token) + "/reschedule", BackURL: manageURL(token) + "/reschedule",
+		Action: manageURL(token) + "/reschedule", BackURL: manageURL(token) + "/reschedule?" + url.Values{"week": {isoWeek(mondayOf(start.In(c.Loc), c.Loc))}}.Encode(),
 	})
 }
 

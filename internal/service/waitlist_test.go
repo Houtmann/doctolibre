@@ -514,3 +514,35 @@ func TestWaitlistOfferedOnStaffCancellation(t *testing.T) {
 		t.Fatalf("propositions = %v, want Bob", tokens)
 	}
 }
+
+func TestWaitlistOfferSkipsBlockedPatient(t *testing.T) {
+	t.Parallel()
+	e := newBookingEnv(t, thursday)
+	wl := e.waitlist()
+	ctx := context.Background()
+	_, token := e.bookAt(t, tuesday9, "Alice", "06 11 11 11 11", "+33611111111")
+	for _, p := range []service.PatientDetails{emailPatient("Bob", "bob@example.test"), emailPatient("Carl", "carl@example.test")} {
+		if _, err := wl.AddByStaff(ctx, e.actor(t), service.StaffAddInput{Patient: p, Window: e.window()}); err != nil {
+			t.Fatalf("AddByStaff: %v", err)
+		}
+	}
+	// Bob atteint le seuil d'absences : il passe son tour.
+	var bobID uuid.UUID
+	if err := e.db.QueryRow(ctx, "SELECT id FROM patient WHERE practice_id = $1 AND email = 'bob@example.test'", e.pc.ID).Scan(&bobID); err != nil {
+		t.Fatal(err)
+	}
+	e.addNoShow(t, bobID, thursday.AddDate(0, 0, -5))
+	one := int16(1)
+	e.setThreshold(t, &one)
+
+	if err := e.svc.CancelByPatient(ctx, token); err != nil {
+		t.Fatalf("CancelByPatient: %v", err)
+	}
+	tokens := e.offerTokens(t)
+	if len(tokens) != 1 || tokens["carl@example.test"] == "" {
+		t.Fatalf("propositions = %v, want Carl seul", tokens)
+	}
+	if n := e.count(t, "SELECT count(*) FROM waitlist_offer o JOIN waitlist_entry en ON en.id = o.entry_id WHERE en.patient_id = $1", bobID); n != 0 {
+		t.Errorf("offre créée pour le patient bloqué: %d", n)
+	}
+}

@@ -107,7 +107,18 @@ func (b *Booking) RescheduleSlots(ctx context.Context, token string, from, to ti
 			return err
 		}
 		out, err = sc.slots(ctx, q, b.Clock.Now(), from, to)
-		return err
+		if err != nil {
+			return err
+		}
+		// Le créneau actuel n'est pas une destination.
+		kept := out[:0]
+		for _, s := range out {
+			if !s.Start.Equal(a.During.Lower.Time) {
+				kept = append(kept, s)
+			}
+		}
+		out = kept
+		return nil
 	})
 	return out, err
 }
@@ -119,12 +130,18 @@ func (b *Booking) RescheduleSlots(ctx context.Context, token string, from, to ti
 func (b *Booking) RescheduleByPatient(ctx context.Context, token string, start time.Time) error {
 	var appt sqlcgen.Appointment
 	var from time.Time
+	noop := false
 	err := store.WithTx(ctx, b.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		a, err := b.lockByToken(ctx, q, token)
 		if err != nil {
 			return err
 		}
 		from = a.During.Lower.Time
+		if start.Equal(from) {
+			// Même créneau : rien à écrire, aucun message, rappels conservés.
+			noop = true
+			return nil
+		}
 		sc, err := rescheduleContext(ctx, q, a)
 		if err != nil {
 			return err
@@ -140,7 +157,7 @@ func (b *Booking) RescheduleByPatient(ctx context.Context, token string, start t
 		}
 		return b.notifier().rescheduled(ctx, tx, q, appt, from, token)
 	})
-	if err != nil {
+	if err != nil || noop {
 		return err
 	}
 	b.emit(ctx, Event{Kind: EventAppointmentMoved, PracticeID: appt.PracticeID, AppointmentID: appt.ID, Detail: from.UTC().Format(time.RFC3339)})

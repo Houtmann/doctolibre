@@ -131,12 +131,16 @@ func TestRescheduleByPatient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	found := false
+	found, overlap := false, false
 	for _, s := range slots {
 		found = found || s.Start.Equal(tuesday9)
+		overlap = overlap || s.Start.Equal(tuesday9.Add(15*time.Minute))
 	}
-	if !found {
-		t.Error("l'horaire actuel devrait rester proposé au déplacement")
+	if found {
+		t.Error("l'horaire actuel ne doit pas être proposé au déplacement")
+	}
+	if !overlap {
+		t.Error("9 h 15 (qui chevauche le rendez-vous) devrait être proposé")
 	}
 
 	target := tuesday9.Add(90 * time.Minute) // 10 h 30
@@ -180,5 +184,32 @@ func TestRescheduleAtomicWhenSlotTaken(t *testing.T) {
 	}
 	if n := e.count(t, "SELECT count(*) FROM appointment WHERE status = 'booked'"); n != 2 {
 		t.Errorf("%d rendez-vous actifs, want 2", n)
+	}
+}
+
+func TestRescheduleToSameSlotIsNoop(t *testing.T) {
+	t.Parallel()
+	e := newBookingEnv(t, thursday)
+	sink := &recordSink{}
+	e.svc.Events = sink
+	_, token := e.bookAt(t, tuesday9, "Alice", "06 11 11 11 11", "+33611111111")
+	const q = "SELECT count(*) FROM outbox_message WHERE practice_id = $1"
+	const qs = "SELECT count(*) FROM outbox_message WHERE practice_id = $1 AND status = 'cancelled'"
+	before, beforeCancelled := e.count(t, q, e.pc.ID), e.count(t, qs, e.pc.ID)
+
+	if err := e.svc.RescheduleByPatient(context.Background(), token, tuesday9); err != nil {
+		t.Fatalf("RescheduleByPatient (même créneau): %v", err)
+	}
+	if n := e.count(t, q, e.pc.ID); n != before {
+		t.Errorf("messages = %d, want %d (aucun message enfilé)", n, before)
+	}
+	if n := e.count(t, qs, e.pc.ID); n != beforeCancelled {
+		t.Errorf("messages annulés = %d, want %d (rappels conservés)", n, beforeCancelled)
+	}
+	if got := sink.got(); len(got) != 1 {
+		t.Errorf("événements = %v, want la seule réservation", got)
+	}
+	if _, _, start := e.status(t, token); !start.Equal(tuesday9) {
+		t.Errorf("début = %v, want %v", start, tuesday9)
 	}
 }

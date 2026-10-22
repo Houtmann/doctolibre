@@ -110,6 +110,14 @@ func (n notifier) offerTo(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, ap
 	if err != nil {
 		return false, fmt.Errorf("lecture patient: %w", err)
 	}
+	// Garde-fou T054 : un patient au seuil d'absences ne reçoit pas d'offre.
+	blocked, err := onlineBookingBlocked(ctx, q, sc.pc, pat.ID, n.clock.Now())
+	if err != nil {
+		return false, err
+	}
+	if blocked {
+		return false, nil
+	}
 	rec := recipient{
 		FirstName: pat.FirstName, Phone: pat.Phone.String, Email: pat.Email.String,
 		SMSOptIn: pat.SmsOptIn, EmailOptIn: pat.EmailOptIn, Verified: e.VerifiedChannel.String,

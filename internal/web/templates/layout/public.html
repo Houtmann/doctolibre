@@ -8,6 +8,6 @@
   {{block "content" .}}{{end}}
 </main>
 <footer class="mx-auto w-full max-w-3xl px-4 pb-8 text-sm text-base-content/70">
-  <p>Doctolibre, prise de rendez-vous libre et auto-hébergeable.</p>
+  <p>Doctolibre, prise de rendez-vous libre et auto-hébergeable.{{if .PrivacyURL}} <a class="link" href="{{.PrivacyURL}}">Protection de vos données</a>{{end}}</p>
 </footer>
 {{end}}

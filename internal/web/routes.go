@@ -145,5 +145,7 @@ func (d Deps) newRenderer() (*Renderer, error) {
 		Location:  loc,
 		Reload:    !d.Config.IsProd(),
 		Secure:    d.Config.IsProd(),
+
+		PrivacyPublic: d.Privacy != nil,
 	})
 }

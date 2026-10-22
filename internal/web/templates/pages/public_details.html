@@ -57,7 +57,7 @@
     <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
   </div>
 
-  <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> <span>J'accepte que mes coordonnées soient utilisées par le cabinet pour gérer ce rendez-vous.</span></label>
+  <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> <span>J'accepte que mes coordonnées soient utilisées par le cabinet pour gérer ce rendez-vous.{{if .PrivacyURL}} <a class="link" href="{{.PrivacyURL}}">En savoir plus sur vos données</a>.{{end}}</span></label>
   <p class="text-sm text-base-content/70">N'indiquez aucune information médicale. Ce service sert uniquement à fixer un rendez-vous.</p>
   <button class="btn btn-primary w-full sm:w-auto" type="submit">Recevoir mon code</button>
 </form>

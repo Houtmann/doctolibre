@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-22 — T093 correctifs du parcours patient (sonnet ; contrôle : opus)
+
+- **Tâches** : T088 review → done (validée par l'humain), T093 todo → review
+- **Fait** : `offerTo` saute un patient au seuil T054 (entrée suivante servie) ; déplacement vers le créneau actuel retiré de la grille et no-op en service ; consigne interne retirée de la page vie privée publique, lien vers celle-ci dans les cases de consentement et le pied public si la route est active ; `BackURL` de la confirmation avec `?week=` ; flash « délai dépassé » renvoyé vers `/r/` (lien `tel:`)
+- **Vérification** : `make check` ✅ relancé par l'orchestrateur ; revue renforcée du diff (no-op après `lockByToken`, donc statut et délai toujours contrôlés). Non vu au navigateur
+- **Reste** : relecture humaine ; un POST forcé sur le même créneau affiche encore « Votre rendez-vous est déplacé. » ; lien vie privée absent de `/r/` et `/w/`
+- **Décisions** : 3 lignes du 2026-10-22 (T093)
+
 ## 2026-10-18 — T099 agenda : praticiens non chargés au changement de vue (sonnet ; contrôle : opus)
 
 - **Tâches** : T099 todo → review

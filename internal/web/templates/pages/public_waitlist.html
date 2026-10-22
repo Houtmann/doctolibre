@@ -75,7 +75,7 @@
     <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
   </div>
 
-  <label class="flex items-start gap-3"><input class="checkbox checkbox-primary mt-0.5" type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> <span>J'accepte que mes coordonnées soient utilisées par le cabinet pour me proposer un créneau.</span></label>
+  <label class="flex items-start gap-3"><input class="checkbox checkbox-primary mt-0.5" type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> <span>J'accepte que mes coordonnées soient utilisées par le cabinet pour me proposer un créneau.{{if .PrivacyURL}} <a class="link" href="{{.PrivacyURL}}">En savoir plus sur vos données</a>.{{end}}</span></label>
   <p class="text-sm text-base-content/70">N'indiquez aucune information médicale. Seul le canal vérifié par le code (SMS ou email) servira à vous écrire.</p>
   <button class="btn btn-primary w-full sm:w-auto" type="submit">Recevoir mon code</button>
 </form>

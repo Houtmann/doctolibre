@@ -82,12 +82,12 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T085 | [Choix de la couleur du praticien](T085-practitioner-color.md) | 5 | T057 | review |
 | T086 | [Fournisseurs email et SMS configurables par cabinet](T086-practice-notification-providers.md) | 5 | T023, T033 | review |
 | T087 | [Rate limiting du back-office et de la prise de RDV](T087-rate-limiting-admin-booking.md) | 5 | T014, T033, T046 | review |
-| T088 | [Corrections RDV : trajet, liste d'attente, statut concurrent](T088-booking-waitlist-fixes.md) | 5 | T032, T054, T031, T050 | review |
+| T088 | [Corrections RDV : trajet, liste d'attente, statut concurrent](T088-booking-waitlist-fixes.md) | 5 | T032, T054, T031, T050 | done |
 | T089 | [Contrôle d'accès : séries, praticien implicite, reset](T089-access-control-fixes.md) | 5 | T056, T059 | todo |
 | T090 | [Durcissement HTTP et notifications](T090-http-notify-hardening.md) | 5 | T087, T086 | todo |
 | T091 | [SQL : recherche patients indexée, filtres practice_id](T091-sql-search-tenant-hygiene.md) | 5 | T017, T088 | todo |
 | T092 | [Page patient « réservation en ligne indisponible »](T092-online-booking-blocked-page.md) | 5 | T088 | review |
-| T093 | [Correctifs du parcours patient (offres, déplacement, vie privée)](T093-patient-journey-fixes.md) | 5 | T088 | todo |
+| T093 | [Correctifs du parcours patient (offres, déplacement, vie privée)](T093-patient-journey-fixes.md) | 5 | T088 | review |
 | T094 | [Navigation de la prise de rendez-vous](T094-booking-navigation.md) | 5 | T081 | todo |
 | T095 | [Déplacement et annulation par le patient](T095-patient-reschedule-cancel.md) | 5 | T093 | todo |
 | T096 | [Écran de vérification et visites à domicile](T096-verify-screen-home-visits.md) | 5 | T094 | todo |

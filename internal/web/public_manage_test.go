@@ -86,7 +86,7 @@ func TestPatientCancelRefusedOutsideNotice(t *testing.T) {
 		t.Fatalf("POST hors délai = %d", rec.Code)
 	}
 	rec = c.do("GET", rec.Header().Get("Location"), nil)
-	mustContain(t, rec, 200, "ne peut plus être modifié en ligne", "01 23 45 67 89")
+	mustContain(t, rec, 200, "ne peut plus être modifié en ligne", "01 23 45 67 89", `href="tel:01 23 45 67 89"`)
 	if rec = c.do("GET", manage+"/reschedule", nil); rec.Code != 303 {
 		t.Errorf("GET reschedule hors délai = %d, want 303", rec.Code)
 	}
@@ -110,10 +110,29 @@ func TestPatientRescheduleFlow(t *testing.T) {
 		t.Error("le créneau de 10 h, pris, est proposé")
 	}
 	mustContain(t, c.doWith("GET", grid, "HX-Request", "true"), 200, `id="slot-grid"`)
+	if strings.Contains(rec.Body.String(), "start=2026-10-20T07%3A00%3A00Z") {
+		t.Error("le créneau actuel (9 h) est proposé au déplacement")
+	}
+	// Le créneau actuel forcé en GET : refus ; en POST : aucune écriture.
+	rec = c.do("GET", manage+"/reschedule/confirm?start="+url.QueryEscape("2026-10-20T07:00:00Z"), nil)
+	if rec.Code != 303 {
+		t.Errorf("confirmation du créneau actuel = %d, want 303", rec.Code)
+	}
+	var msgs int
+	_ = e.db.QueryRow(context.Background(), "SELECT count(*) FROM outbox_message").Scan(&msgs)
+	rec = c.do("POST", manage+"/reschedule", url.Values{"start": {"2026-10-20T07:00:00Z"}})
+	if rec.Code != 303 {
+		t.Errorf("POST même créneau = %d", rec.Code)
+	}
+	var msgs2 int
+	_ = e.db.QueryRow(context.Background(), "SELECT count(*) FROM outbox_message").Scan(&msgs2)
+	if msgs2 != msgs {
+		t.Errorf("messages %d -> %d après POST sur le même créneau", msgs, msgs2)
+	}
 
 	newStart := "2026-10-20T07:30:00Z" // 9 h 30
 	rec = c.do("GET", manage+"/reschedule/confirm?start="+url.QueryEscape(newStart), nil)
-	mustContain(t, rec, 200, "Confirmer le déplacement", "mardi 20 octobre 2026 à 09h30", `name="csrf_token"`, newStart)
+	mustContain(t, rec, 200, "Confirmer le déplacement", "mardi 20 octobre 2026 à 09h30", `name="csrf_token"`, newStart, "reschedule?week=2026-43")
 
 	// Créneau pris entre-temps : refus et conservation de l'ancien rendez-vous.
 	rec = c.do("POST", manage+"/reschedule", url.Values{"start": {"2026-10-20T08:00:00Z"}})
@@ -145,6 +164,36 @@ func TestPatientManageUnknownToken(t *testing.T) {
 	for _, p := range []string{"/r/inconnu/cancel", "/r/inconnu/reschedule"} {
 		if rec := c.do("POST", p, url.Values{"start": {"2026-10-20T07:00:00Z"}}); rec.Code != 404 {
 			t.Errorf("POST %s = %d, want 404", p, rec.Code)
+		}
+	}
+}
+
+func TestPublicPrivacyLinkOnlyWhenRouteActive(t *testing.T) {
+	t.Parallel()
+	for _, active := range []bool{true, false} {
+		e := newPublicEnvWith(t, active)
+		c := newClient(t, e.h, "192.0.2.70")
+		start := "2026-10-20T07:00:00Z"
+		rec := c.do("GET", e.base()+"/book/details?type="+e.typ.ID.String()+"&start="+url.QueryEscape(start), nil)
+		link := "/p/" + e.pc.Slug + "/privacy"
+		body := rec.Body.String()
+		if rec.Code != 200 {
+			t.Fatalf("details = %d", rec.Code)
+		}
+		if got := strings.Contains(body, `href="`+link+`"`); got != active {
+			t.Errorf("privacy actif=%v : lien présent = %v", active, got)
+		}
+		if active {
+			if n := strings.Count(body, `href="`+link+`"`); n < 2 {
+				t.Errorf("lien attendu dans la case de consentement et le pied, trouvé %d", n)
+			}
+			rec = c.do("GET", link, nil)
+			if rec.Code != 200 {
+				t.Fatalf("page vie privée = %d", rec.Code)
+			}
+			if strings.Contains(rec.Body.String(), "Modèle d'information à relire") {
+				t.Error("consigne interne visible côté public")
+			}
 		}
 	}
 }
