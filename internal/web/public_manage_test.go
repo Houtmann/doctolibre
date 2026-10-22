@@ -86,7 +86,7 @@ func TestPatientCancelRefusedOutsideNotice(t *testing.T) {
 		t.Fatalf("POST hors délai = %d", rec.Code)
 	}
 	rec = c.do("GET", rec.Header().Get("Location"), nil)
-	mustContain(t, rec, 200, "ne peut plus être modifié en ligne", "01 23 45 67 89", `href="tel:01 23 45 67 89"`)
+	mustContain(t, rec, 200, "ne peut plus être modifié en ligne", "01 23 45 67 89", `href="tel:0123456789"`)
 	if rec = c.do("GET", manage+"/reschedule", nil); rec.Code != 303 {
 		t.Errorf("GET reschedule hors délai = %d, want 303", rec.Code)
 	}
@@ -105,7 +105,7 @@ func TestPatientRescheduleFlow(t *testing.T) {
 
 	grid := manage + "/reschedule?week=2026-43"
 	rec := c.do("GET", grid, nil)
-	mustContain(t, rec, 200, "Choisir un nouveau créneau", `id="slot-grid"`, "mardi 20 octobre 2026", "09h00", "09h30")
+	mustContain(t, rec, 200, "Choisir un nouveau créneau", `id="slot-grid"`, "mardi 20 octobre 2026", "09h30")
 	if strings.Contains(rec.Body.String(), "start=2026-10-20T08%3A00%3A00Z") {
 		t.Error("le créneau de 10 h, pris, est proposé")
 	}

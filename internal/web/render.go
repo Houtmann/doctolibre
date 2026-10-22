@@ -486,6 +486,8 @@ func frenchDate(t time.Time) string {
 func (r *Renderer) funcMap() template.FuncMap {
 	loc := r.opts.Location
 	return template.FuncMap{
+		// Numéro réduit aux chiffres et "+" pour un lien tel:.
+		"telHref": telHref,
 		// "mardi 15 octobre 2026", dans le fuseau du cabinet.
 		"formatDate": func(t time.Time) string { return frenchDate(t.In(loc)) },
 		// Idem, mais dans le fuseau porté par t (déjà celui du cabinet).

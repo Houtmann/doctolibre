@@ -24,6 +24,6 @@
 {{else if eq .Data.Reason "claimed"}}
 <div class="alert alert-info" role="status">Ce créneau a déjà été réservé avec ce lien. Vous avez reçu la confirmation par message.</div>
 {{else}}
-<div class="alert alert-error" role="alert"><span>Cette proposition a expiré.{{if .Data.Phone}} Pour prendre rendez-vous, appelez le cabinet au <a class="link" href="tel:{{.Data.Phone}}">{{.Data.Phone}}</a>.{{end}}</span></div>
+<div class="alert alert-error" role="alert"><span>Cette proposition a expiré.{{if .Data.Phone}} Pour prendre rendez-vous, appelez le cabinet au <a class="link" href="tel:{{telHref .Data.Phone}}">{{.Data.Phone}}</a>.{{end}}</span></div>
 {{end}}
 {{end}}

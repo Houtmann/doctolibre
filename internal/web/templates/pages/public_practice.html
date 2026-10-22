@@ -4,11 +4,11 @@
   <div class="card-body gap-1">
     <h1 class="card-title text-2xl">{{.Data.Practice.Name}}</h1>
     {{if .Data.Practice.Address}}<p class="text-base-content/70">{{.Data.Practice.Address}}</p>{{end}}
-    {{if .Data.Practice.Phone}}<p class="text-base-content/70">Téléphone : <a class="link link-primary" href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a></p>{{end}}
+    {{if .Data.Practice.Phone}}<p class="text-base-content/70">Téléphone : <a class="link link-primary" href="tel:{{telHref .Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a></p>{{end}}
   </div>
 </section>
 {{if .Data.Closed}}
-<div class="alert alert-info alert-soft" role="status">La réservation en ligne n'est pas disponible pour le moment.{{if .Data.Practice.Phone}} Appelez le cabinet au <a class="link" href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>.{{end}}</div>
+<div class="alert alert-info alert-soft" role="status">La réservation en ligne n'est pas disponible pour le moment.{{if .Data.Practice.Phone}} Appelez le cabinet au <a class="link" href="tel:{{telHref .Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>.{{end}}</div>
 {{else}}
 <h2 class="text-lg font-semibold">Prendre rendez-vous</h2>
 <nav aria-label="Étapes de la réservation"><ul class="steps steps-horizontal w-full text-xs sm:text-sm"><li class="step step-primary" aria-current="step">Motif</li><li class="step">Créneau</li><li class="step">Coordonnées</li><li class="step">Vérification</li></ul></nav>

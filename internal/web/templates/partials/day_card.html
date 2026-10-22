@@ -21,7 +21,7 @@
       {{if .A.Travel}}<br><span class="text-base-content/70">Trajet réservé : {{formatDuration .A.Travel}}</span>{{end}}
     </p>
     {{end}}
-    {{if .A.Phone}}<p><a class="btn btn-outline btn-sm" href="tel:{{.A.Phone}}">Appeler {{.A.Phone}}</a></p>{{end}}
+    {{if .A.Phone}}<p><a class="btn btn-outline btn-sm" href="tel:{{telHref .A.Phone}}">Appeler {{.A.Phone}}</a></p>{{end}}
     <div class="card-actions items-center">
       {{if eq .A.Status "booked"}}
       {{template "day_status_form.html" (dict "C" . "Status" "done" "Label" "Fait" "Class" "btn-success")}}

@@ -5,7 +5,7 @@
 {{if .Data.Practitioner.Title}}<p class="text-base-content/70">{{.Data.Practitioner.Title}}</p>{{end}}
 {{if .Data.Practitioner.Bio}}<p>{{.Data.Practitioner.Bio}}</p>{{end}}
 {{if .Data.Closed}}
-<div class="alert alert-info alert-soft" role="status">La réservation en ligne n'est pas disponible pour le moment.{{if .Data.Practice.Phone}} Appelez le cabinet au <a class="link" href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>.{{end}}</div>
+<div class="alert alert-info alert-soft" role="status">La réservation en ligne n'est pas disponible pour le moment.{{if .Data.Practice.Phone}} Appelez le cabinet au <a class="link" href="tel:{{telHref .Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>.{{end}}</div>
 {{else}}
 <h2 class="text-lg font-semibold">Choisissez un motif de rendez-vous</h2>
 <nav aria-label="Étapes de la réservation"><ul class="steps steps-horizontal w-full text-xs sm:text-sm"><li class="step step-primary" aria-current="step">Motif</li><li class="step">Créneau</li><li class="step">Coordonnées</li><li class="step">Vérification</li></ul></nav>
@@ -16,7 +16,7 @@
   {{end}}
 </ul>
 {{else}}
-<div class="alert alert-info alert-soft" role="status">Aucun rendez-vous n'est réservable en ligne pour le moment.{{if .Data.Practice.Phone}} Appelez le cabinet au <a class="link" href="tel:{{.Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>.{{end}}</div>
+<div class="alert alert-info alert-soft" role="status">Aucun rendez-vous n'est réservable en ligne pour le moment.{{if .Data.Practice.Phone}} Appelez le cabinet au <a class="link" href="tel:{{telHref .Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>.{{end}}</div>
 {{end}}
 {{end}}
 {{end}}

@@ -6,7 +6,7 @@
     <p>La réservation en ligne n'est pas possible pour cette demande.</p>
     {{if .Data.Phone}}
     <p>Merci d'appeler le cabinet au {{.Data.Phone}}.</p>
-    <div class="card-actions"><a class="btn btn-primary w-full sm:w-auto" href="tel:{{.Data.TelHref}}">Appeler le cabinet</a></div>
+    <div class="card-actions"><a class="btn btn-primary w-full sm:w-auto" href="tel:{{telHref .Data.TelHref}}">Appeler le cabinet</a></div>
     {{else}}
     <p>Merci de contacter le cabinet.</p>
     {{end}}

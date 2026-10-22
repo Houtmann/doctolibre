@@ -6,7 +6,7 @@
     <h2 class="card-title">{{.Data.Type}}</h2>
     <p>{{.Data.FirstName}}, voici les séances de votre série{{if .Data.Prescribed}} ({{.Data.Prescribed}} prescrites){{end}}.</p>
     <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-      <dt class="text-base-content/70">Cabinet</dt><dd>{{.Data.Practice}}{{if .Data.Address}}<br>{{.Data.Address}}{{end}}{{if .Data.Phone}}<br>Téléphone : <a class="link link-primary" href="tel:{{.Data.Phone}}">{{.Data.Phone}}</a>{{end}}</dd>
+      <dt class="text-base-content/70">Cabinet</dt><dd>{{.Data.Practice}}{{if .Data.Address}}<br>{{.Data.Address}}{{end}}{{if .Data.Phone}}<br>Téléphone : <a class="link link-primary" href="tel:{{telHref .Data.Phone}}">{{.Data.Phone}}</a>{{end}}</dd>
       <dt class="text-base-content/70">Praticien</dt><dd>{{.Data.Practitioner}}</dd>
     </dl>
     {{if .Data.ICSURL}}
