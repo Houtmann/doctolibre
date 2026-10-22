@@ -205,7 +205,7 @@ func reminderKinds(pc sqlcgen.Practice, start time.Time, loc *time.Location) []r
 func (r *Reminders) enqueueOne(ctx context.Context, n notifier, c sqlcgen.ListReminderCandidatesRow, kind reminderKind) (int, error) {
 	queued := 0
 	err := store.WithTx(ctx, r.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
-		appt, err := q.LockAppointment(ctx, c.ID)
+		appt, err := q.LockAppointment(ctx, sqlcgen.LockAppointmentParams{ID: c.ID, PracticeID: c.PracticeID})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil
 		}

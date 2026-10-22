@@ -646,7 +646,7 @@ func (c *Calendar) Detail(ctx context.Context, a Actor, id uuid.UUID) (Appointme
 	d.MoveDate, d.MoveTime = d.Start.Format("2006-01-02"), d.Start.Format("15:04")
 
 	logs, err := q.ListAuditLogForEntity(ctx, sqlcgen.ListAuditLogForEntityParams{
-		Entity: "appointment", EntityID: pgtype.UUID{Bytes: id, Valid: true}, PageSize: 50,
+		PracticeID: pgtype.UUID{Bytes: a.PracticeID, Valid: true}, Entity: "appointment", EntityID: pgtype.UUID{Bytes: id, Valid: true}, PageSize: 50,
 	})
 	if err != nil {
 		return AppointmentDetail{}, fmt.Errorf("historique: %w", err)
@@ -697,15 +697,21 @@ func (c *Calendar) ActiveTypes(ctx context.Context, a Actor) ([]sqlcgen.Appointm
 	return out, nil
 }
 
-// SearchPatients cherche des patients du cabinet par préfixe de nom, prénom,
-// téléphone ou email (2 caractères minimum, 10 résultats maximum).
+// SearchPatients cherche des patients du cabinet par nom, prénom,
+// téléphone ou email (sous-chaîne, sans casse ni accents) (2 caractères minimum, 10 résultats maximum).
 func (c *Calendar) SearchPatients(ctx context.Context, a Actor, query string) ([]sqlcgen.Patient, error) {
 	query = strings.TrimSpace(query)
 	if len([]rune(query)) < 2 {
 		return nil, nil
 	}
+	phone := ""
+	if digitCount(query) >= minPhoneDigits {
+		if n, perr := domain.NormalizePhone(query); perr == nil {
+			phone = n
+		}
+	}
 	esc := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(query)
-	ps, err := sqlcgen.New(c.Pool).SearchPatients(ctx, sqlcgen.SearchPatientsParams{PracticeID: a.PracticeID, Prefix: esc, PageSize: patientSearchLimit})
+	ps, err := sqlcgen.New(c.Pool).SearchPatients(ctx, sqlcgen.SearchPatientsParams{PracticeID: a.PracticeID, Term: esc, Phone: phone, PageSize: patientSearchLimit})
 	if err != nil {
 		return nil, fmt.Errorf("recherche de patients: %w", err)
 	}

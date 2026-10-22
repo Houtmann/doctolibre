@@ -93,4 +93,4 @@ WHERE a.practice_id = @practice_id
 
 -- name: LockAppointment :one
 -- Lecture verrouillée (dans une transaction) : sérialise l'enfilement d'un rappel avec une annulation.
-SELECT * FROM appointment WHERE id = @id FOR UPDATE;
+SELECT * FROM appointment WHERE id = @id AND practice_id = @practice_id FOR UPDATE;

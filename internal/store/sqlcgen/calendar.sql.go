@@ -87,15 +87,16 @@ func (q *Queries) GetAppointmentDetail(ctx context.Context, arg GetAppointmentDe
 
 const listAuditLogForEntity = `-- name: ListAuditLogForEntity :many
 SELECT at, actor, action, meta FROM audit_log
-WHERE entity = $1 AND entity_id = $2
+WHERE practice_id = $1 AND entity = $2 AND entity_id = $3
 ORDER BY at, id
-LIMIT $3
+LIMIT $4
 `
 
 type ListAuditLogForEntityParams struct {
-	Entity   string
-	EntityID pgtype.UUID
-	PageSize int32
+	PracticeID pgtype.UUID
+	Entity     string
+	EntityID   pgtype.UUID
+	PageSize   int32
 }
 
 type ListAuditLogForEntityRow struct {
@@ -106,7 +107,12 @@ type ListAuditLogForEntityRow struct {
 }
 
 func (q *Queries) ListAuditLogForEntity(ctx context.Context, arg ListAuditLogForEntityParams) ([]ListAuditLogForEntityRow, error) {
-	rows, err := q.db.Query(ctx, listAuditLogForEntity, arg.Entity, arg.EntityID, arg.PageSize)
+	rows, err := q.db.Query(ctx, listAuditLogForEntity,
+		arg.PracticeID,
+		arg.Entity,
+		arg.EntityID,
+		arg.PageSize,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -369,25 +375,29 @@ func (q *Queries) MoveAppointment(ctx context.Context, arg MoveAppointmentParams
 const searchPatients = `-- name: SearchPatients :many
 SELECT id, practice_id, first_name, last_name, birth_date, phone, email, sms_opt_in, email_opt_in, notes_admin, deleted_at, created_at, updated_at, merged_into, address, anonymized_at FROM patient
 WHERE practice_id = $1 AND deleted_at IS NULL
-  AND (last_name ILIKE $2::text || '%'
-       OR first_name ILIKE $2::text || '%'
-       OR (first_name || ' ' || last_name) ILIKE $2::text || '%'
-       OR (last_name || ' ' || first_name) ILIKE $2::text || '%'
-       OR phone LIKE $2::text || '%'
-       OR email::text ILIKE $2::text || '%')
+  AND (patient_search_text(first_name, last_name, phone, email) LIKE '%' || f_unaccent(lower($2::text)) || '%'
+       OR ($3::text <> '' AND phone = $3::text))
 ORDER BY last_name, first_name, id
-LIMIT $3
+LIMIT $4
 `
 
 type SearchPatientsParams struct {
 	PracticeID uuid.UUID
-	Prefix     string
+	Term       string
+	Phone      string
 	PageSize   int32
 }
 
-// Recherche par préfixe du nom, du prénom, du téléphone ou de l'email.
+// Autocomplétion de l'agenda : même prédicat que SearchPatientsPage (index
+// patient_search_trgm_idx), insensible à la casse et aux accents. @phone est le
+// téléphone normalisé E.164 (ou ”).
 func (q *Queries) SearchPatients(ctx context.Context, arg SearchPatientsParams) ([]Patient, error) {
-	rows, err := q.db.Query(ctx, searchPatients, arg.PracticeID, arg.Prefix, arg.PageSize)
+	rows, err := q.db.Query(ctx, searchPatients,
+		arg.PracticeID,
+		arg.Term,
+		arg.Phone,
+		arg.PageSize,
+	)
 	if err != nil {
 		return nil, err
 	}

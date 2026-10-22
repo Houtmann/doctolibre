@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-22 — T091 SQL : recherche indexée, filtres practice_id ; correctif de tests T093 (sonnet ; contrôle : opus)
+
+- **Tâches** : T091 todo → review ; T093 reste en review (correctif)
+- **Fait** : `SearchPatients` sur `patient_search_text` (index trigramme, EXPLAIN : Bitmap Index Scan sur 20 000 patients, 1 ms) + téléphone normalisé ; `LockAppointment` et `ListAuditLogForEntity` filtrés par `practice_id`. T093 : deux tests web étaient en échec dans le commit 82b9776 (tests DB sautés au contrôle, voir ci-dessous) : assertion contradictoire « 09h00 » retirée, liens `tel:` via `telHref` (9 occurrences)
+- **Vérification** : `make check` ✅ relancé par l'orchestrateur avec la bonne URL de base, 0 test sauté dans `service` et `web`. **Erreur de contrôle** : l'URL de test de STATUS.md (rôle `doctolibre`) n'existe pas sur cette machine, les tests DB étaient silencieusement sautés lors du contrôle de T093 ; URL corrigée dans STATUS.md
+- **Reste** : relecture humaine de T091 et T093
+- **Décisions** : 2 lignes du 2026-10-22 (T091, T093)
+
 ## 2026-10-22 — T093 correctifs du parcours patient (sonnet ; contrôle : opus)
 
 - **Tâches** : T088 review → done (validée par l'humain), T093 todo → review

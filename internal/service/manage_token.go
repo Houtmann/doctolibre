@@ -86,8 +86,8 @@ func (b *Booking) RevokeManageToken(ctx context.Context, practiceID, appointment
 	}
 	var token string
 	err := store.WithTx(ctx, b.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
-		a, err := q.LockAppointment(ctx, appointmentID)
-		if errors.Is(err, pgx.ErrNoRows) || (err == nil && a.PracticeID != practiceID) {
+		a, err := q.LockAppointment(ctx, sqlcgen.LockAppointmentParams{ID: appointmentID, PracticeID: practiceID})
+		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.ErrNotFound
 		}
 		if err != nil {

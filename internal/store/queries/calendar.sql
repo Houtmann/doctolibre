@@ -40,21 +40,19 @@ WHERE id = @id AND practice_id = @practice_id AND status = 'booked'
 RETURNING *;
 
 -- name: SearchPatients :many
--- Recherche par préfixe du nom, du prénom, du téléphone ou de l'email.
+-- Autocomplétion de l'agenda : même prédicat que SearchPatientsPage (index
+-- patient_search_trgm_idx), insensible à la casse et aux accents. @phone est le
+-- téléphone normalisé E.164 (ou '').
 SELECT * FROM patient
 WHERE practice_id = @practice_id AND deleted_at IS NULL
-  AND (last_name ILIKE @prefix::text || '%'
-       OR first_name ILIKE @prefix::text || '%'
-       OR (first_name || ' ' || last_name) ILIKE @prefix::text || '%'
-       OR (last_name || ' ' || first_name) ILIKE @prefix::text || '%'
-       OR phone LIKE @prefix::text || '%'
-       OR email::text ILIKE @prefix::text || '%')
+  AND (patient_search_text(first_name, last_name, phone, email) LIKE '%' || f_unaccent(lower(@term::text)) || '%'
+       OR (@phone::text <> '' AND phone = @phone::text))
 ORDER BY last_name, first_name, id
 LIMIT @page_size;
 
 -- name: ListAuditLogForEntity :many
 SELECT at, actor, action, meta FROM audit_log
-WHERE entity = @entity AND entity_id = @entity_id
+WHERE practice_id = @practice_id AND entity = @entity AND entity_id = @entity_id
 ORDER BY at, id
 LIMIT @page_size;
 

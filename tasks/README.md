@@ -85,7 +85,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T088 | [Corrections RDV : trajet, liste d'attente, statut concurrent](T088-booking-waitlist-fixes.md) | 5 | T032, T054, T031, T050 | done |
 | T089 | [Contrôle d'accès : séries, praticien implicite, reset](T089-access-control-fixes.md) | 5 | T056, T059 | todo |
 | T090 | [Durcissement HTTP et notifications](T090-http-notify-hardening.md) | 5 | T087, T086 | todo |
-| T091 | [SQL : recherche patients indexée, filtres practice_id](T091-sql-search-tenant-hygiene.md) | 5 | T017, T088 | todo |
+| T091 | [SQL : recherche patients indexée, filtres practice_id](T091-sql-search-tenant-hygiene.md) | 5 | T017, T088 | review |
 | T092 | [Page patient « réservation en ligne indisponible »](T092-online-booking-blocked-page.md) | 5 | T088 | review |
 | T093 | [Correctifs du parcours patient (offres, déplacement, vie privée)](T093-patient-journey-fixes.md) | 5 | T088 | review |
 | T094 | [Navigation de la prise de rendez-vous](T094-booking-navigation.md) | 5 | T081 | todo |

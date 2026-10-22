@@ -435,12 +435,17 @@ func (q *Queries) ListReminderCandidates(ctx context.Context, arg ListReminderCa
 }
 
 const lockAppointment = `-- name: LockAppointment :one
-SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version, status_changed_by, status_changed_at FROM appointment WHERE id = $1 FOR UPDATE
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version, status_changed_by, status_changed_at FROM appointment WHERE id = $1 AND practice_id = $2 FOR UPDATE
 `
 
+type LockAppointmentParams struct {
+	ID         uuid.UUID
+	PracticeID uuid.UUID
+}
+
 // Lecture verrouillée (dans une transaction) : sérialise l'enfilement d'un rappel avec une annulation.
-func (q *Queries) LockAppointment(ctx context.Context, id uuid.UUID) (Appointment, error) {
-	row := q.db.QueryRow(ctx, lockAppointment, id)
+func (q *Queries) LockAppointment(ctx context.Context, arg LockAppointmentParams) (Appointment, error) {
+	row := q.db.QueryRow(ctx, lockAppointment, arg.ID, arg.PracticeID)
 	var i Appointment
 	err := row.Scan(
 		&i.ID,

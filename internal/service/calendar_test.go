@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"doctolibre/internal/auth"
@@ -409,5 +410,67 @@ func TestSearchPatientsEscapesWildcards(t *testing.T) {
 		if ps, err := f.cal.SearchPatients(ctx, f.act, q); err != nil || len(ps) != 1 {
 			t.Errorf("%q : %v %+v", q, err, ps)
 		}
+	}
+}
+
+func TestSearchPatientsAutocompleteForms(t *testing.T) {
+	t.Parallel()
+	f := newCalFixture(t)
+	ctx := context.Background()
+	if _, err := f.cal.Create(ctx, f.act, f.quick("2026-10-19", "09:00", false)); err != nil {
+		t.Fatal(err)
+	}
+	// prénom nom, nom prénom, sous-chaîne, casse, accents, téléphone partiel (forme
+	// stockée E.164) et saisi en national.
+	for _, q := range []string{"léa durand", "durand léa", "LEA DURAND", "urand", "lea", "+336123", "06 12 34 56 78", "0612345678"} {
+		if ps, err := f.cal.SearchPatients(ctx, f.act, q); err != nil || len(ps) != 1 {
+			t.Errorf("%q : %v %+v", q, err, ps)
+		}
+	}
+}
+
+func TestAuditAndLockAreScopedToPractice(t *testing.T) {
+	t.Parallel()
+	f := newCalFixture(t)
+	ctx := context.Background()
+	ap, err := f.cal.Create(ctx, f.act, f.quick("2026-10-19", "09:00", false))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.cal.Cancel(ctx, f.act, ap.ID, ""); err != nil {
+		t.Fatal(err)
+	}
+	u, err := auth.CreateUser(ctx, f.db, auth.CreateUserParams{
+		Email: "autre2@example.test", Role: domain.RoleAdmin, PracticeName: "Autre cabinet 2", Password: testPassword,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := sqlcgen.New(f.db)
+	entityID := pgtype.UUID{Bytes: ap.ID, Valid: true}
+	own, err := q.ListAuditLogForEntity(ctx, sqlcgen.ListAuditLogForEntityParams{
+		PracticeID: pgtype.UUID{Bytes: f.act.PracticeID, Valid: true}, Entity: "appointment", EntityID: entityID, PageSize: 50,
+	})
+	if err != nil || len(own) == 0 {
+		t.Fatalf("journal du cabinet: %v %d", err, len(own))
+	}
+	other, err := q.ListAuditLogForEntity(ctx, sqlcgen.ListAuditLogForEntityParams{
+		PracticeID: pgtype.UUID{Bytes: u.PracticeID, Valid: true}, Entity: "appointment", EntityID: entityID, PageSize: 50,
+	})
+	if err != nil || len(other) != 0 {
+		t.Errorf("journal inter-cabinets: %v %d lignes", err, len(other))
+	}
+	// LockAppointment : lecture verrouillée dans une transaction.
+	tx, err := f.db.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	qt := q.WithTx(tx)
+	if _, err := qt.LockAppointment(ctx, sqlcgen.LockAppointmentParams{ID: ap.ID, PracticeID: u.PracticeID}); !errors.Is(err, pgx.ErrNoRows) {
+		t.Errorf("verrou inter-cabinets: %v", err)
+	}
+	if _, err := qt.LockAppointment(ctx, sqlcgen.LockAppointmentParams{ID: ap.ID, PracticeID: f.act.PracticeID}); err != nil {
+		t.Errorf("verrou du cabinet: %v", err)
 	}
 }
