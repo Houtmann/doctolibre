@@ -1,0 +1,9 @@
+{{define "title"}}Rendez-vous annulé{{end}}
+{{define "content"}}
+<h1 style="margin:0 0 16px;font-size:20px;">Rendez-vous annulé</h1>
+<p style="margin:0 0 16px;">Bonjour {{.first_name}},</p>
+<p style="margin:0 0 16px;">Nous avons bien annulé votre rendez-vous ({{.type_name}}) du <strong>{{.date}} à {{.time}}</strong> avec {{.practitioner}}, comme vous l'avez demandé.</p>
+{{if .rebook_url}}<p style="margin:0 0 16px;"><a href="{{.rebook_url}}">Reprendre rendez-vous</a></p>
+{{end}}{{if .practice_phone}}<p style="margin:0 0 16px;font-size:14px;">Une question ? Appelez le {{.practice_phone}}.</p>{{end}}
+<p style="margin:0;font-size:14px;">{{.signature}}</p>
+{{end}}

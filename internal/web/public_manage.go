@@ -116,7 +116,11 @@ func (h *publicHandlers) rescheduleGrid(w http.ResponseWriter, r *http.Request) 
 	now := h.svc.Now()
 	minMon, maxMon := mondayOf(now, c.Loc), mondayOf(now.Add(c.Horizon), c.Loc)
 	mon, okWeek := parseWeek(r.URL.Query().Get("week"), c.Loc)
-	if !okWeek || mon.Before(minMon) {
+	if !okWeek {
+		// Sans semaine demandée : celle du rendez-vous actuel (bornée ci-dessous).
+		mon = mondayOf(c.Start, c.Loc)
+	}
+	if mon.Before(minMon) {
 		mon = minMon
 	}
 	if mon.After(maxMon) {
@@ -145,6 +149,7 @@ func (h *publicHandlers) rescheduleGrid(w http.ResponseWriter, r *http.Request) 
 		Type:      TypeView{ID: c.Type.ID.String(), Name: c.Type.Name, Duration: c.End.Sub(c.Start)},
 		WeekLabel: fmt.Sprintf("du %s au %s", frenchDate(mon), frenchDate(mon.AddDate(0, 0, 6))),
 		BackURL:   base,
+		Current:   c.Start.In(c.Loc),
 	}
 	if mon.After(minMon) {
 		data.PrevURL = weekURL(mon.AddDate(0, 0, -7))

@@ -142,6 +142,8 @@ type GridData struct {
 	PrevURL      string
 	NextURL      string
 	BackURL      string
+	// Current : créneau actuel du rendez-vous qu'on déplace (zéro = réservation, pas de déplacement).
+	Current time.Time
 	// WaitlistURL : inscription à la liste d'attente ; vide = fonction désactivée ou motif à domicile.
 	WaitlistURL string
 }
@@ -213,7 +215,8 @@ type ConfirmedData struct {
 	MinCancel  time.Duration
 	AtHome     bool
 	Address    string // adresse de la visite à domicile
-	// RebookURL : page du praticien, pour reprendre rendez-vous après une annulation.
+	// RebookURL : grille du praticien (motif présélectionné s'il est réservable en ligne)
+	// ou, à défaut, sa page, pour reprendre rendez-vous après une annulation.
 	RebookURL string
 }
 
@@ -656,7 +659,7 @@ func (h *publicHandlers) confirmed(w http.ResponseWriter, r *http.Request) {
 		ICSURL:     manageURL(r.PathValue("token")) + "/ics",
 		Changeable: c.Changeable, ManageURL: manageURL(r.PathValue("token")), MinCancel: c.MinCancel,
 		AtHome: c.Type.AtHome, Address: c.Appointment.Address.String,
-		RebookURL: practitionerView(c.Practice.Slug, c.Practitioner).URL,
+		RebookURL: service.RebookPath(c.Practice.Slug, c.Practitioner, c.Type),
 	})
 }
 

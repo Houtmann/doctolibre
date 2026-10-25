@@ -8,7 +8,8 @@ Votre rendez-vous ({{.type_name}}) avec {{.practitioner}} est confirmé :
 {{if .manage_url}}
 Pour consulter, déplacer ou annuler ce rendez-vous :
 {{.manage_url}}
-{{end}}{{if .practice_phone}}
+{{if .cancel_notice}}Déplacement et annulation possibles jusqu'à {{.cancel_notice}} avant le rendez-vous.
+{{end}}{{end}}{{if .practice_phone}}
 Une question ? Appelez le {{.practice_phone}}.
 {{end}}
 {{.signature}}

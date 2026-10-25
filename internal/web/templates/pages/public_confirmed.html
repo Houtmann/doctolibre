@@ -31,5 +31,8 @@
 {{if and (not .Data.Cancelled) (not .Data.Changeable)}}
 <p class="text-sm text-base-content/70">Ce rendez-vous ne peut plus être déplacé ni annulé en ligne (délai de {{formatDuration .Data.MinCancel}}){{if .Data.Practice.Phone}} : appelez le cabinet au <a class="link link-primary" href="tel:{{telHref .Data.Practice.Phone}}">{{.Data.Practice.Phone}}</a>{{end}}.</p>
 {{end}}
+{{if and (not .Data.Cancelled) .Data.Changeable (gt .Data.MinCancel 0)}}
+<p class="text-sm text-base-content/70">Déplacement et annulation possibles en ligne jusqu'à {{formatDuration .Data.MinCancel}} avant le rendez-vous.</p>
+{{end}}
 {{if not .Data.Cancelled}}<p class="text-sm text-base-content/70">Conservez l'adresse de cette page : elle vous permettra de retrouver votre rendez-vous. Ne la partagez pas.</p>{{end}}
 {{end}}

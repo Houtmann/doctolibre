@@ -71,8 +71,12 @@ func (b *Booking) CancelByPatient(ctx context.Context, token string) error {
 		if err != nil {
 			return fmt.Errorf("annulation: %w", err)
 		}
-		// Annulée par le patient : on supprime les rappels, sans message d'annulation.
-		return b.notifier().cancelled(ctx, tx, q, appt, false)
+		// Annulée par le patient : rappels supprimés, accusé d'annulation enfilé (T095).
+		n := b.notifier()
+		if err := n.cancelled(ctx, tx, q, appt, false); err != nil {
+			return err
+		}
+		return n.patientCancelled(ctx, tx, q, appt)
 	})
 	if err != nil {
 		return err

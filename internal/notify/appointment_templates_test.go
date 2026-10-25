@@ -20,13 +20,14 @@ func apptData(manage bool) map[string]any {
 		"practice_name": "Cabinet de kinésithérapie Dup", "practice_address": "12 rue des Lilas, 69003 Lyon",
 		"practice_phone": "04 72 00 00 00", "first_name": "Léa", "practitioner": "Camille Martin",
 		"type_name": "Séance de kinésithérapie", "date": "jeudi 15 octobre", "date_short": "15/10", "time": "14h30",
-		"manage_url": "", "series_url": "", "signature": "Cabinet de kinésithérapie Dupont",
+		"manage_url": "", "series_url": "", "rebook_url": "", "cancel_notice": "24 h", "signature": "Cabinet de kinésithérapie Dupont",
 		"old_date": "mardi 13 octobre", "old_date_short": "13/10", "old_time": "9h00",
 		"reason": "Praticien souffrant", "valid_until": "16h30", "offer_url": "https://rdv.cabinet-dupont.fr/w/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde",
 		"count": 10, "sessions": []string{"jeudi 15 octobre à 14h30", "lundi 19 octobre à 14h30", "jeudi 22 octobre à 14h30"},
 	}
 	if manage {
 		d["manage_url"] = "https://rdv.cabinet-dupont.fr/r/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde"
+		d["rebook_url"] = "https://rdv.cabinet-dupont.fr/p/cabinet-dupont/camille-martin/book?type=3f2b8c1e-5a7d-4e90-b1c2-8d4f6a9e0b13"
 		d["series_url"] = "https://rdv.cabinet-dupont.fr/s/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde"
 	}
 	return d
@@ -59,7 +60,7 @@ func TestAppointmentTemplatesGolden(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"confirmation", "reminder", "cancellation", "reschedule", "series", "waitlist"} {
+	for _, name := range []string{"confirmation", "reminder", "cancellation", "reschedule", "series", "waitlist", "patient_cancellation"} {
 		for _, manage := range []bool{true, false} {
 			variant := "avec_lien"
 			if !manage {
@@ -84,7 +85,7 @@ func TestAppointmentTemplatesGolden(t *testing.T) {
 				if !strings.Contains(e.Text, "Léa") || !strings.Contains(e.HTML, "15 octobre") {
 					t.Errorf("email %s : prénom ou date absents", name)
 				}
-				wantLink := manage && name != "series" && name != "waitlist"
+				wantLink := manage && name != "series" && name != "waitlist" && name != "patient_cancellation"
 				if wantLink != strings.Contains(e.Text, "/r/") {
 					t.Errorf("email %s : lien de gestion présent=%v, attendu %v", name, !wantLink, wantLink)
 				}

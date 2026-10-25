@@ -23,8 +23,10 @@ const (
 	TemplateConfirmation = "confirmation"
 	TemplateReminder     = "reminder"
 	TemplateCancellation = "cancellation"
-	TemplateReschedule   = "reschedule"
-	TemplateSeries       = "series"
+	// TemplatePatientCancellation : accusé envoyé au patient qui annule lui-même (T095).
+	TemplatePatientCancellation = "patient_cancellation"
+	TemplateReschedule          = "reschedule"
+	TemplateSeries              = "series"
 )
 
 // Canaux acceptés dans les réglages de notification du cabinet.
@@ -173,8 +175,36 @@ func (n notifier) data(v apptView, manageToken string) map[string]any {
 		"type_name": v.typ.Name, "date": frenchDay(start), "date_short": start.Format("02/01"), "time": clockText(start),
 		"manage_url": manage, "signature": signature,
 		"old_date": "", "old_date_short": "", "old_time": "", "series_url": "",
-		"reason": "",
+		"reason": "", "rebook_url": "",
+		"cancel_notice": noticeText(microsToDuration(intervalMicros(v.practice.MinCancelNotice))),
 	}
+}
+
+// noticeText écrit le délai minimal d'annulation pour un message (« 24 h »,
+// « 1 h 30 », « 45 min ») ; "" si le cabinet n'impose aucun délai.
+func noticeText(d time.Duration) string {
+	h, m := int(d/time.Hour), int(d%time.Hour/time.Minute)
+	switch {
+	case d <= 0:
+		return ""
+	case h == 0:
+		return fmt.Sprintf("%d min", m)
+	case m == 0:
+		return fmt.Sprintf("%d h", h)
+	default:
+		return fmt.Sprintf("%d h %02d", h, m)
+	}
+}
+
+// RebookPath est l'adresse (relative) où un patient reprend rendez-vous : la
+// grille du praticien avec le motif présélectionné si le motif est toujours actif
+// et réservable en ligne, sinon la page du praticien.
+func RebookPath(practiceSlug string, pr sqlcgen.Practitioner, typ sqlcgen.AppointmentType) string {
+	page := "/p/" + url.PathEscape(practiceSlug) + "/" + url.PathEscape(pr.Slug)
+	if typ.Active && typ.OnlineBookable {
+		return page + "/book?type=" + typ.ID.String()
+	}
+	return page
 }
 
 // enqueue enfile le message template pour chaque canal retenu. runAt zéro =
@@ -297,6 +327,33 @@ func (n notifier) cancelledFor(ctx context.Context, tx pgx.Tx, q *sqlcgen.Querie
 		}
 	}
 	return n.slotFreed(ctx, tx, q, appt, appt.During.Lower.Time)
+}
+
+// patientCancelled enfile l'accusé d'annulation du patient qui vient d'annuler
+// lui-même (dans la transaction d'annulation ; la clé de déduplication rend un
+// rejeu sans effet). Email par défaut ; SMS seulement si le RDV a été vérifié par
+// SMS. Un RDV pris par le cabinet sans email utilisable n'en reçoit pas.
+func (n notifier) patientCancelled(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, appt sqlcgen.Appointment) error {
+	v, err := loadView(ctx, q, appt)
+	if err != nil {
+		return err
+	}
+	pref := ChannelEmail
+	switch {
+	case v.to.Verified == ChannelSMS:
+		pref = ChannelSMS
+	case !v.to.canEmail():
+		return nil
+	}
+	if v.practice.NotifyChangeChannel == ChannelNone {
+		return nil
+	}
+	data := n.data(v, n.key.forAppointment(appt))
+	if n.baseURL != "" {
+		data["rebook_url"] = strings.TrimRight(n.baseURL, "/") + RebookPath(v.practice.Slug, v.practitioner, v.typ)
+	}
+	_, err = n.enqueue(ctx, tx, v, pref, TemplatePatientCancellation, data, time.Time{}, TemplatePatientCancellation, "")
+	return err
 }
 
 // rescheduled annule les anciens messages en attente (rappels de l'ancienne heure

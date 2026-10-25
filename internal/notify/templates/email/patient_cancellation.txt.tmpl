@@ -1,0 +1,10 @@
+Bonjour {{.first_name}},
+
+Nous avons bien annulé votre rendez-vous ({{.type_name}}) du {{.date}} à {{.time}} avec {{.practitioner}}, comme vous l'avez demandé.
+{{if .rebook_url}}
+Pour reprendre rendez-vous :
+{{.rebook_url}}
+{{end}}{{if .practice_phone}}
+Une question ? Appelez le {{.practice_phone}}.
+{{end}}
+{{.signature}}

@@ -3,5 +3,6 @@
 <nav aria-label="Fil d'Ariane"><a class="link link-primary" href="{{.Data.BackURL}}">&larr; Retour au rendez-vous</a></nav>
 <h1 class="text-2xl font-semibold">Choisir un nouveau créneau</h1>
 <p class="text-base-content/70">{{.Data.Type.Name}} ({{formatDuration .Data.Type.Duration}}) avec {{.Data.Practitioner}}</p>
+{{if not .Data.Current.IsZero}}<p class="text-sm">Rendez-vous actuel : <strong><time datetime="{{.Data.Current.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Data.Current}} à {{localTime .Data.Current}}</time></strong></p>{{end}}
 {{template "booking_grid.html" .Data}}
 {{end}}
