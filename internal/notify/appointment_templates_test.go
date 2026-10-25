@@ -22,12 +22,13 @@ func apptData(manage bool) map[string]any {
 		"type_name": "Séance de kinésithérapie", "date": "jeudi 15 octobre", "date_short": "15/10", "time": "14h30",
 		"manage_url": "", "series_url": "", "rebook_url": "", "cancel_notice": "24 h", "signature": "Cabinet de kinésithérapie Dupont",
 		"old_date": "mardi 13 octobre", "old_date_short": "13/10", "old_time": "9h00",
-		"reason": "Praticien souffrant", "valid_until": "16h30", "offer_url": "https://rdv.cabinet-dupont.fr/w/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde",
+		"reason": "Praticien souffrant", "window": "du 12 novembre au 12 décembre, lundi, mercredi", "leave_url": "", "valid_until": "16h30", "offer_url": "https://rdv.cabinet-dupont.fr/w/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde",
 		"count": 10, "sessions": []string{"jeudi 15 octobre à 14h30", "lundi 19 octobre à 14h30", "jeudi 22 octobre à 14h30"},
 	}
 	if manage {
 		d["manage_url"] = "https://rdv.cabinet-dupont.fr/r/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde"
 		d["rebook_url"] = "https://rdv.cabinet-dupont.fr/p/cabinet-dupont/camille-martin/book?type=3f2b8c1e-5a7d-4e90-b1c2-8d4f6a9e0b13"
+		d["leave_url"] = "https://rdv.cabinet-dupont.fr/wl/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde"
 		d["series_url"] = "https://rdv.cabinet-dupont.fr/s/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde"
 	}
 	return d
@@ -60,7 +61,7 @@ func TestAppointmentTemplatesGolden(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"confirmation", "reminder", "cancellation", "reschedule", "series", "waitlist", "patient_cancellation"} {
+	for _, name := range []string{"confirmation", "reminder", "cancellation", "reschedule", "series", "waitlist", "patient_cancellation", "waitlist_joined"} {
 		for _, manage := range []bool{true, false} {
 			variant := "avec_lien"
 			if !manage {
@@ -82,10 +83,10 @@ func TestAppointmentTemplatesGolden(t *testing.T) {
 				if n, ucs2 := sms.Segments(body); n != 1 || ucs2 {
 					t.Errorf("SMS %s (%d caractères) : %d segment(s), UCS-2=%v ; attendu 1 segment GSM-7\n%s", name, len([]rune(body)), n, ucs2, body)
 				}
-				if !strings.Contains(e.Text, "Léa") || !strings.Contains(e.HTML, "15 octobre") {
+				if !strings.Contains(e.Text, "Léa") || (name != "waitlist_joined" && !strings.Contains(e.HTML, "15 octobre")) {
 					t.Errorf("email %s : prénom ou date absents", name)
 				}
-				wantLink := manage && name != "series" && name != "waitlist" && name != "patient_cancellation"
+				wantLink := manage && name != "series" && name != "waitlist" && name != "patient_cancellation" && name != "waitlist_joined"
 				if wantLink != strings.Contains(e.Text, "/r/") {
 					t.Errorf("email %s : lien de gestion présent=%v, attendu %v", name, !wantLink, wantLink)
 				}

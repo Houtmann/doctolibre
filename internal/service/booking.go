@@ -438,7 +438,7 @@ func (b *Booking) StartVerification(ctx context.Context, in VerifyInput) (Verifi
 		}); err != nil {
 			return fmt.Errorf("création OTP: %w", err)
 		}
-		return b.OTP.SendOTP(ctx, tx, sc.pc.ID, sc.pc.Name, in.Channel, recipient, code)
+		return b.OTP.SendOTP(ctx, tx, sc.pc.ID, sc.pc.Name, in.Channel, recipient, code, OTPPurposeBooking)
 	})
 	if err != nil {
 		return Verification{}, err

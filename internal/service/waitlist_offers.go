@@ -167,6 +167,7 @@ func (n notifier) offerTo(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, ap
 	v := apptView{appt: ghost, practice: sc.pc, practitioner: sc.pr, typ: sc.typ, to: rec, loc: sc.loc}
 	data := n.data(v, "")
 	data["offer_url"] = strings.TrimRight(n.baseURL, "/") + "/w/" + token
+	data["leave_url"] = leaveURL(n.baseURL, n.key.forWaitlistEntry(e)) // e-mail seulement : le SMS tient en un segment
 	data["valid_until"] = clockText(expires.In(sc.loc))
 	if _, err := n.enqueue(ctx, tx, v, sc.pc.NotifyChangeChannel, TemplateWaitlist, data, time.Time{}, TemplateWaitlist, offerID.String()); err != nil {
 		return false, err

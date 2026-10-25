@@ -38,6 +38,9 @@ func (d Deps) waitlistRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logg
 	mux.Handle("POST "+base+"/confirm", httpx.Chain(http.HandlerFunc(h.confirm), book))
 	mux.Handle("GET /w/{token}", httpx.Chain(http.HandlerFunc(h.offer), offer))
 	mux.Handle("POST /w/{token}", httpx.Chain(http.HandlerFunc(h.claim), offer))
+	// Désinscription (T097) : GET n'écrit rien, POST désinscrit. Même limiteur que /w/{jeton}.
+	mux.Handle("GET /wl/{token}", httpx.Chain(http.HandlerFunc(h.leaveForm), offer))
+	mux.Handle("POST /wl/{token}", httpx.Chain(http.HandlerFunc(h.leave), offer))
 }
 
 func (h *waitlistHandlers) fail(w http.ResponseWriter, r *http.Request, err error) {
@@ -321,5 +324,63 @@ func (h *waitlistHandlers) claim(w http.ResponseWriter, r *http.Request) {
 		h.renderOffer(w, r, status, v, token)
 	default:
 		h.fail(w, r, err)
+	}
+}
+
+// --- Désinscription (lien /wl/{jeton}) ---
+
+// LeaveData est la donnée de la page public_waitlist_leave.
+type LeaveData struct {
+	State        string // confirm | done | gone
+	Practice     string
+	Phone        string
+	Practitioner string
+	Type         string
+	Window       string
+	Action       string
+}
+
+// renderGone : page neutre pour un lien inconnu, déjà utilisé ou périmé (aucune
+// distinction, pour ne rien révéler sur l'existence d'une inscription).
+func (h *waitlistHandlers) renderGone(w http.ResponseWriter, r *http.Request) {
+	noStore(w)
+	h.rd.PageStatus(w, r, http.StatusNotFound, "public_waitlist_leave", LeaveData{State: "gone"})
+}
+
+func (h *waitlistHandlers) leaveForm(w http.ResponseWriter, r *http.Request) {
+	token := r.PathValue("token")
+	v, err := h.svc.LeaveView(r.Context(), token)
+	if errors.Is(err, domain.ErrNotFound) {
+		h.renderGone(w, r)
+		return
+	}
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	noStore(w)
+	h.rd.PageStatus(w, r, http.StatusOK, "public_waitlist_leave", LeaveData{
+		State: "confirm", Practice: v.Practice.Name, Phone: v.Practice.Phone, Practitioner: v.Practitioner,
+		Type: v.Type, Window: v.Window, Action: "/wl/" + url.PathEscape(token),
+	})
+}
+
+func (h *waitlistHandlers) leave(w http.ResponseWriter, r *http.Request) {
+	token := r.PathValue("token")
+	// Le nom du cabinet est lu avant l'écriture : après, le lien ne résout plus rien.
+	v, verr := h.svc.LeaveView(r.Context(), token)
+	err := h.svc.Leave(r.Context(), token)
+	switch {
+	case errors.Is(err, domain.ErrNotFound):
+		h.renderGone(w, r)
+	case err != nil:
+		h.fail(w, r, err)
+	default:
+		noStore(w)
+		d := LeaveData{State: "done"}
+		if verr == nil {
+			d.Practice, d.Phone = v.Practice.Name, v.Practice.Phone
+		}
+		h.rd.PageStatus(w, r, http.StatusOK, "public_waitlist_leave", d)
 	}
 }

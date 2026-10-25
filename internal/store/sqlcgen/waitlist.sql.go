@@ -43,14 +43,15 @@ func (q *Queries) CountActiveWaitlistForPatient(ctx context.Context, patientID u
 }
 
 const createWaitlistEntry = `-- name: CreateWaitlistEntry :one
-INSERT INTO waitlist_entry (practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays,
-                            time_from, time_to, verified_channel, source, created_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10, $11, $12)
-RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays, time_from, time_to, status, verified_channel, source, created_at
+INSERT INTO waitlist_entry (id, practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays,
+                            time_from, time_to, verified_channel, source, created_at, unsubscribe_hash)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, $13, $14)
+RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays, time_from, time_to, status, verified_channel, source, created_at, unsubscribe_hash
 `
 
 type CreateWaitlistEntryParams struct {
+	ID                uuid.UUID
 	PracticeID        uuid.UUID
 	PatientID         uuid.UUID
 	PractitionerID    pgtype.UUID
@@ -63,10 +64,12 @@ type CreateWaitlistEntryParams struct {
 	VerifiedChannel   pgtype.Text
 	Source            string
 	CreatedAt         time.Time
+	UnsubscribeHash   pgtype.Text
 }
 
 func (q *Queries) CreateWaitlistEntry(ctx context.Context, arg CreateWaitlistEntryParams) (WaitlistEntry, error) {
 	row := q.db.QueryRow(ctx, createWaitlistEntry,
+		arg.ID,
 		arg.PracticeID,
 		arg.PatientID,
 		arg.PractitionerID,
@@ -79,6 +82,7 @@ func (q *Queries) CreateWaitlistEntry(ctx context.Context, arg CreateWaitlistEnt
 		arg.VerifiedChannel,
 		arg.Source,
 		arg.CreatedAt,
+		arg.UnsubscribeHash,
 	)
 	var i WaitlistEntry
 	err := row.Scan(
@@ -96,6 +100,7 @@ func (q *Queries) CreateWaitlistEntry(ctx context.Context, arg CreateWaitlistEnt
 		&i.VerifiedChannel,
 		&i.Source,
 		&i.CreatedAt,
+		&i.UnsubscribeHash,
 	)
 	return i, err
 }
@@ -158,7 +163,7 @@ func (q *Queries) FulfillWaitlistEntry(ctx context.Context, id uuid.UUID) error 
 }
 
 const getWaitlistEntry = `-- name: GetWaitlistEntry :one
-SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays, time_from, time_to, status, verified_channel, source, created_at FROM waitlist_entry WHERE id = $1
+SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays, time_from, time_to, status, verified_channel, source, created_at, unsubscribe_hash FROM waitlist_entry WHERE id = $1
 `
 
 func (q *Queries) GetWaitlistEntry(ctx context.Context, id uuid.UUID) (WaitlistEntry, error) {
@@ -179,6 +184,35 @@ func (q *Queries) GetWaitlistEntry(ctx context.Context, id uuid.UUID) (WaitlistE
 		&i.VerifiedChannel,
 		&i.Source,
 		&i.CreatedAt,
+		&i.UnsubscribeHash,
+	)
+	return i, err
+}
+
+const getWaitlistEntryByUnsubscribeHash = `-- name: GetWaitlistEntryByUnsubscribeHash :one
+SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays, time_from, time_to, status, verified_channel, source, created_at, unsubscribe_hash FROM waitlist_entry WHERE unsubscribe_hash = $1
+`
+
+// Lien /wl/{jeton} : recherche par l'index unique du haché (jamais le jeton en clair).
+func (q *Queries) GetWaitlistEntryByUnsubscribeHash(ctx context.Context, unsubscribeHash pgtype.Text) (WaitlistEntry, error) {
+	row := q.db.QueryRow(ctx, getWaitlistEntryByUnsubscribeHash, unsubscribeHash)
+	var i WaitlistEntry
+	err := row.Scan(
+		&i.ID,
+		&i.PracticeID,
+		&i.PatientID,
+		&i.PractitionerID,
+		&i.AppointmentTypeID,
+		&i.Earliest,
+		&i.Latest,
+		&i.Weekdays,
+		&i.TimeFrom,
+		&i.TimeTo,
+		&i.Status,
+		&i.VerifiedChannel,
+		&i.Source,
+		&i.CreatedAt,
+		&i.UnsubscribeHash,
 	)
 	return i, err
 }
@@ -205,8 +239,8 @@ func (q *Queries) GetWaitlistOfferByToken(ctx context.Context, tokenHash string)
 }
 
 const listWaitlistCandidates = `-- name: ListWaitlistCandidates :many
-SELECT c.id, c.practice_id, c.patient_id, c.practitioner_id, c.appointment_type_id, c.earliest, c.latest, c.weekdays, c.time_from, c.time_to, c.status, c.verified_channel, c.source, c.created_at FROM (
-  SELECT DISTINCT ON (w.patient_id) w.id, w.practice_id, w.patient_id, w.practitioner_id, w.appointment_type_id, w.earliest, w.latest, w.weekdays, w.time_from, w.time_to, w.status, w.verified_channel, w.source, w.created_at FROM waitlist_entry w
+SELECT c.id, c.practice_id, c.patient_id, c.practitioner_id, c.appointment_type_id, c.earliest, c.latest, c.weekdays, c.time_from, c.time_to, c.status, c.verified_channel, c.source, c.created_at, c.unsubscribe_hash FROM (
+  SELECT DISTINCT ON (w.patient_id) w.id, w.practice_id, w.patient_id, w.practitioner_id, w.appointment_type_id, w.earliest, w.latest, w.weekdays, w.time_from, w.time_to, w.status, w.verified_channel, w.source, w.created_at, w.unsubscribe_hash FROM waitlist_entry w
   WHERE w.practice_id = $1 AND w.status = 'active'
   AND (w.practitioner_id IS NULL OR w.practitioner_id = $2)
   AND $3::date BETWEEN w.earliest AND w.latest
@@ -269,6 +303,7 @@ func (q *Queries) ListWaitlistCandidates(ctx context.Context, arg ListWaitlistCa
 			&i.VerifiedChannel,
 			&i.Source,
 			&i.CreatedAt,
+			&i.UnsubscribeHash,
 		); err != nil {
 			return nil, err
 		}
@@ -359,7 +394,7 @@ func (q *Queries) ListWaitlistEntries(ctx context.Context, arg ListWaitlistEntri
 }
 
 const lockWaitlistEntry = `-- name: LockWaitlistEntry :one
-SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays, time_from, time_to, status, verified_channel, source, created_at FROM waitlist_entry WHERE id = $1 FOR UPDATE
+SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays, time_from, time_to, status, verified_channel, source, created_at, unsubscribe_hash FROM waitlist_entry WHERE id = $1 FOR UPDATE
 `
 
 func (q *Queries) LockWaitlistEntry(ctx context.Context, id uuid.UUID) (WaitlistEntry, error) {
@@ -380,6 +415,7 @@ func (q *Queries) LockWaitlistEntry(ctx context.Context, id uuid.UUID) (Waitlist
 		&i.VerifiedChannel,
 		&i.Source,
 		&i.CreatedAt,
+		&i.UnsubscribeHash,
 	)
 	return i, err
 }

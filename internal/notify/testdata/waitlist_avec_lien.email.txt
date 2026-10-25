@@ -13,6 +13,9 @@ Vous êtes sur la liste d'attente : le premier à confirmer obtient ce créneau.
 Pour réserver ce créneau :
 https://rdv.cabinet-dupont.fr/w/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde
 
+Vous n'avez plus besoin de ce créneau ? Pour quitter la liste d'attente :
+https://rdv.cabinet-dupont.fr/wl/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde
+
 Une question ? Appelez le 04 72 00 00 00.
 
 Cabinet de kinésithérapie Dupont

@@ -29,6 +29,13 @@ const (
 	// TemplateOTP est le template email (internal/notify/templates/email).
 	TemplateOTP = "otp"
 
+	// TemplateOTPWaitlist : même code, texte propre à l'inscription en liste d'attente.
+	TemplateOTPWaitlist = "otp_waitlist" //nolint:gosec // nom de template, pas un secret
+
+	// Objet du code : la réservation d'un rendez-vous ou l'inscription en liste d'attente.
+	OTPPurposeBooking  = "booking"
+	OTPPurposeWaitlist = "waitlist"
+
 	channelSMS   = "sms"
 	channelEmail = "email"
 )
@@ -50,25 +57,28 @@ var (
 // adresse email (channel "email"). Ni le code ni le destinataire ne doivent être
 // journalisés.
 type OTPSender interface {
-	SendOTP(ctx context.Context, tx pgx.Tx, practiceID uuid.UUID, practiceName, channel, recipient, code string) error
+	SendOTP(ctx context.Context, tx pgx.Tx, practiceID uuid.UUID, practiceName, channel, recipient, code, purpose string) error
 }
 
 // OutboxOTPSender enfile le code dans l'outbox (SMS ou email), dans la transaction métier.
 type OutboxOTPSender struct{}
 
 // SendOTP implémente OTPSender.
-func (OutboxOTPSender) SendOTP(ctx context.Context, tx pgx.Tx, practiceID uuid.UUID, practiceName, channel, recipient, code string) error {
+func (OutboxOTPSender) SendOTP(ctx context.Context, tx pgx.Tx, practiceID uuid.UUID, practiceName, channel, recipient, code, purpose string) error {
 	m := outbox.Msg{PracticeID: practiceID, Recipient: recipient}
 	var payload any
 	switch channel {
 	case channelSMS:
 		m.Kind, m.Template = outbox.KindSMS, "otp"
 		payload = map[string]any{
-			"body": fmt.Sprintf("%s : votre code de vérification est %s (valable 10 min).", truncate(practiceName, 30), code),
+			"body": otpSMSBody(practiceName, code, purpose),
 			"otp":  true,
 		}
 	case channelEmail:
 		m.Kind, m.Template = outbox.KindEmail, TemplateOTP
+		if purpose == OTPPurposeWaitlist {
+			m.Template = TemplateOTPWaitlist
+		}
 		payload = map[string]string{"code": code, "valid_for": "10 minutes", "practice_name": practiceName}
 	default:
 		return fmt.Errorf("canal OTP inconnu %q", channel)
@@ -79,6 +89,13 @@ func (OutboxOTPSender) SendOTP(ctx context.Context, tx pgx.Tx, practiceID uuid.U
 	}
 	m.Payload = b
 	return outbox.Enqueue(ctx, tx, m)
+}
+
+func otpSMSBody(practiceName, code, purpose string) string {
+	if purpose == OTPPurposeWaitlist {
+		return fmt.Sprintf("%s : votre code de vérification pour la liste d'attente est %s (valable 10 min).", truncate(practiceName, 30), code)
+	}
+	return fmt.Sprintf("%s : votre code de vérification est %s (valable 10 min).", truncate(practiceName, 30), code)
 }
 
 // newOTPCode tire un code à 6 chiffres avec crypto/rand.

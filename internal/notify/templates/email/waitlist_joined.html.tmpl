@@ -1,0 +1,10 @@
+{{define "title"}}Liste d'attente{{end}}
+{{define "content"}}
+<h1 style="margin:0 0 16px;font-size:20px;">Vous êtes sur la liste d'attente</h1>
+<p style="margin:0 0 16px;">Bonjour {{.first_name}},</p>
+<p style="margin:0 0 16px;">Votre inscription sur la liste d'attente de {{.practice_name}} est enregistrée. Nous vous écrirons si un créneau se libère ; le premier à confirmer l'obtient.</p>
+<p style="margin:0 0 16px;">Motif : <strong>{{.type_name}}</strong><br>Praticien : {{.practitioner}}<br>Créneaux souhaités : {{.window}}</p>
+{{if .leave_url}}<p style="margin:0 0 16px;font-size:14px;">Vous n'avez plus besoin d'une place ? <a href="{{.leave_url}}">Quitter la liste d'attente</a>.</p>{{end}}
+{{if .practice_phone}}<p style="margin:0 0 16px;font-size:14px;">Une question ? Appelez le {{.practice_phone}}.</p>{{end}}
+<p style="margin:0;font-size:14px;">{{.signature}}</p>
+{{end}}

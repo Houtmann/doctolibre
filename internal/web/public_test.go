@@ -33,7 +33,7 @@ type otpCapture struct {
 	sent  int
 }
 
-func (o *otpCapture) SendOTP(_ context.Context, _ pgx.Tx, _ uuid.UUID, _, _, recipient, code string) error {
+func (o *otpCapture) SendOTP(_ context.Context, _ pgx.Tx, _ uuid.UUID, _, _, recipient, code, _ string) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	if o.codes == nil {

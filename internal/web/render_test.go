@@ -129,6 +129,8 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = BookingBlockedData{}
 			case "public_waitlist_offer":
 				data = OfferData{}
+			case "public_waitlist_leave":
+				data = LeaveData{}
 			case "dev_styleguide":
 				data = styleguideView()
 			}

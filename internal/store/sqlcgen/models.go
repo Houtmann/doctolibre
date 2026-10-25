@@ -314,6 +314,7 @@ type WaitlistEntry struct {
 	VerifiedChannel   pgtype.Text
 	Source            string
 	CreatedAt         time.Time
+	UnsubscribeHash   pgtype.Text
 }
 
 type WaitlistOffer struct {

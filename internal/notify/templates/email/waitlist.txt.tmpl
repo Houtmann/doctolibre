@@ -10,6 +10,9 @@ Vous êtes sur la liste d'attente : le premier à confirmer obtient ce créneau.
 {{if .offer_url}}
 Pour réserver ce créneau :
 {{.offer_url}}
+{{end}}{{if .leave_url}}
+Vous n'avez plus besoin de ce créneau ? Pour quitter la liste d'attente :
+{{.leave_url}}
 {{end}}{{if .practice_phone}}
 Une question ? Appelez le {{.practice_phone}}.
 {{end}}

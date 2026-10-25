@@ -26,7 +26,7 @@ type captureOTP struct {
 	sent  int
 }
 
-func (c *captureOTP) SendOTP(_ context.Context, _ pgx.Tx, _ uuid.UUID, _, _, recipient, code string) error {
+func (c *captureOTP) SendOTP(_ context.Context, _ pgx.Tx, _ uuid.UUID, _, _, recipient, code, _ string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.codes == nil {

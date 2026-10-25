@@ -272,7 +272,7 @@ func (w *Waitlist) StartVerification(ctx context.Context, in WaitlistVerifyInput
 		}); err != nil {
 			return fmt.Errorf("création OTP: %w", err)
 		}
-		return w.OTP.SendOTP(ctx, tx, pc.ID, pc.Name, in.Channel, recipient, code)
+		return w.OTP.SendOTP(ctx, tx, pc.ID, pc.Name, in.Channel, recipient, code, OTPPurposeWaitlist)
 	})
 	if err != nil {
 		return Verification{}, err
@@ -318,7 +318,7 @@ func (w *Waitlist) Join(ctx context.Context, in WaitlistJoinInput) (sqlcgen.Wait
 		return sqlcgen.WaitlistEntry{}, ErrOTPWrong
 	}
 	var entry sqlcgen.WaitlistEntry
-	err = store.WithTx(ctx, w.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
+	err = store.WithTx(ctx, w.Pool, func(q *sqlcgen.Queries, tx pgx.Tx) error {
 		n, err := q.ConsumeOTPChallenge(ctx, sqlcgen.ConsumeOTPChallengeParams{ID: in.ChallengeID, Now: now})
 		if err != nil {
 			return fmt.Errorf("consommation OTP: %w", err)
@@ -337,8 +337,13 @@ func (w *Waitlist) Join(ctx context.Context, in WaitlistJoinInput) (sqlcgen.Wait
 				slog.String("practice_id", pc.ID.String()), slog.String("patient_id", patient.ID.String()))
 			return domain.ErrOnlineBookingBlocked
 		}
-		entry, err = insertWaitlistEntry(ctx, q, pc.ID, patient.ID, win, in.Channel, "online", now)
-		return err
+		var token string
+		entry, token, err = insertWaitlistEntry(ctx, q, w.ManageKey, pc.ID, patient.ID, win, in.Channel, "online", now)
+		if err != nil {
+			return err
+		}
+		// Récapitulatif dans la transaction : rien n'est envoyé si elle échoue.
+		return w.notifier().waitlistJoined(ctx, tx, q, pc, loc, patient, entry, token)
 	})
 	if err != nil {
 		return sqlcgen.WaitlistEntry{}, err
@@ -346,23 +351,30 @@ func (w *Waitlist) Join(ctx context.Context, in WaitlistJoinInput) (sqlcgen.Wait
 	return entry, nil
 }
 
-func insertWaitlistEntry(ctx context.Context, q *sqlcgen.Queries, practiceID, patientID uuid.UUID, win window, verified, source string, now time.Time) (sqlcgen.WaitlistEntry, error) {
+// insertWaitlistEntry crée l'inscription et retourne aussi le jeton de désinscription
+// ("" sans clé). Le jeton est dérivé de l'id tiré ici, seul son haché est stocké.
+func insertWaitlistEntry(ctx context.Context, q *sqlcgen.Queries, key ManageKey, practiceID, patientID uuid.UUID, win window, verified, source string, now time.Time) (sqlcgen.WaitlistEntry, string, error) {
 	n, err := q.CountActiveWaitlistForPatient(ctx, patientID)
 	if err != nil {
-		return sqlcgen.WaitlistEntry{}, fmt.Errorf("comptage des inscriptions: %w", err)
+		return sqlcgen.WaitlistEntry{}, "", fmt.Errorf("comptage des inscriptions: %w", err)
 	}
 	if n >= maxActiveWaitlist {
-		return sqlcgen.WaitlistEntry{}, domain.ErrValidation{Field: "earliest", Msg: "Ce patient a déjà le nombre maximal d'inscriptions actives en liste d'attente."}
+		return sqlcgen.WaitlistEntry{}, "", domain.ErrValidation{Field: "earliest", Msg: "Ce patient a déjà le nombre maximal d'inscriptions actives en liste d'attente."}
 	}
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return sqlcgen.WaitlistEntry{}, "", fmt.Errorf("id de l'inscription: %w", err)
+	}
+	token, hash := key.mintWaitlist(id)
 	e, err := q.CreateWaitlistEntry(ctx, sqlcgen.CreateWaitlistEntryParams{
-		PracticeID: practiceID, PatientID: patientID, PractitionerID: win.practitioner, AppointmentTypeID: win.typeID,
+		ID: id, UnsubscribeHash: pgtype.Text{String: hash, Valid: hash != ""}, PracticeID: practiceID, PatientID: patientID, PractitionerID: win.practitioner, AppointmentTypeID: win.typeID,
 		Earliest: win.earliest, Latest: win.latest, Weekdays: win.weekdays, TimeFrom: win.from, TimeTo: win.to,
 		VerifiedChannel: pgtype.Text{String: verified, Valid: verified != ""}, Source: source, CreatedAt: now,
 	})
 	if err != nil {
-		return sqlcgen.WaitlistEntry{}, fmt.Errorf("création de l'inscription: %w", err)
+		return sqlcgen.WaitlistEntry{}, "", fmt.Errorf("création de l'inscription: %w", err)
 	}
-	return e, nil
+	return e, token, nil
 }
 
 // StaffAddInput est l'inscription saisie par le cabinet.
@@ -401,7 +413,7 @@ func (w *Waitlist) AddByStaff(ctx context.Context, a Actor, in StaffAddInput) (s
 		if err != nil {
 			return err
 		}
-		entry, err = insertWaitlistEntry(ctx, q, a.PracticeID, patient.ID, win, "", "staff", now)
+		entry, _, err = insertWaitlistEntry(ctx, q, w.ManageKey, a.PracticeID, patient.ID, win, "", "staff", now)
 		return err
 	})
 	if err != nil {

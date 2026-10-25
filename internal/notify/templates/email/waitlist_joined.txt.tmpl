@@ -1,0 +1,14 @@
+Bonjour {{.first_name}},
+
+Votre inscription sur la liste d'attente de {{.practice_name}} est enregistrée. Nous vous écrirons si un créneau se libère ; le premier à confirmer l'obtient.
+
+  Motif : {{.type_name}}
+  Praticien : {{.practitioner}}
+  Créneaux souhaités : {{.window}}
+{{if .leave_url}}
+Vous n'avez plus besoin d'une place ? Pour quitter la liste d'attente :
+{{.leave_url}}
+{{end}}{{if .practice_phone}}
+Une question ? Appelez le {{.practice_phone}}.
+{{end}}
+{{.signature}}

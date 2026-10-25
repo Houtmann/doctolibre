@@ -1,8 +1,8 @@
 -- name: CreateWaitlistEntry :one
-INSERT INTO waitlist_entry (practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays,
-                            time_from, time_to, verified_channel, source, created_at)
-VALUES (@practice_id, @patient_id, sqlc.narg('practitioner_id'), @appointment_type_id, @earliest, @latest, @weekdays,
-        sqlc.narg('time_from'), sqlc.narg('time_to'), sqlc.narg('verified_channel'), @source, @created_at)
+INSERT INTO waitlist_entry (id, practice_id, patient_id, practitioner_id, appointment_type_id, earliest, latest, weekdays,
+                            time_from, time_to, verified_channel, source, created_at, unsubscribe_hash)
+VALUES (@id, @practice_id, @patient_id, sqlc.narg('practitioner_id'), @appointment_type_id, @earliest, @latest, @weekdays,
+        sqlc.narg('time_from'), sqlc.narg('time_to'), sqlc.narg('verified_channel'), @source, @created_at, sqlc.narg('unsubscribe_hash'))
 RETURNING *;
 
 -- name: CountActiveWaitlistForPatient :one
@@ -67,6 +67,10 @@ SELECT * FROM waitlist_offer WHERE token_hash = @token_hash FOR UPDATE;
 
 -- name: GetWaitlistEntry :one
 SELECT * FROM waitlist_entry WHERE id = @id;
+
+-- name: GetWaitlistEntryByUnsubscribeHash :one
+-- Lien /wl/{jeton} : recherche par l'index unique du haché (jamais le jeton en clair).
+SELECT * FROM waitlist_entry WHERE unsubscribe_hash = @unsubscribe_hash;
 
 -- name: LockWaitlistEntry :one
 SELECT * FROM waitlist_entry WHERE id = @id FOR UPDATE;
