@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-10-25 — T095 déplacement/annulation patient, T097 liste d'attente côté patient (sonnet ×2 en parallèle ; contrôle : opus)
+
+- **Tâches** : T091 et T093 review → done (validées par l'humain) ; T095 et T097 todo → review
+- **Fait** : T095 : « Rendez-vous actuel » et ouverture sur la semaine du RDV (bornée), délai d'annulation sur `/r/` et dans l'email de confirmation, accusé `patient_cancellation` enfilé dans la transaction d'annulation, `RebookPath` (`/book?type=` si le motif est réservable). T097 : migration 00026 (`unsubscribe_hash`), OTP au texte propre à la liste d'attente, récapitulatif `waitlist_joined` dans la transaction de `Join`, `GET/POST /wl/{token}` (GET sans écriture, page 404 neutre, limiteur `offer`), lien dans l'email d'offre
+- **Vérification** : `make check` ✅ relancé par l'orchestrateur dans chaque worktree et sur la fusion des deux (conflit trivial dans `internal/notify/appointment_templates_test.go`, résolu), 0 test DB sauté ; revue renforcée du diff de T097 (jeton hashé, comparaison en temps constant, CSRF global, logs sans PII). Non vus au navigateur
+- **Reste** : relecture humaine de T095 et T097, passage navigateur (`/r/` modifiable et annulé, page de déplacement, `/wl/` dans ses trois états) et envoi vers Mailpit ; T098 attend T095 et T097 `done`
+- **Décisions** : 2 lignes du 2026-10-25 (T095, T097)
+
 ## 2026-10-22 — T091 SQL : recherche indexée, filtres practice_id ; correctif de tests T093 (sonnet ; contrôle : opus)
 
 - **Tâches** : T091 todo → review ; T093 reste en review (correctif)
