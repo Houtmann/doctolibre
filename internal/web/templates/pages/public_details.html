@@ -31,7 +31,7 @@
     <div class="space-y-1 sm:col-span-2">
       <label class="block text-sm font-medium" for="address">Adresse de la visite à domicile</label>
       <textarea class="textarea w-full" id="address" name="address" rows="3" maxlength="300" autocomplete="street-address" required aria-describedby="address-help">{{.Data.Form.Address}}</textarea>
-      <p class="text-sm text-base-content/70" id="address-help">Numéro, rue, code postal et commune. Le praticien se déplace uniquement dans la zone desservie.</p>
+      <p class="text-sm text-base-content/70" id="address-help">Numéro, rue, code postal et commune. Le praticien se déplace uniquement dans la zone desservie.{{if .Data.Zones}} Zones desservies : {{range $i, $z := .Data.Zones}}{{if $i}}, {{end}}{{$z}}{{end}}.{{end}}</p>
     </div>
     {{end}}
     <div class="space-y-1">

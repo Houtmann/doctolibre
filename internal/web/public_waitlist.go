@@ -36,6 +36,8 @@ func (d Deps) waitlistRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logg
 	mux.Handle("GET "+base, httpx.Chain(http.HandlerFunc(h.form), search))
 	mux.Handle("POST "+base, httpx.Chain(http.HandlerFunc(h.submit), book))
 	mux.Handle("POST "+base+"/confirm", httpx.Chain(http.HandlerFunc(h.confirm), book))
+	// Retour au formulaire depuis l'écran du code (T096) : n'envoie rien, n'écrit rien.
+	mux.Handle("POST "+base+"/edit", httpx.Chain(http.HandlerFunc(h.edit), search))
 	mux.Handle("GET /w/{token}", httpx.Chain(http.HandlerFunc(h.offer), offer))
 	mux.Handle("POST /w/{token}", httpx.Chain(http.HandlerFunc(h.claim), offer))
 	// Désinscription (T097) : GET n'écrit rien, POST désinscrit. Même limiteur que /w/{jeton}.
@@ -85,6 +87,7 @@ type WaitlistVerifyData struct {
 	Channel                string
 	Destination            string
 	Action, ResendURL      string
+	EditURL                string // « Modifier mes coordonnées » (T096)
 	BackURL                string
 	Errors                 []string
 }
@@ -164,7 +167,7 @@ func (h *waitlistHandlers) renderVerify(w http.ResponseWriter, r *http.Request, 
 		Practice: t.Practice.Name, Practitioner: practitionerView(t.Practice.Slug, t.Practitioner).Name,
 		TypeName: t.Type.Name, TypeID: t.Type.ID.String(), Form: v, ChallengeID: challenge.String(),
 		Channel: v.Channel, Destination: maskRecipient(dest),
-		Action: base + "/waitlist/confirm", ResendURL: base + "/waitlist",
+		Action: base + "/waitlist/confirm", ResendURL: base + "/waitlist", EditURL: base + "/waitlist/edit",
 		BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}}.Encode(), Errors: errs,
 	})
 }
@@ -179,6 +182,15 @@ func (h *waitlistHandlers) form(w http.ResponseWriter, r *http.Request) {
 		BookingForm: BookingForm{Channel: "email", SMSOptIn: true, EmailOptIn: true},
 		Earliest:    today.Format("2006-01-02"), Latest: today.AddDate(0, 0, waitlistDefaultSpanDays).Format("2006-01-02"),
 	}, nil)
+}
+
+// edit re-rend le formulaire pré-rempli depuis l'écran du code, sans rien envoyer ni valider.
+func (h *waitlistHandlers) edit(w http.ResponseWriter, r *http.Request) {
+	t, ok := h.target(w, r)
+	if !ok {
+		return
+	}
+	h.renderForm(w, r, http.StatusOK, t, readWaitlistForm(r), nil)
 }
 
 func (h *waitlistHandlers) submit(w http.ResponseWriter, r *http.Request) {

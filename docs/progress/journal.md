@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-11-01 — T096 écran de vérification et visites à domicile (sonnet ; contrôle : opus)
+
+- **Tâches** : T094 review → done (validée par l'humain) ; T096 todo → review
+- **Fait** : bouton « Modifier mes coordonnées » sur l'écran du code (réservation et liste d'attente) : POST avec CSRF vers `/book/edit` ou `/waitlist/edit`, formulaire pré-rempli en 200, ni OTP ni écriture ; zones desservies (`practice.home_visit_zones`) affichées dans l'aide du champ adresse pour un motif à domicile
+- **Vérification** : `make check` ✅ relancé par l'orchestrateur, tests T096 exécutés (0 sauté) : nombre d'OTP inchangé après « Modifier », 403 sans CSRF. Non vu au navigateur
+- **Reste** : relecture humaine et passage navigateur ; `TestPublicWaitlistJoinBlockedByNoShows` rejoint les tests fragiles (assertion sur la sous-chaîne « 403 », qu'un UUID peut contenir)
+- **Décisions** : 1 ligne du 2026-11-01 (T096)
+
 ## 2026-11-01 — T094 navigation de la prise de rendez-vous (sonnet ; contrôle : opus)
 
 - **Tâches** : T059 et T081 review → done (validées par l'humain) ; T094 todo → review

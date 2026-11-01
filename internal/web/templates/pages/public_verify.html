@@ -21,4 +21,9 @@
   {{template "booking_hidden.html" .Data}}
   <button class="btn btn-outline btn-sm" type="submit">Recevoir un nouveau code</button>
 </form>
+<form method="post" action="{{.Data.EditURL}}">
+  {{csrf .CSRF}}
+  {{template "booking_hidden.html" .Data}}
+  <button class="btn btn-ghost btn-sm" type="submit">Modifier mes coordonnées</button>
+</form>
 {{end}}

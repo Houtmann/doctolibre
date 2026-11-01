@@ -88,9 +88,9 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T091 | [SQL : recherche patients indexée, filtres practice_id](T091-sql-search-tenant-hygiene.md) | 5 | T017, T088 | done |
 | T092 | [Page patient « réservation en ligne indisponible »](T092-online-booking-blocked-page.md) | 5 | T088 | review |
 | T093 | [Correctifs du parcours patient (offres, déplacement, vie privée)](T093-patient-journey-fixes.md) | 5 | T088 | done |
-| T094 | [Navigation de la prise de rendez-vous](T094-booking-navigation.md) | 5 | T081 | review |
+| T094 | [Navigation de la prise de rendez-vous](T094-booking-navigation.md) | 5 | T081 | done |
 | T095 | [Déplacement et annulation par le patient](T095-patient-reschedule-cancel.md) | 5 | T093 | review |
-| T096 | [Écran de vérification et visites à domicile](T096-verify-screen-home-visits.md) | 5 | T094 | todo |
+| T096 | [Écran de vérification et visites à domicile](T096-verify-screen-home-visits.md) | 5 | T094 | review |
 | T097 | [Liste d'attente côté patient](T097-waitlist-patient-side.md) | 5 | T093, T091 | review |
 | T098 | [Reprendre rendez-vous sans nouvelle vérification](T098-rebook-without-reverify.md) | 5 | T095, T097 | todo |
 | T099 | [Agenda : praticiens non chargés au changement de vue](T099-agenda-view-switch-sources.md) | 5 | T083, T057 | review |

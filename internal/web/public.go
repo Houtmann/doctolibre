@@ -49,6 +49,8 @@ func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	// details et confirm partagent le seau « book » ; confirm est en plus limité par praticien (dans le handler).
 	mux.Handle("POST "+base+"/details", httpx.Chain(http.HandlerFunc(h.detailsSubmit), book))
 	mux.Handle("POST "+base+"/confirm", httpx.Chain(http.HandlerFunc(h.confirm), book))
+	// Retour au formulaire depuis l'écran de vérification (T096) : n'envoie rien, n'écrit rien.
+	mux.Handle("POST "+base+"/edit", httpx.Chain(http.HandlerFunc(h.detailsEdit), search))
 	// Lien de gestion : limité par IP (le jeton est un secret de 256 bits, mais pas de sondage gratuit).
 	// La grille de déplacement calcule des créneaux : elle partage le seau « search ».
 	mux.Handle("GET /r/{token}", httpx.Chain(http.HandlerFunc(h.confirmed), manage))
@@ -174,13 +176,15 @@ type DetailsData struct {
 	// Channels : canaux proposés pour recevoir le code (T086).
 	Channels service.Channels
 	AtHome   bool // visite à domicile : l'adresse est demandée
-	Summary  Summary
-	Form     BookingForm
-	TypeID   string
-	Start    string
-	Action   string
-	BackURL  string
-	Errors   []string
+	// Zones : zones desservies (codes postaux ou communes), affichées pour une visite à domicile.
+	Zones   []string
+	Summary Summary
+	Form    BookingForm
+	TypeID  string
+	Start   string
+	Action  string
+	BackURL string
+	Errors  []string
 }
 
 // VerifyData est la donnée de la page public_verify.
@@ -195,6 +199,7 @@ type VerifyData struct {
 	Destination string
 	Action      string
 	ResendURL   string
+	EditURL     string // « Modifier mes coordonnées » : renvoie au formulaire pré-rempli
 	BackURL     string
 	Errors      []string
 }
@@ -502,8 +507,12 @@ func (h *publicHandlers) renderDetails(w http.ResponseWriter, r *http.Request, s
 	base := basePath(r)
 	w.Header().Set("Cache-Control", "no-store")
 	f.Channel = availableChannel(f.Channel, t.Channels)
+	var zones []string
+	if t.Type.AtHome {
+		zones = t.Practice.HomeVisitZones
+	}
 	h.rd.PageStatus(w, r, status, "public_details", DetailsData{
-		Channels: t.Channels, AtHome: t.Type.AtHome, Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
+		Channels: t.Channels, AtHome: t.Type.AtHome, Zones: zones, Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
 		Action:  base + "/book/details",
 		BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}, "week": {isoWeek(start.In(t.Loc))}}.Encode(),
 		Errors:  errs,
@@ -523,7 +532,7 @@ func (h *publicHandlers) renderVerify(w http.ResponseWriter, r *http.Request, st
 	h.rd.PageStatus(w, r, status, "public_verify", VerifyData{
 		AtHome: t.Type.AtHome, Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
 		ChallengeID: challenge.String(), Channel: f.Channel, Destination: maskRecipient(dest),
-		Action: base + "/book/confirm", ResendURL: base + "/book/details",
+		Action: base + "/book/confirm", ResendURL: base + "/book/details", EditURL: base + "/book/edit",
 		BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}, "week": {isoWeek(start.In(t.Loc))}}.Encode(),
 		Errors:  errs,
 	})
@@ -549,6 +558,17 @@ func (h *publicHandlers) detailsForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.renderDetails(w, r, http.StatusOK, t, start, BookingForm{Channel: "email", SMSOptIn: true, EmailOptIn: true}, nil)
+}
+
+// detailsEdit re-rend le formulaire pré-rempli depuis les champs reposté de l'écran
+// de vérification. Ni code envoyé, ni écriture, ni validation de champ : le créneau est
+// seulement revérifié (bookingTarget), comme au GET.
+func (h *publicHandlers) detailsEdit(w http.ResponseWriter, r *http.Request) {
+	t, start, ok := h.bookingTarget(w, r)
+	if !ok {
+		return
+	}
+	h.renderDetails(w, r, http.StatusOK, t, start, readBookingForm(r), nil)
 }
 
 func (h *publicHandlers) detailsSubmit(w http.ResponseWriter, r *http.Request) {
