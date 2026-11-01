@@ -48,3 +48,7 @@ WHERE id = @id;
 -- name: SetPracticeNoShowThreshold :exec
 UPDATE practice SET no_show_block_threshold = @no_show_block_threshold, updated_at = now()
 WHERE id = @id;
+
+-- name: ListPracticeSlugsLimit2 :many
+-- Sert à savoir si l'instance n'a qu'un cabinet (accueil, T094) : 2 lignes suffisent.
+SELECT slug FROM practice ORDER BY created_at, id LIMIT 2;

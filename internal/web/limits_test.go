@@ -202,7 +202,7 @@ func TestPublicPOSTsShareOneBucket(t *testing.T) {
 			t.Errorf("POST %s après 10 POST: %d, attendu 429 du limiteur", path, rec.Code)
 		}
 	}
-	if rec := c.do("GET", e.base()+"/book?type="+tid, nil); rec.Code != 200 {
+	if rec := c.do("GET", e.base()+"/book?type="+tid+"&week=2026-43", nil); rec.Code != 200 {
 		t.Errorf("la grille a son propre seau: %d", rec.Code)
 	}
 	// Pages d'accueil : seau « browse » (rafale 30) distinct.

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -55,8 +56,13 @@ func (h *publicHandlers) firstAvailable(w http.ResponseWriter, r *http.Request) 
 		h.fail(w, r, err)
 		return
 	}
-	dest := home + "/" + url.PathEscape(first.Practitioner.Slug) + "/book/details?" + url.Values{
-		"type": {first.Type.ID.String()}, "start": {first.Start.UTC().Format("2006-01-02T15:04:05Z")},
+	// La grille de la semaine du créneau : le patient choisit son horaire (T094).
+	loc := time.UTC
+	if l, err := time.LoadLocation(first.Practice.Timezone); err == nil {
+		loc = l
+	}
+	dest := home + "/" + url.PathEscape(first.Practitioner.Slug) + "/book?" + url.Values{
+		"type": {first.Type.ID.String()}, "week": {isoWeek(mondayOf(first.Start, loc))},
 	}.Encode()
 	http.Redirect(w, r, dest, http.StatusSeeOther)
 }

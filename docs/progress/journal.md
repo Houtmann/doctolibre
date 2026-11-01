@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-11-01 — T094 navigation de la prise de rendez-vous (sonnet ; contrôle : opus)
+
+- **Tâches** : T059 et T081 review → done (validées par l'humain) ; T094 todo → review
+- **Fait** : `/` → 303 vers `/p/{slug}` si l'instance n'a qu'un cabinet (`ListPracticeSlugsLimit2`), logo public vers la page du cabinet ; `/book` sans `week` saute vers la semaine du premier créneau du praticien (`Booking.FirstAvailableFor`, boucle factorisée dans `firstFor`) ; grille : bouton « Voir la semaine suivante », navigation en bas, seul le premier jour déplié ; « Premier créneau disponible » redirige vers la grille du praticien retenu
+- **Vérification** : `make check` ✅ relancé par l'orchestrateur, 0 test DB sauté dans `service` et `web` ; diff relu (bornes [minMon, maxMon], pas de boucle de redirection, aucune classe dynamique, `ui.css` inchangé). Non vu au navigateur
+- **Reste** : relecture humaine et passage navigateur de T094 (accueil, saut de semaine, grille vide, grille de déplacement T095 qui partage le partial) ; T096 attend T094 `done`
+- **Décisions** : 1 ligne du 2026-11-01 (T094)
+
 ## 2026-10-25 — T095 déplacement/annulation patient, T097 liste d'attente côté patient (sonnet ×2 en parallèle ; contrôle : opus)
 
 - **Tâches** : T091 et T093 review → done (validées par l'humain) ; T095 et T097 todo → review

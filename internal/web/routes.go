@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"time"
 
 	"doctolibre/internal/auth"
@@ -82,7 +83,19 @@ func Routes(d Deps) http.Handler {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", d.healthz)
-	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) { rd.Page(w, r, "home", nil) })
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		// Instance mono-cabinet : l'accueil mène directement à la page du cabinet (T094).
+		if d.Booking != nil {
+			slug, ok, err := d.Booking.SoleSlug(r.Context())
+			if err != nil {
+				logger.Error("accueil: lecture des cabinets", slog.String("err", err.Error()))
+			} else if ok {
+				http.Redirect(w, r, "/p/"+url.PathEscape(slug), http.StatusSeeOther)
+				return
+			}
+		}
+		rd.Page(w, r, "home", nil)
+	})
 	if rd != nil {
 		mux.Handle("GET /static/", rd.StaticHandler())
 	}

@@ -1,24 +1,29 @@
 <div id="slot-grid" class="space-y-4">
-  <nav class="flex flex-wrap items-center justify-between gap-2" aria-label="Navigation par semaine">
-    {{if .PrevURL}}<a class="btn btn-outline btn-sm" href="{{.PrevURL}}" hx-get="{{.PrevURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">&larr; Semaine précédente</a>{{else}}<span></span>{{end}}
-    <h2 class="order-first w-full text-base font-semibold text-center sm:order-none sm:w-auto">Semaine {{.WeekLabel}}</h2>
-    {{if .NextURL}}<a class="btn btn-outline btn-sm" href="{{.NextURL}}" hx-get="{{.NextURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">Semaine suivante &rarr;</a>{{else}}<span></span>{{end}}
-  </nav>
+  {{template "grid_nav" .}}
   {{if .Days}}
   <div class="space-y-2">
-  {{range .Days}}
-  <details class="collapse collapse-arrow bg-base-100 border border-base-300" open aria-label="{{.Label}}">
-    <summary class="collapse-title font-semibold">{{.Label}}</summary>
+  {{range $i, $d := .Days}}
+  <details class="collapse collapse-arrow bg-base-100 border border-base-300"{{if eq $i 0}} open{{end}} aria-label="{{$d.Label}}">
+    <summary class="collapse-title font-semibold">{{$d.Label}}</summary>
     <div class="collapse-content">
       <ul class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-        {{range .Slots}}<li><a class="btn btn-outline btn-sm w-full" href="{{.URL}}"><time datetime="{{.Datetime}}">{{localTime .Time}}</time></a></li>{{end}}
+        {{range $d.Slots}}<li><a class="btn btn-outline btn-sm w-full" href="{{.URL}}"><time datetime="{{.Datetime}}">{{localTime .Time}}</time></a></li>{{end}}
       </ul>
     </div>
   </details>
   {{end}}
   </div>
   {{else}}
-  <div class="alert alert-info alert-soft" role="status">Aucun créneau disponible cette semaine.{{if .NextURL}} Essayez la semaine suivante.{{end}}</div>
+  <div class="alert alert-info alert-soft" role="status">Aucun créneau disponible cette semaine.</div>
+  {{if .NextURL}}<p class="text-center"><a class="btn btn-primary" href="{{.NextURL}}" hx-get="{{.NextURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">Voir la semaine suivante</a></p>{{end}}
   {{end}}
-  {{if .WaitlistURL}}<p class="text-center"><a class="btn btn-outline" href="{{.WaitlistURL}}">Aucun créneau ne me convient</a></p>{{end}}
+  {{template "grid_nav" .}}
+  {{if .WaitlistURL}}<p class="text-center"><a class="btn btn-ghost btn-sm" href="{{.WaitlistURL}}">Aucun créneau ne me convient</a></p>{{end}}
 </div>
+{{define "grid_nav"}}
+<nav class="flex flex-wrap items-center justify-between gap-2" aria-label="Navigation par semaine">
+    {{if .PrevURL}}<a class="btn btn-outline btn-sm" href="{{.PrevURL}}" hx-get="{{.PrevURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">&larr; Semaine précédente</a>{{else}}<span></span>{{end}}
+    <h2 class="order-first w-full text-base font-semibold text-center sm:order-none sm:w-auto">Semaine {{.WeekLabel}}</h2>
+    {{if .NextURL}}<a class="btn btn-outline btn-sm" href="{{.NextURL}}" hx-get="{{.NextURL}}" hx-target="#slot-grid" hx-swap="outerHTML" hx-push-url="true">Semaine suivante &rarr;</a>{{else}}<span></span>{{end}}
+  </nav>
+{{end}}

@@ -2,6 +2,7 @@ package web_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -227,6 +228,9 @@ func TestPublicBookingFullJourney(t *testing.T) {
 		t.Fatalf("créneau pris: %d %q", rec.Code, rec.Header().Get("Location"))
 	}
 	rec = c.do("GET", rec.Header().Get("Location"), nil)
+	if rec.Code == 303 { // grille sans « week » et semaine vide : saut vers la semaine suivante (T094)
+		rec = c.do("GET", rec.Header().Get("Location"), nil)
+	}
 	mustContain(t, rec, 200, "plus disponible")
 }
 
@@ -336,7 +340,7 @@ func TestPublicBookingIPRateLimit(t *testing.T) {
 	t.Parallel()
 	e := newPublicEnv(t)
 	c := newClient(t, e.h, "192.0.2.54")
-	gridURL := e.base() + "/book?type=" + e.typ.ID.String()
+	gridURL := e.base() + "/book?type=" + e.typ.ID.String() + "&week=2026-43"
 	limited := false
 	for range 15 {
 		if c.do("GET", gridURL, nil).Code == http.StatusTooManyRequests {
@@ -444,5 +448,62 @@ func TestPublicBookingDefaultsToEmailOTP(t *testing.T) {
 	mustContain(t, rec, 200, `name="channel" value="email"`)
 	if e.otp.code("alice@example.test") == "" || e.otp.code("+33611111111") != "" {
 		t.Errorf("le code doit partir par email uniquement (codes: %v)", e.otp.codes)
+	}
+}
+
+// Sans « week », une semaine courante vide mène (303) à la semaine du premier créneau ;
+// avec « week » explicite, pas de saut ; la cible n'est jamais rejouée en boucle (T094).
+func TestPublicBookingJumpsToFirstWeek(t *testing.T) {
+	t.Parallel()
+	e := newPublicEnv(t)
+	c := newClient(t, e.h, "192.0.2.58")
+	g := e.base() + "/book?type=" + e.typ.ID.String()
+
+	// Samedi 17/10 au soir : la semaine 42 n'a plus de créneau, le premier est le mardi 20/10 (semaine 43).
+	e.clock.Advance(time.Date(2026, 10, 17, 18, 0, 0, 0, time.UTC).Sub(e.clock.Now()))
+	rec := c.do("GET", g, nil)
+	if rec.Code != 303 || !strings.HasSuffix(rec.Header().Get("Location"), "&week=2026-43") {
+		t.Fatalf("saut: %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+	if rec := c.do("GET", rec.Header().Get("Location"), nil); rec.Code != 200 || !strings.Contains(rec.Body.String(), `<details class="collapse collapse-arrow bg-base-100 border border-base-300" open`) {
+		t.Errorf("cible: %d", rec.Code)
+	}
+	// Semaine explicite (même vide) : pas de saut.
+	if rec := c.do("GET", g+"&week=2026-42", nil); rec.Code != 200 {
+		t.Errorf("week explicite: %d", rec.Code)
+	}
+	// Grille vide : lien « Voir la semaine suivante » et navigation répétée en bas.
+	rec = c.do("GET", g+"&week=2026-42", nil)
+	body := rec.Body.String()
+	if !strings.Contains(body, "Voir la semaine suivante") || strings.Count(body, "Navigation par semaine") != 2 || strings.Count(body, " open ") != 0 {
+		t.Errorf("grille vide: %d nav=%d", rec.Code, strings.Count(body, "Navigation par semaine"))
+	}
+	// Le jour d'après l'horizon (aucun créneau : règle valide jusqu'à la veille) : pas de redirection.
+	if _, err := e.db.Exec(context.Background(), "UPDATE availability_rule SET valid_until = '2026-10-01' WHERE practitioner_id = $1", e.pr.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.svc.FirstAvailableFor(context.Background(), e.pc.Slug, e.pr.Slug, e.typ.ID); !errors.Is(err, service.ErrNoAvailability) {
+		t.Errorf("FirstAvailableFor = %v", err)
+	}
+	if rec := c.do("GET", g, nil); rec.Code != 200 {
+		t.Errorf("aucun créneau dans l'horizon: %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+}
+
+// L'accueil redirige vers le cabinet quand l'instance n'en a qu'un, le logo mène au cabinet (T094).
+func TestHomeRedirectsToSolePractice(t *testing.T) {
+	t.Parallel()
+	e := newPublicEnv(t) // base isolée : un seul cabinet
+	c := newClient(t, e.h, "192.0.2.59")
+	rec := c.do("GET", "/", nil)
+	if rec.Code != 303 || rec.Header().Get("Location") != "/p/"+e.pc.Slug {
+		t.Fatalf("accueil: %d %q", rec.Code, rec.Header().Get("Location"))
+	}
+	if rec := c.do("GET", "/p/"+e.pc.Slug, nil); !strings.Contains(rec.Body.String(), `href="/p/`+e.pc.Slug+`">Doctolibre`) {
+		t.Errorf("logo: %s", rec.Body.String())
+	}
+	testutil.NewPractice(t, e.db) // deuxième cabinet : page d'accueil actuelle
+	if rec := c.do("GET", "/", nil); rec.Code != 200 {
+		t.Errorf("deux cabinets: %d", rec.Code)
 	}
 }

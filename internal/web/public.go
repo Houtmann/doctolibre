@@ -318,7 +318,9 @@ func (h *publicHandlers) grid(w http.ResponseWriter, r *http.Request) {
 	}
 	now := h.svc.Now()
 	minMon, maxMon := mondayOf(now, t.Loc), mondayOf(now.Add(t.Horizon), t.Loc)
-	mon, ok := parseWeek(r.URL.Query().Get("week"), t.Loc)
+	weekParam := r.URL.Query().Get("week")
+	noWeek := !r.URL.Query().Has("week")
+	mon, ok := parseWeek(weekParam, t.Loc)
 	if !ok || mon.Before(minMon) {
 		mon = minMon
 	}
@@ -335,6 +337,30 @@ func (h *publicHandlers) grid(w http.ResponseWriter, r *http.Request) {
 	base := basePath(r)
 	gridURL := func(week time.Time) string {
 		return base + "/book?" + url.Values{"type": {typeID.String()}, "week": {isoWeek(week)}}.Encode()
+	}
+	// Sans « week » explicite et semaine courante vide : saut vers la semaine du
+	// premier créneau (T094). La cible porte « week » : pas de boucle. Aucun
+	// créneau dans l'horizon : on affiche la semaine courante.
+	if noWeek && len(slots) == 0 {
+		first, err := h.svc.FirstAvailableFor(r.Context(), r.PathValue("practice"), r.PathValue("practitioner"), typeID)
+		switch {
+		case err == nil:
+			target := mondayOf(first.Start, t.Loc)
+			if target.Before(minMon) {
+				target = minMon
+			}
+			if target.After(maxMon) {
+				target = maxMon
+			}
+			if target.After(mon) {
+				httpx.Redirect(w, r, gridURL(target))
+				return
+			}
+		case errors.Is(err, service.ErrNoAvailability):
+		default:
+			h.fail(w, r, err)
+			return
+		}
 	}
 	data := GridData{
 		Practice: t.Practice.Name, Practitioner: practitionerView(t.Practice.Slug, t.Practitioner).Name,

@@ -60,7 +60,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T056 | [Réglages : profil vs cabinet, séries au secrétariat](T056-settings-split-and-secretary-plans.md) | 5 | T033, T030 | review |
 | T057 | [Couleurs dans l'agenda compatibles CSP](T057-calendar-colors.md) | 5 | T016, T083 | review |
 | T058 | [Alarmes dans les fichiers ICS patient](T058-ics-valarm.md) | 5 | T042 | review |
-| T059 | [Remplaçant : accès borné dans le temps](T059-locum-delegation.md) | 5 | T033 | review |
+| T059 | [Remplaçant : accès borné dans le temps](T059-locum-delegation.md) | 5 | T033 | done |
 | T060 | [Ressources partagées (box, appareils)](T060-shared-resources.md) | 5 | T013, T014, T016 | review |
 | T061 | [Affiche imprimable avec QR code](T061-qr-poster.md) | 5 | T014 | blocked |
 | T062 | [Design system léger : tokens, catalogue, styleguide](T062-design-system.md) | 5 | T004, T016 | review |
@@ -75,7 +75,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T072 | [« Ma journée » : tournée domicile et pointage en un clic](T072-my-day-check-in.md) | 5 | T016, T032, T033 | review |
 | T073 | [Statistiques de séances et export pour rétrocession](T073-session-stats.md) | 5 | T072, T059 | todo |
 | T080 | [Outillage Tailwind + daisyUI, thème, layouts et partials](T080-daisyui-foundation.md) | 5 | — | review |
-| T081 | [Parcours patient public en daisyUI](T081-daisyui-public.md) | 5 | T080 | review |
+| T081 | [Parcours patient public en daisyUI](T081-daisyui-public.md) | 5 | T080 | done |
 | T082 | [Back-office : formulaires et tableaux en daisyUI](T082-daisyui-backoffice.md) | 5 | T080 | review |
 | T083 | [Agenda staff avec EventCalendar](T083-eventcalendar-agenda.md) | 5 | T080 | review |
 | T084 | [Pages restantes, retrait de Pico et de l'ancien CSS](T084-daisyui-cleanup.md) | 5 | T081, T082, T083 | review |
@@ -88,7 +88,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T091 | [SQL : recherche patients indexée, filtres practice_id](T091-sql-search-tenant-hygiene.md) | 5 | T017, T088 | done |
 | T092 | [Page patient « réservation en ligne indisponible »](T092-online-booking-blocked-page.md) | 5 | T088 | review |
 | T093 | [Correctifs du parcours patient (offres, déplacement, vie privée)](T093-patient-journey-fixes.md) | 5 | T088 | done |
-| T094 | [Navigation de la prise de rendez-vous](T094-booking-navigation.md) | 5 | T081 | todo |
+| T094 | [Navigation de la prise de rendez-vous](T094-booking-navigation.md) | 5 | T081 | review |
 | T095 | [Déplacement et annulation par le patient](T095-patient-reschedule-cancel.md) | 5 | T093 | review |
 | T096 | [Écran de vérification et visites à domicile](T096-verify-screen-home-visits.md) | 5 | T094 | todo |
 | T097 | [Liste d'attente côté patient](T097-waitlist-patient-side.md) | 5 | T093, T091 | review |

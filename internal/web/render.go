@@ -55,6 +55,8 @@ type View struct {
 	// PrivacyURL est la page vie privée publique du cabinet de la page affichée
 	// ("" si la route est inactive ou si la page n'est pas dans /p/{practice}).
 	PrivacyURL string
+	// HomeURL : cible du logo des pages publiques (page du cabinet si connu, sinon « / »).
+	HomeURL string
 }
 
 // navCurrent retourne l'entrée du menu d'administration pour un chemin.
@@ -287,8 +289,12 @@ func (r *Renderer) PageStatus(w http.ResponseWriter, req *http.Request, status i
 		return
 	}
 	v := View{CSRF: httpx.CSRFToken(req.Context()), Flash: r.takeFlash(w, req), Data: data, Role: roleOf(req), Current: navCurrent(req.URL.Path)}
-	if slug := req.PathValue("practice"); r.opts.PrivacyPublic && slug != "" {
-		v.PrivacyURL = "/p/" + url.PathEscape(slug) + "/privacy"
+	v.HomeURL = "/"
+	if slug := req.PathValue("practice"); slug != "" {
+		v.HomeURL = "/p/" + url.PathEscape(slug)
+		if r.opts.PrivacyPublic {
+			v.PrivacyURL = v.HomeURL + "/privacy"
+		}
 	}
 	r.write(w, req, status, t, "base.html", v)
 

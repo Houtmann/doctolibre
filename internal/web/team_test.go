@@ -578,16 +578,16 @@ func TestFirstAvailablePractitioner(t *testing.T) {
 	}
 	rec := anon.do("GET", base+"/premier-disponible?type="+e.typeID.String(), nil)
 	loc := rec.Header().Get("Location")
-	if rec.Code != 303 || !strings.HasPrefix(loc, base+"/p3/book/details?") {
+	if rec.Code != 303 || !strings.HasPrefix(loc, base+"/p3/book?") {
 		t.Fatalf("redirection = %d %q", rec.Code, loc)
 	}
 	u, _ := url.Parse(loc)
-	if got := u.Query().Get("start"); got != "2026-10-16T06:00:00Z" || u.Query().Get("type") != e.typeID.String() {
-		t.Errorf("créneau = %q type = %q", got, u.Query().Get("type"))
+	if u.Query().Get("week") != "2026-42" || u.Query().Get("type") != e.typeID.String() {
+		t.Errorf("semaine = %q type = %q", u.Query().Get("week"), u.Query().Get("type"))
 	}
-	// Le formulaire de réservation accepte ce créneau.
-	if rec := anon.do("GET", loc, nil); rec.Code != 200 {
-		t.Errorf("formulaire de réservation: %d", rec.Code)
+	// La grille de cette semaine propose ce créneau (le patient choisit son horaire).
+	if rec := anon.do("GET", loc, nil); rec.Code != 200 || !strings.Contains(rec.Body.String(), `datetime="2026-10-16T08:00:00&#43;02:00"`) {
+		t.Errorf("grille: %d %s", rec.Code, rec.Body.String())
 	}
 	// Motif inconnu : 404 ; motif absent : retour à la page du cabinet.
 	if rec := anon.do("GET", base+"/premier-disponible?type="+uuid.NewString(), nil); rec.Code != 404 {

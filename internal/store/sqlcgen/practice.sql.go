@@ -192,6 +192,31 @@ func (q *Queries) GetPracticeBySlug(ctx context.Context, slug string) (Practice,
 	return i, err
 }
 
+const listPracticeSlugsLimit2 = `-- name: ListPracticeSlugsLimit2 :many
+SELECT slug FROM practice ORDER BY created_at, id LIMIT 2
+`
+
+// Sert à savoir si l'instance n'a qu'un cabinet (accueil, T094) : 2 lignes suffisent.
+func (q *Queries) ListPracticeSlugsLimit2(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listPracticeSlugsLimit2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var slug string
+		if err := rows.Scan(&slug); err != nil {
+			return nil, err
+		}
+		items = append(items, slug)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPracticesPage = `-- name: ListPracticesPage :many
 SELECT id, name, slug, address, phone, timezone, min_booking_notice, min_cancel_notice, booking_horizon, created_at, updated_at, home_visit_online, home_visit_zones, notify_confirmation_channel, notify_reminder_channel, notify_change_channel, reminder_day_before, reminder_day_before_hour, reminder_two_hours, reminder_series, notify_signature, retention_outbox_days, retention_patient_years, retention_audit_days, patient_purge_enabled, privacy_contact, close_on_holidays, holidays_alsace_moselle, no_show_block_threshold FROM practice WHERE id > $1 ORDER BY id LIMIT $2
 `
