@@ -57,7 +57,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T053 | [Import CSV des patients](T053-patient-csv-import.md) | 5 | T017 | review |
 | T054 | [Garde-fou absences répétées](T054-no-show-guard.md) | 5 | T014, T017 | done |
 | T055 | [Lien de série pour le patient](T055-care-plan-patient-link.md) | 5 | T050 | review |
-| T056 | [Réglages : profil vs cabinet, séries au secrétariat](T056-settings-split-and-secretary-plans.md) | 5 | T033, T030 | review |
+| T056 | [Réglages : profil vs cabinet, séries au secrétariat](T056-settings-split-and-secretary-plans.md) | 5 | T033, T030 | done |
 | T057 | [Couleurs dans l'agenda compatibles CSP](T057-calendar-colors.md) | 5 | T016, T083 | review |
 | T058 | [Alarmes dans les fichiers ICS patient](T058-ics-valarm.md) | 5 | T042 | review |
 | T059 | [Remplaçant : accès borné dans le temps](T059-locum-delegation.md) | 5 | T033 | done |
@@ -72,8 +72,8 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T068 | [Design v2 : retrait de Pico et de l'ancien CSS](T068-design-v2-cleanup.md) | 5 | T065, T066, T067 | superseded |
 | T070 | [Consignes par motif et prérequis à la réservation](T070-appointment-type-instructions.md) | 5 | T014, T023, T058 | todo |
 | T071 | [Auto-planification de la série par le patient](T071-care-plan-self-scheduling.md) | 5 | T055, T030, T014 | todo |
-| T072 | [« Ma journée » : tournée domicile et pointage en un clic](T072-my-day-check-in.md) | 5 | T016, T032, T033 | review |
-| T073 | [Statistiques de séances et export pour rétrocession](T073-session-stats.md) | 5 | T072, T059 | todo |
+| T072 | [« Ma journée » : tournée domicile et pointage en un clic](T072-my-day-check-in.md) | 5 | T016, T032, T033 | done |
+| T073 | [Statistiques de séances et export pour rétrocession](T073-session-stats.md) | 5 | T072, T059 | review |
 | T080 | [Outillage Tailwind + daisyUI, thème, layouts et partials](T080-daisyui-foundation.md) | 5 | — | review |
 | T081 | [Parcours patient public en daisyUI](T081-daisyui-public.md) | 5 | T080 | done |
 | T082 | [Back-office : formulaires et tableaux en daisyUI](T082-daisyui-backoffice.md) | 5 | T080 | review |
@@ -83,7 +83,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T086 | [Fournisseurs email et SMS configurables par cabinet](T086-practice-notification-providers.md) | 5 | T023, T033 | review |
 | T087 | [Rate limiting du back-office et de la prise de RDV](T087-rate-limiting-admin-booking.md) | 5 | T014, T033, T046 | review |
 | T088 | [Corrections RDV : trajet, liste d'attente, statut concurrent](T088-booking-waitlist-fixes.md) | 5 | T032, T054, T031, T050 | done |
-| T089 | [Contrôle d'accès : séries, praticien implicite, reset](T089-access-control-fixes.md) | 5 | T056, T059 | todo |
+| T089 | [Contrôle d'accès : séries, praticien implicite, reset](T089-access-control-fixes.md) | 5 | T056, T059 | review |
 | T090 | [Durcissement HTTP et notifications](T090-http-notify-hardening.md) | 5 | T087, T086 | todo |
 | T091 | [SQL : recherche patients indexée, filtres practice_id](T091-sql-search-tenant-hygiene.md) | 5 | T017, T088 | done |
 | T092 | [Page patient « réservation en ligne indisponible »](T092-online-booking-blocked-page.md) | 5 | T088 | review |

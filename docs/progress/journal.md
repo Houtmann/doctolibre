@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-11-08 — T073 statistiques de séances, T089 contrôle d'accès (sonnet ×2 en parallèle ; contrôle : opus)
+
+- **Tâches** : T056 et T072 review → done (validées par l'humain) ; T073 et T089 todo → review
+- **Fait** : T073 : `GET /admin/stats` et `/admin/stats.csv` (requête agrégée `StatsSessions`, bornes en heure locale du cabinet, attribution au remplaçant selon la fiche praticien du compte qui pointe, CSV `;` + BOM + formules neutralisées, export audité, lien au tableau de bord). T089 : séries d'un praticien inaccessible → 404 dans toutes les méthodes de `CarePlans` ; RDV sans praticien désigné → 422 au lieu d'une fiche parasite ou d'un 403, présélection si un seul praticien ; désactivation = jetons de reset purgés, reset refusé sur compte inactif
+- **Vérification** : `make` ne tourne plus sur cette machine (Command Line Tools Xcode absentes : `/usr/bin/make` et cgo en dépendent). Étapes de `make check` rejouées à la main avec `CGO_ENABLED=0` dans chaque worktree puis sur la fusion : gofmt, vet, golangci-lint (0 issue), `go test ./...` (0 échec, 0 test DB sauté), `ui.css` régénéré identique. Revue renforcée des deux diffs (SQL, accès, CSV, transactions). EXPLAIN T073 : Bitmap Index Scan sur `appointment_practice_start_idx`, 2,8 ms / 15 000 RDV. Non vus au navigateur
+- **Reste** : relecture humaine et passage navigateur (`/admin/stats` à 360 px et en sombre, export CSV dans Excel) ; réinstaller les Command Line Tools (`xcode-select --install`) pour retrouver `make check`
+- **Décisions** : 2 lignes du 2026-11-08 (T073, T089)
+
 ## 2026-11-01 — T096 écran de vérification et visites à domicile (sonnet ; contrôle : opus)
 
 - **Tâches** : T094 review → done (validée par l'humain) ; T096 todo → review
