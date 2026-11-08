@@ -309,7 +309,7 @@ func TestAppointmentAccessByRole(t *testing.T) {
 		"new_last_name": {"Durand"}, "new_first_name": {"Léa"}, "new_phone": {"0612345678"}, "type_id": {e.typeID.String()},
 		"date": {"2026-10-16"}, "time": {"10:00"}, "view": {"day"}, "force": {"1"},
 	}
-	if rec := e.sec.do("POST", "/admin/appointments", cloneValues(form)); rec.Code != 403 {
+	if rec := e.sec.do("POST", "/admin/appointments", cloneValues(form)); rec.Code != 422 || !strings.Contains(rec.Body.String(), "Choisissez le praticien.") {
 		t.Errorf("secrétariat, sans praticien: %d", rec.Code)
 	}
 	f := cloneValues(form)

@@ -474,3 +474,32 @@ func TestAuditAndLockAreScopedToPractice(t *testing.T) {
 		t.Errorf("verrou du cabinet: %v", err)
 	}
 }
+
+// Sans praticien désigné, un administrateur non praticien ou le secrétariat reçoit
+// une erreur de validation et aucune fiche praticien parasite n'est créée.
+func TestCalendarCreateWithoutPractitionerCreatesNoPractitioner(t *testing.T) {
+	t.Parallel()
+	f := newCalFixture(t)
+	ctx := context.Background()
+	for _, role := range []string{domain.RoleAdmin, domain.RoleSecretary} {
+		u, err := auth.CreateUser(ctx, f.db, auth.CreateUserParams{
+			Email: role + "-sans-cible@example.test", Role: role, PracticeName: "Cabinet " + role, Password: testPassword,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		a := service.Actor{UserID: u.ID, PracticeID: u.PracticeID, Role: role}
+		_, err = f.cal.Create(ctx, a, f.quick("2026-10-19", "09:00", true))
+		ve := domain.FieldErrors(err)
+		if len(ve) != 1 || ve[0].Field != "practitioner" || ve[0].Msg != "Choisissez le praticien." {
+			t.Errorf("%s sans cible: %v", role, err)
+		}
+		var n int
+		if err := f.db.QueryRow(ctx, `SELECT count(*) FROM practitioner WHERE practice_id = $1`, u.PracticeID).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		if n != 0 {
+			t.Errorf("%s: %d fiche(s) praticien parasite(s)", role, n)
+		}
+	}
+}

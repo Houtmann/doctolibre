@@ -374,6 +374,9 @@ func (s *Service) SetActive(ctx context.Context, actor User, id uuid.UUID, activ
 			if err := q.DeleteSessionsByUser(ctx, id); err != nil {
 				return fmt.Errorf("révocation des sessions: %w", err)
 			}
+			if err := q.DeletePasswordResetsByUser(ctx, id); err != nil {
+				return fmt.Errorf("purge des jetons de réinitialisation: %w", err)
+			}
 			action = ActionUserDeactivated
 		}
 		return auditTeam(ctx, q, actor, action, uuid.NullUUID{UUID: id, Valid: true}, nil)

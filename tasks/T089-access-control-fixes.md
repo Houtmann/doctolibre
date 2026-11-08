@@ -20,10 +20,10 @@ Un praticien (ou un remplaçant) n'agit que sur les séries des praticiens auxqu
 3. **Compte désactivé** — `SetActive(false)` ajoute `DeletePasswordResetsByUser` dans la même transaction ; `ResetPassword` refuse un compte inactif. Test : jeton émis, compte désactivé → reset refusé.
 
 ## Critères d'acceptation
-- [ ] Aucune méthode de `CarePlans` n'agit sur la série d'un praticien inaccessible (tests cross-praticien et délégation).
-- [ ] Secrétaire en cabinet mono-praticien crée un RDV même sans paramètre d'URL ; plus de fiche praticien parasite.
-- [ ] Désactivation = sessions et jetons de reset supprimés (test).
-- [ ] `make check` vert.
+- [x] Aucune méthode de `CarePlans` n'agit sur la série d'un praticien inaccessible (tests cross-praticien et délégation).
+- [x] Secrétaire en cabinet mono-praticien crée un RDV même sans paramètre d'URL ; plus de fiche praticien parasite.
+- [x] Désactivation = sessions et jetons de reset supprimés (test).
+- [x] `make check` vert.
 
 ## Vérification
 ```bash
@@ -38,8 +38,8 @@ Horaires hebdomadaires du titulaire modifiables par le remplaçant (question pro
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-11-08 (sonnet)
+- **Fait** : contrôle `mayAccessPractitioner` → `ErrNotFound` dans `CarePlans.load` (donc `AddSession`, `ForAppointment`) et `SetStatus` (lecture de la série dans la transaction) ; `replace` passe par `AddSession`. `Calendar.Create` : acteur sans cible ni praticien lié et de rôle ≠ praticien → `ErrValidation{practitioner, "Choisissez le praticien."}`, aucune fiche créée. `formPage` : un seul praticien visible → champ caché. `SetActive(false)` purge les jetons de reset ; `ResetPassword` refuse un compte inactif (`ErrInvalidResetToken`, rollback). Tests : service (`TestCarePlanAccessControl`, `TestCalendarCreateWithoutPractitionerCreatesNoPractitioner`), web (`TestCarePlanOfAnotherPractitionerIsNotFound`, `TestAppointmentFormPreselectsSinglePractitioner`), auth (`TestSetActiveFalseDeletesResetTokensAndResetRefusesInactive`). `TestAppointmentAccessByRole` adapté : secrétariat sans praticien = 422 (plus 403).
+- **Reste à faire** : rien.
+- **Notes de reprise** : sur cette machine, `make` appelle go avec cgo → utiliser `CGO_ENABLED=0` ; `make check` lancé en étapes (fmt-check, vet, golangci-lint 0 issue, go test ./... vert, 0 SKIP). Aucun template modifié (css-check non lancé).
+- **Écarts avec la spécification** : la liste de séries d'un patient (`ForPatient`) reste en lecture pour tout rôle autorisé sur le patient (hors périmètre).

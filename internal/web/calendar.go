@@ -348,6 +348,9 @@ func (h *calendarHandlers) formPage(r *http.Request, f FormValues, errs []string
 	}
 	if prs, err := h.svc.ViewablePractitioners(r.Context(), a); err != nil {
 		return nil, err
+	} else if len(prs) == 1 && f.Practitioner == "" {
+		// Un seul praticien visible (secrétariat en cabinet mono-praticien) : présélection en champ caché.
+		p.Form.Practitioner = prs[0].ID.String()
 	} else if len(prs) > 1 {
 		for _, pr := range prs {
 			p.Practitioners = append(p.Practitioners, PractitionerOption{

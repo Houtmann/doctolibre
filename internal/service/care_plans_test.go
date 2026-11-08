@@ -284,3 +284,73 @@ func TestCarePlanSetStatus(t *testing.T) {
 		t.Errorf("série inconnue : %v", err)
 	}
 }
+
+// Une série n'est accessible qu'aux acteurs qui ont accès à l'agenda de son
+// praticien : 404 (pas 403) sinon, pour toutes les méthodes qui prennent un ID de série.
+func TestCarePlanAccessControl(t *testing.T) {
+	t.Parallel()
+	f := newPlanFixture(t)
+	ctx := context.Background()
+	prop, err := f.plans.Propose(ctx, f.act, f.input())
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := f.plans.Create(ctx, f.act, service.CreateInput{Plan: f.input(), Lines: f.lines(t, prop)[:3]})
+	if err != nil {
+		t.Fatal(err)
+	}
+	owner := plan.PractitionerID
+	other := uuid.New()
+	base := service.Actor{UserID: f.act.UserID, PracticeID: f.act.PracticeID}
+	with := func(role string, own uuid.UUID, delegated ...uuid.UUID) service.Actor {
+		a := base
+		a.Role, a.PractitionerID, a.Delegated = role, own, delegated
+		return a
+	}
+	denied := map[string]service.Actor{
+		"praticien confrère":            with(domain.RolePractitioner, other),
+		"remplaçant délégué pour autre": with(domain.RolePractitioner, other, uuid.New()),
+	}
+	for name, a := range denied {
+		if _, err := f.plans.AddSession(ctx, a, plan.ID, "2026-12-01", "08:00"); !errors.Is(err, domain.ErrNotFound) {
+			t.Errorf("%s AddSession: %v, attendu ErrNotFound", name, err)
+		}
+		if _, err := f.plans.SetStatus(ctx, a, plan.ID, "completed"); !errors.Is(err, domain.ErrNotFound) {
+			t.Errorf("%s SetStatus: %v, attendu ErrNotFound", name, err)
+		}
+	}
+	var apptID uuid.UUID
+	if err := f.db.QueryRow(ctx, `SELECT id FROM appointment WHERE care_plan_id = $1 LIMIT 1`, plan.ID).Scan(&apptID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.plans.ForAppointment(ctx, denied["praticien confrère"], apptID); !errors.Is(err, domain.ErrNotFound) {
+		t.Errorf("ForAppointment confrère: %v", err)
+	}
+	if st := mustStatus(t, f, plan.ID); st != "active" {
+		t.Fatalf("la série d'un confrère a été modifiée: %s", st)
+	}
+
+	allowed := map[string]service.Actor{
+		"remplaçant délégué": with(domain.RolePractitioner, other, owner),
+		"secrétariat":        with(domain.RoleSecretary, uuid.Nil),
+		"administrateur":     with(domain.RoleAdmin, uuid.Nil),
+		"propriétaire":       with(domain.RolePractitioner, owner),
+	}
+	for name, a := range allowed {
+		if _, err := f.plans.AddSession(ctx, a, plan.ID, "2026-12-01", "08:00"); errors.Is(err, domain.ErrNotFound) || errors.Is(err, domain.ErrForbidden) {
+			t.Errorf("%s AddSession: %v", name, err)
+		}
+		if _, err := f.plans.SetStatus(ctx, a, plan.ID, "active"); err != nil {
+			t.Errorf("%s SetStatus: %v", name, err)
+		}
+	}
+}
+
+func mustStatus(t *testing.T, f planFixture, id uuid.UUID) string {
+	t.Helper()
+	var s string
+	if err := f.db.QueryRow(context.Background(), `SELECT status FROM care_plan WHERE id = $1`, id).Scan(&s); err != nil {
+		t.Fatal(err)
+	}
+	return s
+}

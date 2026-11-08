@@ -319,6 +319,11 @@ func (c *Calendar) Create(ctx context.Context, a Actor, in NewAppointmentInput) 
 	if len(errs) > 0 {
 		return sqlcgen.Appointment{}, errs
 	}
+	// Sans praticien désigné, seul un acteur praticien (ou lié à un praticien) agit
+	// sur son propre agenda ; les autres doivent choisir (aucune fiche parasite).
+	if a.Role != "" && a.Target == uuid.Nil && a.Role != domain.RolePractitioner && a.PractitionerID == uuid.Nil {
+		return sqlcgen.Appointment{}, domain.ErrValidation{Field: "practitioner", Msg: "Choisissez le praticien."}
+	}
 	pr, err := c.practice().Practitioner(ctx, a)
 	if err != nil {
 		return sqlcgen.Appointment{}, err

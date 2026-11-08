@@ -318,3 +318,29 @@ func TestTeamIsScopedToPractice(t *testing.T) {
 		}
 	}
 }
+
+func TestSetActiveFalseDeletesResetTokensAndResetRefusesInactive(t *testing.T) {
+	t.Parallel()
+	e := newTeamEnv(t)
+	ctx := context.Background()
+	member := e.addMember(t, "reset@example.test", domain.RolePractitioner)
+	insert := func(token string) {
+		t.Helper()
+		if _, err := e.db.Exec(ctx, `INSERT INTO password_reset (token_hash, user_id, expires_at, created_at) VALUES ($1, $2, $3, $4)`,
+			auth.SessionID(token), member.ID, t0.Add(time.Hour), t0); err != nil {
+			t.Fatal(err)
+		}
+	}
+	insert("tok-a")
+	if err := e.svc.SetActive(ctx, e.admin, member.ID, false); err != nil {
+		t.Fatal(err)
+	}
+	if n := count(t, e.db, `SELECT count(*) FROM password_reset WHERE user_id = $1`, member.ID); n != 0 {
+		t.Errorf("jetons de reset conservés après désactivation: %d", n)
+	}
+	// Défense en profondeur : un jeton qui survivrait ne réinitialise pas un compte inactif.
+	insert("tok-b")
+	if err := e.svc.ResetPassword(ctx, "tok-b", "un-mot-de-passe-solide-42", ""); !errors.Is(err, auth.ErrInvalidResetToken) {
+		t.Errorf("reset d'un compte inactif: %v, attendu ErrInvalidResetToken", err)
+	}
+}

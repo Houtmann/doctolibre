@@ -130,6 +130,14 @@ func (s *Service) ResetPassword(ctx context.Context, token, newPassword, ip stri
 		if err != nil {
 			return fmt.Errorf("consommation du jeton: %w", err)
 		}
+		u, err := q.GetUser(ctx, userID)
+		if err != nil {
+			return fmt.Errorf("lecture de l'utilisateur: %w", err)
+		}
+		if !u.Active {
+			// Même réponse qu'un jeton invalide (pas d'énumération) ; rollback du jeton consommé.
+			return ErrInvalidResetToken
+		}
 		if err := q.UpdateUserPassword(ctx, sqlcgen.UpdateUserPasswordParams{ID: userID, PasswordHash: hash}); err != nil {
 			return fmt.Errorf("mise à jour du mot de passe: %w", err)
 		}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -213,6 +214,7 @@ func TestCarePlanConflictRendersAllOrNothing(t *testing.T) {
 // horaires), un secrétaire connecté, un patient, et un praticien d'un autre cabinet.
 type secretaryPlanEnv struct {
 	c        *client // secrétaire
+	h        http.Handler
 	db       *pgxpool.Pool
 	patient  sqlcgen.Patient
 	typeID   string
@@ -270,7 +272,7 @@ func newSecretaryPlanEnv(t *testing.T) secretaryPlanEnv {
 	}
 	other := testutil.NewPractice(t, db)
 	return secretaryPlanEnv{
-		c: c, db: db, patient: p, typeID: ts[0].ID.String(), pracID: pr.ID, pracName: service.PractitionerName(pr),
+		c: c, h: h, db: db, patient: p, typeID: ts[0].ID.String(), pracID: pr.ID, pracName: service.PractitionerName(pr),
 		foreign: testutil.NewPractitioner(t, db, other.ID).ID,
 	}
 }
@@ -371,5 +373,60 @@ func TestCarePlanSecretaryCannotTargetOtherPractice(t *testing.T) {
 	}
 	if n := e.count(t, "SELECT count(*) FROM appointment WHERE care_plan_id IS NOT NULL"); n != 0 {
 		t.Errorf("%d séance(s) créée(s)", n)
+	}
+}
+
+// Un praticien ne change pas le statut ni ne planifie une séance dans la série d'un
+// confrère : 404 (l'existence n'est pas révélée) et rien n'est modifié.
+func TestCarePlanOfAnotherPractitionerIsNotFound(t *testing.T) {
+	t.Parallel()
+	e := newSecretaryPlanEnv(t)
+	ctx := context.Background()
+	base := "/admin/patients/" + e.patient.ID.String()
+	form := url.Values{
+		"type_id": {e.typeID}, "prescribed": {"4"}, "per_week": {"2"}, "start_date": {"2026-10-19"},
+		"practitioner": {e.pracID.String()}, "line_date": {"2026-10-19", "2026-10-22"}, "line_time": {"08:00", "08:00"},
+	}
+	if rec := e.c.do("POST", base+"/care-plans", form); rec.Code != 303 {
+		t.Fatalf("create : %d", rec.Code)
+	}
+	var planID string
+	if err := e.db.QueryRow(ctx, `SELECT id::text FROM care_plan WHERE practitioner_id = $1`, e.pracID).Scan(&planID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := auth.CreateUser(ctx, e.db, auth.CreateUserParams{Email: "confrere@example.test", Role: domain.RolePractitioner, PracticeName: "Cabinet test", Password: pw}); err != nil {
+		t.Fatal(err)
+	}
+	other := newClient(t, e.h, "192.0.2.42")
+	if rec := other.login("confrere@example.test", pw, "/admin"); rec.Code != 303 {
+		t.Fatalf("login confrère: %d", rec.Code)
+	}
+	if rec := other.do("POST", "/admin/care-plans/"+planID+"/status", url.Values{"status": {"cancelled"}}); rec.Code != 404 {
+		t.Errorf("status confrère: %d, attendu 404", rec.Code)
+	}
+	if rec := other.do("POST", "/admin/care-plans/"+planID+"/replace", url.Values{"date": {"2026-11-02"}, "time": {"08:00"}}); rec.Code != 404 {
+		t.Errorf("replace confrère: %d, attendu 404", rec.Code)
+	}
+	if n := e.count(t, "SELECT count(*) FROM care_plan WHERE id = $1 AND status = 'active'", planID); n != 1 {
+		t.Errorf("série modifiée par un confrère")
+	}
+}
+
+// Secrétariat en cabinet mono-praticien : le formulaire porte le praticien en champ
+// caché, la création aboutit et aucune fiche praticien parasite n'apparaît.
+func TestAppointmentFormPreselectsSinglePractitioner(t *testing.T) {
+	t.Parallel()
+	e := newSecretaryPlanEnv(t)
+	before := e.count(t, "SELECT count(*) FROM practitioner")
+	mustContain(t, e.c.do("GET", "/admin/appointments/new", nil), 200, `<input type="hidden" name="practitioner" value="`+e.pracID.String()+`">`)
+	form := url.Values{
+		"new_first_name": {"Léa"}, "new_last_name": {"Durand"}, "new_phone": {"06 12 34 56 78"},
+		"type_id": {e.typeID}, "date": {"2026-10-19"}, "time": {"09:00"}, "practitioner": {e.pracID.String()},
+	}
+	if rec := e.c.do("POST", "/admin/appointments", form); rec.Code != 303 {
+		t.Fatalf("création : %d", rec.Code)
+	}
+	if after := e.count(t, "SELECT count(*) FROM practitioner"); after != before {
+		t.Errorf("fiche praticien parasite : %d -> %d", before, after)
 	}
 }

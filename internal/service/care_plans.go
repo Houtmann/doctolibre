@@ -672,6 +672,9 @@ func (s *CarePlans) load(ctx context.Context, q *sqlcgen.Queries, a Actor, id uu
 	if err != nil {
 		return cp, PlanView{}, fmt.Errorf("lecture série: %w", err)
 	}
+	if !a.mayAccessPractitioner(cp.PractitionerID) {
+		return cp, PlanView{}, domain.ErrNotFound
+	}
 	rows, err := q.ListCarePlanAppointments(ctx, sqlcgen.ListCarePlanAppointmentsParams{CarePlanID: pgtype.UUID{Bytes: id, Valid: true}, PracticeID: a.PracticeID})
 	if err != nil {
 		return cp, PlanView{}, fmt.Errorf("séances de la série: %w", err)
@@ -748,6 +751,9 @@ func (s *CarePlans) AddSession(ctx context.Context, a Actor, planID uuid.UUID, d
 		if err != nil {
 			return fmt.Errorf("verrou série: %w", err)
 		}
+		if !a.mayAccessPractitioner(cp.PractitionerID) {
+			return domain.ErrNotFound
+		}
 		_, v, err := s.load(ctx, q, a, planID)
 		if err != nil {
 			return err
@@ -809,7 +815,16 @@ func (s *CarePlans) SetStatus(ctx context.Context, a Actor, planID uuid.UUID, st
 	}
 	var out sqlcgen.CarePlan
 	err := store.WithTx(ctx, s.Pool, func(q *sqlcgen.Queries, _ pgx.Tx) error {
-		var err error
+		cp, err := q.GetCarePlan(ctx, sqlcgen.GetCarePlanParams{ID: planID, PracticeID: a.PracticeID})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.ErrNotFound
+		}
+		if err != nil {
+			return fmt.Errorf("lecture série: %w", err)
+		}
+		if !a.mayAccessPractitioner(cp.PractitionerID) {
+			return domain.ErrNotFound
+		}
 		out, err = q.SetCarePlanStatus(ctx, sqlcgen.SetCarePlanStatusParams{ID: planID, PracticeID: a.PracticeID, Status: status})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.ErrNotFound
