@@ -67,6 +67,9 @@ func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger)
 	if d.Audit != nil {
 		d.auditRoutes(mux, rd, logger)
 	}
+	if d.Stats != nil {
+		d.statsRoutes(mux, rd, logger)
+	}
 	if d.Waitlist != nil {
 		d.waitlistAdminRoutes(mux, rd, logger)
 	}

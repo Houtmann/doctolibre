@@ -35,5 +35,5 @@
   {{end}}
 </section>
 {{end}}{{end}}
-<p class="mt-4"><a class="link link-primary" href="/admin/messages">Messages envoyés</a></p>
+<p class="mt-4"><a class="link link-primary" href="/admin/messages">Messages envoyés</a>{{if or (eq .Role "admin") (eq .Role "practitioner")}} · <a class="link link-primary" href="/admin/stats">Statistiques de séances</a>{{end}}</p>
 {{end}}

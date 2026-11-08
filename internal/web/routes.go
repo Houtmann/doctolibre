@@ -59,6 +59,9 @@ type Deps struct {
 	// NotifyTransport (fournisseurs d'email et de SMS par cabinet) est optionnel : nil = pas de /admin/settings/notifications/transport.
 	NotifyTransport *service.NotifyTransport
 
+	// Stats (statistiques de séances, export CSV) est optionnel : nil = pas de /admin/stats.
+	Stats *service.Stats
+
 	// LimiterNow est l'horloge des limiteurs de débit (tests) ; nil = time.Now.
 	LimiterNow func() time.Time
 

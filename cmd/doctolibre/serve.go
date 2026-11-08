@@ -55,6 +55,7 @@ func serve(ctx context.Context, logOut io.Writer) error {
 		deps.NotifyTransport = service.NewNotifyTransport(pool, domain.SystemClock{}, transports, logger)
 		deps.Privacy = &service.Privacy{Pool: pool, Clock: domain.SystemClock{}, Logger: logger}
 		deps.Audit = &service.Audit{Pool: pool, Clock: domain.SystemClock{}}
+		deps.Stats = &service.Stats{Pool: pool, Clock: domain.SystemClock{}}
 		deps.Feed = &service.CalendarFeed{Pool: pool, Clock: domain.SystemClock{}}
 		deps.Calendar = &service.Calendar{Pool: pool, Clock: domain.SystemClock{}, Events: service.NopSink{}, BaseURL: cfg.BaseURL, ManageKey: manageKey}
 		deps.Patients = &service.Patients{Pool: pool, Clock: domain.SystemClock{}}

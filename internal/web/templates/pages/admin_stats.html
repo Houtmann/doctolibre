@@ -1,0 +1,81 @@
+{{/* layout: admin */}}
+{{define "title"}}Statistiques de séances{{end}}
+{{define "content"}}
+<h1 class="text-2xl font-semibold">Statistiques de séances</h1>
+<p>Séances faites, absences et annulations dont le début tombe dans la période (jours du cabinet, bornes incluses, {{.Data.MaxDays}} jours au plus). Pour calculer les rétrocessions : les séances pointées par un remplaçant lui sont attribuées. Aucun montant ni donnée de patient.</p>
+{{if .Data.Errors}}
+<div class="alert alert-error" role="alert"><ul>{{range .Data.Errors}}<li>{{.}}</li>{{end}}</ul></div>
+{{end}}
+<form class="flex flex-wrap items-end gap-3" method="get" action="/admin/stats" role="search">
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="from">Du</label>
+    <input class="input" id="from" type="date" name="from" value="{{.Data.From}}" required>
+  </div>
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="to">Au (inclus)</label>
+    <input class="input" id="to" type="date" name="to" value="{{.Data.To}}" required>
+  </div>
+  {{if .Data.Report.Choices}}
+  <div class="space-y-1">
+    <label class="block text-sm font-medium" for="practitioner">Praticien</label>
+    <select class="select" id="practitioner" name="practitioner">
+      <option value="">Tous les praticiens</option>
+      {{$sel := .Data.Practitioner}}
+      {{range .Data.Report.Choices}}<option value="{{.ID}}"{{if eq (printf "%s" .ID) $sel}} selected{{end}}>{{.Name}}</option>{{end}}
+    </select>
+  </div>
+  {{end}}
+  <button class="btn btn-primary" type="submit">Afficher</button>
+  {{if .Data.CSVURL}}<a class="btn btn-outline" href="{{.Data.CSVURL}}" download>Exporter en CSV</a>{{end}}
+</form>
+{{if not .Data.Errors}}
+{{if .Data.Report.Groups}}
+{{range .Data.Report.Groups}}
+<section class="space-y-2" aria-labelledby="g-{{.ID}}">
+  <h2 class="text-xl font-semibold" id="g-{{.ID}}">{{.Name}}</h2>
+  <div class="overflow-x-auto rounded-box border border-base-300 bg-base-100">
+  <table class="table">
+    <caption class="sr-only">Séances de {{.Name}}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Réalisé par</th>
+        <th scope="col">Motif</th>
+        <th scope="col" class="text-right">Faites</th>
+        <th scope="col" class="text-right">Absents</th>
+        <th scope="col" class="text-right">Annulées</th>
+        <th scope="col" class="text-right">Dont à domicile</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Performers}}{{$p := .}}
+      {{range .Lines}}
+      <tr>
+        <td>{{$p.Name}}{{if $p.Substitute}} <span class="badge badge-outline">remplaçant</span>{{end}}</td>
+        <td>{{.Type}}{{if .AtHome}} <span class="badge badge-ghost">domicile</span>{{end}}</td>
+        <td class="text-right tabular-nums">{{.Done}}</td>
+        <td class="text-right tabular-nums">{{.NoShow}}</td>
+        <td class="text-right tabular-nums">{{.Cancelled}}</td>
+        <td class="text-right tabular-nums">{{.HomeDone}}</td>
+      </tr>
+      {{end}}
+      {{end}}
+    </tbody>
+    <tfoot>
+      <tr class="font-semibold">
+        <th scope="row" colspan="2">Total {{.Name}}</th>
+        <td class="text-right tabular-nums">{{.Total.Done}}</td>
+        <td class="text-right tabular-nums">{{.Total.NoShow}}</td>
+        <td class="text-right tabular-nums">{{.Total.Cancelled}}</td>
+        <td class="text-right tabular-nums">{{.Total.HomeDone}}</td>
+      </tr>
+    </tfoot>
+  </table>
+  </div>
+</section>
+{{end}}
+<p class="font-semibold">Total général : {{.Data.Report.Total.Done}} faites, {{.Data.Report.Total.NoShow}} absents, {{.Data.Report.Total.Cancelled}} annulées, dont {{.Data.Report.Total.HomeDone}} à domicile.</p>
+{{else}}
+<div class="alert alert-info alert-soft" role="status">Aucune séance sur cette période.</div>
+{{end}}
+{{end}}
+{{end}}
