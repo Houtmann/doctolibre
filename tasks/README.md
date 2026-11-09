@@ -62,7 +62,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T058 | [Alarmes dans les fichiers ICS patient](T058-ics-valarm.md) | 5 | T042 | review |
 | T059 | [Remplaçant : accès borné dans le temps](T059-locum-delegation.md) | 5 | T033 | done |
 | T060 | [Ressources partagées (box, appareils)](T060-shared-resources.md) | 5 | T013, T014, T016 | review |
-| T061 | [Affiche imprimable avec QR code](T061-qr-poster.md) | 5 | T014 | blocked |
+| T061 | [Affiche imprimable avec QR code](T061-qr-poster.md) | 5 | T014 | review |
 | T062 | [Design system léger : tokens, catalogue, styleguide](T062-design-system.md) | 5 | T004, T016 | review |
 | T063 | [Design v2 : socle embarqué et styleguide v2](T063-design-v2-foundation.md) | 5 | T062 | done |
 | T064 | [Design v2 : layouts, navigation, messages, boutons](T064-design-v2-shell.md) | 5 | T063 | done |
@@ -70,8 +70,8 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T066 | [Design v2 : parcours patient](T066-design-v2-booking.md) | 5 | T064 | done |
 | T067 | [Design v2 : agenda et dialogue de RDV](T067-design-v2-calendar.md) | 5 | T064 | done |
 | T068 | [Design v2 : retrait de Pico et de l'ancien CSS](T068-design-v2-cleanup.md) | 5 | T065, T066, T067 | superseded |
-| T070 | [Consignes par motif et prérequis à la réservation](T070-appointment-type-instructions.md) | 5 | T014, T023, T058 | todo |
-| T071 | [Auto-planification de la série par le patient](T071-care-plan-self-scheduling.md) | 5 | T055, T030, T014 | todo |
+| T070 | [Consignes par motif et prérequis à la réservation](T070-appointment-type-instructions.md) | 5 | T014, T023, T058 | review |
+| T071 | [Auto-planification de la série par le patient](T071-care-plan-self-scheduling.md) | 5 | T055, T030, T014 | review |
 | T072 | [« Ma journée » : tournée domicile et pointage en un clic](T072-my-day-check-in.md) | 5 | T016, T032, T033 | done |
 | T073 | [Statistiques de séances et export pour rétrocession](T073-session-stats.md) | 5 | T072, T059 | review |
 | T080 | [Outillage Tailwind + daisyUI, thème, layouts et partials](T080-daisyui-foundation.md) | 5 | — | review |
@@ -84,7 +84,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T087 | [Rate limiting du back-office et de la prise de RDV](T087-rate-limiting-admin-booking.md) | 5 | T014, T033, T046 | review |
 | T088 | [Corrections RDV : trajet, liste d'attente, statut concurrent](T088-booking-waitlist-fixes.md) | 5 | T032, T054, T031, T050 | done |
 | T089 | [Contrôle d'accès : séries, praticien implicite, reset](T089-access-control-fixes.md) | 5 | T056, T059 | review |
-| T090 | [Durcissement HTTP et notifications](T090-http-notify-hardening.md) | 5 | T087, T086 | todo |
+| T090 | [Durcissement HTTP et notifications](T090-http-notify-hardening.md) | 5 | T087, T086 | review |
 | T091 | [SQL : recherche patients indexée, filtres practice_id](T091-sql-search-tenant-hygiene.md) | 5 | T017, T088 | done |
 | T092 | [Page patient « réservation en ligne indisponible »](T092-online-booking-blocked-page.md) | 5 | T088 | review |
 | T093 | [Correctifs du parcours patient (offres, déplacement, vie privée)](T093-patient-journey-fixes.md) | 5 | T088 | done |
@@ -92,7 +92,7 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T095 | [Déplacement et annulation par le patient](T095-patient-reschedule-cancel.md) | 5 | T093 | review |
 | T096 | [Écran de vérification et visites à domicile](T096-verify-screen-home-visits.md) | 5 | T094 | review |
 | T097 | [Liste d'attente côté patient](T097-waitlist-patient-side.md) | 5 | T093, T091 | review |
-| T098 | [Reprendre rendez-vous sans nouvelle vérification](T098-rebook-without-reverify.md) | 5 | T095, T097 | todo |
+| T098 | [Reprendre rendez-vous sans nouvelle vérification](T098-rebook-without-reverify.md) | 5 | T095, T097 | review |
 | T099 | [Agenda : praticiens non chargés au changement de vue](T099-agenda-view-switch-sources.md) | 5 | T083, T057 | review |
 
 ## Parallélisation possible

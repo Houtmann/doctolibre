@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-11-09 — T090, T061, T070, T071, T098 (sonnet ×5 en séquence ; contrôle : opus)
+
+- **Tâches** : T090, T070, T071, T098 todo → review ; T061 blocked → todo → review (choix humain : `rsc.io/qr`). Lancées à la demande de l'humain alors que leurs dépendances (T055, T058, T086, T087, T095, T097) sont encore en `review`
+- **Fait** : T090 : corps borné avec ou sans en-tête CSRF (413), XFF illisible ignoré, logs de test d'envoi par catégorie, préfixes IPv6 SSRF, liste blanche `STATUS` ICS, avertissement `NotifyAllowPrivateHosts` en prod. T061 : `/admin/poster` A4 avec QR SVG serveur. T070 : consignes par motif (migration 00027), case « J'ai lu » vérifiée serveur, emails + ICS patient. T071 : auto-planification de série via `/s/{token}/plan` (migration 00028), quota sous verrou, invitation `series_invite`. T098 : reprise sans OTP `/r/{token}/rebook` (migration 00029), un seul rebook garanti en base. Tests no-show instables corrigés
+- **Vérification** : `make` toujours inutilisable ; étapes de `make check` rejouées par l'orchestrateur (via sous-agent) après chaque tâche : gofmt, vet, golangci-lint 0 issue, `go mod tidy -diff` vide, `sqlc diff` vide, `go test ./...` 0 échec / 0 sauté, `ui.css` à jour. T071 renvoyée une fois (lien de série non envoyé à 0/1 séance, écart/quota hebdo non revérifiés à la confirmation). Rien vu au navigateur. Rien committé (demande de l'humain)
+- **Reste** : relecture humaine ; passage navigateur (affiche en aperçu d'impression + lecture du QR, consignes à la réservation, parcours `/s/{token}/plan` à 360 px, reprise `/r/{token}/rebook`) ; commits par tâche
+- **Décisions** : lignes du 2026-11-09 (T061, T090, T070, T071, T098, tests no-show)
+
 ## 2026-11-08 — T073 statistiques de séances, T089 contrôle d'accès (sonnet ×2 en parallèle ; contrôle : opus)
 
 - **Tâches** : T056 et T072 review → done (validées par l'humain) ; T073 et T089 todo → review
