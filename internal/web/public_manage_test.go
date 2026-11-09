@@ -53,7 +53,7 @@ func TestPatientCancelFlow(t *testing.T) {
 		t.Fatalf("annulation: %d %q", rec.Code, rec.Header().Get("Location"))
 	}
 	rec = c.do("GET", manage, nil)
-	mustContain(t, rec, 200, "Rendez-vous annulé", "Votre rendez-vous est annulé.", "Reprendre rendez-vous", `href="`+e.base()+`/book?type=`+e.typ.ID.String()+`"`)
+	mustContain(t, rec, 200, "Rendez-vous annulé", "Votre rendez-vous est annulé.", "Reprendre rendez-vous", `href="`+manage+`/rebook"`)
 	if tm := regexp.MustCompile(`(?s)<title>(.*?)</title>`).FindStringSubmatch(rec.Body.String()); tm == nil || !strings.Contains(tm[1], "annulé") || strings.Contains(tm[1], "confirmé") {
 		t.Errorf("<title> d'un RDV annulé = %v", tm)
 	}

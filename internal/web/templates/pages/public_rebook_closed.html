@@ -1,0 +1,18 @@
+{{define "title"}}Reprise de rendez-vous impossible{{end}}
+{{define "content"}}
+<section class="card bg-base-100 border border-base-300">
+  <div class="card-body gap-3">
+    <h1 class="card-title text-2xl">{{if .Data.AlreadyDone}}Rendez-vous déjà repris{{else}}Reprise en ligne impossible{{end}}</h1>
+    {{if .Data.AlreadyDone}}
+    <p>Un nouveau rendez-vous a déjà été pris à la suite de celui-ci. Retrouvez-le dans le message de confirmation que vous avez reçu.</p>
+    {{else}}
+    <p>Ce rendez-vous ne peut plus être repris en ligne en un clic (annulation trop ancienne ou motif non réservable en ligne).</p>
+    {{end}}
+    {{if .Data.Phone}}<p>Pour un nouveau rendez-vous, vous pouvez aussi appeler le cabinet au {{.Data.Phone}}.</p>{{end}}
+    <div class="card-actions">
+      <a class="btn btn-primary w-full sm:w-auto" href="{{.Data.PageURL}}">Voir la page du praticien</a>
+      {{if .Data.Phone}}<a class="btn btn-outline w-full sm:w-auto" href="tel:{{telHref .Data.TelHref}}">Appeler le cabinet</a>{{end}}
+    </div>
+  </div>
+</section>
+{{end}}

@@ -605,6 +605,8 @@ type Confirmation struct {
 	Changeable bool
 	// MinCancel est le délai minimal avant le RDV ; Horizon la fenêtre de réservation.
 	MinCancel, Horizon time.Duration
+	// Rebookable : RDV annulé qui permet la reprise directe sans OTP (T098).
+	Rebookable bool
 }
 
 // Confirmation retrouve un rendez-vous par le secret de son lien de gestion.
@@ -643,7 +645,12 @@ func (b *Booking) Confirmation(ctx context.Context, token string) (Confirmation,
 	}
 	minCancel := microsToDuration(intervalMicros(pc.MinCancelNotice))
 	start := a.During.Lower.Time
+	rebookable, err := rebookPermitted(ctx, q, a, pc, pr, typ, b.Clock.Now())
+	if err != nil {
+		return Confirmation{}, err
+	}
 	return Confirmation{
+		Rebookable:  rebookable,
 		Appointment: a, Practice: pc, Practitioner: pr, Type: typ, FirstName: pat.FirstName, Loc: loc,
 		Start: start.In(loc), End: a.During.Upper.Time.In(loc),
 		Changeable: a.Status == "booked" && start.Sub(b.Clock.Now()) >= minCancel,

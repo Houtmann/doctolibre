@@ -322,7 +322,7 @@ UPDATE appointment SET
     during_blocked = tstzrange($3::timestamptz, $4::timestamptz, '[)'),
     updated_at = now()
 WHERE id = $5 AND practice_id = $6 AND status = 'booked'
-RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version, status_changed_by, status_changed_at
+RETURNING id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version, status_changed_by, status_changed_at, rebooked_appointment_id
 `
 
 type MoveAppointmentParams struct {
@@ -368,6 +368,7 @@ func (q *Queries) MoveAppointment(ctx context.Context, arg MoveAppointmentParams
 		&i.ManageTokenVersion,
 		&i.StatusChangedBy,
 		&i.StatusChangedAt,
+		&i.RebookedAppointmentID,
 	)
 	return i, err
 }

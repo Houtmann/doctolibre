@@ -226,7 +226,7 @@ func (q *Queries) ListCarePlanAppointments(ctx context.Context, arg ListCarePlan
 }
 
 const listCarePlanSessions = `-- name: ListCarePlanSessions :many
-SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version, status_changed_by, status_changed_at FROM appointment
+SELECT id, practice_id, practitioner_id, patient_id, appointment_type_id, during, buffer_before, buffer_after, during_blocked, status, source, care_plan_id, cancelled_at, cancelled_by, cancel_reason, manage_token_hash, created_at, updated_at, address, verified_channel, manage_token_version, status_changed_by, status_changed_at, rebooked_appointment_id FROM appointment
 WHERE care_plan_id = $1 AND practice_id = $2
 ORDER BY lower(during), id
 `
@@ -271,6 +271,7 @@ func (q *Queries) ListCarePlanSessions(ctx context.Context, arg ListCarePlanSess
 			&i.ManageTokenVersion,
 			&i.StatusChangedBy,
 			&i.StatusChangedAt,
+			&i.RebookedAppointmentID,
 		); err != nil {
 			return nil, err
 		}

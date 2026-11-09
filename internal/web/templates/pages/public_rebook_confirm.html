@@ -1,0 +1,14 @@
+{{define "title"}}Confirmer le nouveau rendez-vous{{end}}
+{{define "content"}}
+<nav aria-label="Fil d'Ariane"><a class="link link-primary" href="{{.Data.BackURL}}">&larr; Changer de créneau</a></nav>
+<h1 class="text-2xl font-semibold">Confirmer le nouveau rendez-vous</h1>
+<p>Vos coordonnées sont celles du rendez-vous annulé : aucune vérification supplémentaire n'est nécessaire.</p>
+{{template "booking_summary.html" .Data.Summary}}
+{{template "patient_instructions.html" .Data.Instructions}}
+<form method="post" action="{{.Data.Action}}" class="flex flex-col gap-4">
+  {{csrf .CSRF}}
+  <input type="hidden" name="start" value="{{.Data.Start}}">
+  {{if .Data.AckRequired}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="instructions_ack" value="on" required> <span>J'ai lu les consignes.</span></label>{{end}}
+  <div><button class="btn btn-primary w-full sm:w-auto" type="submit">Confirmer le rendez-vous</button></div>
+</form>
+{{end}}

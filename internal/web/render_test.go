@@ -121,6 +121,12 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = GridData{}
 			case "public_reschedule_confirm":
 				data = RescheduleConfirmData{}
+			case "public_rebook":
+				data = GridData{}
+			case "public_rebook_confirm":
+				data = RebookConfirmData{}
+			case "public_rebook_closed":
+				data = RebookClosedData{}
 			case "public_cancel":
 				data = CancelData{}
 			case "admin_waitlist":

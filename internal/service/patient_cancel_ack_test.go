@@ -99,7 +99,8 @@ func TestCancelByPatientQueuesEmailAckWithRebookLink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := baseURL + "/p/" + e.pc.Slug + "/" + e.pr.Slug + "/book?type=" + e.typ.ID.String()
+	// Reprise directe sans ressaisie (T098) quand elle est permise.
+	want := baseURL + "/r/" + res.Token + "/rebook"
 	if !strings.Contains(em.Text, want) || !strings.Contains(em.HTML, want) {
 		t.Errorf("lien de reprise %q absent de l'email :\n%s", want, em.Text)
 	}

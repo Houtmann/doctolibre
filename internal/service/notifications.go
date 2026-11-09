@@ -429,7 +429,16 @@ func (n notifier) patientCancelled(ctx context.Context, tx pgx.Tx, q *sqlcgen.Qu
 	}
 	data := n.data(v, n.key.forAppointment(appt))
 	if n.baseURL != "" {
-		data["rebook_url"] = strings.TrimRight(n.baseURL, "/") + RebookPath(v.practice.Slug, v.practitioner, v.typ)
+		base := strings.TrimRight(n.baseURL, "/")
+		data["rebook_url"] = base + RebookPath(v.practice.Slug, v.practitioner, v.typ)
+		// Reprise directe sans ressaisie (T098) quand elle est permise, sinon repli sur la grille.
+		if token := n.key.forAppointment(appt); token != "" {
+			if ok, err := rebookPermitted(ctx, q, appt, v.practice, v.practitioner, v.typ, n.clock.Now()); err != nil {
+				return err
+			} else if ok {
+				data["rebook_url"] = base + "/r/" + url.PathEscape(token) + "/rebook"
+			}
+		}
 	}
 	_, err = n.enqueue(ctx, tx, v, pref, TemplatePatientCancellation, data, time.Time{}, TemplatePatientCancellation, "")
 	return err

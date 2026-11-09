@@ -69,6 +69,10 @@ func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	mux.Handle("GET /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleGrid), search))
 	mux.Handle("GET /r/{token}/reschedule/confirm", httpx.Chain(http.HandlerFunc(h.rescheduleConfirm), search))
 	mux.Handle("POST /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleSubmit), manage))
+	// Reprise après annulation, sans OTP (T098) : le jeton du RDV annulé reste valable pour cette seule action.
+	mux.Handle("GET /r/{token}/rebook", httpx.Chain(http.HandlerFunc(h.rebookGrid), search))
+	mux.Handle("GET /r/{token}/rebook/confirm", httpx.Chain(http.HandlerFunc(h.rebookConfirm), search))
+	mux.Handle("POST /r/{token}/rebook", httpx.Chain(http.HandlerFunc(h.rebookSubmit), manage))
 	if d.Waitlist != nil {
 		d.waitlistRoutes(mux, rd, logger)
 	}
@@ -728,7 +732,7 @@ func (h *publicHandlers) confirmed(w http.ResponseWriter, r *http.Request) {
 		Changeable: c.Changeable, ManageURL: manageURL(r.PathValue("token")), MinCancel: c.MinCancel,
 		AtHome: c.Type.AtHome, Address: c.Appointment.Address.String,
 		Instructions: strings.TrimSpace(c.Type.PatientInstructions),
-		RebookURL:    service.RebookPath(c.Practice.Slug, c.Practitioner, c.Type),
+		RebookURL:    rebookTarget(c, r.PathValue("token")),
 	})
 }
 
@@ -769,4 +773,12 @@ func phoneLine(phone string) string {
 		return ""
 	}
 	return "Cabinet : " + phone
+}
+
+// rebookTarget : la reprise directe (T098) quand elle est permise, sinon la grille du praticien (T095).
+func rebookTarget(c service.Confirmation, token string) string {
+	if c.Rebookable {
+		return rebookURL(token)
+	}
+	return service.RebookPath(c.Practice.Slug, c.Practitioner, c.Type)
 }

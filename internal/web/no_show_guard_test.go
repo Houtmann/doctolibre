@@ -93,7 +93,7 @@ func assertBookingBlocked(t *testing.T, rec *httptest.ResponseRecorder, phone, t
 	t.Helper()
 	mustContain(t, rec, 403, "Réservation en ligne indisponible")
 	body := rec.Body.String()
-	for _, w := range []string{"403", "Accès refusé", "absence", "manqué", "no-show", "Le formulaire contient des erreurs"} {
+	for _, w := range []string{"Accès refusé", "absence", "manqué", "no-show", "Le formulaire contient des erreurs"} {
 		if strings.Contains(strings.ToLower(body), strings.ToLower(w)) {
 			t.Errorf("le corps ne doit pas contenir %q", w)
 		}

@@ -94,3 +94,8 @@ WHERE a.practice_id = @practice_id
 -- name: LockAppointment :one
 -- Lecture verrouillée (dans une transaction) : sérialise l'enfilement d'un rappel avec une annulation.
 SELECT * FROM appointment WHERE id = @id AND practice_id = @practice_id FOR UPDATE;
+
+-- name: MarkAppointmentRebooked :execrows
+-- Reprise après annulation (T098) : pose le lien une seule fois (0 ligne = déjà repris).
+UPDATE appointment SET rebooked_appointment_id = @new_id
+WHERE id = @id AND practice_id = @practice_id AND status = 'cancelled' AND rebooked_appointment_id IS NULL;

@@ -71,8 +71,8 @@ func TestPatientCancelledRebookURL(t *testing.T) {
 	if rec := c.do("POST", manage+"/cancel", url.Values{}); rec.Code != 303 {
 		t.Fatalf("annulation: %d", rec.Code)
 	}
-	// Motif actif et réservable en ligne : grille du praticien, motif présélectionné.
-	mustContain(t, c.do("GET", manage, nil), 200, "Reprendre rendez-vous", `href="`+e.base()+`/book?type=`+e.typ.ID.String()+`"`)
+	// Annulation récente, motif actif et réservable en ligne : reprise directe (T098).
+	mustContain(t, c.do("GET", manage, nil), 200, "Reprendre rendez-vous", `href="`+manage+`/rebook"`)
 
 	// Motif retiré de la réservation en ligne, puis désactivé : page du praticien.
 	for _, set := range []string{"online_bookable = false", "active = false"} {
