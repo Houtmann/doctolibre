@@ -33,6 +33,7 @@
     {{range .Practitioners}}<li>{{.Name}} : <a class="link link-primary" href="{{.URL}}">{{.URL}}</a></li>{{end}}
   </ul>
   {{end}}
+  <p><a class="link link-primary" href="/admin/poster">Imprimer l'affiche avec le QR code</a></p>
 </section>
 {{end}}{{end}}
 <p class="mt-4"><a class="link link-primary" href="/admin/messages">Messages envoyés</a>{{if or (eq .Role "admin") (eq .Role "practitioner")}} · <a class="link link-primary" href="/admin/stats">Statistiques de séances</a>{{end}}</p>

@@ -49,6 +49,7 @@ func (d Deps) adminRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger)
 	mux.Handle("POST /admin/logout", require(http.HandlerFunc(h.logout)))
 	mux.Handle("GET /admin", require(http.HandlerFunc(h.dashboard)))
 	d.messagesRoutes(mux, rd, require)
+	d.posterRoutes(mux, rd, logger)
 	d.statusRoutes(mux, rd, logger)
 	d.teamRoutes(mux, rd, logger)
 	if d.Practice != nil {

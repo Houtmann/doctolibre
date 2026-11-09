@@ -1,0 +1,26 @@
+{{/* layout: admin */}}
+{{define "title"}}Affiche de réservation{{end}}
+{{define "content"}}
+{{with .Data}}
+<div class="print:hidden space-y-2">
+  <h1 class="text-2xl font-semibold">Affiche de réservation</h1>
+  {{if .URL}}<p>Imprimez cette page (format A4, Ctrl+P ou Cmd+P) et affichez-la dans la salle d'attente.</p>
+  <button type="button" class="btn btn-primary" data-print>Imprimer l'affiche</button>
+  {{end}}
+</div>
+{{if .URL}}
+<section class="poster mx-auto max-w-2xl bg-base-100 border border-base-300 rounded-box p-8 text-center space-y-6 print:border-0 print:max-w-none" aria-label="Affiche">
+  <h2 class="text-4xl font-bold">{{.PracticeName}}</h2>
+  {{if .Practitioners}}<p class="text-xl">{{range $i, $n := .Practitioners}}{{if $i}} · {{end}}{{$n}}{{end}}</p>{{end}}
+  <p class="text-2xl font-semibold">Prenez rendez-vous en ligne</p>
+  <div class="mx-auto w-80 max-w-full print:w-96">{{.QR}}</div>
+  <p class="text-lg">Scannez le QR code ou rendez-vous sur</p>
+  <p class="text-2xl font-semibold break-all">{{.URL}}</p>
+</section>
+{{else}}
+<aside class="alert alert-warning items-start" role="alert"><div>
+  <p>L'adresse publique du site n'est pas configurée (<code>DOCTOLIBRE_BASE_URL</code> est vide) : impossible de fabriquer un QR code fiable. Renseignez-la puis rechargez cette page.</p>
+</div></aside>
+{{end}}
+{{end}}
+{{end}}

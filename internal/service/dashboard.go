@@ -9,6 +9,7 @@ import (
 
 // Dashboard est la donnée du tableau de bord : liens de réservation et état de la configuration.
 type Dashboard struct {
+	PracticeName  string
 	PracticeSlug  string
 	Practitioners []sqlcgen.Practitioner
 	// HasAvailability : au moins un praticien actif a une plage horaire.
@@ -36,5 +37,5 @@ func (s *Practice) Dashboard(ctx context.Context, a Actor) (Dashboard, error) {
 	if err != nil {
 		return Dashboard{}, fmt.Errorf("motifs réservables: %w", err)
 	}
-	return Dashboard{PracticeSlug: pc.Slug, Practitioners: prs, HasAvailability: rules > 0, HasBookableType: len(types) > 0}, nil
+	return Dashboard{PracticeName: pc.Name, PracticeSlug: pc.Slug, Practitioners: prs, HasAvailability: rules > 0, HasBookableType: len(types) > 0}, nil
 }

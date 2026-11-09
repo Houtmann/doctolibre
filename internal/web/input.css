@@ -152,3 +152,12 @@
 :root {
   --fx-noise: none;
 }
+
+/* Impression de l'affiche (/admin/poster) : A4, sans navigation ni marges de l'interface. */
+@media print {
+  @page { size: A4; margin: 15mm; }
+  .drawer-side, .navbar { display: none !important; }
+  .drawer-content { margin: 0 !important; }
+  main { padding: 0 !important; }
+  .poster { break-inside: avoid; }
+}

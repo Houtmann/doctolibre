@@ -58,3 +58,8 @@ document.addEventListener("click", function (e) {
   var d = document.getElementById(b.getAttribute("data-dialog-open"));
   if (d && typeof d.showModal === "function" && !d.open) d.showModal();
 });
+
+// Imprime la page : <button data-print>.
+document.addEventListener("click", function (e) {
+  if (e.target.closest && e.target.closest("[data-print]")) window.print();
+});
