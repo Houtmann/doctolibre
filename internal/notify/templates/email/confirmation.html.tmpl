@@ -4,7 +4,8 @@
 <p style="margin:0 0 16px;">Bonjour {{.first_name}},</p>
 <p style="margin:0 0 16px;">Votre rendez-vous ({{.type_name}}) avec {{.practitioner}} est confirmé :</p>
 <p style="margin:0 0 16px;font-size:18px;"><strong>{{.date}} à {{.time}}</strong><br>{{.practice_name}}{{if .practice_address}}<br>{{.practice_address}}{{end}}</p>
-{{if .manage_url}}<p style="margin:0 0 16px;"><a href="{{.manage_url}}">Consulter, déplacer ou annuler ce rendez-vous</a>{{if .cancel_notice}}<br><span style="font-size:14px;">Déplacement et annulation possibles jusqu'à {{.cancel_notice}} avant le rendez-vous.</span>{{end}}</p>{{end}}
+{{if .instructions}}<p style="margin:0 0 16px;"><strong>À prévoir</strong><br><span style="white-space:pre-line;">{{.instructions}}</span></p>
+{{end}}{{if .manage_url}}<p style="margin:0 0 16px;"><a href="{{.manage_url}}">Consulter, déplacer ou annuler ce rendez-vous</a>{{if .cancel_notice}}<br><span style="font-size:14px;">Déplacement et annulation possibles jusqu'à {{.cancel_notice}} avant le rendez-vous.</span>{{end}}</p>{{end}}
 {{if .practice_phone}}<p style="margin:0 0 16px;font-size:14px;">Une question ? Appelez le {{.practice_phone}}.</p>{{end}}
 <p style="margin:0;font-size:14px;">{{.signature}}</p>
 {{end}}

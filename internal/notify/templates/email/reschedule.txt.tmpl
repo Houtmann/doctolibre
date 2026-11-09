@@ -5,7 +5,10 @@ Votre rendez-vous ({{.type_name}}) avec {{.practitioner}} a été déplacé.
   Nouveau créneau : {{.date}} à {{.time}}
   Ancien créneau : {{.old_date}} à {{.old_time}}
   {{.practice_name}}{{if .practice_address}}
-  {{.practice_address}}{{end}}
+  {{.practice_address}}{{end}}{{if .instructions}}
+
+À prévoir :
+{{.instructions}}{{end}}
 {{if .manage_url}}
 Pour consulter, déplacer ou annuler ce rendez-vous :
 {{.manage_url}}

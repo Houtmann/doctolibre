@@ -38,3 +38,8 @@ ORDER BY t.position, t.name, t.id;
 -- name: SetAppointmentTypeTravelBuffer :exec
 UPDATE appointment_type SET travel_buffer = @travel_buffer, updated_at = now()
 WHERE id = @id AND practice_id = @practice_id;
+
+-- name: SetAppointmentTypeInstructions :exec
+UPDATE appointment_type SET patient_instructions = @patient_instructions,
+    instructions_ack_required = @instructions_ack_required, updated_at = now()
+WHERE id = @id AND practice_id = @practice_id;

@@ -181,3 +181,21 @@ func TestStatusWhitelist(t *testing.T) {
 		}
 	}
 }
+
+func TestWithInstructions(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ desc, instr, want string }{
+		{"Cabinet : 04", "", "Cabinet : 04"},
+		{"Cabinet : 04", "  \n", "Cabinet : 04"},
+		{"Cabinet : 04", " Ordonnance\nServiette ", "Cabinet : 04\n\nÀ prévoir :\nOrdonnance\nServiette"},
+		{"", "Ordonnance", "À prévoir :\nOrdonnance"},
+	} {
+		if got := ics.WithInstructions(tc.desc, tc.instr); got != tc.want {
+			t.Errorf("WithInstructions(%q, %q) = %q, attendu %q", tc.desc, tc.instr, got, tc.want)
+		}
+	}
+	ev := ics.Event{UID: "x", Summary: "S", Description: ics.WithInstructions("Cabinet : 04", "A\nB;C")}
+	if got := string(ev.Calendar()); !strings.Contains(got, `DESCRIPTION:Cabinet : 04\n\nÀ prévoir :\nA\nB\;C`) {
+		t.Errorf("DESCRIPTION mal échappée : %s", got)
+	}
+}

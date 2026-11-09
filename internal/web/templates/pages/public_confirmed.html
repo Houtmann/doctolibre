@@ -34,5 +34,6 @@
 {{if and (not .Data.Cancelled) .Data.Changeable (gt .Data.MinCancel 0)}}
 <p class="text-sm text-base-content/70">Déplacement et annulation possibles en ligne jusqu'à {{formatDuration .Data.MinCancel}} avant le rendez-vous.</p>
 {{end}}
+{{if not .Data.Cancelled}}{{template "patient_instructions.html" .Data.Instructions}}{{end}}
 {{if not .Data.Cancelled}}<p class="text-sm text-base-content/70">Conservez l'adresse de cette page : elle vous permettra de retrouver votre rendez-vous. Ne la partagez pas.</p>{{end}}
 {{end}}

@@ -143,3 +143,17 @@ func fold(s string) string {
 func validStatus(s string) bool {
 	return s == "CONFIRMED" || s == "TENTATIVE" || s == "CANCELLED"
 }
+
+// WithInstructions ajoute, après la description existante, le bloc « À prévoir » des
+// consignes du motif (texte brut, sauts de ligne conservés) ; inchangée si elles sont vides.
+func WithInstructions(desc, instructions string) string {
+	instructions = strings.TrimSpace(instructions)
+	if instructions == "" {
+		return desc
+	}
+	block := "À prévoir :\n" + instructions
+	if desc == "" {
+		return block
+	}
+	return desc + "\n\n" + block
+}

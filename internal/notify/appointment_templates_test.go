@@ -20,7 +20,7 @@ func apptData(manage bool) map[string]any {
 		"practice_name": "Cabinet de kinésithérapie Dup", "practice_address": "12 rue des Lilas, 69003 Lyon",
 		"practice_phone": "04 72 00 00 00", "first_name": "Léa", "practitioner": "Camille Martin",
 		"type_name": "Séance de kinésithérapie", "date": "jeudi 15 octobre", "date_short": "15/10", "time": "14h30",
-		"manage_url": "", "series_url": "", "rebook_url": "", "cancel_notice": "24 h", "signature": "Cabinet de kinésithérapie Dupont",
+		"manage_url": "", "series_url": "", "rebook_url": "", "cancel_notice": "24 h", "instructions": "", "signature": "Cabinet de kinésithérapie Dupont",
 		"old_date": "mardi 13 octobre", "old_date_short": "13/10", "old_time": "9h00",
 		"reason": "Praticien souffrant", "window": "du 12 novembre au 12 décembre, lundi, mercredi", "leave_url": "", "valid_until": "16h30", "offer_url": "https://rdv.cabinet-dupont.fr/w/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde",
 		"count": 10, "sessions": []string{"jeudi 15 octobre à 14h30", "lundi 19 octobre à 14h30", "jeudi 22 octobre à 14h30"},
@@ -102,5 +102,53 @@ func TestRenderSMSErrors(t *testing.T) {
 	}
 	if _, err := notify.RenderSMS("confirmation", map[string]any{}); err == nil {
 		t.Error("données incomplètes acceptées")
+	}
+}
+
+// TestInstructionsBlock : le bloc « À prévoir » n'apparaît que si les consignes sont renseignées,
+// est échappé en HTML, et n'entre jamais dans les SMS.
+func TestInstructionsBlock(t *testing.T) {
+	t.Parallel()
+	tpl, err := notify.NewTemplates()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const instr = "Apporter l'ordonnance\nTenue souple <script>alert(1)</script>"
+	for _, name := range []string{"confirmation", "reminder", "reschedule", "series"} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			d := apptData(true)
+			d["instructions"] = instr
+			e, err := tpl.Render(name, d)
+			if err != nil {
+				t.Fatal(err)
+			}
+			golden(t, name+"_consignes.email.txt", "Sujet : "+e.Subject+"\n\n"+e.Text)
+			golden(t, name+"_consignes.email.html", e.HTML)
+			if !strings.Contains(e.Text, "À prévoir :\nApporter l'ordonnance\nTenue souple") || !strings.Contains(e.HTML, "À prévoir") {
+				t.Errorf("bloc « À prévoir » absent : %s", e.Text)
+			}
+			if strings.Contains(e.HTML, "<script>") {
+				t.Errorf("consignes non échappées dans le HTML : %s", e.HTML)
+			}
+			plain, err := tpl.Render(name, apptData(true))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if strings.Contains(plain.Text, "À prévoir") || strings.Contains(plain.HTML, "À prévoir") {
+				t.Error("bloc « À prévoir » présent alors que les consignes sont vides")
+			}
+			withSMS, err := notify.RenderSMS(name, d)
+			if err != nil {
+				t.Fatal(err)
+			}
+			withoutSMS, err := notify.RenderSMS(name, apptData(true))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if withSMS != withoutSMS {
+				t.Errorf("les consignes changent le SMS :\n%s\n%s", withSMS, withoutSMS)
+			}
+		})
 	}
 }

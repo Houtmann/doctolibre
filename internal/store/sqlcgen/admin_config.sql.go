@@ -53,7 +53,7 @@ func (q *Queries) GetUserForUpdate(ctx context.Context, arg GetUserForUpdatePara
 
 const listAllAppointmentTypes = `-- name: ListAllAppointmentTypes :many
 
-SELECT id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at, travel_buffer FROM appointment_type
+SELECT id, practice_id, name, duration, buffer_before, buffer_after, online_bookable, at_home, color, position, active, created_at, updated_at, travel_buffer, patient_instructions, instructions_ack_required FROM appointment_type
 WHERE practice_id = $1
 ORDER BY position, name, id
 LIMIT $2
@@ -89,6 +89,8 @@ func (q *Queries) ListAllAppointmentTypes(ctx context.Context, arg ListAllAppoin
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.TravelBuffer,
+			&i.PatientInstructions,
+			&i.InstructionsAckRequired,
 		); err != nil {
 			return nil, err
 		}

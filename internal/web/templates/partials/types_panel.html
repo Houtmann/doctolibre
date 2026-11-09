@@ -76,6 +76,13 @@
     <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="online_bookable" value="1"{{if .OnlineBookable}} checked{{end}}> Réservable en ligne par les patients</label>
     <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="at_home" value="1"{{if .AtHome}} checked{{end}}> Séance à domicile</label>
     <div class="space-y-1">
+      <label class="block text-sm font-medium" for="type-instructions">Consignes pour le patient</label>
+      <textarea class="textarea w-full" id="type-instructions" name="patient_instructions" rows="4" maxlength="1000" aria-describedby="type-instructions-help">{{.PatientInstructions}}</textarea>
+      <p class="text-sm text-base-content/70" id="type-instructions-help">Texte brut, 1000 caractères au plus (apporter l'ordonnance, une serviette, une tenue souple…). Affichées avant la réservation, sur la confirmation, dans les emails et dans le fichier d'agenda du patient, pas dans les SMS. Elles sont lues au moment de l'envoi : une correction profite aux rappels suivants.</p>
+      <p class="alert alert-warning alert-soft text-sm">Aucune donnée médicale : n'indiquez ni pathologie, ni diagnostic, ni contenu d'ordonnance.</p>
+    </div>
+    <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="instructions_ack_required" value="1"{{if .InstructionsAckRequired}} checked{{end}}> Le patient doit confirmer avoir lu les consignes (réservation en ligne)</label>
+    <div class="space-y-1">
       <label class="block text-sm font-medium" for="type-resource">Ressource exigée</label>
       <select class="select w-full" id="type-resource" name="resource" aria-describedby="type-resource-help">
         <option value=""{{if not .ResourceID}} selected{{end}}>Aucune</option>

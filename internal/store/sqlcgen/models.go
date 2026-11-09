@@ -58,20 +58,22 @@ type AppointmentResource struct {
 }
 
 type AppointmentType struct {
-	ID             uuid.UUID
-	PracticeID     uuid.UUID
-	Name           string
-	Duration       pgtype.Interval
-	BufferBefore   pgtype.Interval
-	BufferAfter    pgtype.Interval
-	OnlineBookable bool
-	AtHome         bool
-	Color          string
-	Position       int32
-	Active         bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	TravelBuffer   pgtype.Interval
+	ID                      uuid.UUID
+	PracticeID              uuid.UUID
+	Name                    string
+	Duration                pgtype.Interval
+	BufferBefore            pgtype.Interval
+	BufferAfter             pgtype.Interval
+	OnlineBookable          bool
+	AtHome                  bool
+	Color                   string
+	Position                int32
+	Active                  bool
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+	TravelBuffer            pgtype.Interval
+	PatientInstructions     string
+	InstructionsAckRequired bool
 }
 
 type AppointmentTypeResource struct {

@@ -176,6 +176,8 @@ func (n notifier) data(v apptView, manageToken string) map[string]any {
 		"manage_url": manage, "signature": signature,
 		"old_date": "", "old_date_short": "", "old_time": "", "series_url": "",
 		"reason": "", "rebook_url": "",
+		// Consignes du motif, lues à la rédaction du message (T070) ; absentes des SMS (aucun template SMS ne s'en sert).
+		"instructions":  strings.TrimSpace(v.typ.PatientInstructions),
 		"cancel_notice": noticeText(microsToDuration(intervalMicros(v.practice.MinCancelNotice))),
 	}
 }

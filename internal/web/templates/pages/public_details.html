@@ -5,6 +5,7 @@
 <nav aria-label="Étapes de la réservation"><ul class="steps steps-horizontal w-full text-xs sm:text-sm"><li class="step step-primary">Motif</li><li class="step step-primary">Créneau</li><li class="step step-primary" aria-current="step">Coordonnées</li><li class="step">Vérification</li></ul></nav>
 {{template "booking_summary.html" .Data.Summary}}
 {{template "form_errors.html" .Data.Errors}}
+{{template "patient_instructions.html" .Data.Instructions}}
 <form method="post" action="{{.Data.Action}}" class="space-y-4">
   {{csrf .CSRF}}
   <input type="hidden" name="type" value="{{.Data.TypeID}}">
@@ -58,6 +59,7 @@
   </div>
 
   <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="consent" value="on"{{if .Data.Form.Consent}} checked{{end}} required> <span>J'accepte que mes coordonnées soient utilisées par le cabinet pour gérer ce rendez-vous.{{if .PrivacyURL}} <a class="link" href="{{.PrivacyURL}}">En savoir plus sur vos données</a>.{{end}}</span></label>
+  {{if .Data.AckRequired}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="instructions_ack" value="on"{{if .Data.Form.InstructionsAck}} checked{{end}} required> <span>J'ai lu les consignes.</span></label>{{end}}
   <p class="text-sm text-base-content/70">N'indiquez aucune information médicale. Ce service sert uniquement à fixer un rendez-vous.</p>
   <button class="btn btn-primary w-full sm:w-auto" type="submit">Recevoir mon code</button>
 </form>

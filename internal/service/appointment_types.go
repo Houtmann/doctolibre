@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -25,7 +26,13 @@ type AppointmentTypeInput struct {
 	OnlineBookable, AtHome          bool
 	TravelBufferMin                 string // trajet (visite à domicile), en minutes, ajouté avant et après
 	ResourceID                      string // ressource exigée (T060) ; vide = aucune
+	// PatientInstructions : consignes en texte brut montrées au patient (T070).
+	PatientInstructions     string
+	InstructionsAckRequired bool // le patient doit confirmer avoir lu les consignes pour réserver en ligne
 }
+
+// MaxInstructionsLen est la longueur maximale des consignes (en caractères).
+const MaxInstructionsLen = 1000
 
 type defaultType struct {
 	name    string
@@ -95,12 +102,16 @@ type typeValues struct {
 	duration, before, aft int
 	travel                int
 	color                 string
+	instructions          string
 }
 
 func validateType(in AppointmentTypeInput) (typeValues, error) {
 	var errs domain.ValidationErrors
 	add := func(field, msg string) { errs = append(errs, domain.ErrValidation{Field: field, Msg: msg}) }
-	v := typeValues{name: strings.TrimSpace(in.Name), color: strings.TrimSpace(in.Color)}
+	v := typeValues{name: strings.TrimSpace(in.Name), color: strings.TrimSpace(in.Color), instructions: strings.TrimSpace(in.PatientInstructions)}
+	if utf8.RuneCountInString(v.instructions) > MaxInstructionsLen {
+		add("patient_instructions", "Les consignes sont trop longues (1000 caractères maximum).")
+	}
 	if v.name == "" {
 		add("name", "Le nom du motif est requis.")
 	} else if tooLong(v.name, 60) {
@@ -180,6 +191,13 @@ func (s *Practice) CreateAppointmentType(ctx context.Context, a Actor, in Appoin
 			return fmt.Errorf("trajet du motif: %w", err)
 		}
 		out.TravelBuffer = minutesInterval(v.travel)
+		if err := q.SetAppointmentTypeInstructions(ctx, sqlcgen.SetAppointmentTypeInstructionsParams{
+			ID: out.ID, PracticeID: a.PracticeID, PatientInstructions: v.instructions,
+			InstructionsAckRequired: in.InstructionsAckRequired && v.instructions != "",
+		}); err != nil {
+			return fmt.Errorf("consignes du motif: %w", err)
+		}
+		out.PatientInstructions, out.InstructionsAckRequired = v.instructions, in.InstructionsAckRequired && v.instructions != ""
 		if in.ResourceID != "" {
 			return setTypeResource(ctx, q, a.PracticeID, out.ID, in.ResourceID)
 		}
@@ -215,6 +233,12 @@ func (s *Practice) UpdateAppointmentType(ctx context.Context, a Actor, id uuid.U
 			ID: id, PracticeID: a.PracticeID, TravelBuffer: minutesInterval(v.travel),
 		}); err != nil {
 			return fmt.Errorf("trajet du motif: %w", err)
+		}
+		if err := q.SetAppointmentTypeInstructions(ctx, sqlcgen.SetAppointmentTypeInstructionsParams{
+			ID: id, PracticeID: a.PracticeID, PatientInstructions: v.instructions,
+			InstructionsAckRequired: in.InstructionsAckRequired && v.instructions != "",
+		}); err != nil {
+			return fmt.Errorf("consignes du motif: %w", err)
 		}
 		return setTypeResource(ctx, q, a.PracticeID, id, in.ResourceID)
 	})

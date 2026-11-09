@@ -169,6 +169,7 @@ type BookingForm struct {
 	Address                                      string
 	Channel                                      string
 	SMSOptIn, EmailOptIn, Consent                bool
+	InstructionsAck                              bool // « J'ai lu les consignes » (T070)
 }
 
 // DetailsData est la donnée de la page public_details.
@@ -177,14 +178,17 @@ type DetailsData struct {
 	Channels service.Channels
 	AtHome   bool // visite à domicile : l'adresse est demandée
 	// Zones : zones desservies (codes postaux ou communes), affichées pour une visite à domicile.
-	Zones   []string
-	Summary Summary
-	Form    BookingForm
-	TypeID  string
-	Start   string
-	Action  string
-	BackURL string
-	Errors  []string
+	Zones []string
+	// Instructions : consignes du motif (texte brut) ; AckRequired : case « J'ai lu » obligatoire.
+	Instructions string
+	AckRequired  bool
+	Summary      Summary
+	Form         BookingForm
+	TypeID       string
+	Start        string
+	Action       string
+	BackURL      string
+	Errors       []string
 }
 
 // VerifyData est la donnée de la page public_verify.
@@ -220,6 +224,8 @@ type ConfirmedData struct {
 	MinCancel  time.Duration
 	AtHome     bool
 	Address    string // adresse de la visite à domicile
+	// Instructions : consignes du motif, lues à l'affichage (T070).
+	Instructions string
 	// RebookURL : grille du praticien (motif présélectionné s'il est réservable en ligne)
 	// ou, à défaut, sa page, pour reprendre rendez-vous après une annulation.
 	RebookURL string
@@ -469,7 +475,7 @@ func readBookingForm(r *http.Request) BookingForm {
 		Address:  formValue(r, "address"),
 		Channel:  formValue(r, "channel"),
 		SMSOptIn: r.PostFormValue("sms_opt_in") != "", EmailOptIn: r.PostFormValue("email_opt_in") != "",
-		Consent: r.PostFormValue("consent") != "",
+		Consent: r.PostFormValue("consent") != "", InstructionsAck: r.PostFormValue("instructions_ack") != "",
 	}
 	f.Channel = resolveOTPChannel(f.Channel, f.Phone, f.Email)
 	return f
@@ -503,6 +509,12 @@ func (f BookingForm) patient() service.PatientDetails {
 	}
 }
 
+// instructions retourne les consignes du motif et si leur lecture doit être confirmée.
+func instructionsOf(t sqlcgen.AppointmentType) (text string, ackRequired bool) {
+	text = strings.TrimSpace(t.PatientInstructions)
+	return text, text != "" && t.InstructionsAckRequired
+}
+
 func (h *publicHandlers) renderDetails(w http.ResponseWriter, r *http.Request, status int, t service.Target, start time.Time, f BookingForm, errs []string) {
 	base := basePath(r)
 	w.Header().Set("Cache-Control", "no-store")
@@ -511,7 +523,9 @@ func (h *publicHandlers) renderDetails(w http.ResponseWriter, r *http.Request, s
 	if t.Type.AtHome {
 		zones = t.Practice.HomeVisitZones
 	}
+	instr, ack := instructionsOf(t.Type)
 	h.rd.PageStatus(w, r, status, "public_details", DetailsData{
+		Instructions: instr, AckRequired: ack,
 		Channels: t.Channels, AtHome: t.Type.AtHome, Zones: zones, Summary: h.summary(t, start), Form: f, TypeID: t.Type.ID.String(), Start: start.Format(time.RFC3339),
 		Action:  base + "/book/details",
 		BackURL: base + "/book?" + url.Values{"type": {t.Type.ID.String()}, "week": {isoWeek(start.In(t.Loc))}}.Encode(),
@@ -588,6 +602,7 @@ func (h *publicHandlers) detailsSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	v, err := h.svc.StartVerification(r.Context(), service.VerifyInput{
 		PractitionerID: t.Practitioner.ID, TypeID: t.Type.ID, Start: start, Patient: f.patient(), Channel: f.Channel,
+		InstructionsAck: f.InstructionsAck,
 	})
 	switch {
 	case err == nil:
@@ -629,6 +644,7 @@ func (h *publicHandlers) confirm(w http.ResponseWriter, r *http.Request) {
 	res, err := h.svc.Book(r.Context(), service.BookInput{
 		VerifyInput: service.VerifyInput{
 			PractitionerID: t.Practitioner.ID, TypeID: t.Type.ID, Start: start, Patient: f.patient(), Channel: f.Channel,
+			InstructionsAck: f.InstructionsAck,
 		},
 		ChallengeID: challenge,
 		Code:        strings.Join(strings.Fields(r.PostFormValue("code")), ""),
@@ -705,7 +721,8 @@ func (h *publicHandlers) confirmed(w http.ResponseWriter, r *http.Request) {
 		ICSURL:     manageURL(r.PathValue("token")) + "/ics",
 		Changeable: c.Changeable, ManageURL: manageURL(r.PathValue("token")), MinCancel: c.MinCancel,
 		AtHome: c.Type.AtHome, Address: c.Appointment.Address.String,
-		RebookURL: service.RebookPath(c.Practice.Slug, c.Practitioner, c.Type),
+		Instructions: strings.TrimSpace(c.Type.PatientInstructions),
+		RebookURL:    service.RebookPath(c.Practice.Slug, c.Practitioner, c.Type),
 	})
 }
 
@@ -715,10 +732,7 @@ func (h *publicHandlers) calendarFile(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, r, errOrNotFound(err))
 		return
 	}
-	desc := ""
-	if c.Practice.Phone != "" {
-		desc = "Cabinet : " + c.Practice.Phone
-	}
+	desc := ics.WithInstructions(phoneLine(c.Practice.Phone), c.Type.PatientInstructions)
 	location := c.Practice.Address
 	if c.Type.AtHome && c.Appointment.Address.String != "" {
 		location = c.Appointment.Address.String // le praticien se déplace
@@ -741,4 +755,12 @@ func errOrNotFound(err error) error {
 		return err
 	}
 	return domain.ErrNotFound
+}
+
+// phoneLine est la première ligne de la description de l'ICS patient.
+func phoneLine(phone string) string {
+	if phone == "" {
+		return ""
+	}
+	return "Cabinet : " + phone
 }

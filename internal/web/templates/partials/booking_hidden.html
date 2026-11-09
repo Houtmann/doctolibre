@@ -9,4 +9,5 @@
 <input type="hidden" name="channel" value="{{.Form.Channel}}">
 {{if .Form.SMSOptIn}}<input type="hidden" name="sms_opt_in" value="on">{{end}}
 {{if .Form.EmailOptIn}}<input type="hidden" name="email_opt_in" value="on">{{end}}
+{{if .Form.InstructionsAck}}<input type="hidden" name="instructions_ack" value="on">{{end}}
 {{if .Form.Consent}}<input type="hidden" name="consent" value="on">{{end}}

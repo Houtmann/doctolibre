@@ -30,12 +30,12 @@ Chaque motif peut porter des consignes pratiques pour le patient (« apporter l'
 - Golden files emails / ICS mis à jour (`-update`).
 
 ## Critères d'acceptation
-- [ ] Consignes saisies dans l'admin, affichées à la réservation, sur la confirmation, sur `/r/{token}`.
-- [ ] Case obligatoire : réservation refusée sans la case (test handler, requête POST sans le champ), acceptée avec.
-- [ ] Emails (confirmation, rappel, report, série) et ICS patient contiennent les consignes ; rien quand le champ est vide (golden files).
-- [ ] SMS inchangés (test).
-- [ ] `<script>` saisi dans les consignes rendu échappé (test).
-- [ ] 1001 caractères refusés avec un message sur le champ.
+- [x] Consignes saisies dans l'admin, affichées à la réservation, sur la confirmation, sur `/r/{token}`.
+- [x] Case obligatoire : réservation refusée sans la case (test handler, requête POST sans le champ), acceptée avec.
+- [x] Emails (confirmation, rappel, report, série) et ICS patient contiennent les consignes ; rien quand le champ est vide (golden files).
+- [x] SMS inchangés (test).
+- [x] `<script>` saisi dans les consignes rendu échappé (test).
+- [x] 1001 caractères refusés avec un message sur le champ.
 
 ## Vérification
 ```bash
@@ -50,8 +50,8 @@ Consignes par praticien, mise en forme riche (Markdown), pièces jointes, questi
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-11-09 (sonnet).
+- **Fait** : migration 00027 (`patient_instructions`, `instructions_ack_required`) ; setter `SetAppointmentTypeInstructions` (requêtes Create/Update inchangées) ; saisie admin (textarea + case + avertissement « aucune donnée médicale » + aide « lues à l'envoi ») ; affichage sur `public_details` (partial `patient_instructions.html`, `whitespace-pre-line`) et `public_confirmed` (= `/r/{token}`) ; case « J'ai lue » vérifiée par le service (`StartVerification` et `Book`, `ErrValidation{Field:"instructions_ack"}`), reportée en champ caché vers l'étape code, non stockée ; emails confirmation / rappel / report / série (bloc « À prévoir ») ; ICS patient (RDV et série) via `ics.WithInstructions` ; pas de SMS ni de flux ICS cabinet ; goldens `*_consignes.*` ajoutés (goldens existants inchangés) ; `ui.css` régénéré.
+- **Reste à faire** : passage navigateur (non vu).
+- **Notes de reprise** : `make` inutilisable, étapes à la main (`CGO_ENABLED=0`). Les consignes sont lues par `notifier.data()` à la rédaction du message (rappels : au moment où le scanner les met en file, pas à la réservation).
+- **Écarts avec la spécification** : la case n'est exigée que si les consignes sont non vides (une case sans consignes est ignorée et décochée à l'enregistrement). Pas de lecture des consignes à `/r/{token}/reschedule` (hors spec).

@@ -4,7 +4,10 @@ Votre rendez-vous ({{.type_name}}) avec {{.practitioner}} est confirmé :
 
   {{.date}} à {{.time}}
   {{.practice_name}}{{if .practice_address}}
-  {{.practice_address}}{{end}}
+  {{.practice_address}}{{end}}{{if .instructions}}
+
+À prévoir :
+{{.instructions}}{{end}}
 {{if .manage_url}}
 Pour consulter, déplacer ou annuler ce rendez-vous :
 {{.manage_url}}

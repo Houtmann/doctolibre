@@ -4,7 +4,10 @@ Nous vous rappelons votre rendez-vous ({{.type_name}}) avec {{.practitioner}} :
 
   {{.date}} à {{.time}}
   {{.practice_name}}{{if .practice_address}}
-  {{.practice_address}}{{end}}
+  {{.practice_address}}{{end}}{{if .instructions}}
+
+À prévoir :
+{{.instructions}}{{end}}
 {{if .manage_url}}
 Un empêchement ? Déplacez ou annulez le rendez-vous :
 {{.manage_url}}

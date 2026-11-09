@@ -366,6 +366,7 @@ func typeFormOf(t sqlcgen.AppointmentType) service.AppointmentTypeInput {
 	return service.AppointmentTypeInput{
 		Name: t.Name, DurationMin: strconv.Itoa(d), BufferBeforeMin: strconv.Itoa(b), BufferAfterMin: strconv.Itoa(a),
 		Color: t.Color, OnlineBookable: t.OnlineBookable, AtHome: t.AtHome, TravelBufferMin: strconv.Itoa(service.TravelMinutes(t)),
+		PatientInstructions: t.PatientInstructions, InstructionsAckRequired: t.InstructionsAckRequired,
 	}
 }
 
@@ -386,6 +387,7 @@ func typeFormFrom(r *http.Request) service.AppointmentTypeInput {
 		Name: r.PostFormValue("name"), DurationMin: r.PostFormValue("duration"),
 		BufferBeforeMin: r.PostFormValue("buffer_before"), BufferAfterMin: r.PostFormValue("buffer_after"),
 		TravelBufferMin: r.PostFormValue("travel_buffer"), ResourceID: r.PostFormValue("resource"),
+		PatientInstructions: r.PostFormValue("patient_instructions"), InstructionsAckRequired: r.PostFormValue("instructions_ack_required") == "1",
 		Color: r.PostFormValue("color"), OnlineBookable: r.PostFormValue("online_bookable") == "1", AtHome: r.PostFormValue("at_home") == "1",
 	}
 }

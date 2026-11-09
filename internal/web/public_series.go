@@ -73,10 +73,7 @@ func (h *publicHandlers) seriesCalendar(w http.ResponseWriter, r *http.Request) 
 		h.fail(w, r, err)
 		return
 	}
-	desc := ""
-	if p.Practice.Phone != "" {
-		desc = "Cabinet : " + p.Practice.Phone
-	}
+	desc := ics.WithInstructions(phoneLine(p.Practice.Phone), p.Type.PatientInstructions)
 	events := make([]ics.Event, 0, len(p.Upcoming))
 	for _, s := range p.Upcoming {
 		location := p.Practice.Address

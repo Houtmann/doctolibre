@@ -374,6 +374,17 @@ type VerifyInput struct {
 	Start          time.Time
 	Patient        PatientDetails
 	Channel        string // "sms" | "email" : où envoyer le code
+	// InstructionsAck : le patient a coché « J'ai lu les consignes » (exigé si le motif le demande ; non stocké).
+	InstructionsAck bool
+}
+
+// checkInstructionsAck refuse la réservation en ligne si le motif exige la lecture des consignes
+// et que le patient ne l'a pas confirmée.
+func checkInstructionsAck(t sqlcgen.AppointmentType, ack bool) error {
+	if t.InstructionsAckRequired && t.PatientInstructions != "" && !ack {
+		return domain.ErrValidation{Field: "instructions_ack", Msg: "Confirmez avoir lu les consignes pour ce rendez-vous."}
+	}
+	return nil
 }
 
 // Verification est le résultat de StartVerification.
@@ -398,6 +409,9 @@ func (b *Booking) StartVerification(ctx context.Context, in VerifyInput) (Verifi
 		return Verification{}, err
 	}
 	if err := sc.checkAddress(d); err != nil {
+		return Verification{}, err
+	}
+	if err := checkInstructionsAck(sc.typ, in.InstructionsAck); err != nil {
 		return Verification{}, err
 	}
 	if err := checkOTPChannel(ctx, q, sc.pc, in.Channel); err != nil {
@@ -512,6 +526,9 @@ func (b *Booking) Book(ctx context.Context, in BookInput) (BookResult, error) {
 			return ErrOTPExpired
 		}
 		if err := sc.checkAddress(d); err != nil {
+			return err
+		}
+		if err := checkInstructionsAck(sc.typ, in.InstructionsAck); err != nil {
 			return err
 		}
 		slot, err := sc.check(ctx, q, now, in.Start)
