@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-11-09 (suite) — passage navigateur T061, T070, T071, T098 (contrôle : opus ; corrections : sonnet)
+
+- **Tâches** : T061, T070, T071, T098 restent en `review` (vues au navigateur sur `doctolibre_demo`, serveur local `verify`)
+- **Fait** : T061 : affiche rendue, QR décodé (BarcodeDetector) vers l'URL publique, règles `@media print` relues (aperçu d'impression natif non vu). T070 : consignes saisies (avec `<script>` et sauts de ligne), affichées échappées à l'étape coordonnées, sur la confirmation et `/r/{token}`, refus serveur 422 sans la case, email texte/HTML et ICS patient corrects. T098 : annulation patient → bouton vers `/rebook`, grille, consignes + case, nouveau RDV avec jeton propre sans OTP, rejeu → 403 « déjà repris », un seul RDV en base. T071 : réglage cabinet, série à 0 séance, invitation `series_invite` reçue, proposition, htmx « Créneau suivant » / « Retirer », confirmation → 5 RDV `online` + un seul récapitulatif
+- **Bugs trouvés et corrigés (T071)** : heures affichées en UTC après l'appel htmx `adjust` ; « Créneau suivant » excluait le jour même (sautait de 3 semaines) ; alerte « aucun créneau » placée sous le bouton. Tests de non-régression ajoutés
+- **Vérification** : étapes de `make check` rejouées : 0 échec, 0 test sauté, lint 0, sqlc et `ui.css` à jour
+- **Reste** : 360 px et thème sombre non vus pour ces pages ; aperçu d'impression natif de l'affiche
+- **Décisions** : aucune nouvelle
+
 ## 2026-11-09 — T090, T061, T070, T071, T098 (sonnet ×5 en séquence ; contrôle : opus)
 
 - **Tâches** : T090, T070, T071, T098 todo → review ; T061 blocked → todo → review (choix humain : `rsc.io/qr`). Lancées à la demande de l'humain alors que leurs dépendances (T055, T058, T086, T087, T095, T097) sont encore en `review`
