@@ -45,6 +45,8 @@
       <label class="block text-sm font-medium" for="horizon_days">Réservation possible jusqu'à (jours à l'avance)</label>
       <input class="input w-full" id="horizon_days" name="horizon_days" type="number" inputmode="numeric" min="1" max="730" value="{{.HorizonDays}}" required>
     </div>
+    <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="care_plan_self_scheduling" value="1"{{if .CarePlanSelfScheduling}} checked{{end}} aria-describedby="self-sched-help"> Laisser le patient planifier lui-même les séances d'une série</label>
+    <p class="text-sm text-base-content/70" id="self-sched-help">Le praticien l'active ensuite série par série. Le patient choisit ses séances restantes depuis le lien de sa série, dans la limite du nombre de séances prescrites et selon vos délais et horizons de réservation.</p>
   </fieldset>
   <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
     <legend class="fieldset-legend">Visites à domicile</legend>

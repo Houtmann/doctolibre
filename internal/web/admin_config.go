@@ -214,7 +214,8 @@ func settingsInputOf(s service.Settings) service.SettingsInput {
 		HorizonDays:        strconv.Itoa(s.HorizonDays),
 		HomeVisitOnline:    s.Practice.HomeVisitOnline, HomeVisitZones: strings.Join(s.Practice.HomeVisitZones, "\n"),
 		CloseOnHolidays: s.Practice.CloseOnHolidays, HolidaysAlsaceMoselle: s.Practice.HolidaysAlsaceMoselle,
-		NoShowBlockThreshold: noShowThresholdText(s.Practice.NoShowBlockThreshold),
+		NoShowBlockThreshold:   noShowThresholdText(s.Practice.NoShowBlockThreshold),
+		CarePlanSelfScheduling: s.Practice.CarePlanSelfScheduling,
 	}
 }
 
@@ -256,7 +257,8 @@ func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) 
 		HorizonDays:        r.PostFormValue("horizon_days"),
 		HomeVisitOnline:    r.PostFormValue("home_visit_online") == "1", HomeVisitZones: r.PostFormValue("home_visit_zones"),
 		CloseOnHolidays: r.PostFormValue("close_on_holidays") == "1", HolidaysAlsaceMoselle: r.PostFormValue("holidays_alsace_moselle") == "1",
-		NoShowBlockThreshold: r.PostFormValue("no_show_block_threshold"),
+		NoShowBlockThreshold:   r.PostFormValue("no_show_block_threshold"),
+		CarePlanSelfScheduling: r.PostFormValue("care_plan_self_scheduling") == "1",
 	}
 	err := h.svc.UpdateSettings(r.Context(), actorFrom(r), in)
 	if msgs := validation(err); msgs != nil {
@@ -275,7 +277,7 @@ func (h *configHandlers) settingsSubmit(w http.ResponseWriter, r *http.Request) 
 // sur la page du profil est refusé (403), jamais ignoré en silence.
 var cabinetFields = [...]string{
 	"name", "address", "phone", "booking_notice_hours", "cancel_notice_hours", "horizon_days",
-	"home_visit_online", "home_visit_zones", "close_on_holidays", "holidays_alsace_moselle", "no_show_block_threshold",
+	"home_visit_online", "home_visit_zones", "close_on_holidays", "holidays_alsace_moselle", "no_show_block_threshold", "care_plan_self_scheduling",
 }
 
 func (h *configHandlers) profileForm(w http.ResponseWriter, r *http.Request) {

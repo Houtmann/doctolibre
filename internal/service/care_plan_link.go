@@ -84,6 +84,9 @@ type PlanLink struct {
 	Loc          *time.Location
 	Upcoming     []PlanLinkSession // séances réservées à venir, chronologique
 	Past         []PlanLinkSession // le reste (honorées, absences, annulées, passées), chronologique
+	// CanSelfSchedule : le patient peut planifier ses séances restantes (T071) ; Remaining en donne le nombre.
+	CanSelfSchedule bool
+	Remaining       int
 }
 
 // CarePlanByToken retrouve une série par son lien. Jeton inconnu, falsifié ou
@@ -139,5 +142,17 @@ func (b *Booking) CarePlanByToken(ctx context.Context, token string) (PlanLink, 
 		}
 		out.Past = append(out.Past, s)
 	}
+	counted := 0
+	var addrs []string
+	for _, a := range rows {
+		if a.Status == "done" || a.Status == "booked" {
+			counted++
+		}
+		if a.Status != "cancelled" {
+			addrs = append(addrs, a.Address.String)
+		}
+	}
+	out.Remaining = max(int(cp.SessionsPrescribed)-counted, 0)
+	out.CanSelfSchedule = out.Remaining > 0 && selfScheduleOpen(cp, pc, pr, typ) && (!typ.AtHome || seriesAddress(addrs, pat) != "")
 	return out, nil
 }

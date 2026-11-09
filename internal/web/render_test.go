@@ -115,6 +115,8 @@ func TestAllTemplatesParseAndRender(t *testing.T) {
 				data = ConfirmedData{}
 			case "public_series":
 				data = SeriesData{}
+			case "public_series_plan":
+				data = SeriesPlanData{}
 			case "public_reschedule":
 				data = GridData{}
 			case "public_reschedule_confirm":

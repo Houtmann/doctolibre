@@ -1,0 +1,20 @@
+Bonjour {{.first_name}},
+
+{{.practice_name}} vous invite à planifier vous-même vos séances ({{.type_name}}) avec {{.practitioner}} : il vous en reste {{.remaining}} sur {{.prescribed}}.
+{{if .sessions}}
+Déjà planifiée{{if gt .count 1}}s{{end}} :
+{{range .sessions}}
+  - {{.}}{{end}}
+{{end}}{{if .instructions}}
+À prévoir :
+{{.instructions}}
+{{end}}
+{{if .series_url}}Choisir mes séances, les gérer et les ajouter à mon agenda :
+{{.series_url}}
+{{end}}
+  {{.practice_name}}{{if .practice_address}}
+  {{.practice_address}}{{end}}
+{{if .practice_phone}}
+Une question ? Appelez le {{.practice_phone}}.
+{{end}}
+{{.signature}}

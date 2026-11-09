@@ -61,6 +61,7 @@ type CarePlanValues struct {
 	Practitioner                                  string // praticien choisi par le secrétariat
 	WindowStart, WindowEnd, Address               string
 	Weekdays                                      []string
+	SelfSchedule                                  bool // le patient planifie lui-même les séances restantes (T071)
 }
 
 // WeekdayChoice est une case « jour préféré ».
@@ -82,6 +83,7 @@ type CarePlanPage struct {
 	Found                  int
 	Want                   int
 	AtHome                 bool
+	SelfScheduling         bool // réglage du cabinet actif : case « laisser le patient planifier »
 	ConflictRow            int
 	Errors                 []string
 }
@@ -91,6 +93,7 @@ func readPlanValues(r *http.Request) CarePlanValues {
 	return CarePlanValues{
 		Practitioner: v(practitionerParam), TypeID: v("type_id"), Label: v("label"), Prescribed: v("prescribed"), PerWeek: v("per_week"), StartDate: v("start_date"),
 		WindowStart: v("window_start"), WindowEnd: v("window_end"), Address: v("address"), Weekdays: r.PostForm["weekdays"],
+		SelfSchedule: v("self_schedule") == "1",
 	}
 }
 
@@ -98,6 +101,7 @@ func (v CarePlanValues) input(patientID uuid.UUID) service.PlanInput {
 	return service.PlanInput{
 		PatientID: patientID.String(), TypeID: v.TypeID, Label: v.Label, Prescribed: v.Prescribed, PerWeek: v.PerWeek,
 		Weekdays: v.Weekdays, WindowStart: v.WindowStart, WindowEnd: v.WindowEnd, StartDate: v.StartDate, Address: v.Address,
+		PatientSelfSchedule: v.SelfSchedule,
 	}
 }
 
@@ -122,7 +126,7 @@ func (h *carePlanHandlers) page(r *http.Request, patientID uuid.UUID, v CarePlan
 		v.StartDate = f.Today
 	}
 	p := CarePlanPage{
-		PatientID: patientID.String(), PatientName: f.Patient.FirstName + " " + f.Patient.LastName, Values: v, Errors: errs,
+		PatientID: patientID.String(), PatientName: f.Patient.FirstName + " " + f.Patient.LastName, Values: v, Errors: errs, SelfScheduling: f.SelfScheduling,
 	}
 	for _, t := range f.Types {
 		d, _, _ := service.TypeMinutes(t)
@@ -221,7 +225,13 @@ func (h *carePlanHandlers) create(w http.ResponseWriter, r *http.Request) {
 	row := 0
 	switch {
 	case err == nil:
-		h.rd.SetFlash(w, "success", "Série créée : les séances sont planifiées.")
+		msg := "Série créée : les séances sont planifiées."
+		if v.SelfSchedule {
+			// Le patient ne reçoit le lien que si au moins deux séances sont posées (message récapitulatif) :
+			// le cabinet l'a toujours sous la main ici.
+			msg = "Série créée. Le patient planifie les séances restantes depuis son lien de série : " + h.svc.LinkURL(plan)
+		}
+		h.rd.SetFlash(w, "success", msg)
 		httpx.Redirect(w, r, pathPatients+"/"+plan.PatientID.String())
 		return
 	case errors.As(err, &conflict):

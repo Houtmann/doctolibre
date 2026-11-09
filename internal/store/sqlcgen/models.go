@@ -123,23 +123,24 @@ type CalendarFeedToken struct {
 }
 
 type CarePlan struct {
-	ID                 uuid.UUID
-	PracticeID         uuid.UUID
-	PatientID          uuid.UUID
-	PractitionerID     uuid.UUID
-	AppointmentTypeID  uuid.UUID
-	Label              string
-	SessionsPrescribed int32
-	FrequencyPerWeek   int16
-	PreferredWeekdays  []int16
-	PreferredTimeStart pgtype.Time
-	PreferredTimeEnd   pgtype.Time
-	StartDate          pgtype.Date
-	Status             string
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	TokenVersion       int32
-	TokenHash          pgtype.Text
+	ID                  uuid.UUID
+	PracticeID          uuid.UUID
+	PatientID           uuid.UUID
+	PractitionerID      uuid.UUID
+	AppointmentTypeID   uuid.UUID
+	Label               string
+	SessionsPrescribed  int32
+	FrequencyPerWeek    int16
+	PreferredWeekdays   []int16
+	PreferredTimeStart  pgtype.Time
+	PreferredTimeEnd    pgtype.Time
+	StartDate           pgtype.Date
+	Status              string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	TokenVersion        int32
+	TokenHash           pgtype.Text
+	PatientSelfSchedule bool
 }
 
 type OtpChallenge struct {
@@ -232,6 +233,7 @@ type Practice struct {
 	CloseOnHolidays           bool
 	HolidaysAlsaceMoselle     bool
 	NoShowBlockThreshold      pgtype.Int2
+	CarePlanSelfScheduling    bool
 }
 
 type PracticeNotifyTransport struct {

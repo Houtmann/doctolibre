@@ -1,0 +1,31 @@
+{{/* Proposition de séances (T071) : page entière sans JS, fragment htmx sinon. Donnée : SeriesPlanData (avec CSRF). */}}
+<section id="plan-proposal" class="space-y-4 max-w-2xl" aria-live="polite">
+  {{template "form_errors.html" .Errors}}
+  {{if .Notice}}<div class="alert alert-warning alert-soft" role="status">{{.Notice}}</div>{{end}}
+  {{if .Lines}}
+  <form class="space-y-4" method="post" action="{{.Action}}/confirm">
+    {{csrf .CSRF}}
+    <input type="hidden" name="count" value="{{.Count}}">
+    {{range .Weekdays}}{{if .Checked}}<input type="hidden" name="weekdays" value="{{.Value}}">{{end}}{{end}}
+    <input type="hidden" name="window_start" value="{{.WindowStart}}">
+    <input type="hidden" name="window_end" value="{{.WindowEnd}}">
+    <h2 class="text-xl font-semibold">Séances proposées</h2>
+    <ul class="bg-base-100 border border-base-300 rounded-box divide-y divide-base-300">
+      {{range .Lines}}
+      <li class="flex flex-col items-start gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <input type="hidden" name="line" value="{{.Value}}">
+        <time datetime="{{.Start.Format "2006-01-02T15:04:05Z07:00"}}">{{localDate .Start}} à {{localTime .Start}}</time>
+        <span class="flex flex-wrap gap-2">
+          <button class="btn btn-outline btn-sm" type="submit" formnovalidate formaction="{{$.Action}}/adjust" name="next" value="{{.Index}}" hx-post="{{$.Action}}/adjust" hx-target="#plan-proposal" hx-swap="outerHTML">Créneau suivant</button>
+          <button class="btn btn-ghost btn-sm" type="submit" formnovalidate formaction="{{$.Action}}/adjust" name="remove" value="{{.Index}}" hx-post="{{$.Action}}/adjust" hx-target="#plan-proposal" hx-swap="outerHTML">Retirer</button>
+        </span>
+      </li>
+      {{end}}
+    </ul>
+    {{template "patient_instructions.html" .Instructions}}
+    {{if .AckRequired}}<label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="instructions_ack" value="on"{{if .Ack}} checked{{end}} required> <span>J'ai lu les consignes.</span></label>{{end}}
+    <p class="text-sm text-base-content/70">Toutes les séances sont enregistrées ensemble, ou aucune si l'une d'elles vient d'être prise par un autre patient.</p>
+    <button class="btn btn-primary w-full sm:w-auto" type="submit">Confirmer ces séances</button>
+  </form>
+  {{end}}
+</section>

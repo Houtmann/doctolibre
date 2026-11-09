@@ -75,6 +75,9 @@ type PlanInput struct {
 	WindowStart, WindowEnd                        string   // "HH:MM", les deux vides = pas de contrainte
 	StartDate                                     string   // "AAAA-MM-JJ"
 	Address                                       string   // visites à domicile uniquement
+	// PatientSelfSchedule : le patient planifie lui-même les séances restantes (T071) ;
+	// possible seulement si le réglage du cabinet est actif.
+	PatientSelfSchedule bool
 }
 
 type planParams struct {
@@ -87,6 +90,7 @@ type planParams struct {
 	winStart, winEnd  booking.LocalTime
 	start             booking.Date
 	address           string
+	selfSchedule      bool
 }
 
 func parsePlan(in PlanInput) (planParams, error) {
@@ -137,6 +141,7 @@ func parsePlan(in PlanInput) (planParams, error) {
 	}
 	p.start = booking.DateOf(d)
 	p.address = strings.TrimSpace(in.Address)
+	p.selfSchedule = in.PatientSelfSchedule
 	if tooLong(p.address, maxAddressLen) || strings.ContainsFunc(p.address, unicode.IsControl) {
 		add("address", "L'adresse n'est pas valide (300 caractères maximum, sans retour à la ligne).")
 	}
@@ -238,6 +243,8 @@ type FormData struct {
 	// Practitioners : praticiens que l'acteur peut viser (rempli pour le secrétariat, qui choisit).
 	Practitioners []sqlcgen.Practitioner
 	Today         string // date du jour dans le fuseau du cabinet (AAAA-MM-JJ)
+	// SelfScheduling : le cabinet autorise la planification par le patient (case proposée au formulaire).
+	SelfScheduling bool
 }
 
 // Form retourne le patient et les motifs actifs pour le formulaire.
@@ -253,11 +260,15 @@ func (s *CarePlans) Form(ctx context.Context, a Actor, patientID uuid.UUID) (For
 	if err != nil {
 		return FormData{}, err
 	}
-	loc, err := s.practice().location(ctx, a.PracticeID)
+	pc, err := sqlcgen.New(s.Pool).GetPractice(ctx, a.PracticeID)
 	if err != nil {
-		return FormData{}, err
+		return FormData{}, fmt.Errorf("lecture cabinet: %w", err)
 	}
-	out := FormData{Patient: p, Today: s.Clock.Now().In(loc).Format("2006-01-02")}
+	loc, err := time.LoadLocation(pc.Timezone)
+	if err != nil {
+		return FormData{}, fmt.Errorf("fuseau %q: %w", pc.Timezone, err)
+	}
+	out := FormData{Patient: p, Today: s.Clock.Now().In(loc).Format("2006-01-02"), SelfScheduling: pc.CarePlanSelfScheduling}
 	for _, t := range all {
 		if t.Active {
 			out.Types = append(out.Types, t)
@@ -461,8 +472,15 @@ func (s *CarePlans) Create(ctx context.Context, a Actor, in CreateInput) (sqlcge
 			return fmt.Errorf("lecture patient: %w", err)
 		}
 		lines, errs := parseLines(in.Lines, sc.loc)
-		if len(lines) == 0 && len(errs) == 0 {
+		if p.selfSchedule && !sc.pc.CarePlanSelfScheduling {
+			errs = append(errs, domain.ErrValidation{Field: "self_schedule", Msg: "La planification par le patient n'est pas activée dans les réglages du cabinet."})
+		}
+		if len(lines) == 0 && len(errs) == 0 && !p.selfSchedule {
 			errs = append(errs, domain.ErrValidation{Field: "lines", Msg: "Planifiez au moins une séance."})
+		}
+		if len(lines) == 0 && len(errs) == 0 && sc.typ.AtHome {
+			// L'adresse n'est pas stockée sur la série : elle vient des séances posées.
+			errs = append(errs, domain.ErrValidation{Field: "lines", Msg: "Pour une visite à domicile, planifiez au moins une séance : son adresse sera reprise pour les séances du patient."})
 		}
 		if len(lines) > p.prescribed {
 			errs = append(errs, domain.ErrValidation{Field: "lines", Msg: "Il y a plus de séances planifiées que de séances prescrites."})
@@ -474,8 +492,8 @@ func (s *CarePlans) Create(ctx context.Context, a Actor, in CreateInput) (sqlcge
 		cp := sqlcgen.CreateCarePlanParams{
 			PracticeID: a.PracticeID, PatientID: p.patientID, PractitionerID: pr.ID, AppointmentTypeID: p.typeID,
 			Label: p.label, SessionsPrescribed: int32(p.prescribed), FrequencyPerWeek: int16(p.perWeek), //nolint:gosec // bornés par parsePlan
-			PreferredWeekdays: p.weekdays,
-			StartDate:         pgtype.Date{Time: time.Date(p.start.Year, p.start.Month, p.start.Day, 0, 0, 0, 0, time.UTC), Valid: true},
+			PreferredWeekdays: p.weekdays, PatientSelfSchedule: p.selfSchedule,
+			StartDate: pgtype.Date{Time: time.Date(p.start.Year, p.start.Month, p.start.Day, 0, 0, 0, 0, time.UTC), Valid: true},
 		}
 		if cp.PreferredWeekdays == nil {
 			cp.PreferredWeekdays = []int16{}
@@ -504,6 +522,10 @@ func (s *CarePlans) Create(ctx context.Context, a Actor, in CreateInput) (sqlcge
 				return fmt.Errorf("lecture rendez-vous: %w", err)
 			}
 			appts = append(appts, ap)
+		}
+		if p.selfSchedule {
+			// Le patient reçoit le lien pour choisir ses séances : une invitation, quel que soit le nombre posé.
+			return s.notifier().seriesInvite(ctx, tx, q, plan, appts, planToken)
 		}
 		return s.notifier().seriesBooked(ctx, tx, q, appts, planToken)
 	})

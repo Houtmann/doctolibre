@@ -1,0 +1,13 @@
+{{define "title"}}Planifiez vos séances{{end}}
+{{define "content"}}
+<h1 style="margin:0 0 16px;font-size:20px;">Planifiez vos séances</h1>
+<p style="margin:0 0 16px;">Bonjour {{.first_name}},</p>
+<p style="margin:0 0 16px;">{{.practice_name}} vous invite à planifier vous-même vos séances ({{.type_name}}) avec {{.practitioner}} : il vous en reste {{.remaining}} sur {{.prescribed}}.</p>
+{{if .sessions}}<p style="margin:0 0 8px;">Déjà planifiée{{if gt .count 1}}s{{end}} :</p>
+<ul style="margin:0 0 16px;padding-left:20px;">{{range .sessions}}<li>{{.}}</li>{{end}}</ul>
+{{end}}{{if .instructions}}<p style="margin:0 0 16px;"><strong>À prévoir</strong><br><span style="white-space:pre-line;">{{.instructions}}</span></p>
+{{end}}{{if .series_url}}<p style="margin:0 0 16px;"><a href="{{.series_url}}">Choisir mes séances, les gérer et les ajouter à mon agenda</a></p>{{end}}
+<p style="margin:0 0 16px;">{{.practice_name}}{{if .practice_address}}<br>{{.practice_address}}{{end}}</p>
+{{if .practice_phone}}<p style="margin:0 0 16px;font-size:14px;">Une question ? Appelez le {{.practice_phone}}.</p>{{end}}
+<p style="margin:0;font-size:14px;">{{.signature}}</p>
+{{end}}

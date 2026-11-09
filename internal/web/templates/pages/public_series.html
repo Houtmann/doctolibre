@@ -17,6 +17,15 @@
   </div>
 </article>
 
+{{if .Data.PlanURL}}
+<div class="alert alert-info alert-soft" role="status">
+  <div class="space-y-2">
+    <p>Il vous reste {{.Data.Remaining}} séance{{if gt .Data.Remaining 1}}s{{end}} à planifier.</p>
+    <a class="btn btn-primary btn-sm" href="{{.Data.PlanURL}}">Planifier mes séances</a>
+  </div>
+</div>
+{{end}}
+
 <section aria-labelledby="series-upcoming" class="space-y-2">
   <h2 id="series-upcoming" class="text-lg font-semibold">À venir</h2>
   {{if .Data.Upcoming}}

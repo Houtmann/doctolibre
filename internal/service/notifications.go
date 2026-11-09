@@ -27,6 +27,8 @@ const (
 	TemplatePatientCancellation = "patient_cancellation"
 	TemplateReschedule          = "reschedule"
 	TemplateSeries              = "series"
+	// TemplateSeriesInvite : invitation à planifier ses séances (T071), sans rendez-vous rattaché.
+	TemplateSeriesInvite = "series_invite"
 )
 
 // Canaux acceptés dans les réglages de notification du cabinet.
@@ -303,6 +305,81 @@ func (n notifier) seriesBooked(ctx context.Context, tx pgx.Tx, q *sqlcgen.Querie
 	data["series_url"] = planURL(n.baseURL, planToken)
 	_, err = n.enqueue(ctx, tx, v, v.practice.NotifyConfirmationChannel, TemplateSeries, data, time.Time{}, "series-confirmation", "")
 	return err
+}
+
+// seriesInvite enfile UNE invitation à planifier ses séances pour une série ouverte à la
+// planification par le patient (T071), quel que soit le nombre de séances déjà posées (0, 1 ou N) :
+// elle remplace la confirmation, sans doublon, et porte le lien de série /s/{jeton}. Le message
+// n'est rattaché à aucun rendez-vous (il survit à l'annulation d'une séance). Canal et
+// consentements : ceux de la confirmation du cabinet.
+func (n notifier) seriesInvite(ctx context.Context, tx pgx.Tx, q *sqlcgen.Queries, cp sqlcgen.CarePlan, appts []sqlcgen.Appointment, planToken string) error {
+	pc, err := q.GetPractice(ctx, cp.PracticeID)
+	if err != nil {
+		return fmt.Errorf("lecture cabinet: %w", err)
+	}
+	pr, err := q.GetPractitioner(ctx, sqlcgen.GetPractitionerParams{ID: cp.PractitionerID, PracticeID: cp.PracticeID})
+	if err != nil {
+		return fmt.Errorf("lecture praticien: %w", err)
+	}
+	typ, err := q.GetAppointmentType(ctx, sqlcgen.GetAppointmentTypeParams{ID: cp.AppointmentTypeID, PracticeID: cp.PracticeID})
+	if err != nil {
+		return fmt.Errorf("lecture motif: %w", err)
+	}
+	pat, err := q.GetPatient(ctx, sqlcgen.GetPatientParams{ID: cp.PatientID, PracticeID: cp.PracticeID})
+	if err != nil {
+		return fmt.Errorf("lecture patient: %w", err)
+	}
+	loc, err := time.LoadLocation(pc.Timezone)
+	if err != nil {
+		return fmt.Errorf("fuseau %q: %w", pc.Timezone, err)
+	}
+	to := recipient{FirstName: pat.FirstName, Phone: pat.Phone.String, Email: pat.Email.String, SMSOptIn: pat.SmsOptIn, EmailOptIn: pat.EmailOptIn}
+	signature := strings.TrimSpace(pc.NotifySignature)
+	if signature == "" {
+		signature = pc.Name
+	}
+	sort.Slice(appts, func(i, j int) bool { return appts[i].During.Lower.Time.Before(appts[j].During.Lower.Time) })
+	sessions := make([]string, len(appts))
+	for i, a := range appts {
+		t := a.During.Lower.Time.In(loc)
+		sessions[i] = frenchDay(t) + " à " + clockText(t)
+	}
+	data := map[string]any{
+		"practice_name": pc.Name, "practice_address": pc.Address, "practice_phone": pc.Phone,
+		"first_name": pat.FirstName, "practitioner": strings.TrimSpace(pr.FirstName + " " + pr.LastName),
+		"type_name": typ.Name, "signature": signature, "instructions": strings.TrimSpace(typ.PatientInstructions),
+		"count": len(appts), "sessions": sessions, "prescribed": int(cp.SessionsPrescribed),
+		"remaining": max(int(cp.SessionsPrescribed)-len(appts), 0), "series_url": planURL(n.baseURL, planToken),
+	}
+	now := n.clock.Now()
+	for _, ch := range pickChannels(pc.NotifyConfirmationChannel, to) {
+		m := outbox.Msg{PracticeID: cp.PracticeID, Template: TemplateSeriesInvite, DedupKey: fmt.Sprintf("series-invite:%s:%s", cp.ID, ch)}
+		switch ch {
+		case ChannelEmail:
+			payload, err := marshalPayload(data)
+			if err != nil {
+				return err
+			}
+			m.Kind, m.Recipient, m.Payload = outbox.KindEmail, to.Email, payload
+		case ChannelSMS:
+			sd := maps.Clone(data)
+			sd["practice_name"] = truncate(pc.Name, smsNameMax)
+			body, err := notify.RenderSMS(TemplateSeriesInvite, sd)
+			if err != nil {
+				return fmt.Errorf("rédaction du SMS %s: %w", TemplateSeriesInvite, err)
+			}
+			payload, err := marshalPayload(map[string]any{"body": body, "sms_opt_in": to.SMSOptIn})
+			if err != nil {
+				return err
+			}
+			m.Kind, m.Recipient, m.Payload = outbox.KindSMS, to.Phone, payload
+			m.RunAt = notify.SMSRunAt(now, loc, false) // pas de SMS la nuit
+		}
+		if err := outbox.Enqueue(ctx, tx, m); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // cancelled annule les messages en attente du rendez-vous et, si l'annulation

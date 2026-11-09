@@ -29,31 +29,50 @@ func (q *Queries) AttachAppointmentToCarePlan(ctx context.Context, arg AttachApp
 	return err
 }
 
+const countCarePlanSessions = `-- name: CountCarePlanSessions :one
+SELECT count(*)::int FROM appointment
+WHERE care_plan_id = $1 AND practice_id = $2 AND status IN ('done', 'booked')
+`
+
+type CountCarePlanSessionsParams struct {
+	CarePlanID pgtype.UUID
+	PracticeID uuid.UUID
+}
+
+// Séances comptées dans le quota d'une série (honorées ou à venir ; index appointment_care_plan_idx).
+func (q *Queries) CountCarePlanSessions(ctx context.Context, arg CountCarePlanSessionsParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countCarePlanSessions, arg.CarePlanID, arg.PracticeID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createCarePlan = `-- name: CreateCarePlan :one
 INSERT INTO care_plan (
     practice_id, patient_id, practitioner_id, appointment_type_id, label,
     sessions_prescribed, frequency_per_week, preferred_weekdays,
-    preferred_time_start, preferred_time_end, start_date
+    preferred_time_start, preferred_time_end, start_date, patient_self_schedule
 ) VALUES (
     $1, $2, $3, $4, $5,
     $6, $7, $8,
-    $9, $10, $11
+    $9, $10, $11, $12
 )
-RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash
+RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash, patient_self_schedule
 `
 
 type CreateCarePlanParams struct {
-	PracticeID         uuid.UUID
-	PatientID          uuid.UUID
-	PractitionerID     uuid.UUID
-	AppointmentTypeID  uuid.UUID
-	Label              string
-	SessionsPrescribed int32
-	FrequencyPerWeek   int16
-	PreferredWeekdays  []int16
-	PreferredTimeStart pgtype.Time
-	PreferredTimeEnd   pgtype.Time
-	StartDate          pgtype.Date
+	PracticeID          uuid.UUID
+	PatientID           uuid.UUID
+	PractitionerID      uuid.UUID
+	AppointmentTypeID   uuid.UUID
+	Label               string
+	SessionsPrescribed  int32
+	FrequencyPerWeek    int16
+	PreferredWeekdays   []int16
+	PreferredTimeStart  pgtype.Time
+	PreferredTimeEnd    pgtype.Time
+	StartDate           pgtype.Date
+	PatientSelfSchedule bool
 }
 
 func (q *Queries) CreateCarePlan(ctx context.Context, arg CreateCarePlanParams) (CarePlan, error) {
@@ -69,6 +88,7 @@ func (q *Queries) CreateCarePlan(ctx context.Context, arg CreateCarePlanParams) 
 		arg.PreferredTimeStart,
 		arg.PreferredTimeEnd,
 		arg.StartDate,
+		arg.PatientSelfSchedule,
 	)
 	var i CarePlan
 	err := row.Scan(
@@ -89,12 +109,13 @@ func (q *Queries) CreateCarePlan(ctx context.Context, arg CreateCarePlanParams) 
 		&i.UpdatedAt,
 		&i.TokenVersion,
 		&i.TokenHash,
+		&i.PatientSelfSchedule,
 	)
 	return i, err
 }
 
 const getCarePlan = `-- name: GetCarePlan :one
-SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash FROM care_plan WHERE id = $1 AND practice_id = $2
+SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash, patient_self_schedule FROM care_plan WHERE id = $1 AND practice_id = $2
 `
 
 type GetCarePlanParams struct {
@@ -123,12 +144,13 @@ func (q *Queries) GetCarePlan(ctx context.Context, arg GetCarePlanParams) (CareP
 		&i.UpdatedAt,
 		&i.TokenVersion,
 		&i.TokenHash,
+		&i.PatientSelfSchedule,
 	)
 	return i, err
 }
 
 const getCarePlanByTokenHash = `-- name: GetCarePlanByTokenHash :one
-SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash FROM care_plan WHERE token_hash = $1
+SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash, patient_self_schedule FROM care_plan WHERE token_hash = $1
 `
 
 // Recherche par haché (index unique care_plan_token_hash_key).
@@ -153,6 +175,7 @@ func (q *Queries) GetCarePlanByTokenHash(ctx context.Context, tokenHash pgtype.T
 		&i.UpdatedAt,
 		&i.TokenVersion,
 		&i.TokenHash,
+		&i.PatientSelfSchedule,
 	)
 	return i, err
 }
@@ -260,7 +283,7 @@ func (q *Queries) ListCarePlanSessions(ctx context.Context, arg ListCarePlanSess
 }
 
 const listCarePlansForPatient = `-- name: ListCarePlansForPatient :many
-SELECT cp.id, cp.practice_id, cp.patient_id, cp.practitioner_id, cp.appointment_type_id, cp.label, cp.sessions_prescribed, cp.frequency_per_week, cp.preferred_weekdays, cp.preferred_time_start, cp.preferred_time_end, cp.start_date, cp.status, cp.created_at, cp.updated_at, cp.token_version, cp.token_hash, t.name AS type_name
+SELECT cp.id, cp.practice_id, cp.patient_id, cp.practitioner_id, cp.appointment_type_id, cp.label, cp.sessions_prescribed, cp.frequency_per_week, cp.preferred_weekdays, cp.preferred_time_start, cp.preferred_time_end, cp.start_date, cp.status, cp.created_at, cp.updated_at, cp.token_version, cp.token_hash, cp.patient_self_schedule, t.name AS type_name
 FROM care_plan cp
 JOIN appointment_type t ON t.id = cp.appointment_type_id
 WHERE cp.practice_id = $1 AND cp.patient_id = $2
@@ -274,24 +297,25 @@ type ListCarePlansForPatientParams struct {
 }
 
 type ListCarePlansForPatientRow struct {
-	ID                 uuid.UUID
-	PracticeID         uuid.UUID
-	PatientID          uuid.UUID
-	PractitionerID     uuid.UUID
-	AppointmentTypeID  uuid.UUID
-	Label              string
-	SessionsPrescribed int32
-	FrequencyPerWeek   int16
-	PreferredWeekdays  []int16
-	PreferredTimeStart pgtype.Time
-	PreferredTimeEnd   pgtype.Time
-	StartDate          pgtype.Date
-	Status             string
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	TokenVersion       int32
-	TokenHash          pgtype.Text
-	TypeName           string
+	ID                  uuid.UUID
+	PracticeID          uuid.UUID
+	PatientID           uuid.UUID
+	PractitionerID      uuid.UUID
+	AppointmentTypeID   uuid.UUID
+	Label               string
+	SessionsPrescribed  int32
+	FrequencyPerWeek    int16
+	PreferredWeekdays   []int16
+	PreferredTimeStart  pgtype.Time
+	PreferredTimeEnd    pgtype.Time
+	StartDate           pgtype.Date
+	Status              string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+	TokenVersion        int32
+	TokenHash           pgtype.Text
+	PatientSelfSchedule bool
+	TypeName            string
 }
 
 func (q *Queries) ListCarePlansForPatient(ctx context.Context, arg ListCarePlansForPatientParams) ([]ListCarePlansForPatientRow, error) {
@@ -321,6 +345,7 @@ func (q *Queries) ListCarePlansForPatient(ctx context.Context, arg ListCarePlans
 			&i.UpdatedAt,
 			&i.TokenVersion,
 			&i.TokenHash,
+			&i.PatientSelfSchedule,
 			&i.TypeName,
 		); err != nil {
 			return nil, err
@@ -379,7 +404,7 @@ func (q *Queries) ListPatientCarePlanAppointments(ctx context.Context, arg ListP
 }
 
 const lockCarePlan = `-- name: LockCarePlan :one
-SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash FROM care_plan WHERE id = $1 AND practice_id = $2 FOR UPDATE
+SELECT id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash, patient_self_schedule FROM care_plan WHERE id = $1 AND practice_id = $2 FOR UPDATE
 `
 
 type LockCarePlanParams struct {
@@ -408,6 +433,7 @@ func (q *Queries) LockCarePlan(ctx context.Context, arg LockCarePlanParams) (Car
 		&i.UpdatedAt,
 		&i.TokenVersion,
 		&i.TokenHash,
+		&i.PatientSelfSchedule,
 	)
 	return i, err
 }
@@ -450,7 +476,7 @@ func (q *Queries) RevokeCarePlanTokens(ctx context.Context, arg RevokeCarePlanTo
 const setCarePlanStatus = `-- name: SetCarePlanStatus :one
 UPDATE care_plan SET status = $1, updated_at = now()
 WHERE id = $2 AND practice_id = $3
-RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash
+RETURNING id, practice_id, patient_id, practitioner_id, appointment_type_id, label, sessions_prescribed, frequency_per_week, preferred_weekdays, preferred_time_start, preferred_time_end, start_date, status, created_at, updated_at, token_version, token_hash, patient_self_schedule
 `
 
 type SetCarePlanStatusParams struct {
@@ -480,6 +506,7 @@ func (q *Queries) SetCarePlanStatus(ctx context.Context, arg SetCarePlanStatusPa
 		&i.UpdatedAt,
 		&i.TokenVersion,
 		&i.TokenHash,
+		&i.PatientSelfSchedule,
 	)
 	return i, err
 }

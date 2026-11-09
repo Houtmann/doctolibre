@@ -58,6 +58,12 @@ func (d Deps) publicRoutes(mux *http.ServeMux, rd *Renderer, logger *slog.Logger
 	// Lien de série (T055) : même limiteur que /r/.
 	mux.Handle("GET /s/{token}", httpx.Chain(http.HandlerFunc(h.series), manage))
 	mux.Handle("GET /s/{token}/ics", httpx.Chain(http.HandlerFunc(h.seriesCalendar), manage))
+	// Planification des séances restantes par le patient (T071) : seau « manage » par IP, plus un plafond
+	// de propositions par série (dans le handler).
+	mux.Handle("GET /s/{token}/plan", httpx.Chain(http.HandlerFunc(h.planForm), manage))
+	mux.Handle("POST /s/{token}/plan/propose", httpx.Chain(http.HandlerFunc(h.planPropose), manage))
+	mux.Handle("POST /s/{token}/plan/adjust", httpx.Chain(http.HandlerFunc(h.planAdjust), manage))
+	mux.Handle("POST /s/{token}/plan/confirm", httpx.Chain(http.HandlerFunc(h.planConfirm), manage))
 	mux.Handle("GET /r/{token}/cancel", httpx.Chain(http.HandlerFunc(h.cancelForm), manage))
 	mux.Handle("POST /r/{token}/cancel", httpx.Chain(http.HandlerFunc(h.cancelSubmit), manage))
 	mux.Handle("GET /r/{token}/reschedule", httpx.Chain(http.HandlerFunc(h.rescheduleGrid), search))

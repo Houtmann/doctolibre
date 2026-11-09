@@ -28,13 +28,13 @@ T055 (route `/s/{token}`, jeton de série, révocation), T030 Suivi (algorithme,
 - Audit : création par le patient journalisée avec l'id de la série (pas de nom).
 
 ## Critères d'acceptation
-- [ ] Série « 10 séances, 2/semaine, mardi/jeudi » avec 1 séance posée par le praticien : le patient planifie les 9 autres en une validation.
-- [ ] Réglage cabinet off ou case série off ou série non `active` → pas de bouton, POST refusé (403/404 neutre).
-- [ ] Quota : deux confirmations concurrentes (goroutines, test DB) ne dépassent jamais `sessions_prescribed`.
-- [ ] Conflit au milieu de la proposition : rien n'est créé, nouvelle proposition affichée.
-- [ ] Préavis et horizon du cabinet respectés ; jour férié exclu ; test sur la semaine du changement d'heure (25/10/2026).
-- [ ] Un seul email récapitulatif (test sur les messages outbox).
-- [ ] Le parcours fonctionne sans JS (POST classique + redirect).
+- [x] Série « 10 séances, 2/semaine, mardi/jeudi » avec 1 séance posée par le praticien : le patient planifie les 9 autres en une validation.
+- [x] Réglage cabinet off ou case série off ou série non `active` → pas de bouton, POST refusé (403/404 neutre).
+- [x] Quota : deux confirmations concurrentes (goroutines, test DB) ne dépassent jamais `sessions_prescribed`.
+- [x] Conflit au milieu de la proposition : rien n'est créé, nouvelle proposition affichée.
+- [x] Préavis et horizon du cabinet respectés ; jour férié exclu ; test sur la semaine du changement d'heure (25/10/2026).
+- [x] Un seul email récapitulatif (test sur les messages outbox).
+- [x] Le parcours fonctionne sans JS (POST classique + redirect).
 
 ## Vérification
 ```bash
@@ -49,8 +49,14 @@ Modification des préférences de la série par le patient au-delà de ce formul
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-11-09 (sonnet).
+- **Fait** : migration 00028 (`practice.care_plan_self_scheduling`, `care_plan.patient_self_schedule`) + sqlc (`CreateCarePlan` étendu, `CountCarePlanSessions`, `SetPracticeSelfScheduling`). Service `internal/service/care_plan_self.go` (sur `Booking`) : `SelfSchedule`, `ProposeSelf`, `NextSelf`, `ConfirmSelf` (transaction, `LockCarePlan` FOR UPDATE, recompte, revalidation de chaque créneau avec le contexte en ligne, `LineConflict`, un seul message, audit `care_plan.self_scheduled` acteur « patient », `OnCreated` + événements). `CarePlanByToken` expose `CanSelfSchedule`/`Remaining`. Staff : case de réglage dans `/admin/settings`, case « Laisser le patient planifier » + bouton « Créer la série sans séance » dans le formulaire de série ; `Create` accepte 0 séance si la case est cochée (réglage cabinet requis). Web : `GET /s/{token}/plan`, `POST .../plan/propose|adjust|confirm` (`public_series_plan.go`, page `public_series_plan.html`, partial `public_series_plan_proposal.html`, bouton sur `public_series.html`), limiteur `public-plan` (20 propositions/h par série), htmx en amélioration sur « Retirer » / « Créneau suivant ». `ui.css` régénéré.
+- **Reste à faire** : passage au navigateur (parcours patient 360 px, clair/sombre, htmx réel) ; voir « Écarts ».
+- **Notes de reprise** : tests `TestSelfSchedule*` (service, dont concurrence et DST 25/10/2026) et `TestSeriesPlan*` / `TestSettingsSelfSchedulingCheckbox` / `TestCarePlanFormOffersSelfScheduling` (web). `make` inutilisable : étapes à la main (`CGO_ENABLED=0`).
+- **Écarts avec la spécification** (et pourquoi) :
+  - Garde-fou no-show T054 (`onlineBookingBlocked`) appliqué à la proposition et à la confirmation (ajout demandé par l'orchestrateur) ; refus = page neutre 403 existante.
+  - Décompte du quota = séances `done` + `booked` (décompte T030 existant), pas « non annulées » : une absence (`no_show`) ne consomme pas le quota, comme dans la vue du cabinet (sinon le patient ne pourrait pas replanifier ce que le cabinet peut).
+  - Série à domicile : l'adresse n'est pas stockée sur la série ; elle est reprise de la dernière séance non annulée, à défaut de la fiche patient ; sans adresse, planification refusée (404 neutre, pas de bouton). Pour la même raison, une série à domicile ne peut pas être créée avec 0 séance (erreur de validation expliquée).
+  - Envoi du lien (revue orchestrateur) : à la création d'une série `patient_self_schedule`, UNE invitation `series_invite` (email + SMS, nouveaux templates et golden files, consignes « À prévoir » reprises) part quel que soit le nombre de séances posées (0, 1, N), à la place de la confirmation / du récapitulatif ; message sans `appointment_id` (`notifier.seriesInvite`), canal et consentements de la confirmation du cabinet, dedup `series-invite:<série>:<canal>`. Le flash au cabinet garde le lien.
+  - Revalidation à `confirm` (sous verrou) de l'écart minimal et du quota hebdomadaire, séances existantes comprises (`checkSeriesRules`) : test `TestSelfScheduleConfirmRevalidatesGapAndWeeklyQuota`.
+  - Pas de notification au praticien (hors scope), `VerifiedChannel` vide (contact de la fiche, comme une série créée par le cabinet).

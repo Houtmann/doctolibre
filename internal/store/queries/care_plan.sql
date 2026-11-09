@@ -2,11 +2,11 @@
 INSERT INTO care_plan (
     practice_id, patient_id, practitioner_id, appointment_type_id, label,
     sessions_prescribed, frequency_per_week, preferred_weekdays,
-    preferred_time_start, preferred_time_end, start_date
+    preferred_time_start, preferred_time_end, start_date, patient_self_schedule
 ) VALUES (
     @practice_id, @patient_id, @practitioner_id, @appointment_type_id, @label,
     @sessions_prescribed, @frequency_per_week, @preferred_weekdays,
-    sqlc.narg('preferred_time_start'), sqlc.narg('preferred_time_end'), @start_date
+    sqlc.narg('preferred_time_start'), sqlc.narg('preferred_time_end'), @start_date, @patient_self_schedule
 )
 RETURNING *;
 
@@ -71,3 +71,8 @@ WHERE patient_id = @patient_id AND practice_id = @practice_id;
 SELECT * FROM appointment
 WHERE care_plan_id = @care_plan_id AND practice_id = @practice_id
 ORDER BY lower(during), id;
+
+-- name: CountCarePlanSessions :one
+-- Séances comptées dans le quota d'une série (honorées ou à venir ; index appointment_care_plan_idx).
+SELECT count(*)::int FROM appointment
+WHERE care_plan_id = @care_plan_id AND practice_id = @practice_id AND status IN ('done', 'booked');

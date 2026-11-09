@@ -34,6 +34,9 @@ const (
 	// maxOnlineBookingsPerHour borne les réservations en ligne par praticien, quel que
 	// soit le nombre d'IP et d'adresses : au-delà, il faut appeler le cabinet.
 	maxOnlineBookingsPerHour = 30
+	// maxPlanProposalsPerHour borne les propositions de séances (calcul de créneaux) par série et par
+	// heure, quel que soit le nombre d'IP (T071).
+	maxPlanProposalsPerHour = 20
 	// bookingWarnEvery : au plus un Warn par praticien et par heure.
 	bookingWarnEvery = time.Hour
 )
@@ -96,6 +99,7 @@ type publicLimits struct {
 	book         *httpx.Limiter // POST de réservation et de liste d'attente
 	manage       *httpx.Limiter // lien de gestion /r/{jeton}
 	offer        *httpx.Limiter // lien de la liste d'attente /w/{jeton}
+	plan         *httpx.Limiter // propositions de séances d'une série (Reserve uniquement, clé = id de série)
 	practitioner *httpx.Limiter // réservations par praticien (Reserve/AllowKey uniquement, pas de clé de requête)
 	warned       *hourlyWarn
 }
@@ -108,6 +112,7 @@ func (d Deps) newPublicLimits(rd *Renderer, logger *slog.Logger) *publicLimits {
 		book:   d.newLimiter(rd, logger, "public-book", httpx.IPKey, perIP, publicBurst),
 		manage: d.newLimiter(rd, logger, "public-manage", httpx.IPKey, perIP, publicBurst),
 		offer:  d.newLimiter(rd, logger, "public-offer", httpx.IPKey, perIP, publicBurst),
+		plan:   d.newLimiter(rd, logger, "public-plan", nil, rate.Every(time.Hour/maxPlanProposalsPerHour), maxPlanProposalsPerHour),
 		practitioner: d.newLimiter(rd, logger, "public-book-practitioner", nil,
 			rate.Every(time.Hour/maxOnlineBookingsPerHour), maxOnlineBookingsPerHour),
 		warned: &hourlyWarn{last: map[uuid.UUID]time.Time{}},

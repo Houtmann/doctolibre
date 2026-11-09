@@ -23,7 +23,7 @@ func apptData(manage bool) map[string]any {
 		"manage_url": "", "series_url": "", "rebook_url": "", "cancel_notice": "24 h", "instructions": "", "signature": "Cabinet de kinésithérapie Dupont",
 		"old_date": "mardi 13 octobre", "old_date_short": "13/10", "old_time": "9h00",
 		"reason": "Praticien souffrant", "window": "du 12 novembre au 12 décembre, lundi, mercredi", "leave_url": "", "valid_until": "16h30", "offer_url": "https://rdv.cabinet-dupont.fr/w/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde",
-		"count": 10, "sessions": []string{"jeudi 15 octobre à 14h30", "lundi 19 octobre à 14h30", "jeudi 22 octobre à 14h30"},
+		"count": 10, "prescribed": 15, "remaining": 5, "sessions": []string{"jeudi 15 octobre à 14h30", "lundi 19 octobre à 14h30", "jeudi 22 octobre à 14h30"},
 	}
 	if manage {
 		d["manage_url"] = "https://rdv.cabinet-dupont.fr/r/AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-AbCde"
@@ -61,7 +61,7 @@ func TestAppointmentTemplatesGolden(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, name := range []string{"confirmation", "reminder", "cancellation", "reschedule", "series", "waitlist", "patient_cancellation", "waitlist_joined"} {
+	for _, name := range []string{"confirmation", "reminder", "cancellation", "reschedule", "series", "series_invite", "waitlist", "patient_cancellation", "waitlist_joined"} {
 		for _, manage := range []bool{true, false} {
 			variant := "avec_lien"
 			if !manage {
@@ -86,7 +86,7 @@ func TestAppointmentTemplatesGolden(t *testing.T) {
 				if !strings.Contains(e.Text, "Léa") || (name != "waitlist_joined" && !strings.Contains(e.HTML, "15 octobre")) {
 					t.Errorf("email %s : prénom ou date absents", name)
 				}
-				wantLink := manage && name != "series" && name != "waitlist" && name != "patient_cancellation" && name != "waitlist_joined"
+				wantLink := manage && name != "series" && name != "series_invite" && name != "waitlist" && name != "patient_cancellation" && name != "waitlist_joined"
 				if wantLink != strings.Contains(e.Text, "/r/") {
 					t.Errorf("email %s : lien de gestion présent=%v, attendu %v", name, !wantLink, wantLink)
 				}
@@ -114,7 +114,7 @@ func TestInstructionsBlock(t *testing.T) {
 		t.Fatal(err)
 	}
 	const instr = "Apporter l'ordonnance\nTenue souple <script>alert(1)</script>"
-	for _, name := range []string{"confirmation", "reminder", "reschedule", "series"} {
+	for _, name := range []string{"confirmation", "reminder", "reschedule", "series", "series_invite"} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			d := apptData(true)

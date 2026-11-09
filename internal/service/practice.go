@@ -82,6 +82,10 @@ type SettingsInput struct {
 	// NoShowBlockThreshold : nombre d'absences sur 6 mois à partir duquel la
 	// réservation en ligne est refusée au patient ; vide = désactivé.
 	NoShowBlockThreshold string
+
+	// CarePlanSelfScheduling : le patient peut planifier lui-même les séances restantes
+	// des séries marquées en ce sens (T071).
+	CarePlanSelfScheduling bool
 }
 
 // ProfileInput est la saisie du profil que le praticien règle sur lui-même.
@@ -310,6 +314,11 @@ func (s *Practice) UpdateSettings(ctx context.Context, a Actor, in SettingsInput
 			ID: pc.ID, NoShowBlockThreshold: threshold,
 		}); err != nil {
 			return fmt.Errorf("seuil d'absences: %w", err)
+		}
+		if err := q.SetPracticeSelfScheduling(ctx, sqlcgen.SetPracticeSelfSchedulingParams{
+			ID: pc.ID, CarePlanSelfScheduling: in.CarePlanSelfScheduling,
+		}); err != nil {
+			return fmt.Errorf("auto-planification des séries: %w", err)
 		}
 		return nil
 	})

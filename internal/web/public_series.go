@@ -30,6 +30,9 @@ type SeriesData struct {
 	Upcoming     []SeriesSession
 	Past         []SeriesSession
 	ICSURL       string
+	// PlanURL : « Planifier mes séances » (T071) ; vide si la planification n'est pas ouverte.
+	PlanURL   string
+	Remaining int
 }
 
 func seriesURL(token string) string { return "/s/" + url.PathEscape(token) }
@@ -62,6 +65,9 @@ func (h *publicHandlers) series(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(p.Upcoming) > 0 {
 		d.ICSURL = seriesURL(token) + "/ics"
+	}
+	if p.CanSelfSchedule {
+		d.PlanURL, d.Remaining = seriesURL(token)+"/plan", p.Remaining
 	}
 	h.rd.Page(w, r, "public_series", d)
 }

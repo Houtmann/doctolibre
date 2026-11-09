@@ -63,6 +63,11 @@
     </div>
   </div>
 
+  {{if .Data.SelfScheduling}}
+  <label class="flex items-start gap-3 text-sm"><input class="checkbox checkbox-primary checkbox-sm mt-0.5" type="checkbox" name="self_schedule" value="1"{{if .Data.Values.SelfSchedule}} checked{{end}} aria-describedby="cp-self-help"> Laisser le patient planifier les séances restantes</label>
+  <p class="text-sm text-base-content/70" id="cp-self-help">Le patient choisit lui-même ses séances depuis le lien de sa série, dans la limite du nombre prescrit. Vous pouvez planifier vous-même 0 à {{if .Data.Values.Prescribed}}{{.Data.Values.Prescribed}}{{else}}N{{end}} séance(s) avant. Visite à domicile : posez au moins une séance (son adresse est reprise).</p>
+  {{end}}
+
   {{if .Data.AtHome}}
   <div class="space-y-1">
     <label class="block text-sm font-medium" for="cp-address">Adresse de la visite à domicile</label>
@@ -100,7 +105,10 @@
     <button class="btn btn-primary" type="submit" formaction="/admin/patients/{{.Data.PatientID}}/care-plans">Valider la série</button>
   </div>
   {{else}}
-  <button class="btn btn-primary" type="submit">Proposer les séances</button>
+  <div class="flex flex-wrap items-center gap-2">
+    <button class="btn btn-primary" type="submit">Proposer les séances</button>
+    {{if .Data.SelfScheduling}}<button class="btn btn-outline" type="submit" name="self_schedule" value="1" formaction="/admin/patients/{{.Data.PatientID}}/care-plans">Créer la série sans séance, le patient planifiera</button>{{end}}
+  </div>
   {{end}}
 </form>
 {{end}}
