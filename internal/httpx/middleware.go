@@ -225,13 +225,19 @@ func CSRF(secure bool) Middleware {
 					Error(w, r, http.StatusForbidden, "jeton CSRF invalide")
 					return
 				}
+				limit := int64(maxCSRFFormLen)
+				if mt, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err == nil && mt == "multipart/form-data" {
+					limit = MaxMultipartLen
+				}
+				// Borne posée pour toute requête non sûre, avec ou sans en-tête CSRF
+				// (htmx l'envoie toujours) : sinon le plafond serait celui de net/http.
+				if r.ContentLength > limit {
+					Error(w, r, http.StatusRequestEntityTooLarge, "requête trop volumineuse")
+					return
+				}
+				r.Body = http.MaxBytesReader(w, r.Body, limit)
 				got := r.Header.Get(CSRFHeader)
 				if got == "" {
-					limit := int64(maxCSRFFormLen)
-					if mt, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err == nil && mt == "multipart/form-data" {
-						limit = MaxMultipartLen
-					}
-					r.Body = http.MaxBytesReader(w, r.Body, limit)
 					got = r.PostFormValue(CSRFFormField)
 				}
 				if subtle.ConstantTimeCompare([]byte(got), []byte(token)) != 1 {
@@ -268,7 +274,7 @@ func remoteIP(r *http.Request) string {
 // TrustedProxies résout l'IP du client derrière un reverse proxy : X-Forwarded-For
 // n'est lu que si RemoteAddr appartient à `trusted`. La liste est parcourue de
 // droite à gauche et la première IP non fiable est retenue (si toutes sont
-// fiables, la plus à gauche). En-tête invalide -> RemoteAddr. X-Real-IP est ignoré.
+// fiables, la plus à gauche). Éléments illisibles ignorés ; aucun élément valide -> RemoteAddr. X-Real-IP est ignoré.
 // Sans proxy configuré, le middleware ne change rien.
 func TrustedProxies(trusted []netip.Prefix) Middleware {
 	return func(next http.Handler) http.Handler {
@@ -303,15 +309,20 @@ func resolveClientIP(r *http.Request, trusted []netip.Prefix) string {
 	if len(values) == 0 {
 		return remote
 	}
+	// Un élément illisible est ignoré (jamais d'IP du proxy comme clé tant qu'un
+	// client est identifiable) ; sans aucun élément valide, on retombe sur le proxy.
 	var hops []netip.Addr
 	for _, v := range values {
 		for _, part := range strings.Split(v, ",") {
 			a, err := netip.ParseAddr(strings.TrimSpace(part))
 			if err != nil {
-				return remote
+				continue
 			}
 			hops = append(hops, a.Unmap())
 		}
+	}
+	if len(hops) == 0 {
+		return remote
 	}
 	for i := len(hops) - 1; i >= 0; i-- {
 		if !isTrusted(hops[i], trusted) {

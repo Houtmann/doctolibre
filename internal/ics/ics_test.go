@@ -170,3 +170,14 @@ func TestAlarms(t *testing.T) {
 		t.Error("VALARM émise sans Alarms")
 	}
 }
+
+func TestStatusWhitelist(t *testing.T) {
+	t.Parallel()
+	stamp := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	for status, want := range map[string]bool{"CONFIRMED": true, "TENTATIVE": true, "CANCELLED": true, "": false, "X-EVIL:1\r\nATTENDEE:x": false, "confirmed": false} {
+		ev := ics.Event{UID: "u@doctolibre", Stamp: stamp, Start: stamp, End: stamp.Add(time.Hour), Summary: "RDV", Status: status}
+		if got := strings.Contains(string(ev.Calendar()), "STATUS:"); got != want {
+			t.Errorf("Status %q : émis = %v, attendu %v", status, got, want)
+		}
+	}
+}

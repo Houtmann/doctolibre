@@ -2,10 +2,15 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/textproto"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -480,18 +485,9 @@ func (s *NotifyTransport) testFailure(a Actor, kind string, tr notify.Transport,
 		return domain.ErrValidation{Field: "transport", Msg: "Cette adresse vise un réseau interne et n'est pas autorisée."}
 	}
 	id := uuid.NewString()
-	msg := err.Error()
-	for _, v := range tr.Secrets {
-		if v != "" {
-			msg = strings.ReplaceAll(msg, v, "***")
-		}
-	}
-	for _, k := range []string{"user", "basic_user"} {
-		if v := tr.Settings[k]; v != "" {
-			msg = strings.ReplaceAll(msg, v, "***")
-		}
-	}
-	s.logger().Error("test d'envoi en échec", "log_id", id, "practice_id", a.PracticeID, "kind", kind, "mode", tr.Mode, "error", msg)
+	// Pas de texte d'erreur : une réponse SMTP 550 contient le destinataire, et les
+	// secrets ne sont pas tous connus ici. On ne journalise qu'une classification.
+	s.logger().Error("test d'envoi en échec", "log_id", id, "practice_id", a.PracticeID, "kind", kind, "mode", tr.Mode, "reason", classifyTestError(err))
 	return TestError{LogID: id}
 }
 
@@ -523,4 +519,32 @@ func checkOTPChannel(ctx context.Context, q *sqlcgen.Queries, pc sqlcgen.Practic
 // Channels retourne les canaux actifs du cabinet (réglages de notification, bandeau du tableau de bord).
 func (s *Practice) Channels(ctx context.Context, a Actor) (Channels, error) {
 	return channelsOf(ctx, sqlcgen.New(s.Pool), a.PracticeID)
+}
+
+// classifyTestError réduit une erreur d'envoi à une catégorie sans donnée personnelle.
+func classifyTestError(err error) string {
+	var te *textproto.Error
+	if errors.As(err, &te) {
+		return "smtp_" + strconv.Itoa(te.Code)
+	}
+	var se sms.StatusError
+	if errors.As(err, &se) {
+		return "http_" + strconv.Itoa(se.Status)
+	}
+	var ne net.Error
+	if errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &ne) && ne.Timeout()) {
+		return "timeout"
+	}
+	var rh tls.RecordHeaderError
+	var ua x509.UnknownAuthorityError
+	var ci x509.CertificateInvalidError
+	var hn x509.HostnameError
+	if errors.As(err, &rh) || errors.As(err, &ua) || errors.As(err, &ci) || errors.As(err, &hn) || strings.Contains(err.Error(), "TLS") {
+		return "tls"
+	}
+	var oe *net.OpError
+	if errors.As(err, &oe) {
+		return "dial"
+	}
+	return "other"
 }

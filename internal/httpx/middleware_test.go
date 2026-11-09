@@ -202,8 +202,8 @@ func TestCSRFBodyLimits(t *testing.T) {
 	}{
 		{"multipart de 1,5 Mio accepté", multipart(3 << 19), http.StatusOK},
 		{"multipart de 3 Mio accepté", multipart(3 << 20), http.StatusOK},
-		{"multipart au-delà de la limite refusé", multipart(MaxMultipartLen), http.StatusForbidden},
-		{"urlencoded de 1,5 Mio toujours refusé", urlencoded(3 << 19), http.StatusForbidden},
+		{"multipart au-delà de la limite refusé", multipart(MaxMultipartLen), http.StatusRequestEntityTooLarge},
+		{"urlencoded de 1,5 Mio refusé (413)", urlencoded(3 << 19), http.StatusRequestEntityTooLarge},
 		{"urlencoded court accepté", urlencoded(10), http.StatusOK},
 	}
 	for _, tt := range tests {
@@ -216,5 +216,40 @@ func TestCSRFBodyLimits(t *testing.T) {
 				t.Errorf("statut %d, attendu %d", rec.Code, tt.want)
 			}
 		})
+	}
+}
+
+func TestCSRFBodyLimitedWithHeader(t *testing.T) {
+	t.Parallel()
+	const token = "0123456789abcdef0123456789abcdef0123456789"
+	read := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := io.Copy(io.Discard, r.Body); err != nil {
+			http.Error(w, "trop gros", http.StatusRequestEntityTooLarge)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	h := CSRF(false)(read)
+	do := func(size int, chunked bool) int {
+		var body io.Reader = strings.NewReader(strings.Repeat("a", size))
+		req := httptest.NewRequest(http.MethodPost, "/", body)
+		if chunked {
+			req.ContentLength = -1
+		}
+		req.Header.Set("Content-Type", "text/plain")
+		req.Header.Set(CSRFHeader, token)
+		req.AddCookie(&http.Cookie{Name: CSRFCookie, Value: token}) //nolint:gosec // test
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec.Code
+	}
+	if c := do(10, false); c != http.StatusOK {
+		t.Errorf("petit corps htmx : %d", c)
+	}
+	if c := do(maxCSRFFormLen+1, false); c != http.StatusRequestEntityTooLarge {
+		t.Errorf("corps déclaré trop gros : %d", c)
+	}
+	if c := do(maxCSRFFormLen+1, true); c != http.StatusRequestEntityTooLarge {
+		t.Errorf("corps sans Content-Length trop gros : %d", c)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net/textproto"
 	"strings"
 	"sync"
 	"testing"
@@ -255,6 +256,17 @@ func TestSendTest(t *testing.T) {
 	if !strings.Contains(logs, te.LogID) || strings.Contains(logs, secret) || strings.Contains(logs, "utilisateur-smtp") {
 		t.Errorf("logs : %s", logs)
 	}
+	// Réponse SMTP contenant le destinataire : absente des logs, code classé.
+	f.email.fail = &textproto.Error{Code: 550, Msg: "5.1.1 <kine@example.test> user unknown"}
+	if err := f.tr.SendTest(ctx, f.act, notify.KindEmail, ""); err == nil {
+		t.Fatal("échec attendu")
+	}
+	logs = f.logs.String()
+	if strings.Contains(logs, "kine@example.test") || strings.Contains(logs, "user unknown") || !strings.Contains(logs, "smtp_550") {
+		t.Errorf("logs : %s", logs)
+	}
+	f.email.fail = errors.New("535 authentification refusée pour utilisateur-smtp avec " + secret)
+	_ = f.tr.SendTest(ctx, f.act, notify.KindEmail, "")
 	var meta string
 	if err := f.db.QueryRow(ctx, `SELECT string_agg(meta::text, ' ') FROM audit_log WHERE action = $1`, service.ActionNotifyTransportTest).Scan(&meta); err != nil {
 		t.Fatal(err)
@@ -263,9 +275,9 @@ func TestSendTest(t *testing.T) {
 		t.Errorf("audit = %s", meta)
 	}
 
-	// Limite : 5 par heure et par cabinet (2 déjà faits).
+	// Limite : 5 par heure et par cabinet (4 déjà faits).
 	f.email.fail = nil
-	for i := range service.TestSendsPerHour - 2 {
+	for i := range service.TestSendsPerHour - 4 {
 		if err := f.tr.SendTest(ctx, f.act, notify.KindEmail, ""); err != nil {
 			t.Fatalf("test %d : %v", i, err)
 		}

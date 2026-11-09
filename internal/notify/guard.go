@@ -26,6 +26,10 @@ var forbiddenPrefixes = []netip.Prefix{
 	netip.MustParsePrefix("240.0.0.0/4"),
 	netip.MustParsePrefix("64:ff9b::/96"),
 	netip.MustParsePrefix("2001:db8::/32"),
+	netip.MustParsePrefix("64:ff9b:1::/48"), // NAT64 local (RFC 8215)
+	netip.MustParsePrefix("fec0::/10"),      // site-local obsolète
+	netip.MustParsePrefix("2002::/16"),      // 6to4
+	netip.MustParsePrefix("2001::/32"),      // Teredo
 }
 
 // forbiddenIP indique si a n'est pas une destination publique.

@@ -23,10 +23,10 @@ Le corps des requêtes non sûres est toujours borné, la résolution d'IP derri
 6. **Config** — au démarrage, `slog.Warn` si `Env == prod` et `NotifyAllowPrivateHosts` (comportement voulu et documenté, on le rend visible ; pas de refus).
 
 ## Critères d'acceptation
-- [ ] Corps borné avec ou sans en-tête CSRF (test).
-- [ ] XFF malformé ne donne jamais l'IP du proxy comme clé (tests).
-- [ ] Aucun email/téléphone/secret dans les logs d'un test d'envoi en échec (test).
-- [ ] Préfixes IPv6 ajoutés et testés ; liste blanche ICS ; avertissement de config.
+- [x] Corps borné avec ou sans en-tête CSRF (test).
+- [x] XFF malformé ne donne jamais l'IP du proxy comme clé (tests).
+- [x] Aucun email/téléphone/secret dans les logs d'un test d'envoi en échec (test).
+- [x] Préfixes IPv6 ajoutés et testés ; liste blanche ICS ; avertissement de config.
 - [ ] `make check` vert.
 
 ## Vérification
@@ -42,8 +42,8 @@ Refonte du rate limiting (T087) ; contenu de `outbox_message.last_error` (choix 
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-11-09 (sonnet)
+- **Fait** : (1) MaxBytesReader posé pour toute requête non sûre avant le test d'en-tête, plus 413 immédiat si Content-Length dépasse la limite ; (2) XFF : éléments illisibles ignorés, jamais l'IP du proxy tant qu'un client valide existe ; Caddyfile `header_up X-Forwarded-For {remote_host}` ; (3) `testFailure` ne logge plus le texte d'erreur, seulement `reason` (smtp_NNN, http_NNN, timeout, tls, dial, other) ; (4) 4 préfixes IPv6 + tests ; (5) liste blanche ICS STATUS ; (6) `slog.Warn` en prod avec NotifyAllowPrivateHosts (serve.go).
+- **Reste à faire** : rien.
+- **Notes de reprise** : tests httpx/service/notify/ics verts, 0 SKIP, golangci-lint 0 issue, gofmt propre, go vet propre.
+- **Écarts avec la spécification** : le texte d'erreur n'est de toute façon jamais montré à l'admin (seul LogID l'est) : il n'y a donc rien à masquer côté réponse. Les tests TestCSRFBodyLimits attendent désormais 413 au lieu de 403 pour les corps déclarés trop gros. Pas de test dédié pour l'avertissement de config (log au démarrage).

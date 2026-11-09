@@ -30,6 +30,9 @@ func serve(ctx context.Context, logOut io.Writer) error {
 	ctx, stop := context.WithCancel(ctx)
 	defer stop()
 	logger := newLogger(cfg, logOut)
+	if cfg.IsProd() && cfg.NotifyAllowPrivateHosts {
+		logger.Warn("DOCTOLIBRE_NOTIFY_ALLOW_PRIVATE_HOSTS actif en production : les fournisseurs des cabinets peuvent viser le réseau interne (SSRF)")
+	}
 	deps := web.Deps{Config: cfg, Logger: logger}
 	var pool *pgxpool.Pool
 	var transports *notify.Transports

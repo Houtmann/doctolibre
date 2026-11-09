@@ -9,5 +9,10 @@
 {$DOMAIN} {
 	tls {$CADDY_TLS}
 	encode zstd gzip
-	reverse_proxy app:8080
+	# Caddy REMPLACE X-Forwarded-For envoyé par le client (il ne fait confiance à aucun
+	# proxy amont par défaut) : l'appli lit donc l'IP réelle en fin de chaîne. Ne pas
+	# ajouter `trusted_proxies` sans mettre à jour DOCTOLIBRE_TRUSTED_PROXIES.
+	reverse_proxy app:8080 {
+		header_up X-Forwarded-For {remote_host}
+	}
 }

@@ -18,7 +18,7 @@ type Event struct {
 	Summary     string
 	Location    string
 	Description string
-	// Status : "" (non émis), "CONFIRMED" ou "CANCELLED".
+	// Status : "" (non émis), "CONFIRMED", "TENTATIVE" ou "CANCELLED" ; toute autre valeur est omise.
 	Status string
 	// Sequence : numéro de révision (SEQUENCE) ; 0 = non émis.
 	Sequence int
@@ -59,7 +59,7 @@ func Feed(name string, events []Event) []byte {
 		if e.Sequence > 0 {
 			line("SEQUENCE:" + strconv.Itoa(e.Sequence))
 		}
-		if e.Status != "" {
+		if validStatus(e.Status) {
 			line("STATUS:" + e.Status)
 		}
 		line("SUMMARY:" + escape(e.Summary))
@@ -137,4 +137,9 @@ func fold(s string) string {
 	}
 	b.WriteString(crlf)
 	return b.String()
+}
+
+// validStatus : liste blanche des valeurs STATUS émises (une valeur inconnue omet la ligne).
+func validStatus(s string) bool {
+	return s == "CONFIRMED" || s == "TENTATIVE" || s == "CANCELLED"
 }
