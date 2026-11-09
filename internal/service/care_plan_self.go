@@ -213,6 +213,7 @@ type SelfView struct {
 	WindowStart, WindowEnd string
 	Instructions           string
 	AckRequired            bool
+	Loc                    *time.Location // fuseau du cabinet : les heures affichées sont à cette heure murale
 }
 
 func hhmm(t pgtype.Time) string {
@@ -237,7 +238,7 @@ func (b *Booking) SelfSchedule(ctx context.Context, token string) (SelfView, err
 		return SelfView{}, err
 	}
 	v := SelfView{
-		PlanID: cp.ID, Remaining: st.remaining, PerWeek: int(cp.FrequencyPerWeek),
+		PlanID: cp.ID, Loc: st.sc.loc, Remaining: st.remaining, PerWeek: int(cp.FrequencyPerWeek),
 		WindowStart: hhmm(cp.PreferredTimeStart), WindowEnd: hhmm(cp.PreferredTimeEnd),
 		Instructions: st.sc.typ.PatientInstructions, AckRequired: st.sc.typ.InstructionsAckRequired && st.sc.typ.PatientInstructions != "",
 	}
@@ -318,14 +319,20 @@ func (b *Booking) NextSelf(ctx context.Context, token string, in SelfInput, curr
 	if err := b.guardOnline(ctx, q, st); err != nil {
 		return SelfProposal{}, false, err
 	}
-	taken := append([]booking.Date(nil), st.taken...)
+	// Premier créneau valide après l'actuel (même jour possible) : plage horaire respectée, et écart
+	// minimal et quota hebdomadaire vérifiés avec les AUTRES séances (existantes et proposées).
+	others := append([]booking.Date(nil), st.taken...)
 	for i, t := range current {
 		if i != idx {
-			taken = append(taken, booking.DateOf(t.In(st.sc.loc)))
+			others = append(others, booking.DateOf(t.In(st.sc.loc)))
 		}
 	}
-	from := booking.DateOf(current[idx].In(st.sc.loc).AddDate(0, 0, 1))
-	got, err := st.sc.proposeSessions(ctx, q, b.Clock.Now(), from, 1, int(cp.FrequencyPerWeek), prefs.weekdays, prefs.window(), taken)
+	now := b.Clock.Now()
+	from := current[idx]
+	if from.Before(now) {
+		from = now
+	}
+	slots, err := st.sc.slots(ctx, q, now, from, from.AddDate(0, 0, 7*planSearchWeeks))
 	if err != nil {
 		return SelfProposal{}, false, err
 	}
@@ -333,9 +340,16 @@ func (b *Booking) NextSelf(ctx context.Context, token string, in SelfInput, curr
 	for _, t := range current {
 		out.Lines = append(out.Lines, t.In(st.sc.loc))
 	}
-	if len(got) == 1 {
-		out.Lines[idx] = got[0].Start.In(st.sc.loc)
+	for _, sl := range slots {
+		if !sl.Start.After(current[idx]) || !prefs.inWindow(sl, st.sc.loc) {
+			continue
+		}
+		if checkSeriesRules(others, []time.Time{sl.Start}, st.sc.loc, int(cp.FrequencyPerWeek)) != nil {
+			continue
+		}
+		out.Lines[idx] = sl.Start.In(st.sc.loc)
 		found = true
+		break
 	}
 	sort.Slice(out.Lines, func(i, j int) bool { return out.Lines[i].Before(out.Lines[j]) })
 	return out, found, nil
@@ -548,4 +562,15 @@ func checkSeriesRules(existing []booking.Date, starts []time.Time, loc *time.Loc
 		}
 	}
 	return nil
+}
+
+// inWindow : le soin tient dans la plage horaire souhaitée (heure murale du cabinet) ; sans plage, toujours.
+func (p selfPrefs) inWindow(s booking.Slot, loc *time.Location) bool {
+	if !p.hasWindow {
+		return true
+	}
+	l := s.Start.In(loc)
+	start := l.Hour()*60 + l.Minute()
+	end := start + int(s.End.Sub(s.Start)/time.Minute)
+	return start >= int(p.winStart) && end <= int(p.winEnd)
 }

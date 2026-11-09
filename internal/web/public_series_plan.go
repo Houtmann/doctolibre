@@ -36,6 +36,7 @@ type SeriesPlanData struct {
 	Lines                 []SeriesPlanLine
 	Errors                []string
 	Notice                string
+	Inline                bool // fragment htmx : alertes dans le fragment (sur la page, elles précèdent le formulaire)
 }
 
 func planWeekdayChoices(selected []string) []WeekdayChoice {
@@ -112,6 +113,7 @@ func (h *publicHandlers) blockedPage(w http.ResponseWriter, r *http.Request) {
 func (h *publicHandlers) renderPlan(w http.ResponseWriter, r *http.Request, status int, d SeriesPlanData) {
 	w.Header().Add("Vary", "HX-Request")
 	if httpx.IsHTMX(r) {
+		d.Inline = true
 		h.rd.Partial(w, r, "public_series_plan_proposal", d)
 		return
 	}
@@ -171,6 +173,9 @@ func (h *publicHandlers) planAdjust(w http.ResponseWriter, r *http.Request) {
 	d := h.planData(r, v, in)
 	d.Ack = r.PostFormValue("instructions_ack") == "on"
 	starts, err := service.ParseSelfStarts(r.PostForm["line"])
+	for i := range starts {
+		starts[i] = starts[i].In(v.Loc) // les valeurs postées sont en UTC : affichage à l'heure du cabinet
+	}
 	if err != nil {
 		d.Errors = validation(err)
 		h.renderPlan(w, r, http.StatusUnprocessableEntity, d)
@@ -230,6 +235,9 @@ func (h *publicHandlers) planConfirm(w http.ResponseWriter, r *http.Request) {
 	d := h.planData(r, v, in)
 	d.Ack = r.PostFormValue("instructions_ack") == "on"
 	starts, err := service.ParseSelfStarts(r.PostForm["line"])
+	for i := range starts {
+		starts[i] = starts[i].In(v.Loc) // les valeurs postées sont en UTC : affichage à l'heure du cabinet
+	}
 	if err == nil {
 		var n int
 		n, err = h.svc.ConfirmSelf(r.Context(), token, service.SelfConfirm{Starts: starts, InstructionsAck: d.Ack})

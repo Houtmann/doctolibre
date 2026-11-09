@@ -4,6 +4,9 @@
 <p><a class="link link-primary" href="{{.Data.BackURL}}">&larr; Retour à mes séances</a></p>
 <p>Il vous reste {{.Data.Remaining}} séance{{if gt .Data.Remaining 1}}s{{end}} à planifier. Indiquez vos préférences : nous proposons des créneaux, que vous pouvez ajuster avant de valider.</p>
 
+{{template "form_errors.html" .Data.Errors}}
+{{if .Data.Notice}}<div class="alert alert-warning alert-soft max-w-2xl" role="status">{{.Data.Notice}}</div>{{end}}
+
 <form class="space-y-4 max-w-2xl" method="post" action="{{.Data.Action}}/propose">
   {{csrf .CSRF}}
   <div class="space-y-1">

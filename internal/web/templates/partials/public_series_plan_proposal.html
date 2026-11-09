@@ -1,7 +1,7 @@
 {{/* Proposition de séances (T071) : page entière sans JS, fragment htmx sinon. Donnée : SeriesPlanData (avec CSRF). */}}
 <section id="plan-proposal" class="space-y-4 max-w-2xl" aria-live="polite">
-  {{template "form_errors.html" .Errors}}
-  {{if .Notice}}<div class="alert alert-warning alert-soft" role="status">{{.Notice}}</div>{{end}}
+  {{if .Inline}}{{template "form_errors.html" .Errors}}
+  {{if .Notice}}<div class="alert alert-warning alert-soft" role="status">{{.Notice}}</div>{{end}}{{end}}
   {{if .Lines}}
   <form class="space-y-4" method="post" action="{{.Action}}/confirm">
     {{csrf .CSRF}}

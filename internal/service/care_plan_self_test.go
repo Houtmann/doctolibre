@@ -3,6 +3,7 @@ package service_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -622,5 +623,38 @@ func TestSelfScheduleConfirmRevalidatesGapAndWeeklyQuota(t *testing.T) {
 	// Une saisie conforme passe : jeudi 22 (écart de 2 jours, 2e séance de la semaine).
 	if n, err := s.public.ConfirmSelf(ctx, s.token, service.SelfConfirm{Starts: []time.Time{at("2026-10-22", "08:00")}}); err != nil || n != 1 {
 		t.Errorf("saisie conforme : %d, %v", n, err)
+	}
+}
+
+func TestSelfScheduleNextSlotIsFirstValidSlotSameDayIncluded(t *testing.T) {
+	t.Parallel()
+	s := newSelfFixture(t, func(f planFixture) { f.cal.Clock.(*testutil.FixedClock).Advance(4 * 24 * time.Hour) })
+	in := service.SelfInput{Count: "4", Weekdays: []string{"1", "3"}, WindowStart: "08:00", WindowEnd: "12:00"}
+	p := s.propose(t, "4", in.Weekdays, in.WindowStart, in.WindowEnd)
+	got, found, err := s.public.NextSelf(context.Background(), s.token, in, p.Lines, 0)
+	if err != nil || !found {
+		t.Fatalf("NextSelf = %v, %v", found, err)
+	}
+	// Le premier créneau valide après l'actuel est un créneau suivant le même jour (écart avec les autres respecté).
+	first := p.Lines[0].In(s.loc)
+	var moved time.Time
+	for _, l := range got.Lines {
+		if !l.Equal(p.Lines[1]) && !l.Equal(p.Lines[2]) && !l.Equal(p.Lines[3]) {
+			moved = l.In(s.loc)
+		}
+	}
+	if moved.Format("2006-01-02") != first.Format("2006-01-02") || !moved.After(first) {
+		t.Errorf("créneau suivant %s, attendu plus tard le même jour que %s", moved, first)
+	}
+	// Quota hebdomadaire respecté avec les autres lignes : avec 1 séance posée (20/10) + 2 par semaine.
+	perWeek := map[string]int{}
+	for _, l := range got.Lines {
+		y, w := l.In(s.loc).ISOWeek()
+		perWeek[fmt.Sprint(y, "-", w)]++
+	}
+	for w, n := range perWeek {
+		if n > 2 {
+			t.Errorf("semaine %s : %d séances proposées (max 2)", w, n)
+		}
 	}
 }

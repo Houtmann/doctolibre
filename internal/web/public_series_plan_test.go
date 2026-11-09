@@ -3,6 +3,7 @@ package web_test
 import (
 	"context"
 	"fmt"
+	"net/http/httptest"
 	"net/url"
 	"regexp"
 	"strings"
@@ -242,5 +243,47 @@ func TestCarePlanFormOffersSelfScheduling(t *testing.T) {
 	var n int
 	if err := e.db.QueryRow(ctx, "SELECT patient_self_schedule, (SELECT count(*) FROM appointment) FROM care_plan").Scan(&self, &n); err != nil || !self || n != 0 {
 		t.Errorf("patient_self_schedule=%v, %d rendez-vous (%v)", self, n, err)
+	}
+}
+
+func TestSeriesPlanAdjustKeepsPracticeLocalTime(t *testing.T) {
+	t.Parallel()
+	s := newSelfPlanEnv(t)
+	c := newClient(t, s.h, "192.0.2.84")
+	base := "/s/" + s.token
+	rec := c.do("POST", base+"/plan/propose", url.Values{"count": {"3"}})
+	mustContain(t, rec, 200, "09h00")
+	lines := planLines(t, rec.Body.String())
+	if len(lines) != 3 || !strings.HasSuffix(lines[0], "T07:00:00Z") && !strings.HasSuffix(lines[0], "T08:00:00Z") {
+		t.Fatalf("lignes : %v", lines)
+	}
+	check := func(name string, rec *httptest.ResponseRecorder) {
+		t.Helper()
+		body := rec.Body.String()
+		if rec.Code != 200 || !strings.Contains(body, "09h00") || strings.Contains(body, "07h00") || strings.Contains(body, "08h00") {
+			t.Errorf("%s : heure locale attendue (09h00, pas l'heure UTC)\n%s", name, body)
+		}
+	}
+	form := func(k, v string) url.Values { return url.Values{"count": {"3"}, "line": lines, k: {v}} }
+	check("sans JS, retirer", c.do("POST", base+"/plan/adjust", form("remove", "2")))
+	check("sans JS, suivant", c.do("POST", base+"/plan/adjust", form("next", "0")))
+	check("htmx, retirer", c.doHX("POST", base+"/plan/adjust", form("remove", "2")))
+	check("htmx, suivant", c.doHX("POST", base+"/plan/adjust", form("next", "0")))
+}
+
+func TestSeriesPlanNoSlotAlertPrecedesForm(t *testing.T) {
+	t.Parallel()
+	s := newSelfPlanEnv(t)
+	if _, err := s.db.Exec(context.Background(), "UPDATE practice SET booking_horizon = '1 day' WHERE id = $1", s.pc.ID); err != nil {
+		t.Fatal(err)
+	}
+	c := newClient(t, s.h, "192.0.2.85")
+	body := c.do("POST", "/s/"+s.token+"/plan/propose", url.Values{"count": {"2"}}).Body.String()
+	alert, button := strings.Index(body, "Aucun créneau disponible"), strings.Index(body, "Proposer des séances</button>")
+	if alert < 0 || button < 0 || alert > button {
+		t.Errorf("l'alerte (%d) doit précéder le formulaire (%d)", alert, button)
+	}
+	if strings.Count(body, "Aucun créneau disponible") != 1 {
+		t.Error("alerte dupliquée")
 	}
 }
