@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-11-11 — validation des tâches en review (humain ; suivi : opus)
+
+- **Tâches** : T051, T052, T053, T055, T057, T058, T060, T061, T062, T070, T071, T073, T080, T082, T083, T084, T085, T086, T087, T089, T090, T092, T095, T096, T097, T098, T099 (review → done)
+- **Fait** : `/run-task` n'a trouvé aucune tâche prête ; l'humain a validé les 27 tâches en `review` d'un bloc. 71 `done`, 1 `superseded`, plus aucune tâche ouverte
+- **Vérification** : aucune relance de `make check` (suivi seulement, pas de code touché)
+- **Reste / reprise** : écrire de nouvelles tâches ; vérifications manuelles et questions produit listées dans STATUS.md
+- **Décisions** : aucune
+
 ## 2026-11-09 (suite) — passage navigateur T061, T070, T071, T098 (contrôle : opus ; corrections : sonnet)
 
 - **Tâches** : T061, T070, T071, T098 restent en `review` (vues au navigateur sur `doctolibre_demo`, serveur local `verify`)
