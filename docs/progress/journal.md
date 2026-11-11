@@ -14,6 +14,15 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-11-11 (suite) — pile Docker locale et parcours de bout en bout (opus)
+
+- **Tâches** : aucune (vérifications manuelles de T040, T021, T023, T041, T081, T095, T098)
+- **Fait** : `docker compose` (app, postgres, caddy, backup + Mailpit en surcharge) sous le projet `doctolibre-test` ; 3 comptes créés par `create-user` ; horaires posés ; les ~80 pages `/admin` atteignables répondent 200 ; parcours patient complet : réservation, OTP email, confirmation, ICS (2 alarmes), déplacement, annulation, reprise sans OTP ; 7 emails dans Mailpit ; agenda JSON en heure de Paris ; sauvegarde chiffrée produite ; redémarrage sans perte
+- **Constats** : image 32,6 Mo (> 30) ; app ~105 Mio ; le praticien s'affiche « admin » côté public tant que le profil n'est pas rempli ; l'email de confirmation annonce « déplacement possible jusqu'à 24 h avant » même pour un RDV déjà dans les 24 h ; version « dev » dans une image construite localement ; image de sauvegarde 585 Mo
+- **Visuel** : desktop clair (créneaux, confirmation, agenda semaine, « Ma journée », paramètres) et 375 px sombre (créneaux, coordonnées, agenda jour, « Ma journée », dialogue de RDV) propres ; aucun débordement horizontal sur 10 pages admin à 375 px ; déplacement depuis le dialogue d'agenda OK + email « déplacé » reçu. Constats : téléphone affiché brut `+33612345678` (« Ma journée », dialogue) ; le dialogue met le focus sur « Nouvelle heure » (clavier ouvert sur mobile)
+- **Non fait** : restauration de la sauvegarde (permission refusée) ; JS désactivé ; parcours liste d'attente et séries ; certificat Caddy interne refusé par le navigateur intégré (tests faits via `http://localhost:8088`, port publié par une surcharge locale)
+- **Décisions** : aucune
+
 ## 2026-11-11 — validation des tâches en review (humain ; suivi : opus)
 
 - **Tâches** : T051, T052, T053, T055, T057, T058, T060, T061, T062, T070, T071, T073, T080, T082, T083, T084, T085, T086, T087, T089, T090, T092, T095, T096, T097, T098, T099 (review → done)

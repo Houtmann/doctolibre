@@ -37,8 +37,9 @@ Rien.
   - Fusion de fiches patients ouverte aux 3 rôles : restreindre ?
   - Le motif « Séance à domicile » est `online_bookable=false` par défaut.
 - Vérifications manuelles non faites :
-  - Docker : `docker build` (image ≤ 30 Mo), `caddy validate`, `docker compose up` en HTTPS, mémoire < 50 Mo, reboot (T040) ; `make db-up` (T002, T005) ; Lighthouse ≥ 95 (T004).
-  - Envois : Mailpit (T021), bout en bout réservation → Mailpit + SMS (T023).
+  - Docker : **fait le 2026-11-11 en local (OrbStack, projet compose `doctolibre-test`, `DOMAIN=localhost`, `CADDY_TLS=internal`)** : build OK, HTTPS HTTP/2 via Caddy avec CSP/HSTS, healthcheck vert, redémarrage de la pile sans perte. **Écarts** : image 32,6 Mo (cible ≤ 30 Mo) ; app à ~105 Mio en mémoire (cible < 50 Mo, à confirmer hors cache) ; image de sauvegarde 585 Mo. Restent : vrai domaine + Let's Encrypt, reboot machine (T040).
+  - Envois : **email fait le 2026-11-11** (OTP, confirmation, déplacement, annulation, nouvelle confirmation dans Mailpit, lien vers `DOCTOLIBRE_BASE_URL`) ; SMS réel non fait.
+  - Sauvegarde : fichier `.age` produit et vu dans `/admin/status` ; **déchiffrement + `pg_restore` non faits** (refusés par les permissions de session, à faire par l’humain).
   - Import du flux ICS dans un vrai client (T042), S3 et `docker compose --profile backup up` sur serveur réel (T041).
   - EXPLAIN sur données réelles (T017, T030, T043 : purge et effacement d'un patient, qui parcourt les messages du cabinet par destinataire).
   - `.env.example` : comportement au démarrage avec le SMTP d'exemple, et du service `backup` avec `DOCTOLIBRE_BACKUP_AGE_RECIPIENT` vide (T044).
