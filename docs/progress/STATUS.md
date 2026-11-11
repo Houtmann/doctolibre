@@ -7,7 +7,7 @@
 
 ## Où on en est
 
-- **Toutes les tâches sont `done`** : 71 `done`, 1 `superseded` (T068, absorbée par T084). Aucune tâche `todo`, `in_progress`, `review` ni `blocked`.
+- 71 `done`, 1 `superseded` (T068), **2 `todo`** : T100 (retouches UX) et T101 (empreinte du déploiement), issues de l'essai Docker du 2026-11-11, indépendantes (fichiers disjoints), toutes deux prêtes.
 - Phases 0 à 4 terminées (29 tâches). Phase 5 — Retours terrain : 42 `done` + T068 `superseded`, dont la migration front daisyUI (T080–T085), les audits UX et sécurité (T088–T099), les consignes par motif (T070), l'auto-planification de série (T071), « Ma journée » (T072), les statistiques (T073), les ressources partagées (T060), l'affiche QR (T061).
 - Validation du 2026-11-11 : passage en `done` sur décision de l'humain, sans nouvelle relecture ; les vérifications manuelles listées plus bas restent non faites.
 - Migrations : 00001, 00002, 00004–00029 (00027 consignes, 00028 auto-planification, 00029 reprise sans OTP). Prochaine : 00030.
@@ -18,7 +18,7 @@ Rien.
 
 ## Prochaine action
 
-1. Définir de nouvelles tâches (plus aucune `todo`) : à partir des questions produit ci-dessous, des vérifications manuelles non faites et des petits manques.
+1. `/run-task` : T100 et T101 (parallélisables). Puis définir d'autres tâches à partir des questions produit ci-dessous, des vérifications manuelles non faites et des petits manques.
 2. Vérifications au navigateur jamais faites : 360 px et thème sombre pour T061/T070/T071/T098 ; aperçu d'impression de l'affiche ; parcours public confirmé / annulation / déplacement / liste d'attente ; états avec données (liste d'attente, absences, invitations, pagination) ; dialogue d'agenda à 360 px ; JS désactivé ; pages de T051, T053, T055, T056, T059, T060, T073, T085, T086, T087, T095, T096, T097 ; envoi de test vers Mailpit.
 3. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
 
@@ -60,4 +60,4 @@ Rien.
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 43 (dont 1 remplacée) | 42 | 0 |
+| 5 — Retours terrain | 45 (dont 1 remplacée) | 42 | 0 |

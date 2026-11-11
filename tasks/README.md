@@ -94,6 +94,8 @@ Sans orchestrateur, suivre le **workflow de session** de [`AGENTS.md`](../AGENTS
 | T097 | [Liste d'attente côté patient](T097-waitlist-patient-side.md) | 5 | T093, T091 | done |
 | T098 | [Reprendre rendez-vous sans nouvelle vérification](T098-rebook-without-reverify.md) | 5 | T095, T097 | done |
 | T099 | [Agenda : praticiens non chargés au changement de vue](T099-agenda-view-switch-sources.md) | 5 | T083, T057 | done |
+| T100 | [Retouches UX de l'essai Docker (téléphone, focus, profil, délai)](T100-field-test-ux-fixes.md) | 5 | T072, T083, T095 | todo |
+| T101 | [Empreinte du déploiement (version, sauvegarde, mémoire)](T101-packaging-footprint.md) | 5 | T040, T041 | todo |
 
 ## Parallélisation possible
 
