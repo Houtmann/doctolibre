@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-11-19 — T100 et T101 en parallèle (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T100 (todo → review), T101 (todo → review)
+- **Fait** : T100 : téléphone affiché `06 12 34 56 78` (`domain.FormatPhone`, lien `tel:` dans le dialogue), focus sur le titre du dialogue d'agenda, étape « nom » dans l'encart du tableau de bord (`NeedProfile`), email de confirmation exact quand le délai est dépassé (`domain.ChangeAllowed` partagé, golden `confirmation_delai_depasse`). T101 : `DOCTOLIBRE_VERSION` en build-arg (`local` par défaut), `GOMEMLIMIT=40MiB` (98 → 34 Mio), image de sauvegarde alpine (585 → 199 Mo), sauvegarde `.age` + restauration dans une base vide vérifiées (clé age jetable)
+- **Vérification** : T100 `make check` ✅ relancé par l'orchestrateur (Postgres 17 jetable, 0 SKIP) ; T101 `make check` ✅ (rapport de l'agent ; diff limité à `deploy/` et `docs/`)
+- **Reste / reprise** : relecture humaine ; T101 critère « sauvegarde < 150 Mo » non tenu (199 Mo, rclone) ; cible image app T040 ≤ 30 Mo irréaliste (32,6 Mo mesurés, binaire 18,7 Mo) ; vérification navigateur de T100 non faite
+- **Décisions** : 4 lignes du 2026-11-19 dans decisions.md
+
 ## 2026-11-11 (suite) — pile Docker locale et parcours de bout en bout (opus)
 
 - **Tâches** : aucune (vérifications manuelles de T040, T021, T023, T041, T081, T095, T098)
