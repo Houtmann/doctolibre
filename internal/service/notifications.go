@@ -171,6 +171,13 @@ func (n notifier) data(v apptView, manageToken string) map[string]any {
 	if manageToken != "" && n.baseURL != "" {
 		manage = strings.TrimRight(n.baseURL, "/") + "/r/" + url.PathEscape(manageToken)
 	}
+	// Même règle que Changeable (booking.go) et le contrôle de manage.go : domain.ChangeAllowed.
+	// Délai dépassé à la rédaction : on n'annonce pas « possibles jusqu'à… » mais on le dit.
+	minNotice := microsToDuration(intervalMicros(v.practice.MinCancelNotice))
+	cancelNotice, cancelClosed := noticeText(minNotice), ""
+	if !domain.ChangeAllowed(start, n.clock.Now(), minNotice) {
+		cancelNotice, cancelClosed = "", noticeText(minNotice)
+	}
 	return map[string]any{
 		"practice_name": v.practice.Name, "practice_address": v.practice.Address, "practice_phone": v.practice.Phone,
 		"first_name": v.to.FirstName, "practitioner": strings.TrimSpace(v.practitioner.FirstName + " " + v.practitioner.LastName),
@@ -180,7 +187,7 @@ func (n notifier) data(v apptView, manageToken string) map[string]any {
 		"reason": "", "rebook_url": "",
 		// Consignes du motif, lues à la rédaction du message (T070) ; absentes des SMS (aucun template SMS ne s'en sert).
 		"instructions":  strings.TrimSpace(v.typ.PatientInstructions),
-		"cancel_notice": noticeText(microsToDuration(intervalMicros(v.practice.MinCancelNotice))),
+		"cancel_notice": cancelNotice, "cancel_closed": cancelClosed,
 	}
 }
 

@@ -48,7 +48,12 @@ document.addEventListener("htmx:afterSwap", function (e) {
   var t = e.detail && e.detail.target;
   if (!t || t.id !== "appt-dialog-body") return;
   var d = document.getElementById("appt-dialog");
-  if (d && typeof d.showModal === "function" && !d.open) d.showModal();
+  if (d && typeof d.showModal === "function" && !d.open) {
+    d.showModal();
+    // Le focus va sur le titre, pas sur un champ : sur mobile le clavier ne doit pas s'ouvrir.
+    var h = document.getElementById("appt-dialog-title");
+    if (h) h.focus();
+  }
 });
 
 // Ouvre une boîte de dialogue native : <button data-dialog-open="id">.

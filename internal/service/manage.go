@@ -45,7 +45,7 @@ func (b *Booking) lockByToken(ctx context.Context, q *sqlcgen.Queries, token str
 	if err != nil {
 		return sqlcgen.Appointment{}, fmt.Errorf("lecture cabinet: %w", err)
 	}
-	if a.Status != "booked" || a.During.Lower.Time.Sub(b.Clock.Now()) < microsToDuration(intervalMicros(pc.MinCancelNotice)) {
+	if a.Status != "booked" || !domain.ChangeAllowed(a.During.Lower.Time, b.Clock.Now(), microsToDuration(intervalMicros(pc.MinCancelNotice))) {
 		return sqlcgen.Appointment{}, ErrChangeTooLate
 	}
 	return a, nil

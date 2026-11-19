@@ -12,10 +12,11 @@
 {{with .Data}}{{with .Booking}}
 <section class="space-y-3" aria-labelledby="booking-page">
   <h2 class="text-xl font-semibold" id="booking-page">Votre page de réservation</h2>
-  {{if or .NeedAvailability .NeedType}}
+  {{if or .NeedProfile .NeedAvailability .NeedType}}
   <aside class="alert alert-info alert-soft items-start" aria-label="Configuration à terminer"><div>
     <p><strong>Pour que les patients puissent réserver :</strong></p>
     <ul class="list-disc pl-5">
+      {{if .NeedProfile}}<li><a class="link link-primary" href="/admin/profile">Indiquez votre nom tel que les patients le verront</a></li>{{end}}
       {{if .NeedAvailability}}<li>{{if .CanConfigure}}<a class="link link-primary" href="/admin/availability">Définissez vos horaires d'ouverture</a>{{else}}Définir les horaires d'ouverture (praticien ou administrateur){{end}}</li>{{end}}
       {{if .NeedType}}<li>{{if .CanConfigure}}<a class="link link-primary" href="/admin/appointment-types">Rendez au moins un motif réservable en ligne</a>{{else}}Rendre au moins un motif réservable en ligne (praticien ou administrateur){{end}}</li>{{end}}
     </ul>

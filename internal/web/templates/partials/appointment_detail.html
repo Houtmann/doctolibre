@@ -1,13 +1,13 @@
 <div id="appt-detail" class="space-y-4">
   <div class="flex flex-wrap items-center justify-between gap-2">
-    {{if .Modal}}<h2 id="appt-dialog-title" class="text-xl font-semibold">Rendez-vous</h2>{{else}}<h1 id="appt-dialog-title" class="text-xl font-semibold">Rendez-vous</h1>{{end}}
+    {{if .Modal}}<h2 id="appt-dialog-title" tabindex="-1" class="outline-none text-xl font-semibold">Rendez-vous</h2>{{else}}<h1 id="appt-dialog-title" class="text-xl font-semibold">Rendez-vous</h1>{{end}}
     {{with .D}}<span class="badge {{if eq .Status "done"}}badge-success badge-soft{{else if eq .Status "no_show"}}badge-warning badge-soft{{else if eq .Status "cancelled"}}badge-ghost{{else}}badge-primary badge-soft{{end}}">{{.StatusLabel}}</span>{{end}}
   </div>
   {{template "form_errors.html" .Errors}}
   {{with .D}}
   <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
     <dt class="text-base-content/70">Patient</dt><dd class="font-medium">{{.Patient}}</dd>
-    {{if .Phone}}<dt class="text-base-content/70">Téléphone</dt><dd>{{.Phone}}</dd>{{end}}
+    {{if .Phone}}<dt class="text-base-content/70">Téléphone</dt><dd><a class="link link-primary" href="tel:{{telHref .Phone}}">{{formatPhone .Phone}}</a></dd>{{end}}
     {{if .Email}}<dt class="text-base-content/70">Email</dt><dd class="break-all">{{.Email}}</dd>{{end}}
     <dt class="text-base-content/70">Motif</dt><dd>{{.TypeName}}</dd>
     {{if .AtHome}}<dt class="text-base-content/70">Lieu</dt><dd>À domicile{{if .Address}} : {{.Address}}

@@ -16,7 +16,7 @@
   <thead><tr><th scope="col">Nom</th><th scope="col">Téléphone</th><th scope="col" class="hidden sm:table-cell">Email</th></tr></thead>
   <tbody>
     {{range .Data.Rows}}
-    <tr><td><a class="link link-primary" href="/admin/patients/{{.ID}}">{{.Name}}</a></td><td class="tabular-nums">{{.Phone}}</td><td class="hidden sm:table-cell">{{.Email}}</td></tr>
+    <tr><td><a class="link link-primary" href="/admin/patients/{{.ID}}">{{.Name}}</a></td><td class="tabular-nums">{{formatPhone .Phone}}</td><td class="hidden sm:table-cell">{{.Email}}</td></tr>
     {{end}}
   </tbody>
 </table>

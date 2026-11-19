@@ -162,7 +162,9 @@ type DashboardBooking struct {
 	PracticeURL                string
 	Practitioners              []DashboardPractitioner
 	NeedAvailability, NeedType bool
-	CanConfigure               bool
+	// NeedProfile : le praticien connecté n'a pas encore indiqué son prénom (nom affiché aux patients).
+	NeedProfile  bool
+	CanConfigure bool
 }
 
 // DashboardPractitioner est un praticien actif et son adresse de réservation.
@@ -192,6 +194,7 @@ func (h *adminHandlers) dashboard(w http.ResponseWriter, r *http.Request) {
 			PracticeURL:      base + "/p/" + url.PathEscape(d.PracticeSlug),
 			NeedAvailability: !d.HasAvailability,
 			NeedType:         !d.HasBookableType,
+			NeedProfile:      d.NeedProfile,
 			CanConfigure:     a.Role != domain.RoleSecretary,
 		}
 		for _, p := range d.Practitioners {

@@ -20,7 +20,7 @@
 </article>
 {{else if eq .Data.State "done"}}
 <div class="alert alert-success" role="status"><span>Vous avez quitté la liste d'attente{{if .Data.Practice}} de {{.Data.Practice}}{{end}}. Vous ne recevrez plus de proposition pour cette inscription.</span></div>
-{{if .Data.Phone}}<p class="text-sm">Pour prendre rendez-vous, appelez le cabinet au <a class="link" href="tel:{{telHref .Data.Phone}}">{{.Data.Phone}}</a>.</p>{{end}}
+{{if .Data.Phone}}<p class="text-sm">Pour prendre rendez-vous, appelez le cabinet au <a class="link" href="tel:{{telHref .Data.Phone}}">{{formatPhone .Data.Phone}}</a>.</p>{{end}}
 {{else}}
 <div class="alert alert-info" role="status"><span>Ce lien n'est plus valable : la désinscription a peut-être déjà été faite.</span></div>
 {{end}}

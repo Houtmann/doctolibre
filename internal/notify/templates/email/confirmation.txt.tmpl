@@ -9,9 +9,10 @@ Votre rendez-vous ({{.type_name}}) avec {{.practitioner}} est confirmé :
 À prévoir :
 {{.instructions}}{{end}}
 {{if .manage_url}}
-Pour consulter, déplacer ou annuler ce rendez-vous :
+Pour consulter{{if not .cancel_closed}}, déplacer ou annuler{{end}} ce rendez-vous :
 {{.manage_url}}
-{{if .cancel_notice}}Déplacement et annulation possibles jusqu'à {{.cancel_notice}} avant le rendez-vous.
+{{if .cancel_closed}}Ce rendez-vous ne peut plus être déplacé ni annulé en ligne (délai de {{.cancel_closed}}) : contactez le cabinet{{if .practice_phone}} au {{.practice_phone}}{{end}}.
+{{else if .cancel_notice}}Déplacement et annulation possibles jusqu'à {{.cancel_notice}} avant le rendez-vous.
 {{end}}{{end}}{{if .practice_phone}}
 Une question ? Appelez le {{.practice_phone}}.
 {{end}}

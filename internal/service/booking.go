@@ -653,7 +653,7 @@ func (b *Booking) Confirmation(ctx context.Context, token string) (Confirmation,
 		Rebookable:  rebookable,
 		Appointment: a, Practice: pc, Practitioner: pr, Type: typ, FirstName: pat.FirstName, Loc: loc,
 		Start: start.In(loc), End: a.During.Upper.Time.In(loc),
-		Changeable: a.Status == "booked" && start.Sub(b.Clock.Now()) >= minCancel,
+		Changeable: a.Status == "booked" && domain.ChangeAllowed(start, b.Clock.Now(), minCancel),
 		MinCancel:  minCancel, Horizon: microsToDuration(intervalMicros(pc.BookingHorizon)),
 	}, nil
 }

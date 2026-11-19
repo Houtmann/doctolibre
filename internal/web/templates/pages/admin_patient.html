@@ -76,7 +76,7 @@
   <fieldset class="fieldset bg-base-100 border-base-300 rounded-box border p-4 gap-2">
     <legend class="fieldset-legend">Fiche à conserver</legend>
     {{range .Data.Candidates}}
-    <label class="flex items-start gap-3 text-sm"><input class="radio radio-primary radio-sm mt-0.5" type="radio" name="into" value="{{.ID}}" required> {{.Name}} <span class="text-sm text-base-content/70">{{.Phone}} {{.Email}}</span></label>
+    <label class="flex items-start gap-3 text-sm"><input class="radio radio-primary radio-sm mt-0.5" type="radio" name="into" value="{{.ID}}" required> {{.Name}} <span class="text-sm text-base-content/70">{{formatPhone .Phone}} {{.Email}}</span></label>
     {{end}}
   </fieldset>
   <button class="btn btn-secondary" type="submit">Fusionner dans la fiche choisie</button>

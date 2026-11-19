@@ -7,7 +7,7 @@
 <div class="alert alert-warning items-start" role="alert"><div>
   <strong>Un patient avec le même téléphone ou le même email existe déjà :</strong>
   <ul class="list-disc pl-5">
-    {{range .Data.Duplicates}}<li><a class="link link-primary" href="/admin/patients/{{.ID}}">{{.Name}}</a> <span class="text-sm text-base-content/70">{{.Phone}} {{.Email}}</span></li>{{end}}
+    {{range .Data.Duplicates}}<li><a class="link link-primary" href="/admin/patients/{{.ID}}">{{.Name}}</a> <span class="text-sm text-base-content/70">{{formatPhone .Phone}} {{.Email}}</span></li>{{end}}
   </ul>
   <p>Ouvrez la fiche existante, ou créez quand même une nouvelle fiche avec le bouton ci-dessous.</p>
 </div></div>

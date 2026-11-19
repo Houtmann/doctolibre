@@ -1,5 +1,5 @@
 <div id="appt-form" class="space-y-4">
-  {{if .Modal}}<h2 id="appt-dialog-title" class="text-xl font-semibold">Nouveau rendez-vous</h2>{{else}}<h1 id="appt-dialog-title" class="text-xl font-semibold">Nouveau rendez-vous</h1>{{end}}
+  {{if .Modal}}<h2 id="appt-dialog-title" tabindex="-1" class="outline-none text-xl font-semibold">Nouveau rendez-vous</h2>{{else}}<h1 id="appt-dialog-title" class="text-xl font-semibold">Nouveau rendez-vous</h1>{{end}}
   {{template "form_errors.html" .Errors}}
 
   <form class="space-y-3" method="get" action="/admin/appointments/new" role="search">

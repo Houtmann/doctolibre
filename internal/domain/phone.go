@@ -8,6 +8,21 @@ import (
 // ErrInvalidPhone : le numéro n'est pas exploitable.
 var ErrInvalidPhone = errors.New("numéro de téléphone invalide")
 
+// FormatPhone met un numéro E.164 en forme lisible pour l'affichage : un numéro
+// français « +33612345678 » devient « 06 12 34 56 78 ». Tout autre texte est rendu tel quel.
+func FormatPhone(e164 string) string {
+	rest, ok := strings.CutPrefix(e164, "+33")
+	if !ok || len(rest) != 9 {
+		return e164
+	}
+	for _, r := range rest {
+		if r < '0' || r > '9' {
+			return e164
+		}
+	}
+	return "0" + rest[:1] + " " + rest[1:3] + " " + rest[3:5] + " " + rest[5:7] + " " + rest[7:9]
+}
+
 // NormalizePhone convertit un numéro saisi à la main en E.164 ("+33612345678").
 // Sans indicatif, le numéro est français (« 06 12 34 56 78 » → « +33612345678 »).
 // Espaces, points, tirets et parenthèses sont ignorés ; « 0033… » vaut « + » ;

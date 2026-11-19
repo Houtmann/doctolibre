@@ -3,7 +3,11 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/google/uuid"
+
+	"doctolibre/internal/domain"
 	"doctolibre/internal/store/sqlcgen"
 )
 
@@ -16,6 +20,9 @@ type Dashboard struct {
 	HasAvailability bool
 	// HasBookableType : au moins un motif actif est réservable en ligne.
 	HasBookableType bool
+	// NeedProfile : la fiche praticien de l'utilisateur existe mais n'a pas de prénom (fiche créée
+	// depuis son email) ; faux pour le secrétariat et pour un utilisateur sans fiche.
+	NeedProfile bool
 }
 
 // Dashboard retourne ce qu'il faut pour afficher la page de réservation du cabinet de l'acteur.
@@ -37,5 +44,13 @@ func (s *Practice) Dashboard(ctx context.Context, a Actor) (Dashboard, error) {
 	if err != nil {
 		return Dashboard{}, fmt.Errorf("motifs réservables: %w", err)
 	}
-	return Dashboard{PracticeName: pc.Name, PracticeSlug: pc.Slug, Practitioners: prs, HasAvailability: rules > 0, HasBookableType: len(types) > 0}, nil
+	need := false
+	if a.Role != domain.RoleSecretary && a.PractitionerID != uuid.Nil {
+		for _, p := range prs {
+			if p.ID == a.PractitionerID {
+				need = strings.TrimSpace(p.FirstName) == ""
+			}
+		}
+	}
+	return Dashboard{PracticeName: pc.Name, PracticeSlug: pc.Slug, Practitioners: prs, HasAvailability: rules > 0, HasBookableType: len(types) > 0, NeedProfile: need}, nil
 }

@@ -37,12 +37,12 @@ Corriger quatre défauts vus au navigateur lors de l'essai de bout en bout sur l
 - Mettre à jour les golden files (`-update`) et ajouter un cas golden « réservé dans les 24 h ».
 
 ## Critères d'acceptation
-- [ ] « Ma journée », le dialogue d'agenda, la liste et la fiche patient affichent `06 12 34 56 78` pour `+33612345678` ; le lien `tel:` reste en E.164.
-- [ ] Ouvrir un RDV dans l'agenda ne met le focus sur aucun champ de saisie.
-- [ ] Un admin dont la fiche n'a pas de prénom voit l'étape « nom » dans l'encart du tableau de bord ; elle disparaît après enregistrement du profil.
-- [ ] Un RDV pris à moins de `MinCancelNotice` reçoit un email sans « possibles jusqu'à … » et avec la phrase de délai dépassé ; un RDV plus lointain garde la phrase actuelle.
-- [ ] Tests : `FormatPhone`, handler du tableau de bord (`NeedProfile`), golden emails des deux cas.
-- [ ] `make css` relancé (templates modifiés), `ui.css` à jour.
+- [x] « Ma journée », le dialogue d'agenda, la liste et la fiche patient affichent `06 12 34 56 78` pour `+33612345678` ; le lien `tel:` reste en E.164.
+- [x] Ouvrir un RDV dans l'agenda ne met le focus sur aucun champ de saisie.
+- [x] Un admin dont la fiche n'a pas de prénom voit l'étape « nom » dans l'encart du tableau de bord ; elle disparaît après enregistrement du profil.
+- [x] Un RDV pris à moins de `MinCancelNotice` reçoit un email sans « possibles jusqu'à … » et avec la phrase de délai dépassé ; un RDV plus lointain garde la phrase actuelle.
+- [x] Tests : `FormatPhone`, handler du tableau de bord (`NeedProfile`), golden emails des deux cas.
+- [x] `make css` relancé (templates modifiés), `ui.css` à jour.
 
 ## Vérification
 ```bash
@@ -58,8 +58,8 @@ make check
 
 > Rempli par l'agent pendant et à la fin de chaque session sur cette tâche. Le statut officiel est dans `tasks/README.md`.
 
-- **Sessions** : —
-- **Fait** : —
-- **Reste à faire** : —
-- **Notes de reprise** (pièges, état intermédiaire, commandes utiles) : —
-- **Écarts avec la spécification** (et pourquoi) : —
+- **Sessions** : 2026-11-19 (sonnet)
+- **Fait** : `domain.FormatPhone` + `domain.ChangeAllowed` (règle unique utilisée par booking.go, manage.go, notifications.go) ; `formatPhone` dans funcMap et templates (day_card, appointment_detail avec lien `tel:`, admin_patients, admin_patient, pages publiques, fiche de doublons) ; focus du dialogue sur le titre (`tabindex="-1"`, `app.js`) ; `NeedProfile` (service.Dashboard puis DashboardBooking) et étape « nom » dans l'encart ; `cancel_closed` dans `notifier.data` et templates de confirmation ; golden `confirmation_delai_depasse` ; `ui.css` régénéré.
+- **Reste à faire** : rien (vérification visuelle au navigateur non faite).
+- **Notes de reprise** : tests DB lancés sur un Postgres 17 jetable (Docker, port 55432) car Postgres.app était arrêté ; avec `-p 1` (GOFLAGS=-p=1) pour éviter « out of shared memory » sur ce conteneur. 0 SKIP.
+- **Écarts avec la spécification** : le retour du focus à l'événement cliqué n'est pas géré (le dialogue natif le restitue au déclencheur, EventCalendar pas ciblé). `NeedProfile` est faux si l'utilisateur n'a pas encore de fiche (créée paresseusement). L'aperçu d'import CSV garde le numéro E.164 (test existant, hors liste).
