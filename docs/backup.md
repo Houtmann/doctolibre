@@ -4,7 +4,7 @@ Les données d'un cabinet sont des données de santé indirectes (PLAN.md §4) :
 
 ## Principe
 
-- Service compose `backup` (image `postgres:17-alpine` + `age` + `rclone`, voir `deploy/backup/`).
+- Service compose `backup` (image `alpine` + `postgresql17-client` + `age` + `rclone`, voir `deploy/backup/`).
 - Une fois par jour (`BACKUP_TIME`, UTC, défaut 03:30) : `pg_dump` (format custom) envoyé directement dans `age`. Le dump en clair n'est jamais écrit sur disque.
 - Rétention locale (volume `backups`) : 7 quotidiennes (`daily/`) + 4 hebdomadaires (`weekly/`, la sauvegarde du dimanche).
 - Envoi optionnel vers un stockage S3-compatible (Scaleway, OVH, Backblaze B2 : quelques centimes par mois). La rétention distante se règle avec une règle de cycle de vie du bucket.

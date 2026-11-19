@@ -10,6 +10,9 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
+      args:
+        # Version affichée par /admin/status et `doctolibre version` (image construite localement).
+        VERSION: ${DOCTOLIBRE_VERSION:-local}
     restart: unless-stopped
     mem_limit: 256m
     depends_on:
@@ -17,6 +20,8 @@ services:
         condition: service_healthy
     environment:
       DOCTOLIBRE_ENV: prod
+      # Limite souple du ramasse-miettes Go (le conteneur reste plafonné par mem_limit).
+      GOMEMLIMIT: ${GOMEMLIMIT:-40MiB}
       DOCTOLIBRE_HTTP_ADDR: ":8080"
       DOCTOLIBRE_BASE_URL: https://${DOMAIN:?DOMAIN est obligatoire (voir .env.example)}
       DOCTOLIBRE_DATABASE_URL: postgres://doctolibre:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est obligatoire}@postgres:5432/doctolibre?sslmode=disable

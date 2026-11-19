@@ -88,7 +88,7 @@ Les migrations s'appliquent toutes seules. Si `DOMAIN`, `CADDY_TLS`, `POSTGRES_P
 
 Ouvrez `https://rdv.cabinet-dupont.fr` : la page d'accueil doit s'afficher en HTTPS. Le premier certificat peut prendre une minute ; si rien ne vient, voir le §8.
 
-> Pas d'image publiée ? Construisez-la localement : `docker compose up -d --build` (compter plusieurs minutes, surtout sur Raspberry Pi).
+> Pas d'image publiée ? Construisez-la localement : `docker compose up -d --build` (compter plusieurs minutes, surtout sur Raspberry Pi). Pour que `/admin/status` et `doctolibre version` affichent la version construite (sinon `local`) : `DOCTOLIBRE_VERSION=$(git describe --tags --always) docker compose up -d --build`.
 
 ## 4. Créer le compte administrateur et configurer le cabinet
 
