@@ -98,7 +98,7 @@ func TestPatientImportFlowForEveryRole(t *testing.T) {
 
 			prev := postMultipart(e.c, "/admin/patients/import", nil, csv)
 			body := prev.Body.String()
-			if prev.Code != 200 || !strings.Contains(body, "MARTIN Hélène") || !strings.Contains(body, "33612345678") ||
+			if prev.Code != 200 || !strings.Contains(body, "MARTIN Hélène") || !strings.Contains(body, `<td class="tabular-nums">06 12 34 56 78</td>`) ||
 				!strings.Contains(body, "Ce téléphone existe déjà") || !strings.Contains(body, "Ni téléphone ni email") ||
 				!strings.Contains(body, `name="notify_opt_in"`) || !strings.Contains(body, "Importer 2 patient") {
 				t.Fatalf("aperçu : %d\n%s", prev.Code, body)
@@ -117,6 +117,11 @@ func TestPatientImportFlowForEveryRole(t *testing.T) {
 			}
 			if total, opted := e.countPatients(t); total != 3 || opted != 1 { // 1 = la fiche préexistante
 				t.Errorf("total=%d opt-in=%d (case non cochée : aucun opt-in)", total, opted)
+			}
+			var n int
+			if err := e.db.QueryRow(context.Background(),
+				`SELECT count(*) FROM patient WHERE practice_id = $1 AND phone = '+33612345678'`, e.actor.PracticeID).Scan(&n); err != nil || n == 0 {
+				t.Errorf("téléphone non stocké en E.164 : n=%d err=%v", n, err)
 			}
 		})
 	}
