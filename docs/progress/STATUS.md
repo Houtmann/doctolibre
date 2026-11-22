@@ -3,12 +3,13 @@
 > Tableau de bord **réécrit à la fin de chaque session** (pas d'historique ici : voir [`journal.md`](journal.md)).
 > Le statut détaillé de chaque tâche est dans [`tasks/README.md`](../../tasks/README.md), seule source de vérité.
 
-**Mis à jour le** : 2026-11-19 (T100 et T101 implémentées en parallèle, en `review`)
+**Mis à jour le** : 2026-11-22 (T100/T101 validées ; T102 et T103 implémentées en parallèle, en `review`)
 
 ## Où on en est
 
-- 71 `done`, 1 `superseded` (T068), **2 `review`** : T100 (retouches UX) et T101 (empreinte du déploiement), issues de l'essai Docker du 2026-11-11. Plus aucune tâche `todo`.
-- Phases 0 à 4 terminées (29 tâches). Phase 5 — Retours terrain : 42 `done` + T068 `superseded`, dont la migration front daisyUI (T080–T085), les audits UX et sécurité (T088–T099), les consignes par motif (T070), l'auto-planification de série (T071), « Ma journée » (T072), les statistiques (T073), les ressources partagées (T060), l'affiche QR (T061).
+- 73 `done`, 1 `superseded` (T068), **2 `review`** : T102 (sous-réseau compose `DOCTOLIBRE_SUBNET`) et T103 (téléphone formaté dans l'aperçu d'import CSV). Plus aucune tâche `todo`.
+- T100 et T101 validées par l'humain le 2026-11-22 ; cibles revues : image app ≤ 35 Mo, image de sauvegarde ~200 Mo (decisions.md).
+- Phases 0 à 4 terminées (29 tâches). Phase 5 — Retours terrain : 44 `done` + T068 `superseded`, dont la migration front daisyUI (T080–T085), les audits UX et sécurité (T088–T099), les consignes par motif (T070), l'auto-planification de série (T071), « Ma journée » (T072), les statistiques (T073), les ressources partagées (T060), l'affiche QR (T061).
 - Validation du 2026-11-11 : passage en `done` sur décision de l'humain, sans nouvelle relecture ; les vérifications manuelles listées plus bas restent non faites.
 - Migrations : 00001, 00002, 00004–00029 (00027 consignes, 00028 auto-planification, 00029 reprise sans OTP). Prochaine : 00030.
 
@@ -18,14 +19,13 @@ Rien.
 
 ## Prochaine action
 
-1. Relecture humaine de T100 et T101 ; trancher les questions T101 ci-dessous. Puis définir d'autres tâches à partir des questions produit ci-dessous, des vérifications manuelles non faites et des petits manques.
+1. Relecture humaine de T102 et T103. Puis définir d'autres tâches à partir des questions produit ci-dessous, des vérifications manuelles non faites et des petits manques.
 2. Vérifications au navigateur jamais faites : 360 px et thème sombre pour T061/T070/T071/T098 ; aperçu d'impression de l'affiche ; parcours public confirmé / annulation / déplacement / liste d'attente ; états avec données (liste d'attente, absences, invitations, pagination) ; dialogue d'agenda à 360 px ; JS désactivé ; pages de T051, T053, T055, T056, T059, T060, T073, T085, T086, T087, T095, T096, T097 ; envoi de test vers Mailpit.
 3. Installation réelle sur VM neuve en suivant `docs/install.md` (critère T044 non coché).
 
 ## Blocages et questions ouvertes pour l'humain
 
-- **T101** : image de sauvegarde à 199 Mo (critère < 150 Mo non tenu ; `rclone` ≈ 110 Mo) : accepter et porter la cible à ~200 Mo, ou sortir `rclone` (S3 seulement) dans une tâche à part ? Cible image app de T040 (≤ 30 Mo) à porter à ~35 Mo (32,6 Mo mesurés, binaire 18,7 Mo + distroless) ? Le sous-réseau compose fixe `172.30.0.0/24` empêche deux piles sur une même machine.
-- **T100** : formater aussi le téléphone dans l'aperçu d'import CSV (test existant à adapter) ? Vérification navigateur (360 px, focus du dialogue, encart « nom ») non faite.
+- **T100** : vérification navigateur (360 px, focus du dialogue, encart « nom ») non faite.
 
 - Organisation et dépôt : https://github.com/Houtmann/doctolibre (créé le 2026-10-18), image `ghcr.io/houtmann/doctolibre` ; module Go toujours `doctolibre`.
 - CI et `release.yml` : premier push le 2026-11-01 (main à 9404f91) ; résultat non vérifié.
@@ -63,4 +63,4 @@ Rien.
 | 2 — Notifications | 5 | 5 | 0 |
 | 3 — Spécificités kiné | 4 | 4 | 0 |
 | 4 — Exploitation | 7 | 7 | 0 |
-| 5 — Retours terrain | 45 (dont 1 remplacée) | 42 | 2 |
+| 5 — Retours terrain | 47 (dont 1 remplacée) | 44 | 2 |

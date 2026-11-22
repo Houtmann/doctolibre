@@ -14,6 +14,14 @@ Rester court : le détail technique va dans la section « Suivi » de la tâche,
 - **Décisions** : liens vers les lignes ajoutées dans decisions.md, ou « aucune »
 -->
 
+## 2026-11-22 — T100/T101 validées, T102 et T103 en parallèle (exécutant : sonnet ; contrôle : opus)
+
+- **Tâches** : T100, T101 (review → done, décision de l'humain) ; T102, T103 (créées → review)
+- **Fait** : cibles d'empreinte revues (app ≤ 35 Mo, sauvegarde ~200 Mo). T102 : `DOCTOLIBRE_SUBNET` (défaut `172.30.0.0/24`) pilote le subnet compose et `DOCTOLIBRE_TRUSTED_PROXIES` ; deux piles lancées en parallèle (172.31.10.0/24 et 172.31.11.0/24), `app` healthy, puis supprimées. T103 : aperçu d'import CSV en `06 12 34 56 78`, stockage E.164 vérifié en base par le test
+- **Vérification** : `make check` ✅ (Postgres 17 jetable, 0 SKIP dans `internal/web`), lancé par l'agent T103 après les deux modifications ; diff relu par l'orchestrateur
+- **Reste / reprise** : relecture humaine de T102/T103
+- **Décisions** : 1 ligne du 2026-11-22 dans decisions.md
+
 ## 2026-11-19 — T100 et T101 en parallèle (exécutant : sonnet ; contrôle : opus)
 
 - **Tâches** : T100 (todo → review), T101 (todo → review)
