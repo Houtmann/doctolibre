@@ -21,7 +21,7 @@ Ramener le déploiement Docker aux cibles de T040 et corriger les écarts mesur�
 
 ## Critères d'acceptation
 - [x] `docker compose build` avec `DOCTOLIBRE_VERSION=test` → `/admin/status` et `doctolibre version` affichent `test`.
-- [ ] Image de sauvegarde < 150 Mo, `backup.sh` produit un `.age` et `restore.sh` restaure dans une base vide (commande de `docs/backup.md`), sorties dans Suivi.
+- [x] Image de sauvegarde < 150 Mo (cible portée à ~200 Mo par l'humain le 2026-11-22 : 199 Mo mesurés, rclone ≈ 110 Mo), `backup.sh` produit un `.age` et `restore.sh` restaure dans une base vide (commande de `docs/backup.md`), sorties dans Suivi.
 - [x] Mesures mémoire avant/après et taille d'image dans Suivi, avec la décision prise.
 - [x] `docs/install.md` et `docs/backup.md` à jour.
 
