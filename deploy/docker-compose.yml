@@ -58,7 +58,7 @@ services:
       DOCTOLIBRE_SMS_HTTP_BASIC_PASSWORD: ${DOCTOLIBRE_SMS_HTTP_BASIC_PASSWORD:-}
       DOCTOLIBRE_SMS_HTTP_BEARER: ${DOCTOLIBRE_SMS_HTTP_BEARER:-}
       # Caddy est le seul pair fiable : son X-Forwarded-For donne l'IP du client.
-      DOCTOLIBRE_TRUSTED_PROXIES: 172.30.0.0/24
+      DOCTOLIBRE_TRUSTED_PROXIES: ${DOCTOLIBRE_SUBNET:-172.30.0.0/24}
     volumes:
       # Marqueur de dernière sauvegarde réussie, en lecture seule (voir DOCTOLIBRE_BACKUP_DIR).
       - backups:/backups:ro
@@ -144,7 +144,7 @@ networks:
   internal:
     ipam:
       config:
-        - subnet: 172.30.0.0/24
+        - subnet: ${DOCTOLIBRE_SUBNET:-172.30.0.0/24}
 
 volumes:
   pgdata:

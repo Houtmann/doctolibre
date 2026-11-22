@@ -74,7 +74,7 @@ Variables utiles, toutes préfixées `DOCTOLIBRE_` :
 | `METRICS_TOKEN` | vide | Jeton (16 caractères minimum) qui active `/metrics` pour Prometheus ; vide = désactivé |
 | `IMAGE` | `ghcr.io/houtmann/doctolibre:latest` | Image utilisée. Pour figer une version : `ghcr.io/houtmann/doctolibre:v0.1.0` |
 
-Fixées par `docker-compose.yml`, ne les définissez pas dans `.env` : `ENV=prod`, `HTTP_ADDR`, `BASE_URL` (déduite de `DOMAIN`), `DATABASE_URL`, `TRUSTED_PROXIES` (le sous-réseau Docker `172.30.0.0/24`, pour que le limiteur de débit voie l'IP réelle des visiteurs derrière Caddy).
+Fixées par `docker-compose.yml`, ne les définissez pas dans `.env` : `ENV=prod`, `HTTP_ADDR`, `BASE_URL` (déduite de `DOMAIN`), `DATABASE_URL`, `TRUSTED_PROXIES` (déduite de `DOCTOLIBRE_SUBNET`, `172.30.0.0/24` par défaut, pour que le limiteur de débit voie l'IP réelle des visiteurs derrière Caddy).
 
 **Démarrer** :
 
@@ -167,6 +167,10 @@ Avant de mettre à jour : lisez les notes de version de la release (page des rel
 
 Si l'image est construite localement : `docker compose up -d --build` après `git pull`.
 
+### Deux instances sur une même machine
+
+Chaque pile a son dossier `deploy/` et son `.env`, avec un `DOCTOLIBRE_SUBNET` **différent** et un nom de projet différent (`docker compose -p <nom> up -d`). Les ports 80 et 443 de Caddy ne peuvent être pris que par une seule pile : pour héberger plusieurs instances, placez un reverse proxy commun devant elles.
+
 ## 8. Dépannage (FAQ)
 
 | Symptôme | Cause probable et remède |
@@ -175,7 +179,7 @@ Si l'image est construite localement : `docker compose up -d --build` après `gi
 | Le navigateur affiche une erreur de certificat ou rien du tout | Le DNS ne pointe pas encore vers le serveur, ou les ports 80/443 sont fermés (pare-feu du système, de l'hébergeur ou de la box). Consultez `docker compose logs caddy`. Let's Encrypt limite le nombre d'essais : corrigez avant de relancer en boucle. |
 | `app` redémarre en boucle | `docker compose logs app` : la configuration est validée au démarrage (ex. `DOCTOLIBRE_SECRET_KEY` trop courte, SMTP incomplet, driver SMS mal configuré). |
 | `app` « unhealthy » | La base n'est pas joignable ou les migrations échouent : `docker compose logs postgres app`. |
-| Erreur « subnet overlaps » / conflit de réseau | Le sous-réseau `172.30.0.0/24` est déjà pris sur la machine : changer `subnet` **et** `DOCTOLIBRE_TRUSTED_PROXIES` dans `docker-compose.yml` de manière cohérente. |
+| Erreur « subnet overlaps » / conflit de réseau | Le sous-réseau `172.30.0.0/24` est déjà pris sur la machine : définir `DOCTOLIBRE_SUBNET` (ex. `172.31.0.0/24`) dans `.env` ; les proxys de confiance suivent, plus besoin d'éditer `docker-compose.yml`. |
 | Les patients ne reçoivent pas d'email | `/admin/messages` pour l'état et l'erreur ; vérifiez le SMTP et SPF/DKIM/DMARC ([`email.md`](email.md)) ; regardez les spams. |
 | Aucun SMS ne part | `DOCTOLIBRE_SMS_DRIVER` vaut `log` (défaut) ; et vérifiez les réglages de `/admin/settings/notifications`. |
 | Trop de requêtes bloquées / tout le monde semble avoir la même IP | `DOCTOLIBRE_TRUSTED_PROXIES` ne correspond pas à votre reverse proxy. Avec le compose fourni, ne changez rien. |
